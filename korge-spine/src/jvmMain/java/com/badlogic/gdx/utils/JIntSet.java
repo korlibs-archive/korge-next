@@ -337,7 +337,7 @@ public class JIntSet {
      * If {@link Collections#allocateIterators} is false, the same iterator instance is returned each time this method is called.
      * Use the {@link IntSetIterator} constructor for nested or multithreaded iteration. */
     public IntSetIterator iterator () {
-        if (Collections.INSTANCE.getAllocateIterators()) return new IntSetIterator(this);
+        if (Collections.allocateIterators) return new IntSetIterator(this);
         if (iterator1 == null) {
             iterator1 = new IntSetIterator(this);
             iterator2 = new IntSetIterator(this);

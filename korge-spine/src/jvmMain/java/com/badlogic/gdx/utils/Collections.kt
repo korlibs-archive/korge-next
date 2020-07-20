@@ -1,11 +1,10 @@
-package com.badlogic.gdx.utils
+package com.badlogic.gdx.utils;
 
-object Collections {
+public class Collections {
 
-    /** When true, [Iterable.iterator] for [JArray], [ObjectMap], and other collections will allocate a new
+    /** When true, {@link Iterable#iterator()} for {@link JArray}, {@link ObjectMap}, and other collections will allocate a new
      * iterator for each invocation. When false, the iterator is reused and nested use will throw an exception. Default is
-     * false.  */
-    @JvmField
-    var allocateIterators: Boolean = false
+     * false. */
+    public static boolean allocateIterators;
 
 }

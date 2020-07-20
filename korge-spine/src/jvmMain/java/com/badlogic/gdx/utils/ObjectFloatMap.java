@@ -377,7 +377,7 @@ public class ObjectFloatMap<K> implements Iterable<ObjectFloatMap.Entry<K>> {
      * If {@link Collections#allocateIterators} is false, the same iterator instance is returned each time this method is called.
      * Use the {@link Entries} constructor for nested or multithreaded iteration. */
     public Entries<K> entries () {
-        if (Collections.INSTANCE.getAllocateIterators()) return new Entries(this);
+        if (Collections.allocateIterators) return new Entries(this);
         if (entries1 == null) {
             entries1 = new Entries(this);
             entries2 = new Entries(this);
@@ -399,7 +399,7 @@ public class ObjectFloatMap<K> implements Iterable<ObjectFloatMap.Entry<K>> {
      * If {@link Collections#allocateIterators} is false, the same iterator instance is returned each time this method is called.
      * Use the {@link Values} constructor for nested or multithreaded iteration. */
     public Values values () {
-        if (Collections.INSTANCE.getAllocateIterators()) return new Values(this);
+        if (Collections.allocateIterators) return new Values(this);
         if (values1 == null) {
             values1 = new Values(this);
             values2 = new Values(this);
@@ -421,7 +421,7 @@ public class ObjectFloatMap<K> implements Iterable<ObjectFloatMap.Entry<K>> {
      * If {@link Collections#allocateIterators} is false, the same iterator instance is returned each time this method is called.
      * Use the {@link Keys} constructor for nested or multithreaded iteration. */
     public Keys<K> keys () {
-        if (Collections.INSTANCE.getAllocateIterators()) return new Keys(this);
+        if (Collections.allocateIterators) return new Keys(this);
         if (keys1 == null) {
             keys1 = new Keys(this);
             keys2 = new Keys(this);
