@@ -426,7 +426,7 @@ public class JArray<T> implements Iterable<T> {
      * If {@link Collections#allocateIterators} is false, the same iterator instance is returned each time this method is called.
      * Use the {@link ArrayIterator} constructor for nested or multithreaded iteration. */
     public ArrayIterator<T> iterator () {
-        if (Collections.allocateIterators) return new ArrayIterator(this, true);
+        if (Collections.INSTANCE.getAllocateIterators()) return new ArrayIterator(this, true);
         if (iterable == null) iterable = new ArrayIterable(this);
         return iterable.iterator();
     }
@@ -436,7 +436,7 @@ public class JArray<T> implements Iterable<T> {
      * If {@link Collections#allocateIterators} is false, the same iterable instance is returned each time this method is called.
      * Use the {@link Predicate.PredicateIterable} constructor for nested or multithreaded iteration. */
     public Iterable<T> select (Predicate<T> predicate) {
-        if (Collections.allocateIterators) return new Predicate.PredicateIterable<T>(this, predicate);
+        if (Collections.INSTANCE.getAllocateIterators()) return new Predicate.PredicateIterable<T>(this, predicate);
         if (predicateIterable == null)
             predicateIterable = new Predicate.PredicateIterable<T>(this, predicate);
         else
@@ -624,7 +624,7 @@ public class JArray<T> implements Iterable<T> {
 
         /** @see Collections#allocateIterators */
         public ArrayIterator<T> iterator () {
-            if (Collections.allocateIterators) return new ArrayIterator(array, allowRemove);
+            if (Collections.INSTANCE.getAllocateIterators()) return new ArrayIterator(array, allowRemove);
 // lastAcquire.getBuffer().setLength(0);
 // new Throwable().printStackTrace(new java.io.PrintWriter(lastAcquire));
             if (iterator1 == null) {

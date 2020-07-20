@@ -328,7 +328,7 @@ public class ObjectSet<T> implements Iterable<T> {
      * If {@link Collections#allocateIterators} is false, the same iterator instance is returned each time this method is called.
      * Use the {@link ObjectSetIterator} constructor for nested or multithreaded iteration. */
     public ObjectSetIterator<T> iterator () {
-        if (Collections.allocateIterators) return new ObjectSetIterator(this);
+        if (Collections.INSTANCE.getAllocateIterators()) return new ObjectSetIterator(this);
         if (iterator1 == null) {
             iterator1 = new ObjectSetIterator(this);
             iterator2 = new ObjectSetIterator(this);
