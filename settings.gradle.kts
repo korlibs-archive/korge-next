@@ -10,23 +10,13 @@ pluginManagement {
 
 enableFeaturePreview("GRADLE_METADATA")
 
+include(":kmem")
 /*
-for (file in rootDir.listFiles()) {
-	if (file.name == "build" || file.name == "buildSrc" || file.name.startsWith(".")) continue
-	if (
-			setOf("build.gradle", "build.gradle.kts").map { File(file, it) }.any { it.exists() } &&
-			setOf("settings.gradle", "settings.gradle.kts").map { File(file, it) }.all { !it.exists() }
-	) {
-		include(":${file.name}")
-	}
-}
-*/
 include(":kbox2d")
 include(":kbignum")
 include(":klock")
 include(":klogger")
 include(":korinject")
-include(":kmem")
 include(":kds")
 include(":korma")
 include(":korma-shape")
@@ -51,3 +41,4 @@ include(":korge-swf")
 for (sample in (File(rootProject.projectDir, "samples").takeIf { it.isDirectory }?.listFiles() ?: arrayOf())) {
     include(":samples:${sample.name}")
 }
+*/
