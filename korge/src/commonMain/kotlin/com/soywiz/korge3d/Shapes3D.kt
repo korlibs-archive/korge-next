@@ -5,11 +5,11 @@ import com.soywiz.korma.geom.*
 
 @Korge3DExperimental
 @Deprecated("Kotlin/Native boxes inline+Number")
-inline fun Container3D.box(width: Number, height: Number, depth: Number, callback: Cube3D.() -> Unit = {}): Cube3D
-    = box(width.toDouble(), height.toDouble(), depth.toDouble(), callback)
+inline fun Container3D.cube(width: Number, height: Number, depth: Number, callback: Cube3D.() -> Unit = {}): Cube3D
+    = cube(width.toDouble(), height.toDouble(), depth.toDouble(), callback)
 
 @Korge3DExperimental
-inline fun Container3D.box(
+inline fun Container3D.cube(
     width: Double = 1.0,
     height: Double = width,
     depth: Double = height,
