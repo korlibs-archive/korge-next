@@ -204,7 +204,7 @@ fun Library3D.MaterialDef.instantiate(): Material3D {
 		ambient = effect?.ambient?.instantiate() ?: Material3D.LightColor(Colors.BLACK),
 		diffuse = effect?.diffuse?.instantiate() ?: Material3D.LightColor(Colors.BLACK),
 		specular = effect?.specular?.instantiate() ?: Material3D.LightColor(Colors.BLACK),
-		shiness = effect?.shiness ?: 0.5f,
+        shininess = effect?.shiness ?: 0.5f,
 		indexOfRefraction = effect?.index_of_refraction ?: 1f
 	)
 }
