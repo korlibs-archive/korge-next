@@ -4,10 +4,14 @@ import com.soywiz.kds.floatArrayListOf
 import com.soywiz.korag.AG
 import com.soywiz.korag.shader.VertexLayout
 import com.soywiz.korge3d.internal.toFBuffer
+import com.soywiz.korge3d.internal.vector3DTemps
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
 import com.soywiz.korio.util.buildList
 import com.soywiz.korma.geom.Vector3D
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 @Korge3DExperimental
 class MeshBuilder3D {
@@ -63,9 +67,17 @@ class MeshBuilder3D {
     }
 
     fun faceTriangle(v1: Vector3D, v2: Vector3D, v3: Vector3D) {
-        vertex(v1.x, v1.y, v1.z)
-        vertex(v2.x, v2.y, v2.z)
-        vertex(v3.x, v3.y, v3.z)
+        vector3DTemps {
+            val u = v2 - v1
+            val v = v3 - v1
+            val nx = (u.y*v.z) - (u.z*v.y)
+            val ny = (u.z*v.x) - (u.x*v.z)
+            val nz = (u.x*v.y) - (u.y*v.x)
+
+            vertex(v1.x, v1.y, v1.z, nx, ny, nz)
+            vertex(v2.x, v2.y, v2.z, nx, ny, nz)
+            vertex(v3.x, v3.y, v3.z, nx, ny, nz)
+        }
     }
 
     fun faceRectangle(v1: Vector3D, v2: Vector3D, v3: Vector3D, v4: Vector3D) {
@@ -73,8 +85,11 @@ class MeshBuilder3D {
         faceTriangle(v3, v4, v1)
     }
 
-    fun pyramidTriangleBase() {
-        TODO()
+    fun pyramidTriangleBase(v1: Vector3D, v2: Vector3D, v3: Vector3D, v4: Vector3D) {
+        faceTriangle(v1, v2, v3)
+        faceTriangle(v1, v2, v4)
+        faceTriangle(v1, v3, v4)
+        faceTriangle(v2, v4, v3)
     }
 
     fun pyramidRectangleBase() {
@@ -111,6 +126,42 @@ class MeshBuilder3D {
     }
 
     fun cube(size: Float = 1f) = cuboid(size, size, size)
+
+    fun sphere(radius:Float, longitudeLines:Int=10, latitudeLines:Int=10) {
+        parametric(longitudeLines, latitudeLines) {u,v-> Vector3D(cos(u)* sin(v)*radius,cos(v)*radius, sin(u)*sin(v)*radius) }
+    }
+
+    fun parametric(longitudeLines:Int=10, latitudeLines:Int=10, F:(u:Float,v:Float)->Vector3D) {
+        // modified from [https://stackoverflow.com/questions/7687148/drawing-sphere-in-opengl-without-using-glusphere]
+        val startU=0
+        val startV=0
+        val endU= PI*2
+        val endV= PI
+        val stepU=(endU-startU)/longitudeLines // step size between U-points on the grid
+        val stepV=(endV-startV)/latitudeLines // step size between V-points on the grid
+        for(i in 0 until longitudeLines){ // U-points
+            for( j in 0 until latitudeLines){ // V-points
+                val u=(i*stepU+startU).toFloat()
+                val v=(j*stepV+startV).toFloat()
+                val un=(if (i+1==longitudeLines)  endU else (i+1)*stepU+startU).toFloat()
+                val vn=(if (j+1==latitudeLines)  endV else (j+1)*stepV+startV).toFloat()
+                // Find the four points of the grid
+                // square by evaluating the parametric
+                // surface function
+                val v0=F(u, v)
+                val v1=F(u, vn)
+                val v2=F(un, v)
+                val v3=F(un, vn)
+                // NOTE: For spheres, the normal is just the normalized
+                // version of each vertex point; this generally won't be the case for
+                // other parametric surfaces.
+                // Output the first triangle of this grid square
+                faceTriangle(v0, v2, v1)
+                // Output the other triangle of this grid square
+                faceTriangle(v3, v1, v2)
+            }
+        }
+    }
 
     fun build(): Mesh3D = Mesh3D(
         data.toFBuffer(),
