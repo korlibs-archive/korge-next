@@ -70,9 +70,9 @@ class MeshBuilder3D {
         vector3DTemps {
             val u = v2 - v1
             val v = v3 - v1
-            val nx = (u.y*v.z) - (u.z*v.y)
-            val ny = (u.z*v.x) - (u.x*v.z)
-            val nz = (u.x*v.y) - (u.y*v.x)
+            val nx = (u.y * v.z) - (u.z * v.y)
+            val ny = (u.z * v.x) - (u.x * v.z)
+            val nz = (u.x * v.y) - (u.y * v.x)
 
             vertex(v1.x, v1.y, v1.z, nx, ny, nz)
             vertex(v2.x, v2.y, v2.z, nx, ny, nz)
@@ -117,41 +117,46 @@ class MeshBuilder3D {
         val v7 = Vector3D(+hx, -hy, +hz)
         val v8 = Vector3D(-hx, -hy, +hz)
 
-        faceRectangle(v1,v2,v3,v4) //front
-        faceRectangle(v2,v6,v7,v3) // right
-        faceRectangle(v5,v6,v7,v8) // back
-        faceRectangle(v1,v4,v8,v5) // left
-        faceRectangle(v1,v5,v6,v2) // top
-        faceRectangle(v3,v7,v8,v4) // bottom
+        faceRectangle(v1, v2, v3, v4) //front
+        faceRectangle(v2, v6, v7, v3) // right
+        faceRectangle(v5, v6, v7, v8) // back
+        faceRectangle(v1, v4, v8, v5) // left
+        faceRectangle(v1, v5, v6, v2) // top
+        faceRectangle(v3, v7, v8, v4) // bottom
     }
 
     fun cube(size: Float = 1f) = cuboid(size, size, size)
 
-    fun sphere(radius:Float, longitudeLines:Int=10, latitudeLines:Int=10) {
-        parametric(longitudeLines, latitudeLines) {u,v-> Vector3D(cos(u)* sin(v)*radius,cos(v)*radius, sin(u)*sin(v)*radius) }
+    fun sphere(radius: Float = 1f, longitudeLines: Int = 10, latitudeLines: Int = 10) = ellipsoid(radius, radius, radius, longitudeLines, latitudeLines)
+
+    fun ellipsoid(rx: Float = 1f, ry: Float = 1f, rz: Float = 1f, longitudeLines: Int = 10, latitudeLines: Int = 10) = parametric(longitudeLines, latitudeLines) { u, v ->
+        val x = cos(u) * sin(v) * rx
+        val y = cos(v) * ry
+        val z = sin(u) * sin(v) * rz
+        Vector3D(x, y, z)
     }
 
-    fun parametric(longitudeLines:Int=10, latitudeLines:Int=10, F:(u:Float,v:Float)->Vector3D) {
+    fun parametric(longitudeLines: Int = 10, latitudeLines: Int = 10, F: (u: Float, v: Float) -> Vector3D) {
         // modified from [https://stackoverflow.com/questions/7687148/drawing-sphere-in-opengl-without-using-glusphere]
-        val startU=0
-        val startV=0
-        val endU= PI*2
-        val endV= PI
-        val stepU=(endU-startU)/longitudeLines // step size between U-points on the grid
-        val stepV=(endV-startV)/latitudeLines // step size between V-points on the grid
-        for(i in 0 until longitudeLines){ // U-points
-            for( j in 0 until latitudeLines){ // V-points
-                val u=(i*stepU+startU).toFloat()
-                val v=(j*stepV+startV).toFloat()
-                val un=(if (i+1==longitudeLines)  endU else (i+1)*stepU+startU).toFloat()
-                val vn=(if (j+1==latitudeLines)  endV else (j+1)*stepV+startV).toFloat()
+        val startU = 0
+        val startV = 0
+        val endU = PI * 2
+        val endV = PI
+        val stepU = (endU - startU) / longitudeLines // step size between U-points on the grid
+        val stepV = (endV - startV) / latitudeLines // step size between V-points on the grid
+        for (i in 0 until longitudeLines) { // U-points
+            for (j in 0 until latitudeLines) { // V-points
+                val u = (i * stepU + startU).toFloat()
+                val v = (j * stepV + startV).toFloat()
+                val un = (if (i + 1 == longitudeLines) endU else (i + 1) * stepU + startU).toFloat()
+                val vn = (if (j + 1 == latitudeLines) endV else (j + 1) * stepV + startV).toFloat()
                 // Find the four points of the grid
                 // square by evaluating the parametric
                 // surface function
-                val v0=F(u, v)
-                val v1=F(u, vn)
-                val v2=F(un, v)
-                val v3=F(un, vn)
+                val v0 = F(u, v)
+                val v1 = F(u, vn)
+                val v2 = F(un, v)
+                val v3 = F(un, vn)
                 // NOTE: For spheres, the normal is just the normalized
                 // version of each vertex point; this generally won't be the case for
                 // other parametric surfaces.
