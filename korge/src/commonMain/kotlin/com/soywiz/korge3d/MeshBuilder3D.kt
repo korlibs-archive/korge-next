@@ -7,6 +7,7 @@ import com.soywiz.korge3d.internal.toFBuffer
 import com.soywiz.korge3d.internal.vector3DTemps
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
+import com.soywiz.korim.font.BitmapFont
 import com.soywiz.korio.util.buildList
 import com.soywiz.korma.geom.Vector3D
 import kotlin.math.PI
@@ -83,6 +84,27 @@ class MeshBuilder3D {
     fun faceRectangle(v1: Vector3D, v2: Vector3D, v3: Vector3D, v4: Vector3D) {
         faceTriangle(v1, v2, v3)
         faceTriangle(v3, v4, v1)
+    }
+
+    fun faceRectangle(
+        v1: Vector3D, v2: Vector3D, v3: Vector3D, v4: Vector3D,
+        t1: Vector3D, t2: Vector3D, t3: Vector3D, t4: Vector3D
+    ) {
+        vector3DTemps {
+            val u = v2 - v1
+            val v = v3 - v1
+            val nx = (u.y * v.z) - (u.z * v.y)
+            val ny = (u.z * v.x) - (u.x * v.z)
+            val nz = (u.x * v.y) - (u.y * v.x)
+
+            vertex(v1.x, v1.y, v1.z, nx, ny, nz, t1.x, t1.y)
+            vertex(v2.x, v2.y, v2.z, nx, ny, nz, t2.x, t2.y)
+            vertex(v3.x, v3.y, v3.z, nx, ny, nz, t3.x, t3.y)
+
+            vertex(v3.x, v3.y, v3.z, nx, ny, nz, t3.x, t3.y)
+            vertex(v4.x, v4.y, v4.z, nx, ny, nz, t4.x, t4.y)
+            vertex(v1.x, v1.y, v1.z, nx, ny, nz, t1.x, t1.y)
+        }
     }
 
     fun pyramidTriangleBase(v1: Vector3D, v2: Vector3D, v3: Vector3D, v4: Vector3D) {

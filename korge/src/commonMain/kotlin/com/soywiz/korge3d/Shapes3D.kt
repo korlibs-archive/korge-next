@@ -5,6 +5,7 @@ import com.soywiz.korma.geom.Matrix3D
 import com.soywiz.korma.geom.Vector3D
 import com.soywiz.korma.geom.scale
 
+@Korge3DExperimental
 fun Container3D.shape3D(width: Double=1.0, height: Double=1.0, depth: Double=1.0, drawCommands: MeshBuilder3D.() -> Unit): Shape3D {
    return  Shape3D(width, height, depth, drawCommands).addTo(this)
 }
@@ -12,6 +13,7 @@ fun Container3D.shape3D(width: Double=1.0, height: Double=1.0, depth: Double=1.0
 /*
  * Note: To draw solid quads, you can use [Bitmaps.white] + [AgBitmapTextureManager] as texture and the [colorMul] as quad color.
  */
+@Korge3DExperimental
 class Shape3D(
     initWidth: Double, initHeight: Double, initDepth: Double,
     drawCommands: MeshBuilder3D.() -> Unit
