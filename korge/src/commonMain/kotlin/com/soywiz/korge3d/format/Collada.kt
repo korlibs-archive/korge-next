@@ -266,6 +266,7 @@ class ColladaParser {
 					//combinedData.toFloatArray().toFBuffer(),
 					combinedVertexData.toFBuffer(),
                     combinedIndexData.toFBuffer(),
+                    AG.IndexType.INT,
                     combinedIndexData.size,
 					VertexLayout(buildList {
 						add(Shaders3D.a_pos)

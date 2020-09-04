@@ -56,7 +56,7 @@ class Terrain3D : View3D() {
         val indexBuffer = ag.createIndexBuffer()
         ctx.dynamicVertexBufferPool.alloc { vertexBuffer ->
             vertexBuffer.upload(mesh.vertexBuffer)
-            indexBuffer.upload(mesh.indexArray)
+            indexBuffer.upload(mesh.indexBuffer)
         }
     }
 

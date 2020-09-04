@@ -408,6 +408,10 @@ abstract class AG : Extra by Extra.Mixin() {
 		TRIANGLE_FAN,
 	}
 
+    enum class IndexType {
+        BYTE, SHORT, INT
+    }
+
 	val dummyTexture by lazy { createTexture() }
 
 	fun createTexture(): Texture = createTexture(premultiplied = true)
@@ -508,6 +512,7 @@ abstract class AG : Extra by Extra.Mixin() {
 		vertexLayout: VertexLayout,
 		vertexCount: Int,
 		indices: Buffer? = null,
+        indexType: IndexType = IndexType.SHORT,
 		offset: Int = 0,
 		blending: Blending = Blending.NORMAL,
 		uniforms: UniformValues = UniformValues.EMPTY,
@@ -515,7 +520,7 @@ abstract class AG : Extra by Extra.Mixin() {
 		colorMask: ColorMaskState = dummyColorMaskState,
 		scissor: Scissor? = null
 	) = draw(
-        vertices, program, type, vertexLayout, vertexCount, indices, offset, blending,
+        vertices, program, type, vertexLayout, vertexCount, indices, indexType, offset, blending,
 		uniforms, stencil, colorMask, dummyRenderState, scissor
     )
 
@@ -526,6 +531,7 @@ abstract class AG : Extra by Extra.Mixin() {
         vertexLayout: VertexLayout,
         vertexCount: Int,
         indices: Buffer? = null,
+        indexType: IndexType = IndexType.SHORT,
         offset: Int = 0,
         blending: Blending = Blending.NORMAL,
         uniforms: UniformValues = UniformValues.EMPTY,
@@ -540,6 +546,7 @@ abstract class AG : Extra by Extra.Mixin() {
         batch.vertexLayout = vertexLayout
         batch.vertexCount = vertexCount
         batch.indices = indices
+        batch.indexType = indexType
         batch.offset = offset
         batch.blending = blending
         batch.uniforms = uniforms
@@ -556,6 +563,7 @@ abstract class AG : Extra by Extra.Mixin() {
         var vertexLayout: VertexLayout = VertexLayout()
         var vertexCount: Int = 0
         var indices: Buffer? = null
+        var indexType:IndexType = IndexType.SHORT
         var offset: Int = 0
         var blending: Blending = Blending.NORMAL
         var uniforms: UniformValues = UniformValues.EMPTY

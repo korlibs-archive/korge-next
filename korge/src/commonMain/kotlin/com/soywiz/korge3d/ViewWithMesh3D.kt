@@ -56,7 +56,7 @@ open class ViewWithMesh3D(
 		ctx.dynamicVertexBufferPool.alloc { vertexBuffer ->
 			//vertexBuffer.upload(mesh.data)
 			vertexBuffer.upload(mesh.vertexBuffer)
-            indexBuffer.upload(mesh.indexArray)
+            indexBuffer.upload(mesh.indexBuffer)
 			//tempMat2.invert()
 			//tempMat3.multiply(ctx.cameraMatInv, this.localTransform.matrix)
 			//tempMat3.multiply(ctx.cameraMatInv, Matrix3D().invert(this.localTransform.matrix))
@@ -67,6 +67,7 @@ open class ViewWithMesh3D(
 				ag.draw(
 					vertices = vertexBuffer,
                     indices = indexBuffer,
+                    indexType = mesh.indexType,
 					type = mesh.drawType,
 					program = mesh.program ?: ctx.shaders.getProgram3D(
 						ctx.lights.size.clamp(0, 4),

@@ -235,6 +235,7 @@ class MeshBuilder3D {
     fun build(): Mesh3D = Mesh3D(
         vertexData.toFBuffer(),
         indexData.toFBuffer(),
+        AG.IndexType.INT,
         indexData.size,
         layout,
         null,

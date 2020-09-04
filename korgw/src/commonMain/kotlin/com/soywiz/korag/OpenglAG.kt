@@ -230,6 +230,7 @@ abstract class AGOpengl : AG() {
         val vertexLayout = batch.vertexLayout
         val vertexCount = batch.vertexCount
         val indices = batch.indices
+        val indexType = batch.indexType
         val offset = batch.offset
         val blending = batch.blending
         val uniforms = batch.uniforms
@@ -452,7 +453,7 @@ abstract class AGOpengl : AG() {
         //println("viewport=${viewport.getAlignedInt32(0)},${viewport.getAlignedInt32(1)},${viewport.getAlignedInt32(2)},${viewport.getAlignedInt32(3)}")
 
         if (indices != null) {
-            gl.drawElements(type.glDrawMode, vertexCount, gl.UNSIGNED_SHORT, offset)
+            gl.drawElements(type.glDrawMode, vertexCount, indexType.glIndexType, offset)
         } else {
             gl.drawArrays(type.glDrawMode, offset, vertexCount)
         }
@@ -489,6 +490,13 @@ abstract class AGOpengl : AG() {
             VarKind.TUNSIGNED_SHORT -> gl.UNSIGNED_SHORT
             VarKind.TINT -> gl.UNSIGNED_INT
             VarKind.TFLOAT -> gl.FLOAT
+        }
+
+    val IndexType.glIndexType : Int
+        get() = when (this) {
+            IndexType.BYTE-> gl.UNSIGNED_BYTE
+            IndexType.SHORT-> gl.UNSIGNED_SHORT
+            IndexType.INT-> gl.UNSIGNED_INT
         }
 
     private val programs = HashMap<Program, HashMap<ProgramConfig, GlProgram>>()
