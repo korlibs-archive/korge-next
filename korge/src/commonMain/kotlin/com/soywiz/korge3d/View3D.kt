@@ -5,7 +5,10 @@ import com.soywiz.korma.geom.*
 
 @Korge3DExperimental
 abstract class View3D {
-	var active = true
+    //TODO: I don't think that a Camera, Container, Light, ViewWithMesh, Text3D should all have this as supertype
+    // they are not all 'types' of View ?
+
+    var active = true
 	var id: String? = null
 	var name: String? = null
 	val transform = Transform3D()

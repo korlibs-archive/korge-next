@@ -6,7 +6,9 @@ import com.soywiz.korag.shader.*
 
 @Korge3DExperimental
 data class Mesh3D constructor(
-	val fbuffer: FBuffer,
+	val vertexBuffer: FBuffer,
+    val indexArray:FBuffer,
+    val vertexCount:Int,
 	val layout: VertexLayout,
 	val program: Program?,
 	val drawType: AG.DrawType,
@@ -19,7 +21,7 @@ data class Mesh3D constructor(
 	//val modelMat = Matrix3D()
 	val vertexSizeInBytes = layout.totalSize
 	val vertexSizeInFloats = vertexSizeInBytes / 4
-	val vertexCount = fbuffer.size / 4 / vertexSizeInFloats
+	//val vertexCount = vertexBuffer.size / 4 / vertexSizeInFloats
 
 	/*
 
