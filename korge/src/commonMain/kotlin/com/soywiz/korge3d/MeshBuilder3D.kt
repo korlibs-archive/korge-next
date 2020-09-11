@@ -15,7 +15,9 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 @Korge3DExperimental
-class MeshBuilder3D {
+class MeshBuilder3D(
+    val drawType: AG.DrawType = AG.DrawType.TRIANGLES
+) {
     val layout = VertexLayout(buildList {
         add(Shaders3D.a_pos)
         add(Shaders3D.a_norm)
@@ -235,11 +237,11 @@ class MeshBuilder3D {
     fun build(): Mesh3D = Mesh3D(
         vertexData.toFBuffer(),
         indexData.toFBuffer(),
-        AG.IndexType.INT,
+        AG.IndexType.UINT,
         indexData.size,
         layout,
         null,
-        AG.DrawType.TRIANGLES,
+        drawType,
         true,
         maxWeights = 0,
         skin = null,

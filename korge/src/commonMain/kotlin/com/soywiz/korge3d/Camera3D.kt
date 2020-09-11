@@ -41,7 +41,7 @@ abstract class Camera3D : View3D() {
 
     class Perspective(
         fov: Angle = 60.degrees,
-        near: Double = 0.3,
+        near: Double = 0.1,
         far: Double = 1000.0
     ) : Camera3D() {
         var fov: Angle = fov; set(value) = dirty({ field != value }) { field = value }
@@ -65,16 +65,18 @@ abstract class Camera3D : View3D() {
     }
 
     //TODO: position, target and up are also stored in transform....do we need repetition here?
-    private val position = Vector3D(0f,1f,10f)
+    val position = Vector3D(0f, 1f, 10f)
+    var yaw = -90.degrees
+    var pitch = 0.0.degrees
+    var roll = 0.0.degrees
+    var zoom = 45.degrees
+
     private val front = Vector3D(0f, 0f, -1f)
     private val worldUp = Vector3D(0f, 1f, 0f)
     private val up = Vector3D(0f, 1f, 0f)
     private val temp = Vector3D()
     private val right = Vector3D().cross(front, up).normalize()
-    private var yaw = -90.degrees
-    private var pitch = 0.0.degrees
-    private var roll = 0.0.degrees
-    private var zoom = 45.degrees
+
 
     init {
         update()
@@ -84,7 +86,7 @@ abstract class Camera3D : View3D() {
         val fx = yaw.cosine * pitch.cosine
         val fy = pitch.sine
         val fz = yaw.sine * pitch.cosine
-        front.setTo(fx,fy,fz).normalize()
+        front.setTo(fx, fy, fz).normalize()
         right.cross(front, worldUp).normalize()
         up.cross(right, front).normalize()
         val tx = position.x + front.x
@@ -93,12 +95,19 @@ abstract class Camera3D : View3D() {
         this.transform.setTranslationAndLookAt(position.x, position.y, position.z, tx, ty, tz)
     }
 
+    fun setPosition(x: Float = 0f, y: Float = 0f, z: Float = 0f) {
+        this.position.setTo(x, y, z)
+        update()
+    }
+
     fun zoomIn(angle: Angle, deltaTime: Float) {
 
     }
+
     fun zoomOut(angle: Angle, deltaTime: Float) {
 
     }
+
     fun forward(speed: Float, deltaTime: Float) {
         val velocity = speed * deltaTime
         position.setTo(position.x + (front.x * velocity), position.y + (front.y * velocity), position.z + (front.z * velocity))
@@ -147,6 +156,7 @@ abstract class Camera3D : View3D() {
     fun slewLeft(angle: Angle, deltaTime: Float) {
 
     }
+
     fun slewRight(angle: Angle, deltaTime: Float) {
 
     }

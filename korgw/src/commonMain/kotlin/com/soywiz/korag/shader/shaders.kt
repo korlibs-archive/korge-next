@@ -10,7 +10,7 @@ import com.soywiz.kmem.*
 import com.soywiz.korio.lang.*
 
 enum class VarKind(val bytesSize: Int) {
-    //BYTE(1), UNSIGNED_BYTE(1), SHORT(2), UNSIGNED_SHORT(2), INT(4), FLOAT(4) // @TODO: This cause problems on Kotlin/Native Objective-C header.h
+    //UBYTE(1), UNSIGNED_BYTE(1), SHORT(2), UNSIGNED_SHORT(2), INT(4), FLOAT(4) // @TODO: This cause problems on Kotlin/Native Objective-C header.h
     TBYTE(1), TUNSIGNED_BYTE(1), TSHORT(2), TUNSIGNED_SHORT(2), TINT(4), TFLOAT(4)
 }
 
@@ -22,6 +22,12 @@ enum class VarType(val kind: VarKind, val elementCount: Int, val isMatrix: Boole
 	Mat4(VarKind.TFLOAT, elementCount = 16, isMatrix = true),
 
 	TextureUnit(VarKind.TINT, elementCount = 1),
+
+    //TODO: need to have a way of indicating Float/Int/UInt variations + more types of sampler to add
+    Sampler1D(VarKind.TFLOAT, elementCount = 1),
+    Sampler2D(VarKind.TFLOAT, elementCount = 1),
+    Sampler3D(VarKind.TFLOAT, elementCount = 1),
+    SamplerCube(VarKind.TFLOAT, elementCount = 1),
 
 	Int1(VarKind.TINT, elementCount = 1),
 
@@ -268,6 +274,7 @@ class Program(val vertex: VertexShader, val fragment: FragmentShader, val name: 
 
 		// Sampling
 		fun texture2D(a: Operand, b: Operand) = Func("texture2D", a, b)
+        fun texture(sampler: Operand, P: Operand) = Func("texture", sampler, P)
 
 		fun func(name: String, vararg args: Operand) = Func(name, *args.map { it }.toTypedArray())
 

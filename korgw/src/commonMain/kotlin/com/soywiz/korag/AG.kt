@@ -1,6 +1,8 @@
 package com.soywiz.korag
 
 import com.soywiz.kds.*
+import com.soywiz.kgl.IKmlGl
+import com.soywiz.kgl.KmlGl
 import com.soywiz.kmem.*
 import com.soywiz.korag.shader.*
 import com.soywiz.korim.bitmap.*
@@ -209,6 +211,9 @@ abstract class AG : Extra by Extra.Mixin() {
 
 	enum class TextureKind { RGBA, LUMINANCE }
 
+    enum class TextureTargetKind { TEXTURE_2D, TEXTURE_3D, TEXTURE_CUBE_MAP } //TODO: there are other possible values
+
+    //TODO: would it better if this was an interface ?
 	open inner class Texture : Closeable {
 		var isFbo = false
 		open val premultiplied = true
@@ -220,7 +225,7 @@ abstract class AG : Extra by Extra.Mixin() {
 		private var generated: Boolean = false
 		private var tempBitmap: Bitmap? = null
 		var ready: Boolean = false; private set
-		val texId = lastTextureId++
+		open val texId = lastTextureId++
 
 		init {
 			createdTextureCount++
@@ -409,7 +414,7 @@ abstract class AG : Extra by Extra.Mixin() {
 	}
 
     enum class IndexType {
-        BYTE, SHORT, INT
+        UBYTE, USHORT, UINT
     }
 
 	val dummyTexture by lazy { createTexture() }
@@ -423,6 +428,9 @@ abstract class AG : Extra by Extra.Mixin() {
 		createTexture(premultiplied).upload(bmp, mipmaps)
 
 	open fun createTexture(premultiplied: Boolean): Texture = Texture()
+
+    open fun createTexture(targetKind: TextureTargetKind, init:Texture.(gl:KmlGl)->Unit): Texture = Texture()
+
 	open fun createBuffer(kind: Buffer.Kind) = Buffer(kind)
 	fun createIndexBuffer() = createBuffer(Buffer.Kind.INDEX)
 	fun createVertexBuffer() = createBuffer(Buffer.Kind.VERTEX)
@@ -512,7 +520,7 @@ abstract class AG : Extra by Extra.Mixin() {
 		vertexLayout: VertexLayout,
 		vertexCount: Int,
 		indices: Buffer? = null,
-        indexType: IndexType = IndexType.SHORT,
+        indexType: IndexType = IndexType.USHORT,
 		offset: Int = 0,
 		blending: Blending = Blending.NORMAL,
 		uniforms: UniformValues = UniformValues.EMPTY,
@@ -531,7 +539,7 @@ abstract class AG : Extra by Extra.Mixin() {
         vertexLayout: VertexLayout,
         vertexCount: Int,
         indices: Buffer? = null,
-        indexType: IndexType = IndexType.SHORT,
+        indexType: IndexType = IndexType.USHORT,
         offset: Int = 0,
         blending: Blending = Blending.NORMAL,
         uniforms: UniformValues = UniformValues.EMPTY,
@@ -563,7 +571,7 @@ abstract class AG : Extra by Extra.Mixin() {
         var vertexLayout: VertexLayout = VertexLayout()
         var vertexCount: Int = 0
         var indices: Buffer? = null
-        var indexType:IndexType = IndexType.SHORT
+        var indexType:IndexType = IndexType.USHORT
         var offset: Int = 0
         var blending: Blending = Blending.NORMAL
         var uniforms: UniformValues = UniformValues.EMPTY
