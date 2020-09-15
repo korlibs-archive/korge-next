@@ -4,6 +4,8 @@ import com.soywiz.korag.AG
 import com.soywiz.korag.shader.*
 import com.soywiz.korge3d.internal.toFBuffer
 import com.soywiz.korim.bitmap.NativeImage
+import com.soywiz.korma.geom.Vector3D
+import com.soywiz.korma.geom.translate
 
 interface CubeMap {
     val right: NativeImage
@@ -18,14 +20,14 @@ interface CubeMap {
 }
 
 @Korge3DExperimental
-fun Stage3D.skyBox(cubemap: CubeMap, vertices: FloatArray = SkyBox.skyboxVertices): SkyBox {
-    return SkyBox(cubemap, vertices).addTo(this)
+fun Stage3D.skyBox(cubemap: CubeMap, centerX: Float = 0f, centerY: Float = 0f, centerZ: Float = 0f): SkyBox {
+    return SkyBox(cubemap, Vector3D(centerX, centerY, centerZ)).addTo(this)
 }
 
 @Korge3DExperimental
 class SkyBox(
     val cubemap: CubeMap,
-    val vertices: FloatArray = skyboxVertices
+    val center: Vector3D
 ) : View3D() {
     /*
         inner class Texture3DDrawer {
@@ -85,60 +87,34 @@ class SkyBox(
         val a_pos = Attribute("a_Pos", VarType.Float3, normalized = false)
         val u_ProjMat = Uniform("u_ProjMat", VarType.Mat4)
         val u_ViewMat = Uniform("u_ViewMat", VarType.Mat4)
-        val v_TexCoords = Varying("v_TexCoords",VarType.Float3)
+        val v_TexCoords = Varying("v_TexCoords", VarType.Float3)
         val u_SkyBox = Uniform("u_SkyBox", VarType.SamplerCube)
         val layout = VertexLayout(a_pos)
         val skyboxVertices = floatArrayOf( // positions
-            -1.0f, 1.0f, -1.0f,
-            -1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f, 1.0f, -1.0f,
-            -1.0f, 1.0f, -1.0f,
-
-            -1.0f, -1.0f, 1.0f,
-            -1.0f, -1.0f, -1.0f,
-            -1.0f, 1.0f, -1.0f,
-            -1.0f, 1.0f, -1.0f,
-            -1.0f, 1.0f, 1.0f,
-            -1.0f, -1.0f, 1.0f,
-
-            1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-
-            -1.0f, -1.0f, 1.0f,
-            -1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f,
-            1.0f, -1.0f, 1.0f,
-            -1.0f, -1.0f, 1.0f,
-
-            -1.0f, 1.0f, -1.0f,
-            1.0f, 1.0f, -1.0f,
-            1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f,
-            -1.0f, 1.0f, 1.0f,
-            -1.0f, 1.0f, -1.0f,
-
-            -1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f, 1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f, 1.0f,
-            1.0f, -1.0f, 1.0f
+            -1f, -1f, +1f, // 0, left, bottom, back
+            +1f, -1f, +1f, // 1, right, bottom, back
+            -1f, +1f, +1f, // 2, left, top, back
+            +1f, +1f, +1f, // 3, right, top, back
+            -1f, -1f, -1f, // 4, left, bottom, front
+            +1f, -1f, -1f, // 5, right, bottom, front
+            -1f, +1f, -1f, // 6, left, top, front
+            +1f, +1f, -1f  // 7, right, top, front
         )
-
+        val skyboxIndices = intArrayOf(
+            1, 5, 3, 3, 5, 7, // right
+            0, 2, 4, 4, 2, 6, // left
+            2, 3, 6, 3, 6, 7, // top
+            1, 0, 5, 5, 0, 4, // bottom
+            1, 3, 0, 3, 0, 2, // back
+            4, 6, 5, 5, 6, 7  // front
+        )
         val skyBoxProgram = Program(VertexShader {
             SET(v_TexCoords, a_pos)
             val temp = createTemp(VarType.Float4)
             SET(temp, u_ProjMat * u_ViewMat * vec4(a_pos, 1f.lit))
             SET(out, temp["xyww"])
         }, FragmentShader {
-            SET(out, func("textureCube",u_SkyBox, v_TexCoords))
+            SET(out, func("textureCube", u_SkyBox, v_TexCoords))
         })
     }
 
@@ -156,7 +132,7 @@ class SkyBox(
             val faces = cubemap.faces()
             val texCubeMap = ag.createTexture(AG.TextureTargetKind.TEXTURE_CUBE_MAP) { gl ->
                 gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.texId)
-                for (i in 0 .. 5) {
+                for (i in 0..5) {
                     val face = faces[i]
                     val tgt = gl.TEXTURE_CUBE_MAP_POSITIVE_X + i
                     gl.texImage2D(tgt, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, face)
@@ -171,22 +147,25 @@ class SkyBox(
             init = false
         }
 
-        //val indexBuffer = ag.createIndexBuffer()
+        val indexBuffer = ag.createIndexBuffer()
         ctx.dynamicVertexBufferPool.alloc { vertexBuffer ->
             vertexBuffer.upload(skyboxVertices.toFBuffer())
-           // indexBuffer.upload(skyboxIndices.toFBuffer())
+            indexBuffer.upload(skyboxIndices.toFBuffer())
             val projection = ctx.projCameraMat
             val view = transform.globalMatrix
             // remove translation from the view matrix
-            val viewNoTrans = view.clone().setColumn(3, 0f,0f,0f,0f).setRow(3,0f,0f,0f,0f)
+            val viewNoTrans = view.clone()
+                .setColumn(3, 0f, 0f, 0f, 0f)
+                .setRow(3, 0f, 0f, 0f, 0f)
+                .translate(center)
             ag.draw(
                 vertices = vertexBuffer,
                 type = AG.DrawType.TRIANGLES,
                 program = skyBoxProgram,
                 vertexLayout = layout,
                 vertexCount = 36,
-               // indices = indexBuffer,
-                //indexType = AG.IndexType.UINT,
+                indices = indexBuffer,
+                indexType = AG.IndexType.UINT,
                 blending = AG.Blending.NONE,
                 uniforms = uniformValues.apply {
                     this[u_ProjMat] = projection

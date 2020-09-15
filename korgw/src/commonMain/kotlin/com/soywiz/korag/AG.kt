@@ -225,7 +225,7 @@ abstract class AG : Extra by Extra.Mixin() {
 		private var generated: Boolean = false
 		private var tempBitmap: Bitmap? = null
 		var ready: Boolean = false; private set
-		open val texId = lastTextureId++
+		val texId = lastTextureId++
 
 		init {
 			createdTextureCount++
@@ -512,25 +512,7 @@ abstract class AG : Extra by Extra.Mixin() {
 	private val dummyStencilState = StencilState()
 	private val dummyColorMaskState = ColorMaskState()
 
-    @Deprecated("")
-	fun draw(
-		vertices: Buffer,
-		program: Program,
-		type: DrawType,
-		vertexLayout: VertexLayout,
-		vertexCount: Int,
-		indices: Buffer? = null,
-        indexType: IndexType = IndexType.USHORT,
-		offset: Int = 0,
-		blending: Blending = Blending.NORMAL,
-		uniforms: UniformValues = UniformValues.EMPTY,
-		stencil: StencilState = dummyStencilState,
-		colorMask: ColorMaskState = dummyColorMaskState,
-		scissor: Scissor? = null
-	) = draw(
-        vertices, program, type, vertexLayout, vertexCount, indices, indexType, offset, blending,
-		uniforms, stencil, colorMask, dummyRenderState, scissor
-    )
+    //open val supportInstancedDrawing: Boolean get() = false
 
     fun draw(
         vertices: Buffer,

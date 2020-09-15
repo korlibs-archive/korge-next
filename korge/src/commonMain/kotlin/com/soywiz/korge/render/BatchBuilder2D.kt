@@ -733,8 +733,8 @@ class TexturedVertexArray(var vcount: Int, val indices: IntArray, var isize: Int
      */
     @OptIn(KorgeInternal::class)
 	fun quad(index: Int, x: Double, y: Double, width: Double, height: Double, matrix: Matrix, bmp: BmpSlice, colMul: RGBA, colAdd: Int) {
-        //fun IMatrix.transformX(px: Double, py: Double): Double = this.a * px + this.c * py + this.tx
-        //fun IMatrix.transformY(px: Double, py: Double): Double = this.d * py + this.b * px + this.ty
+        //fun Matrix.transformX(px: Double, py: Double): Double = this.a * px + this.c * py + this.tx
+        //fun Matrix.transformY(px: Double, py: Double): Double = this.d * py + this.b * px + this.ty
 
         val x0 = matrix.fastTransformXf(x, y)
         val x1 = matrix.fastTransformXf(x + width, y)
@@ -833,41 +833,6 @@ class TexturedVertexArray(var vcount: Int, val indices: IntArray, var isize: Int
 	//	fun setCols(colMul: Int, colAdd: Int) { this.colMul = colMul }.also { this.colAdd = colAdd }
 	//}
 }
-
-@KorgeInternal
-@Deprecated("Not used anymore. Use TexturedVertexArray instead")
-class TexturedVertexArrayBuilder(count: Int) {
-	val indices = IntArray(count * 6)
-	val array = TexturedVertexArray(count * 4, indices)
-	var offset = 0
-
-	fun quad(x: Double, y: Double, width: Double, height: Double, matrix: Matrix, bmp: BmpSlice, colMul: RGBA, colAdd: Int) {
-		val offset4 = offset * 4
-		val i6 = offset * 6
-        array.quad(offset4, x, y, width, height, matrix, bmp, colMul, colAdd)
-		indices[i6 + 0] = offset4 + 0
-		indices[i6 + 1] = offset4 + 1
-		indices[i6 + 2] = offset4 + 2
-		indices[i6 + 3] = offset4 + 3
-		indices[i6 + 4] = offset4 + 0
-		indices[i6 + 5] = offset4 + 2
-		offset++
-	}
-
-    @Deprecated("Kotlin/Native boxes inline+Number", ReplaceWith("anchor(ax.toDouble(), ay.toDouble())"))
-	inline fun quad(x: Number, y: Number, width: Number, height: Number, matrix: Matrix, bmp: BmpSlice, colMul: RGBA, colAdd: Int) =
-			quad(x.toDouble(), y.toDouble(), width.toDouble(), height.toDouble(), matrix, bmp, colMul, colAdd)
-
-    fun build() = array.apply {
-		vcount = offset * 4
-		isize = offset * 6
-	}
-}
-
-@KorgeInternal
-@Deprecated("Not used anymore")
-fun buildQuads(count: Int, build: TexturedVertexArrayBuilder.() -> Unit): TexturedVertexArray =
-	TexturedVertexArrayBuilder(count).apply(build).build()
 
 /*
 // @TODO: Move to the right place
