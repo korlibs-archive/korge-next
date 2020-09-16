@@ -1,9 +1,12 @@
 package com.soywiz.korge3d
 
 import com.soywiz.korag.AG
+import com.soywiz.korag.AGOpengl
 import com.soywiz.korag.shader.*
 import com.soywiz.korge3d.internal.toFBuffer
 import com.soywiz.korim.bitmap.NativeImage
+import com.soywiz.korim.format.readNativeImage
+import com.soywiz.korio.file.std.resourcesVfs
 import com.soywiz.korma.geom.Vector3D
 import com.soywiz.korma.geom.translate
 
@@ -16,6 +19,27 @@ interface CubeMap {
     val front: NativeImage
 
     fun faces(): List<NativeImage> = listOf(right, left, top, bottom, back, front)
+
+}
+
+suspend fun cubeMapFromResourceDirectory(directory: String, ext: String): CubeMap {
+    val rightImage = resourcesVfs.get("$directory/right.$ext").readNativeImage()
+    val leftImage = resourcesVfs.get("$directory/left.$ext").readNativeImage()
+    val topImage = resourcesVfs.get("$directory/top.$ext").readNativeImage()
+    val bottomImage = resourcesVfs.get("$directory/bottom.$ext").readNativeImage()
+    val backImage = resourcesVfs.get("$directory/back.$ext").readNativeImage()
+    val frontImage = resourcesVfs.get("$directory/front.$ext").readNativeImage()
+    return CubeMapSimple(rightImage, leftImage, topImage, bottomImage, backImage, frontImage)
+}
+
+class CubeMapSimple(
+    override val right: NativeImage,
+    override val left: NativeImage,
+    override val top: NativeImage,
+    override val bottom: NativeImage,
+    override val back: NativeImage,
+    override val front: NativeImage
+) : CubeMap {
 
 }
 
@@ -131,7 +155,7 @@ class SkyBox(
         if (init) {
             val faces = cubemap.faces()
             val texCubeMap = ag.createTexture(AG.TextureTargetKind.TEXTURE_CUBE_MAP) { gl ->
-                gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.texId)
+                gl.bindTexture(gl.TEXTURE_CUBE_MAP, (this as AGOpengl.TextureGeneric).texRef)
                 for (i in 0..5) {
                     val face = faces[i]
                     val tgt = gl.TEXTURE_CUBE_MAP_POSITIVE_X + i

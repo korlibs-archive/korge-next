@@ -670,7 +670,7 @@ abstract class AGOpengl : AG() {
 
         private var initialised: Boolean = false
 
-        override val texId: Int by lazy {
+        val texRef: Int by lazy {
             val texIds = FBuffer(4)
             gl.genTextures(1, texIds)
             texIds.getInt(0)
@@ -678,15 +678,14 @@ abstract class AGOpengl : AG() {
 
         fun initialiseIfNeeded() {
             if (!initialised) {
-                this.texId
+                this.texRef
                 this.init(gl)
                 this.initialised = true
             }
         }
 
         override fun bind() {
-            //gl.activeTexture(this.texId)
-            gl.bindTexture(targetKind.glTarget, this.texId)
+            gl.bindTexture(targetKind.glTarget, this.texRef)
         }
 
         override fun actualSyncUpload(source: BitmapSourceBase, bmp: Bitmap?, requestMipmaps: Boolean) {
