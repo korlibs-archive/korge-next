@@ -71,7 +71,7 @@ abstract class Camera3D : View3D() {
     var roll = 0.0.degrees
     var zoom = 45.degrees
 
-    private val front = Vector3D(0f, 0f, -1f)
+     val front = Vector3D(0f, 0f, -1f)
     private val worldUp = Vector3D(0f, 1f, 0f)
     private val up = Vector3D(0f, 1f, 0f)
     private val temp = Vector3D()

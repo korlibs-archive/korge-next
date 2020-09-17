@@ -191,6 +191,11 @@ class Transform3D {
         return this
     }
 
+    fun translate(vec:Vector3D) : Transform3D {
+        this.setTranslation( this.translation.x + vec.x, this.translation.y + vec.y, this.translation.z+vec.z )
+        return this
+    }
+
     fun copyFrom(localTransform: Transform3D) {
         this.setMatrix(localTransform.matrix)
     }
