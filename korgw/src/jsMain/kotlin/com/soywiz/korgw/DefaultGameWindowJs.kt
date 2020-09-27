@@ -17,7 +17,7 @@ import org.w3c.dom.events.*
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.MouseEvent
 import org.w3c.dom.get
-import kotlin.browser.*
+import kotlinx.browser.*
 import kotlin.coroutines.*
 
 private external val navigator: dynamic
