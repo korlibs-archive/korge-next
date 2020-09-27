@@ -253,7 +253,7 @@ class MacGameWindow(val checkGl: Boolean) : GameWindow() {
     private var lastBackingScaleFactor = 0.0
 
     fun renderOpengl(update: Boolean = false) {
-        val startTime = PerformanceCounter.hr
+        val startTime = PerformanceCounter.reference
         // This allows to detect a change in the scale factor of the window without having to resize (changing resolution)
         if (lastBackingScaleFactor != backingScaleFactor) {
             lastBackingScaleFactor = backingScaleFactor

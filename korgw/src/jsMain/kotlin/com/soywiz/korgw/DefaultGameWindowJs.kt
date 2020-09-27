@@ -1,7 +1,6 @@
 package com.soywiz.korgw
 
 import com.soywiz.klock.PerformanceCounter
-import com.soywiz.klock.hr.HRTimeSpan
 import com.soywiz.korag.*
 import com.soywiz.korev.*
 import com.soywiz.korim.bitmap.*
@@ -334,13 +333,13 @@ class BrowserGameWindow : GameWindow() {
         window.addEventListener("resize", { onResized() })
         onResized()
         jsFrame = { step: Double ->
-            val startTime = PerformanceCounter.hr
+            val startTime = PerformanceCounter.reference
             window.requestAnimationFrame(jsFrame) // Execute first to prevent exceptions breaking the loop
             updateGamepad()
             try {
                 doRender()
             } finally {
-                val elapsed = PerformanceCounter.hr - startTime
+                val elapsed = PerformanceCounter.reference - startTime
                 val available = counterTimePerFrame - elapsed
                 coroutineDispatcher.executePending(available)
             }
