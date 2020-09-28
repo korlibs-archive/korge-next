@@ -503,7 +503,19 @@ abstract class AG : Extra by Extra.Mixin() {
 		var referenceValue: Int = 0,
 		var readMask: Int = 0xFF,
 		var writeMask: Int = 0xFF
-	)
+	) {
+        fun copyFrom(other: StencilState) {
+            this.enabled = other.enabled
+            this.triangleFace = other.triangleFace
+            this.compareMode = other.compareMode
+            this.actionOnBothPass = other.actionOnBothPass
+            this.actionOnDepthFail = other.actionOnDepthFail
+            this.actionOnDepthPassStencilFail = other.actionOnDepthPassStencilFail
+            this.referenceValue = other.referenceValue
+            this.readMask = other.readMask
+            this.writeMask = other.writeMask
+        }
+    }
 
 	private val dummyRenderState = RenderState()
 	private val dummyStencilState = StencilState()
