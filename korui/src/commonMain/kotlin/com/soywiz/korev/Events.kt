@@ -193,7 +193,7 @@ data class GamePadConnectionEvent(var type: Type = Type.CONNECTED, var gamepad: 
 @Suppress("ArrayInDataClass")
 data class GamePadUpdateEvent @JvmOverloads constructor(
     var gamepadsLength: Int = 0,
-    val gamepads: Array<GamepadInfo> = Array(8) { GamepadInfo() }
+    val gamepads: Array<GamepadInfo> = Array(8) { GamepadInfo(it) }
 ) : Event() {
     fun copyFrom(that: GamePadUpdateEvent) {
         this.gamepadsLength = that.gamepadsLength
@@ -205,7 +205,6 @@ data class GamePadUpdateEvent @JvmOverloads constructor(
     override fun toString(): String = "GamePadUpdateEvent(${gamepads.filter { it.connected }})"
 }
 
-//@Deprecated("")
 data class GamePadButtonEvent @JvmOverloads constructor(
     var type: Type = Type.DOWN,
     var gamepad: Int = 0,
@@ -222,7 +221,6 @@ data class GamePadButtonEvent @JvmOverloads constructor(
     }
 }
 
-//@Deprecated("")
 data class GamePadStickEvent(
     var gamepad: Int = 0,
     var stick: GameStick = GameStick.LEFT,
@@ -340,10 +338,3 @@ class KeysEvents(val ed: EventDispatcher) : Closeable {
 	override fun close() {
 	}
 }
-
-/*
-@Deprecated("")
-fun EventDispatcher.mouse(callback: MouseEvents.() -> Unit) = MouseEvents(this).apply(callback)
-@Deprecated("")
-fun EventDispatcher.keys(callback: KeysEvents.() -> Unit) = KeysEvents(this).apply(callback)
-*/

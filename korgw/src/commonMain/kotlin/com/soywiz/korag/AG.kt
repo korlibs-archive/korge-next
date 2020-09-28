@@ -1,7 +1,6 @@
 package com.soywiz.korag
 
 import com.soywiz.kds.*
-import com.soywiz.kgl.IKmlGl
 import com.soywiz.kgl.KmlGl
 import com.soywiz.kmem.*
 import com.soywiz.korag.shader.*
@@ -61,8 +60,6 @@ abstract class AG : Extra by Extra.Mixin() {
 	}
 
 	val onReady: Deferred<AG> = _onReadyDeferred
-    @Deprecated("")
-	val onRender = Signal<AG>()
 
     inline fun doRender(block: () -> Unit) {
         mainRenderBuffer.init()
@@ -546,22 +543,22 @@ abstract class AG : Extra by Extra.Mixin() {
         batch.scissor = scissor
     })
 
-    class Batch {
-        var vertices: Buffer = Buffer(Buffer.Kind.VERTEX)
-        var program: Program = DefaultShaders.PROGRAM_DEBUG
-        var type: DrawType = DrawType.TRIANGLES
-        var vertexLayout: VertexLayout = VertexLayout()
-        var vertexCount: Int = 0
-        var indices: Buffer? = null
-        var indexType:IndexType = IndexType.USHORT
-        var offset: Int = 0
-        var blending: Blending = Blending.NORMAL
-        var uniforms: UniformValues = UniformValues.EMPTY
-        var stencil: StencilState = StencilState()
-        var colorMask: ColorMaskState = ColorMaskState()
-        var renderState: RenderState = RenderState()
-        var scissor: Scissor? = null
-    }
+    data class Batch(
+        var vertices: Buffer = Buffer(Buffer.Kind.VERTEX),
+        var program: Program = DefaultShaders.PROGRAM_DEBUG,
+        var type: DrawType = DrawType.TRIANGLES,
+        var vertexLayout: VertexLayout = VertexLayout(),
+        var vertexCount: Int = 0,
+        var indices: Buffer? = null,
+        var indexType:IndexType = IndexType.USHORT,
+        var offset: Int = 0,
+        var blending: Blending = Blending.NORMAL,
+        var uniforms: UniformValues = UniformValues.EMPTY,
+        var stencil: StencilState = StencilState(),
+        var colorMask: ColorMaskState = ColorMaskState(),
+        var renderState: RenderState = RenderState(),
+        var scissor: Scissor? = null,
+    )
 
     private val batch = Batch()
 

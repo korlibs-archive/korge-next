@@ -84,11 +84,6 @@ open class GameWindowCoroutineDispatcher : CoroutineDispatcher(), Delay, Closeab
         }
     }
 
-    @Deprecated("")
-    open fun executePending() {
-        executePending(1.hrSeconds)
-    }
-
     fun executePending(availableTime: HRTimeSpan) {
         try {
             val startTime = now()
@@ -198,10 +193,12 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, Closeable, Cor
     protected val mouseEvent = MouseEvent()
     protected val touchEvent = TouchEvent()
     protected val dropFileEvent = DropFileEvent()
-    @Deprecated("") protected val gamePadButtonEvent = GamePadButtonEvent()
-    @Deprecated("") protected val gamePadStickEvent = GamePadStickEvent()
     protected val gamePadUpdateEvent = GamePadUpdateEvent()
     protected val gamePadConnectionEvent = GamePadConnectionEvent()
+
+    fun onRenderEvent(block: (RenderEvent) -> Unit) {
+        addEventListener<RenderEvent>(block)
+    }
 
     protected open fun _setFps(fps: Int): Int {
         return if (fps <= 0) 60 else fps
@@ -322,7 +319,6 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, Closeable, Cor
 
     fun frameRender(doUpdate: Boolean) {
         try {
-            ag.onRender(ag)
             dispatchRenderEvent(update = false)
         } catch (e: Throwable) {
             println("ERROR GameWindow.frameRender:")
@@ -345,7 +341,7 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, Closeable, Cor
     }
 
     fun executePending() {
-        coroutineDispatcher.executePending()
+        coroutineDispatcher.executePending(1.hrSeconds)
     }
 
     fun dispatchInitEvent() = dispatch(initEvent)

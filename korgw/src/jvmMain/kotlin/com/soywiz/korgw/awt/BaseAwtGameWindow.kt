@@ -1,13 +1,15 @@
 package com.soywiz.korgw.awt
 
-import com.soywiz.kgl.*
 import com.soywiz.klock.hr.*
 import com.soywiz.kmem.*
 import com.soywiz.korev.*
 import com.soywiz.korgw.*
 import com.soywiz.korgw.osx.*
 import com.soywiz.korgw.platform.*
-import com.soywiz.korim.color.*
+import com.soywiz.korgw.win32.XInput
+import com.soywiz.korgw.win32.XInputEventAdapter
+import com.soywiz.korgw.win32.XInputState
+import com.soywiz.korgw.x11.LinuxJoyEventAdapter
 import com.soywiz.korio.async.*
 import com.soywiz.korio.file.*
 import com.soywiz.korio.file.std.*
@@ -170,6 +172,7 @@ abstract class BaseAwtGameWindow : GameWindow() {
 
                 //gl.clearColor(1f, 1f, 1f, 1f)
                 //gl.clear(gl.COLOR_BUFFER_BIT)
+                updateGamepads()
                 frame()
                 gl.flush()
                 gl.finish()
@@ -178,7 +181,22 @@ abstract class BaseAwtGameWindow : GameWindow() {
         //Toolkit.getDefaultToolkit().sync();
     }
 
+    private fun updateGamepads() {
+        when {
+            OS.isWindows -> {
+                xinputEventAdapter.updateGamepadsWin32(this)
+            }
+            OS.isLinux -> {
+                linuxJoyEventAdapter.updateGamepads(this)
+            }
+            else -> {
+                println("undetected OS: ${OS.rawName}")
+            }
+        }
+    }
 
+    private val xinputEventAdapter by lazy { XInputEventAdapter() }
+    private val linuxJoyEventAdapter by lazy { LinuxJoyEventAdapter() }
 
     val frameScaleFactor: Double get() = run {
         getDisplayScalingFactor(component)

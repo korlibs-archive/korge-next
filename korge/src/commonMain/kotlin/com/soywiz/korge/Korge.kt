@@ -4,6 +4,7 @@ import com.soywiz.kds.iterators.*
 import com.soywiz.klock.*
 import com.soywiz.klock.hr.*
 import com.soywiz.klogger.*
+import com.soywiz.korag.log.*
 import com.soywiz.korev.*
 import com.soywiz.korge.input.*
 import com.soywiz.korge.internal.*
@@ -38,24 +39,27 @@ object Korge {
 
     suspend operator fun invoke(config: Config) {
         //println("Korge started from Config")
+        val module = config.module
+        val windowSize = module.windowSize
+
         Korge(
-            title = config.module.title,
-            width = config.module.windowSize.width,
-            height = config.module.windowSize.height,
-            virtualWidth = config.module.size.width,
-            virtualHeight = config.module.size.height,
-            bgcolor = config.module.bgcolor,
-            quality = config.module.quality,
+            title = module.title,
+            width = windowSize.width,
+            height = windowSize.height,
+            virtualWidth = module.size.width,
+            virtualHeight = module.size.height,
+            bgcolor = module.bgcolor,
+            quality = module.quality,
             icon = null,
-            iconPath = config.module.icon,
-            iconDrawable = config.module.iconImage,
-            imageFormats = ImageFormats(config.module.imageFormats),
-            targetFps = config.module.targetFps,
-            scaleAnchor = config.module.scaleAnchor,
-            scaleMode = config.module.scaleMode,
-            clipBorders = config.module.clipBorders,
+            iconPath = module.icon,
+            iconDrawable = module.iconImage,
+            imageFormats = ImageFormats(module.imageFormats),
+            targetFps = module.targetFps,
+            scaleAnchor = module.scaleAnchor,
+            scaleMode = module.scaleMode,
+            clipBorders = module.clipBorders,
             debug = config.debug,
-            fullscreen = config.module.fullscreen,
+            fullscreen = module.fullscreen,
             args = config.args,
             gameWindow = config.gameWindow,
             injector = config.injector,
@@ -63,11 +67,11 @@ object Korge {
             blocking = config.blocking,
             entry = {
                 //println("Korge views prepared for Config")
-                RegisteredImageFormats.register(*config.module.imageFormats.toTypedArray())
+                RegisteredImageFormats.register(*module.imageFormats.toTypedArray())
                 val injector = config.injector
-                injector.mapInstance(Module::class, config.module).mapInstance(Config::class, config)
+                injector.mapInstance(Module::class, module).mapInstance(Config::class, config)
                 config.constructedViews(views)
-                config.module.apply { injector.configure() }
+                module.apply { injector.configure() }
                 val sc = SceneContainer(views, name = "rootSceneContainer")
                 views.stage += sc
                 sc.changeTo(config.sceneClass, *config.sceneInjects.toTypedArray(), time = 0.milliseconds)
@@ -97,6 +101,7 @@ object Korge {
 		gameWindow: GameWindow? = null,
         timeProvider: HRTimeProvider = HRTimeProvider,
         injector: AsyncInjector = AsyncInjector(),
+        debugAg: Boolean = false,
         blocking:Boolean = true,
         entry: @ViewDslMarker suspend Stage.() -> Unit
 	) {
@@ -129,7 +134,7 @@ object Korge {
 
             // Use this once Korgw is on 1.12.5
             //val views = Views(gameWindow.getCoroutineDispatcherWithCurrentContext() + SupervisorJob(), ag, injector, input, timeProvider, stats, gameWindow)
-            val views = Views(coroutineContext + gameWindow.coroutineDispatcher + AsyncInjectorContext(injector) + SupervisorJob(), ag, injector, input, timeProvider, stats, gameWindow)
+            val views = Views(coroutineContext + gameWindow.coroutineDispatcher + AsyncInjectorContext(injector) + SupervisorJob(), if (debugAg) PrintAG() else ag, injector, input, timeProvider, stats, gameWindow)
 
             if (OS.isJsBrowser) KDynamic { global["views"] = views }
             injector
@@ -197,7 +202,7 @@ object Korge {
         injector.mapInstance(views.stats)
         injector.mapInstance(CoroutineContext::class, views.coroutineContext)
         injector.mapPrototype(EmptyScene::class) { EmptyScene() }
-        injector.mapInstance(TimeProvider::class, views.timeProvider.toTimeProvider()) // Deprecated
+        //injector.mapInstance(TimeProvider::class, views.timeProvider.toTimeProvider()) // Deprecated
         injector.mapInstance(HRTimeProvider::class, views.timeProvider)
 
         val input = views.input
@@ -393,7 +398,7 @@ object Korge {
         views.clearEachFrame = clearEachFrame
         views.clearColor = bgcolor
         val firstRenderDeferred = CompletableDeferred<Unit>()
-        views.gameWindow.addEventListener<RenderEvent> {
+        views.gameWindow.onRenderEvent {
             //println("RenderEvent: $it")
             views.ag.doRender {
                 if (!renderShown) {

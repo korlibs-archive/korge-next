@@ -24,7 +24,7 @@ class TweenComponent(
         val easing: Easing = DEFAULT_EASING,
         val callback: (Double) -> Unit,
         val c: CancellableContinuation<Unit>
-) : UpdateComponentV2 {
+) : UpdateComponent {
 	var elapsed = 0.hrNanoseconds
 	val hrtime = if (time != HRTimeSpan.NIL) time else (vs.map { it.endTime.nanosecondsDouble }.max() ?: 0.0).hrNanoseconds
 	var cancelled = false
@@ -67,9 +67,6 @@ class TweenComponent(
 			return completeOnce()
 		}
 	}
-
-    @Deprecated("")
-    fun setToMs(elapsed: Int) = setTo(elapsed.hrMilliseconds)
 
 	fun setTo(elapsed: HRTimeSpan) {
         if (elapsed == 0.hrNanoseconds) {
@@ -142,21 +139,22 @@ suspend fun View.hide(time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EA
 	tween(this::alpha[0.0], time = time, easing = easing)
 
 suspend inline fun View.moveTo(x: Double, y: Double, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) = tween(this::x[x], this::y[y], time = time, easing = easing)
+suspend inline fun View.moveTo(x: Float, y: Float, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) = tween(this::x[x], this::y[y], time = time, easing = easing)
+suspend inline fun View.moveTo(x: Int, y: Int, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) = tween(this::x[x], this::y[y], time = time, easing = easing)
+
 suspend inline fun View.moveBy(dx: Double, dy: Double, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) = tween(this::x[this.x + dx], this::y[this.y + dy], time = time, easing = easing)
+suspend inline fun View.moveBy(dx: Float, dy: Float, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) = tween(this::x[this.x + dx], this::y[this.y + dy], time = time, easing = easing)
+suspend inline fun View.moveBy(dx: Int, dy: Int, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) = tween(this::x[this.x + dx], this::y[this.y + dy], time = time, easing = easing)
+
 suspend inline fun View.scaleTo(sx: Double, sy: Double, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) = tween(this::scaleX[sx], this::scaleY[sy], time = time, easing = easing)
+suspend inline fun View.scaleTo(sx: Float, sy: Float, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) = tween(this::scaleX[sx], this::scaleY[sy], time = time, easing = easing)
+suspend inline fun View.scaleTo(sx: Int, sy: Int, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) = tween(this::scaleX[sx], this::scaleY[sy], time = time, easing = easing)
 
-@Deprecated("Kotlin/Native boxes inline+Number")
-suspend inline fun View.moveTo(x: Number, y: Number, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) = moveTo(x.toDouble(), y.toDouble(), time, easing)
-@Deprecated("Kotlin/Native boxes inline+Number")
-suspend inline fun View.moveBy(dx: Number, dy: Number, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) = moveBy(dx.toDouble(), dy.toDouble(), time, easing)
-@Deprecated("Kotlin/Native boxes inline+Number")
-suspend inline fun View.scaleTo(sx: Number, sy: Number, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) = scaleTo(sx.toDouble(), sy.toDouble(), time, easing)
+suspend inline fun View.rotateTo(angle: Angle, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) =
+	tween(this::rotation[angle], time = time, easing = easing)
 
-suspend inline fun View.rotateTo(deg: Angle, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) =
-	tween(this::rotationRadians[deg.radians], time = time, easing = easing)
-
-suspend inline fun View.rotateBy(ddeg: Angle, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) =
-	tween(this::rotationRadians[this.rotationRadians + ddeg.radians], time = time, easing = easing)
+suspend inline fun View.rotateBy(deltaAngle: Angle, time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) =
+	tween(this::rotation[rotation + deltaAngle], time = time, easing = easing)
 
 @Suppress("UNCHECKED_CAST")
 data class V2<V>(
@@ -255,27 +253,24 @@ inline operator fun KMutableProperty0<Double>.get(initial: Int, end: Int) = get(
 inline operator fun KMutableProperty0<Double>.get(end: Float) = get(end.toDouble())
 inline operator fun KMutableProperty0<Double>.get(initial: Float, end: Float) = get(initial.toDouble(), end.toDouble())
 
-@Deprecated("Kotlin/Native boxes inline+Number")
+inline operator fun KMutableProperty0<Double>.get(end: Long) = get(end.toDouble())
+inline operator fun KMutableProperty0<Double>.get(initial: Long, end: Float) = get(initial.toDouble(), end.toDouble())
+
 inline operator fun KMutableProperty0<Double>.get(end: Number) = get(end.toDouble())
-@Deprecated("Kotlin/Native boxes inline+Number")
 inline operator fun KMutableProperty0<Double>.get(initial: Number, end: Number) = get(initial.toDouble(), end.toDouble())
 
 inline operator fun KMutableProperty0<RGBA>.get(end: RGBA) = V2(this, this.get(), end, ::_interpolateColor, includeStart = false)
-inline operator fun KMutableProperty0<RGBA>.get(initial: RGBA, end: RGBA) =
-	V2(this, initial, end, ::_interpolateColor, includeStart = true)
+inline operator fun KMutableProperty0<RGBA>.get(initial: RGBA, end: RGBA) = V2(this, initial, end, ::_interpolateColor, includeStart = true)
 
 inline operator fun KMutableProperty0<Angle>.get(end: Angle) = V2(this, this.get(), end, ::_interpolateAngle, includeStart = false)
-inline operator fun KMutableProperty0<Angle>.get(initial: Angle, end: Angle) =
-	V2(this, initial, end, ::_interpolateAngle, includeStart = true)
+inline operator fun KMutableProperty0<Angle>.get(initial: Angle, end: Angle) = V2(this, initial, end, ::_interpolateAngle, includeStart = true)
 
 fun V2<Angle>.denormalized(): V2<Angle> = this.copy(interpolator = ::_interpolateAngleDenormalized)
 
 inline operator fun KMutableProperty0<TimeSpan>.get(end: TimeSpan) = V2(this, this.get(), end, ::_interpolateTimeSpan, includeStart = false)
-inline operator fun KMutableProperty0<TimeSpan>.get(initial: TimeSpan, end: TimeSpan) =
-    V2(this, initial, end, ::_interpolateTimeSpan, includeStart = true)
+inline operator fun KMutableProperty0<TimeSpan>.get(initial: TimeSpan, end: TimeSpan) = V2(this, initial, end, ::_interpolateTimeSpan, includeStart = true)
 
-fun <V> V2<V>.easing(easing: Easing): V2<V> =
-	this.copy(interpolator = { ratio, a, b -> this.interpolator(easing(ratio), a, b) })
+fun <V> V2<V>.easing(easing: Easing): V2<V> = this.copy(interpolator = { ratio, a, b -> this.interpolator(easing(ratio), a, b) })
 
 inline fun <V> V2<V>.delay(startTime: TimeSpan) = this.copy(startTime = startTime.hr)
 inline fun <V> V2<V>.duration(duration: TimeSpan) = this.copy(duration = duration.hr)
