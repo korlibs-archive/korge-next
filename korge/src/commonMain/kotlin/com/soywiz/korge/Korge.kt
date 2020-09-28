@@ -60,6 +60,7 @@ object Korge {
             gameWindow = config.gameWindow,
             injector = config.injector,
             timeProvider = config.timeProvider,
+            blocking = config.blocking,
             entry = {
                 //println("Korge views prepared for Config")
                 RegisteredImageFormats.register(*config.module.imageFormats.toTypedArray())
@@ -96,6 +97,7 @@ object Korge {
 		gameWindow: GameWindow? = null,
         timeProvider: HRTimeProvider = HRTimeProvider,
         injector: AsyncInjector = AsyncInjector(),
+        blocking:Boolean = true,
         entry: @ViewDslMarker suspend Stage.() -> Unit
 	) {
         if (!OS.isJsBrowser) {
@@ -156,16 +158,20 @@ object Korge {
                     //println("coroutineContext: $coroutineContext")
                     //println("GameWindow: ${coroutineContext[GameWindow]}")
                     entry(views.stage)
-                    // @TODO: Do not complete to prevent job cancelation?
-                    gameWindow.waitClose()
+                    if (blocking) {
+                        // @TODO: Do not complete to prevent job cancelation?
+                        gameWindow.waitClose()
+                    }
                 }
             }
             if (OS.isNative) println("CanvasApplicationEx.IN[1]")
             if (OS.isNative) println("Korui[1]")
 
-            // @TODO: Do not complete to prevent job cancelation?
-            gameWindow.waitClose()
-            gameWindow.exit()
+            if (blocking) {
+                // @TODO: Do not complete to prevent job cancelation?
+                gameWindow.waitClose()
+                gameWindow.exit()
+            }
         }
     }
 
@@ -441,6 +447,7 @@ object Korge {
 		val trace: Boolean = false,
 		val context: Any? = null,
 		val fullscreen: Boolean? = null,
+        val blocking: Boolean = true,
 		val constructedViews: (Views) -> Unit = {}
 	)
 

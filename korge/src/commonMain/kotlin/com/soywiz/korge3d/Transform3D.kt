@@ -186,8 +186,9 @@ class Transform3D {
 
     private val tempEuler = EulerRotation()
     fun rotate(x: Angle, y: Angle, z: Angle): Transform3D {
-        tempEuler.setQuaternion(this.rotation)
-        setRotation(tempEuler.x + x, tempEuler.y + y, tempEuler.z + z)
+        val re = this.rotationEuler
+        tempEuler.setTo(re.x+x,re.y+y, re.z+z)
+        setRotation(tempEuler)
         return this
     }
 
