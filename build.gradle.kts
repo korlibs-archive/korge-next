@@ -8,8 +8,8 @@ buildscript {
         mavenCentral()
         jcenter()
         maven { url = uri("https://plugins.gradle.org/m2/") }
-        //maven { url = uri("https://dl.bintray.com/kotlin/kotlin-dev") }
-        //maven { url = uri("https://dl.bintray.com/kotlin/kotlin-eap") }
+        maven { url = uri("https://dl.bintray.com/kotlin/kotlin-dev") }
+        maven { url = uri("https://dl.bintray.com/kotlin/kotlin-eap") }
     }
     dependencies {
         classpath("com.gradle.publish:plugin-publish-plugin:0.10.1")
@@ -19,7 +19,8 @@ buildscript {
 
 plugins {
 	java
-    kotlin("multiplatform") version "1.4.10"
+    //kotlin("multiplatform") version "1.4.10"
+    kotlin("multiplatform") version "1.4.20-M1"
     //id("com.gradle.plugin-publish") version "0.12.0" apply false
 }
 
@@ -30,17 +31,24 @@ allprojects {
 		jcenter()
         google()
 		maven { url = uri("https://plugins.gradle.org/m2/") }
-        //maven { url = uri("https://dl.bintray.com/kotlin/kotlin-eap") }
-        //maven { url = uri("https://dl.bintray.com/kotlin/kotlin-dev") }
+        maven { url = uri("https://dl.bintray.com/kotlin/kotlin-eap") }
+        maven { url = uri("https://dl.bintray.com/kotlin/kotlin-dev") }
 	}
 }
 
 val enableKotlinNative: String by project
 val doEnableKotlinNative get() = enableKotlinNative == "true"
 
+val enableKotlinMobile:String by project
+val doEnableKotlinMobile get() = enableKotlinMobile == "true"
+
 val KotlinTarget.isLinux get() = this.name == "linuxX64"
 val KotlinTarget.isWin get() = this.name == "mingwX64"
 val KotlinTarget.isMacos get() = this.name == "macosX64"
+val KotlinTarget.isIosArm64 get() = this.name == "iosArm64"
+val KotlinTarget.isIosArm32 get() = this.name == "iosArm32"
+val KotlinTarget.isIosX64 get() = this.name == "iosX64"
+val KotlinTarget.isIos get() = isIosArm64 || isIosArm32 || isIosX64
 val KotlinTarget.isDesktop get() = isWin || isLinux || isMacos
 
 val isWindows get() = org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_WINDOWS)
@@ -57,8 +65,15 @@ fun org.jetbrains.kotlin.gradle.dsl.KotlinTargetContainerWithPresetFunctions.nat
     }
 }
 
+fun org.jetbrains.kotlin.gradle.dsl.KotlinTargetContainerWithPresetFunctions.mobileTargets(): List<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
+    return listOf(iosArm32(), iosArm64(), iosX64())
+    // seems that kotlinx.coroutines is not published for androidNative
+    // listOf(androidNativeArm64(), androidNativeArm32(), iosArm32(), iosArm64(), iosX64())
+}
+
 subprojects {
     group = "com.soywiz.korlibs.${project.name}"
+
 
     if (project.name != "korge-intellij-plugin" && project.name != "korge-gradle-plugin") {
         apply(plugin = "kotlin-multiplatform")
@@ -92,6 +107,15 @@ subprojects {
             }
             if (doEnableKotlinNative) {
                 for (target in nativeTargets()) {
+                    target.compilations.all {
+                        kotlinOptions.freeCompilerArgs = listOf("-Xallocator=mimalloc")
+                        kotlinOptions.suppressWarnings = true
+                    }
+                }
+            }
+
+            if (doEnableKotlinMobile) {
+                for (target in mobileTargets()) {
                     target.compilations.all {
                         kotlinOptions.freeCompilerArgs = listOf("-Xallocator=mimalloc")
                         kotlinOptions.suppressWarnings = true
@@ -187,6 +211,15 @@ subprojects {
                         }
                         if (target.isMacos) {
                             native.dependsOn(nativePosixApple)
+                        }
+                    }
+
+                    if (doEnableKotlinMobile) {
+                        for (target in mobileTargets()) {
+                            val native = createPairSourceSet(target.name, common, nativeCommon, nonJvm, nonJs)
+                            if (target.isIos) {
+                                native.dependsOn(nativePosixApple)
+                            }
                         }
                     }
                 }

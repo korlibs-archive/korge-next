@@ -1,6 +1,7 @@
 package com.soywiz.korag
 
 import com.soywiz.kds.*
+import com.soywiz.kgl.KmlGl
 import com.soywiz.kmem.*
 import com.soywiz.korag.shader.*
 import com.soywiz.korim.bitmap.*
@@ -207,6 +208,9 @@ abstract class AG : Extra by Extra.Mixin() {
 
 	enum class TextureKind { RGBA, LUMINANCE }
 
+    enum class TextureTargetKind { TEXTURE_2D, TEXTURE_3D, TEXTURE_CUBE_MAP } //TODO: there are other possible values
+
+    //TODO: would it better if this was an interface ?
 	open inner class Texture : Closeable {
 		var isFbo = false
 		open val premultiplied = true
@@ -406,6 +410,13 @@ abstract class AG : Extra by Extra.Mixin() {
 		TRIANGLE_FAN,
 	}
 
+    enum class IndexType {
+        UBYTE, USHORT,
+        // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/drawElements
+        @Deprecated("UINT is not always supported on webgl")
+        UINT
+    }
+
 	val dummyTexture by lazy { createTexture() }
 
 	fun createTexture(): Texture = createTexture(premultiplied = true)
@@ -417,6 +428,9 @@ abstract class AG : Extra by Extra.Mixin() {
 		createTexture(premultiplied).upload(bmp, mipmaps)
 
 	open fun createTexture(premultiplied: Boolean): Texture = Texture()
+
+    open fun createTexture(targetKind: TextureTargetKind, init:Texture.(gl:KmlGl)->Unit): Texture = Texture()
+
 	open fun createBuffer(kind: Buffer.Kind) = Buffer(kind)
 	fun createIndexBuffer() = createBuffer(Buffer.Kind.INDEX)
 	fun createVertexBuffer() = createBuffer(Buffer.Kind.VERTEX)
@@ -492,7 +506,19 @@ abstract class AG : Extra by Extra.Mixin() {
 		var referenceValue: Int = 0,
 		var readMask: Int = 0xFF,
 		var writeMask: Int = 0xFF
-	)
+	) {
+        fun copyFrom(other: StencilState) {
+            this.enabled = other.enabled
+            this.triangleFace = other.triangleFace
+            this.compareMode = other.compareMode
+            this.actionOnBothPass = other.actionOnBothPass
+            this.actionOnDepthFail = other.actionOnDepthFail
+            this.actionOnDepthPassStencilFail = other.actionOnDepthPassStencilFail
+            this.referenceValue = other.referenceValue
+            this.readMask = other.readMask
+            this.writeMask = other.writeMask
+        }
+    }
 
 	private val dummyRenderState = RenderState()
 	private val dummyStencilState = StencilState()
@@ -506,8 +532,8 @@ abstract class AG : Extra by Extra.Mixin() {
         type: DrawType,
         vertexLayout: VertexLayout,
         vertexCount: Int,
-        //instanceCount: Int = 1,
         indices: Buffer? = null,
+        indexType: IndexType = IndexType.USHORT,
         offset: Int = 0,
         blending: Blending = Blending.NORMAL,
         uniforms: UniformValues = UniformValues.EMPTY,
@@ -521,8 +547,8 @@ abstract class AG : Extra by Extra.Mixin() {
         batch.type = type
         batch.vertexLayout = vertexLayout
         batch.vertexCount = vertexCount
-        //batch.instanceCount = instanceCount
         batch.indices = indices
+        batch.indexType = indexType
         batch.offset = offset
         batch.blending = blending
         batch.uniforms = uniforms
@@ -532,22 +558,22 @@ abstract class AG : Extra by Extra.Mixin() {
         batch.scissor = scissor
     })
 
-    class Batch {
-        var vertices: Buffer = Buffer(Buffer.Kind.VERTEX)
-        var program: Program = DefaultShaders.PROGRAM_DEBUG
-        var type: DrawType = DrawType.TRIANGLES
-        var vertexLayout: VertexLayout = VertexLayout()
-        var vertexCount: Int = 0
-        //var instanceCount: Int = 1
-        var indices: Buffer? = null
-        var offset: Int = 0
-        var blending: Blending = Blending.NORMAL
-        var uniforms: UniformValues = UniformValues.EMPTY
-        var stencil: StencilState = StencilState()
-        var colorMask: ColorMaskState = ColorMaskState()
-        var renderState: RenderState = RenderState()
-        var scissor: Scissor? = null
-    }
+    data class Batch(
+        var vertices: Buffer = Buffer(Buffer.Kind.VERTEX),
+        var program: Program = DefaultShaders.PROGRAM_DEBUG,
+        var type: DrawType = DrawType.TRIANGLES,
+        var vertexLayout: VertexLayout = VertexLayout(),
+        var vertexCount: Int = 0,
+        var indices: Buffer? = null,
+        var indexType: IndexType = IndexType.USHORT,
+        var offset: Int = 0,
+        var blending: Blending = Blending.NORMAL,
+        var uniforms: UniformValues = UniformValues.EMPTY,
+        var stencil: StencilState = StencilState(),
+        var colorMask: ColorMaskState = ColorMaskState(),
+        var renderState: RenderState = RenderState(),
+        var scissor: Scissor? = null,
+    )
 
     private val batch = Batch()
 

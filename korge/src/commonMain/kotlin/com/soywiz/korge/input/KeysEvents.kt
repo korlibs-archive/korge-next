@@ -1,11 +1,12 @@
 package com.soywiz.korge.input
 
 import com.soywiz.kds.*
+import com.soywiz.klock.*
+import com.soywiz.korev.*
 import com.soywiz.korge.component.*
 import com.soywiz.korge.view.*
 import com.soywiz.korio.async.*
 import com.soywiz.korio.lang.*
-import com.soywiz.korev.*
 import kotlin.reflect.*
 
 class KeysEvents(override val view: View) : KeyComponent {
@@ -17,6 +18,28 @@ class KeysEvents(override val view: View) : KeyComponent {
     val onKeyDown = AsyncSignal<KeyEvent>()
 	val onKeyUp = AsyncSignal<KeyEvent>()
 	val onKeyTyped = AsyncSignal<KeyEvent>()
+
+    /** Executes [callback] on each frame when [key] is being pressed. When [dt] is provided, the [callback] is executed at that [dt] steps. */
+    fun downFrame(key: Key, dt: TimeSpan = TimeSpan.NIL, callback: (ke: KeyEvent) -> Unit): Cancellable {
+        val ke = KeyEvent()
+        return view.addOptFixedUpdater(dt) { dt ->
+            val views = view.stage?.views
+            if (views != null) {
+                val keys = views.keys
+                if (keys[key]) {
+                    ke.type = KeyEvent.Type.DOWN
+                    ke.key = key
+                    ke.keyCode = key.ordinal
+                    ke.shift = keys[Key.LEFT_SHIFT] || keys[Key.RIGHT_SHIFT]
+                    ke.ctrl = keys[Key.LEFT_CONTROL] || keys[Key.RIGHT_CONTROL]
+                    ke.meta = keys[Key.META]
+                    ke.deltaTime = dt
+                    callback(ke)
+                }
+            }
+            //if (view.input)
+        }
+    }
 
     fun down(callback: suspend (key: KeyEvent) -> Unit): Closeable = onKeyDown { e -> callback(e) }
     fun down(key: Key, callback: suspend (key: KeyEvent) -> Unit): Closeable = onKeyDown { e -> if (e.key == key) callback(e) }

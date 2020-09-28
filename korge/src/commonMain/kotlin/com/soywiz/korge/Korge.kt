@@ -3,6 +3,7 @@ package com.soywiz.korge
 import com.soywiz.kds.iterators.*
 import com.soywiz.klock.*
 import com.soywiz.klogger.*
+import com.soywiz.korag.log.*
 import com.soywiz.korev.*
 import com.soywiz.korge.input.*
 import com.soywiz.korge.internal.*
@@ -62,6 +63,7 @@ object Korge {
             gameWindow = config.gameWindow,
             injector = config.injector,
             timeProvider = config.timeProvider,
+            blocking = config.blocking,
             entry = {
                 //println("Korge views prepared for Config")
                 RegisteredImageFormats.register(*module.imageFormats.toTypedArray())
@@ -98,6 +100,8 @@ object Korge {
 		gameWindow: GameWindow? = null,
         timeProvider: TimeProvider = TimeProvider,
         injector: AsyncInjector = AsyncInjector(),
+        debugAg: Boolean = false,
+        blocking:Boolean = true,
         entry: @ViewDslMarker suspend Stage.() -> Unit
 	) {
         if (!OS.isJsBrowser) {
@@ -129,7 +133,7 @@ object Korge {
 
             // Use this once Korgw is on 1.12.5
             //val views = Views(gameWindow.getCoroutineDispatcherWithCurrentContext() + SupervisorJob(), ag, injector, input, timeProvider, stats, gameWindow)
-            val views: Views = Views(coroutineContext + gameWindow.coroutineDispatcher + AsyncInjectorContext(injector) + SupervisorJob(), ag, injector, input, timeProvider, stats, gameWindow)
+            val views: Views = Views(coroutineContext + gameWindow.coroutineDispatcher + AsyncInjectorContext(injector) + SupervisorJob(), if (debugAg) PrintAG() else ag, injector, input, timeProvider, stats, gameWindow)
 
             if (OS.isJsBrowser) KDynamic { global["views"] = views }
             injector
@@ -158,16 +162,20 @@ object Korge {
                     //println("coroutineContext: $coroutineContext")
                     //println("GameWindow: ${coroutineContext[GameWindow]}")
                     entry(views.stage)
-                    // @TODO: Do not complete to prevent job cancelation?
-                    gameWindow.waitClose()
+                    if (blocking) {
+                        // @TODO: Do not complete to prevent job cancelation?
+                        gameWindow.waitClose()
+                    }
                 }
             }
             if (OS.isNative) println("CanvasApplicationEx.IN[1]")
             if (OS.isNative) println("Korui[1]")
 
-            // @TODO: Do not complete to prevent job cancelation?
-            gameWindow.waitClose()
-            gameWindow.exit()
+            if (blocking) {
+                // @TODO: Do not complete to prevent job cancelation?
+                gameWindow.waitClose()
+                gameWindow.exit()
+            }
         }
     }
 
@@ -176,10 +184,6 @@ object Korge {
             delay(100.milliseconds)
         }
     }
-
-    //Deprecated("")
-    //@KorgeInternal
-    //private fun TimeProvider.toTimeProvider(): TimeProvider = TimeProvider { DateTime.fromUnix(this.now().millisecondsDouble) }
 
     @KorgeInternal
     fun prepareViewsBase(
@@ -446,6 +450,7 @@ object Korge {
 		val trace: Boolean = false,
 		val context: Any? = null,
 		val fullscreen: Boolean? = null,
+        val blocking: Boolean = true,
 		val constructedViews: (Views) -> Unit = {}
 	)
 
