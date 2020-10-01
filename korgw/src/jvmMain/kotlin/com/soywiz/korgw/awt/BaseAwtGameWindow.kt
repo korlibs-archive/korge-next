@@ -190,7 +190,7 @@ abstract class BaseAwtGameWindow : GameWindow() {
                 linuxJoyEventAdapter.updateGamepads(this)
             }
             else -> {
-                println("undetected OS: ${OS.rawName}")
+                //println("undetected OS: ${OS.rawName}")
             }
         }
     }
