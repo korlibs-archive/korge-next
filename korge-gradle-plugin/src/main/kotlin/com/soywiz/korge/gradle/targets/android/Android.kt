@@ -2,10 +2,7 @@ package com.soywiz.korge.gradle.targets.android
 
 import com.soywiz.korge.gradle.util.*
 import com.soywiz.korge.gradle.*
-import com.soywiz.korge.gradle.targets.GROUP_KORGE_INSTALL
-import com.soywiz.korge.gradle.targets.GROUP_KORGE_RUN
-import com.soywiz.korge.gradle.targets.getIconBytes
-import com.soywiz.korge.gradle.targets.getResourceBytes
+import com.soywiz.korge.gradle.targets.*
 import com.soywiz.korge.gradle.util.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
@@ -217,9 +214,10 @@ fun Project.configureNativeAndroid() {
 								line("main") {
 									// @TODO: Use proper source sets of the app
 
-									val projectDir = project.projectDir
-									line("java.srcDirs += [${"$projectDir/src/commonMain/kotlin".quoted}, ${"$projectDir/src/jvmMain/kotlin".quoted}]")
-									line("assets.srcDirs += [${"$projectDir/src/commonMain/resources".quoted}, ${"$projectDir/build/genMainResources".quoted}]")
+                                    val resourcesSrcDirs = kotlin.jvm().compilations["main"].allKotlinSourceSets.flatMap { it.resources.srcDirs }
+                                    val kotlinSrcDirs = kotlin.jvm().compilations["main"].allKotlinSourceSets.flatMap { it.kotlin.srcDirs }
+									line("java.srcDirs += [${kotlinSrcDirs.joinToString(", ") { it.absolutePath.quoted }}]")
+									line("assets.srcDirs += [${resourcesSrcDirs.joinToString(", ") { it.absolutePath.quoted }}]")
 								}
 							}
 						}
@@ -273,7 +271,13 @@ fun Project.configureNativeAndroid() {
 				writeAndroidManifest(outputFolder, korge)
 
 				File(outputFolder, "gradle.properties").conditionally(ifNotExists) {
-					ensureParents().writeTextIfChanged("org.gradle.jvmargs=-Xmx1536m")
+					ensureParents().writeTextIfChanged(
+                        listOf(
+                            "org.gradle.jvmargs=-Xmx1536m",
+                            "android.useAndroidX=true",
+                            "android.enableJetifier=true",
+                        ).joinToString("\n")
+                    )
 				}
 			}
 		}
@@ -300,6 +304,7 @@ fun Project.configureNativeAndroid() {
 			task.apply {
 				group = GROUP_KORGE_INSTALL
 				dependsOn(prepareAndroidBootstrap)
+                dependsOn("korgeProcessedResourcesJvmMain")
 				buildFile = File(buildDir, "platforms/android/build.gradle")
 				version = "4.10.1"
 				tasks = listOf("install$suffixDebug")
@@ -342,11 +347,21 @@ fun writeAndroidManifest(outputFolder: File, korge: KorgeExtension) {
 	File(outputFolder, "src/main/AndroidManifest.xml").also { it.parentFile.mkdirs() }.conditionally(ifNotExists) {
 		ensureParents().writeTextIfChanged(Indenter {
 			line("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
-			line("<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" package=\"$androidPackageName\">")
+			line("<manifest")
+            indent {
+                //line("xmlns:tools=\"http://schemas.android.com/tools\"")
+                line("xmlns:android=\"http://schemas.android.com/apk/res/android\"")
+                line("package=\"$androidPackageName\"")
+            }
+            line(">")
 			indent {
+                line("<uses-feature android:name=\"android.hardware.touchscreen\" android:required=\"false\" />")
+                line("<uses-feature android:name=\"android.software.leanback\" android:required=\"false\" />")
+
 				line("<application")
 				indent {
 					line("")
+                    //line("tools:replace=\"android:appComponentFactory\"")
 					line("android:allowBackup=\"true\"")
 
 					if (!korge.androidLibrary) {
@@ -371,6 +386,10 @@ fun writeAndroidManifest(outputFolder: File, korge: KorgeExtension) {
 
 					line("<activity android:name=\".MainActivity\"")
 					indent {
+                        line("android:banner=\"@drawable/app_icon\"")
+                        line("android:icon=\"@drawable/app_icon\"")
+                        line("android:label=\"$androidAppName\"")
+                        line("android:logo=\"@drawable/app_icon\"")
 						when (korge.orientation) {
 							Orientation.LANDSCAPE -> line("android:screenOrientation=\"landscape\"")
 							Orientation.PORTRAIT -> line("android:screenOrientation=\"portrait\"")
@@ -405,6 +424,9 @@ fun writeAndroidManifest(outputFolder: File, korge: KorgeExtension) {
 	File(outputFolder, "src/main/res/mipmap-mdpi/icon.png").conditionally(ifNotExists) {
 		ensureParents().writeBytesIfChanged(korge.getIconBytes())
 	}
+    File(outputFolder, "src/main/res/drawable/app_icon.png").conditionally(ifNotExists) {
+        ensureParents().writeBytesIfChanged(korge.getBannerBytes(432, 243))
+    }
 	File(outputFolder, "src/main/java/MainActivity.kt").conditionally(ifNotExists) {
 		ensureParents().writeTextIfChanged(Indenter {
 			line("package $androidPackageName")

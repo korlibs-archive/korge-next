@@ -10,20 +10,9 @@ import com.soywiz.korma.geom.*
 import com.soywiz.korma.geom.vector.*
 import com.soywiz.korma.interpolation.*
 
-suspend fun main() = Korge(width = 512, height = 512, bgcolor = Colors["#2b2b2b"]) {
+suspend fun main() = Korge(width = 512, height = 512, bgcolor = Colors["#2b2b9b"]) {
 	val minDegrees = (-16).degrees
 	val maxDegrees = (+16).degrees
-
-    views.addDebugRenderer { ctx ->
-        ctx.debugLineRenderContext.apply {
-            color(Colors.RED) {
-                drawVector {
-                    circle(100.0, 100.0, 60.0)
-                }
-            }
-        }
-        //ctx.debugLineRenderContext.line(0.0, 0.0, 100.0, 100.0)
-    }
 
 	val image = image(resourcesVfs["korge.png"].readBitmap()) {
 		rotation = maxDegrees

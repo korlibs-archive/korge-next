@@ -4,13 +4,11 @@ import android.app.*
 import android.content.*
 import android.content.DialogInterface
 import android.net.*
-import android.support.v4.app.ActivityCompat.startActivityForResult
-import android.support.v4.content.ContextCompat.*
-import android.support.v7.app.*
-import android.support.v7.app.AlertDialog
 import android.text.*
 import android.view.*
 import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat.startActivity
 import com.soywiz.korag.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korio.android.*
@@ -106,27 +104,9 @@ class AndroidGameWindow(val activity: KorgwActivity) : GameWindow() {
     }
 
     override suspend fun openFileDialog(filter: String?, write: Boolean, multi: Boolean): List<VfsFile> {
-        val deferred = CompletableDeferred<List<VfsFile>>()
-        val intent = Intent()
-            .setType("*/*")
-            .setAction(Intent.ACTION_GET_CONTENT)
-
-        val requestCode = activity.registerActivityResult { result, data ->
-            if (result == Activity.RESULT_OK) {
-                val uri = data?.data
-                if (uri != null) {
-                    deferred.complete(listOf(File(uri.toString()).toVfs()))
-                } else {
-                    deferred.completeExceptionally(CancellationException())
-                }
-            } else {
-                deferred.completeExceptionally(CancellationException())
-            }
-        }
-
-        startActivityForResult(activity, Intent.createChooser(intent, "Select a file"), requestCode, null)
-
-        return deferred.await()
+        val result = activity.startActivityWithResult(Intent.createChooser(Intent().setType("*/*").setAction(Intent.ACTION_GET_CONTENT), "Select a file"))
+        val uri = result?.data ?: throw CancellationException()
+        return listOf(File(uri.toString()).toVfs())
     }
 
     lateinit var coroutineContext: CoroutineContext
@@ -136,4 +116,3 @@ class AndroidGameWindow(val activity: KorgwActivity) : GameWindow() {
         entry(this)
     }
 }
-

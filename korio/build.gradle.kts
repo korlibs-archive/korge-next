@@ -6,6 +6,12 @@ dependencies {
 	add("commonMainApi", project(":kds"))
 	add("commonMainApi", project(":kmem"))
     add("commonMainApi", project(":klogger"))
+
+    afterEvaluate {
+        if (configurations.findByName("androidMainApi") != null) {
+            add("androidMainApi", "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion")
+        }
+    }
 }
 /*
 import com.soywiz.korlibs.korlibs
@@ -29,7 +35,6 @@ dependencies {
 	add("jsMainApi", "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:$coroutinesVersion")
 	add("jvmMainApi", "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
 
-    add("iosArm32MainApi", "org.jetbrains.kotlinx:kotlinx-coroutines-core-iosarm32:$coroutinesVersion")
 	add("iosArm64MainApi", "org.jetbrains.kotlinx:kotlinx-coroutines-core-iosarm64:$coroutinesVersion")
 	add("iosX64MainApi", "org.jetbrains.kotlinx:kotlinx-coroutines-core-iosx64:$coroutinesVersion")
 

@@ -54,9 +54,8 @@ val KotlinTarget.isLinux get() = this.name == "linuxX64"
 val KotlinTarget.isWin get() = this.name == "mingwX64"
 val KotlinTarget.isMacos get() = this.name == "macosX64"
 val KotlinTarget.isIosArm64 get() = this.name == "iosArm64"
-val KotlinTarget.isIosArm32 get() = this.name == "iosArm32"
 val KotlinTarget.isIosX64 get() = this.name == "iosX64"
-val KotlinTarget.isIos get() = isIosArm64 || isIosArm32 || isIosX64
+val KotlinTarget.isIos get() = isIosArm64 || isIosX64
 val KotlinTarget.isDesktop get() = isWin || isLinux || isMacos
 
 val isWindows get() = org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_WINDOWS)
@@ -93,14 +92,19 @@ kotlin {
 fun org.jetbrains.kotlin.gradle.dsl.KotlinTargetContainerWithPresetFunctions.nativeTargets(): List<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
     return when {
         isWindows -> listOf(mingwX64())
+        isMacos -> listOf(macosX64())
         else -> listOf(linuxX64(), mingwX64(), macosX64())
     }
 }
 
 fun org.jetbrains.kotlin.gradle.dsl.KotlinTargetContainerWithPresetFunctions.mobileTargets(): List<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
-    return listOf(iosArm32(), iosArm64(), iosX64())
-    // seems that kotlinx.coroutines is not published for androidNative
-    // listOf(androidNativeArm64(), androidNativeArm32(), iosArm32(), iosArm64(), iosX64())
+    return listOf(iosArm64(), iosX64())
+}
+
+//apply(from = "${rootProject.rootDir}/build.idea.gradle")
+
+allprojects {
+    apply(from = "${rootProject.rootDir}/build.idea.gradle")
 }
 
 subprojects {
@@ -542,6 +546,7 @@ samples {
         }
     }
 }
+
 
 /*
 if (Os.isFamily(Os.FAMILY_UNIX) &&

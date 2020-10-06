@@ -7,20 +7,27 @@ import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.view.KeyEvent
 import com.soywiz.kds.Pool
-import com.soywiz.kgl.KmlGl
-import com.soywiz.kgl.KmlGlAndroid
+import com.soywiz.kgl.*
 import com.soywiz.korag.AGOpengl
 import com.soywiz.korev.*
 import com.soywiz.korio.Korio
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 import com.soywiz.korio.android.withAndroidContext
+import com.soywiz.kds.toIntMap
+import com.soywiz.korio.file.VfsFile
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import androidx.core.app.ActivityCompat.startActivityForResult
 
 abstract class KorgwActivity : Activity() {
     var gameWindow: AndroidGameWindow = AndroidGameWindow(this)
     private var mGLView: GLSurfaceView? = null
     lateinit var ag: AGOpengl
+    open val agCheck: Boolean get() = false
+    open val agTrace: Boolean get() = false
 
     var fps: Int
         get() = gameWindow?.fps ?: 60
@@ -32,7 +39,7 @@ abstract class KorgwActivity : Activity() {
 
     inner class KorgwActivityAGOpengl : AGOpengl() {
         //override val gl: KmlGl = CheckErrorsKmlGlProxy(KmlGlAndroid())
-        override val gl: KmlGl = KmlGlAndroid()
+        override val gl: KmlGl = KmlGlAndroid().checkedIf(agCheck).logIf(agCheck)
         override val nativeComponent: Any get() = this@KorgwActivity
         override val gles: Boolean = true
 
@@ -167,6 +174,19 @@ abstract class KorgwActivity : Activity() {
         }.request
     }
 
+    suspend fun startActivityWithResult(intent: Intent, options: Bundle? = null): Intent? {
+        val deferred = CompletableDeferred<Intent?>()
+        val requestCode = registerActivityResult { result, data ->
+            if (result == Activity.RESULT_OK) {
+                deferred.complete(data)
+            } else {
+                deferred.completeExceptionally(CancellationException())
+            }
+        }
+        startActivityForResult(this, intent, requestCode, options)
+        return deferred.await()
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         val handler = handlers.remove(requestCode)
         if (handler != null) {
@@ -200,6 +220,108 @@ abstract class KorgwActivity : Activity() {
             setOnSystemUiVisibilityChangeListener(null)
             systemUiVisibility = defaultUiVisibility
         }
+    }
+
+    companion object {
+        val KEY_MAP = mapOf(
+            KeyEvent.KEYCODE_A to Key.A,
+            KeyEvent.KEYCODE_B to Key.B,
+            KeyEvent.KEYCODE_C to Key.C,
+            KeyEvent.KEYCODE_D to Key.D,
+            KeyEvent.KEYCODE_E to Key.E,
+            KeyEvent.KEYCODE_F to Key.F,
+            KeyEvent.KEYCODE_G to Key.G,
+            KeyEvent.KEYCODE_H to Key.H,
+            KeyEvent.KEYCODE_I to Key.I,
+            KeyEvent.KEYCODE_J to Key.J,
+            KeyEvent.KEYCODE_K to Key.K,
+            KeyEvent.KEYCODE_L to Key.L,
+            KeyEvent.KEYCODE_M to Key.M,
+            KeyEvent.KEYCODE_N to Key.N,
+            KeyEvent.KEYCODE_O to Key.O,
+            KeyEvent.KEYCODE_P to Key.P,
+            KeyEvent.KEYCODE_Q to Key.Q,
+            KeyEvent.KEYCODE_R to Key.R,
+            KeyEvent.KEYCODE_S to Key.S,
+            KeyEvent.KEYCODE_T to Key.T,
+            KeyEvent.KEYCODE_U to Key.U,
+            KeyEvent.KEYCODE_V to Key.V,
+            KeyEvent.KEYCODE_W to Key.W,
+            KeyEvent.KEYCODE_X to Key.X,
+            KeyEvent.KEYCODE_Y to Key.Y,
+            KeyEvent.KEYCODE_Z to Key.Z,
+            KeyEvent.KEYCODE_ENTER to Key.ENTER,
+            KeyEvent.KEYCODE_ESCAPE to Key.ESCAPE,
+            KeyEvent.KEYCODE_DPAD_LEFT to Key.LEFT,
+            KeyEvent.KEYCODE_DPAD_RIGHT to Key.RIGHT,
+            KeyEvent.KEYCODE_DPAD_UP to Key.UP,
+            KeyEvent.KEYCODE_DPAD_DOWN to Key.DOWN,
+            KeyEvent.KEYCODE_DPAD_CENTER to Key.RETURN,
+            KeyEvent.KEYCODE_BACK to Key.BACKSPACE,
+            KeyEvent.KEYCODE_DEL to Key.BACKSPACE,
+            KeyEvent.KEYCODE_FORWARD_DEL to Key.DELETE,
+            KeyEvent.KEYCODE_BUTTON_1 to Key.F1,
+            KeyEvent.KEYCODE_BUTTON_2 to Key.F2,
+            KeyEvent.KEYCODE_BUTTON_3 to Key.F3,
+            KeyEvent.KEYCODE_BUTTON_4 to Key.F4,
+            KeyEvent.KEYCODE_BUTTON_5 to Key.F5,
+            KeyEvent.KEYCODE_BUTTON_6 to Key.F6,
+            KeyEvent.KEYCODE_BUTTON_7 to Key.F7,
+            KeyEvent.KEYCODE_BUTTON_8 to Key.F8,
+            KeyEvent.KEYCODE_BUTTON_9 to Key.F9,
+            KeyEvent.KEYCODE_BUTTON_10 to Key.F10,
+            KeyEvent.KEYCODE_BUTTON_11 to Key.F11,
+            KeyEvent.KEYCODE_BUTTON_12 to Key.F12,
+            KeyEvent.KEYCODE_F1 to Key.F1,
+            KeyEvent.KEYCODE_F2 to Key.F2,
+            KeyEvent.KEYCODE_F3 to Key.F3,
+            KeyEvent.KEYCODE_F4 to Key.F4,
+            KeyEvent.KEYCODE_F5 to Key.F5,
+            KeyEvent.KEYCODE_F6 to Key.F6,
+            KeyEvent.KEYCODE_F7 to Key.F7,
+            KeyEvent.KEYCODE_F8 to Key.F8,
+            KeyEvent.KEYCODE_F9 to Key.F9,
+            KeyEvent.KEYCODE_F10 to Key.F10,
+            KeyEvent.KEYCODE_F11 to Key.F11,
+            KeyEvent.KEYCODE_F12 to Key.F12,
+        ).toIntMap()
+    }
+
+    fun onKey(keyCode: Int, event: KeyEvent, down: Boolean, long: Boolean): Boolean {
+        gameWindow.dispatchKeyEventEx(
+            when {
+                down -> com.soywiz.korev.KeyEvent.Type.DOWN
+                else -> com.soywiz.korev.KeyEvent.Type.UP
+            }, 0,
+            keyCode.toChar(),
+            KEY_MAP[keyCode] ?: Key.UNKNOWN,
+            keyCode,
+            shift = false,
+            ctrl = false,
+            alt = false,
+            meta = false
+        )
+        return true
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        return onKey(keyCode, event, down = true, long = false)
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+        return onKey(keyCode, event, down = false, long = false)
+    }
+
+    override fun onKeyLongPress(keyCode: Int, event: KeyEvent): Boolean {
+        return onKey(keyCode, event, down = true, long = true)
+    }
+
+    override fun onKeyMultiple(keyCode: Int, repeatCount: Int, event: KeyEvent): Boolean {
+        return super.onKeyMultiple(keyCode, repeatCount, event)
+    }
+
+    override fun onKeyShortcut(keyCode: Int, event: KeyEvent): Boolean {
+        return super.onKeyShortcut(keyCode, event)
     }
 }
 
