@@ -78,3 +78,8 @@ fun moduleName(f: File): String {
         "${p}:${f.name}"
     }
 }
+if (rootProject.projectDir.resolve("../hackaton").exists()) {
+    //temp GitHub hackaton workaround
+    include("samples:hackaton")
+    project(":samples:hackaton").projectDir = rootProject.projectDir.resolve("../hackaton")
+}
