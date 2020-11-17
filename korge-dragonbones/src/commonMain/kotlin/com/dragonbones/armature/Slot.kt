@@ -26,12 +26,14 @@ package com.dragonbones.armature
 
 import com.dragonbones.core.*
 import com.dragonbones.event.*
-import com.dragonbones.geom.*
 import com.dragonbones.model.*
 import com.dragonbones.util.*
+import com.dragonbones.util.length
 import com.soywiz.kds.*
-import com.dragonbones.internal.fastForEach
+import com.soywiz.kds.iterators.*
 import com.soywiz.kmem.*
+import com.soywiz.korim.color.*
+import com.soywiz.korma.geom.*
 import kotlin.math.*
 
 /**
@@ -289,7 +291,7 @@ abstract class Slot(pool: SingleObjectPool<out Slot>) :  TransformObject(pool) {
 				display != this._rawDisplay && display != this._meshDisplay &&
 				disposeDisplayList.indexOf(display) < 0
 			) {
-				disposeDisplayList.push(display!!)
+                disposeDisplayList.add(display!!)
 			}
 
 			dispayFrame.returnToPool()
@@ -437,8 +439,8 @@ abstract class Slot(pool: SingleObjectPool<out Slot>) :  TransformObject(pool) {
 				val scale = _textureData.parent!!.scale * this._armature!!._armatureData!!.scale
 				val frame = _textureData.frame
 
-				this._pivotX = imageDisplayData.pivot.x.toDouble()
-				this._pivotY = imageDisplayData.pivot.y.toDouble()
+				this._pivotX = imageDisplayData.pivot.xf.toDouble()
+				this._pivotY = imageDisplayData.pivot.yf.toDouble()
 
 				val rect = frame ?: _textureData.region
 				var width = rect.width
@@ -461,15 +463,15 @@ abstract class Slot(pool: SingleObjectPool<out Slot>) :  TransformObject(pool) {
 				if (rawDisplayData != null && imageDisplayData != rawDisplayData) {
 					rawDisplayData.transform.toMatrix(_helpMatrix)
 					_helpMatrix.invert()
-					_helpMatrix.transformPoint(0f, 0f, _helpPoint)
-					this._pivotX -= _helpPoint.x
-					this._pivotY -= _helpPoint.y
+					_helpMatrix.transform(0f, 0f, _helpPoint)
+					this._pivotX -= _helpPoint.xf
+					this._pivotY -= _helpPoint.yf
 
 					imageDisplayData.transform.toMatrix(_helpMatrix)
 					_helpMatrix.invert()
-					_helpMatrix.transformPoint(0f, 0f, _helpPoint)
-					this._pivotX += _helpPoint.x
-					this._pivotY += _helpPoint.y
+					_helpMatrix.transform(0f, 0f, _helpPoint)
+					this._pivotX += _helpPoint.xf
+					this._pivotY += _helpPoint.yf
 				}
 
 				if (!DragonBones.yDown) {
@@ -511,7 +513,7 @@ abstract class Slot(pool: SingleObjectPool<out Slot>) :  TransformObject(pool) {
 					if (gd != null) {
 						for (i in 0 until gd.bones.lengthSet) {
 							val bone = this._armature!!.getBone(gd.bones[i].name)
-							this._geometryBones.push(bone)
+                            this._geometryBones.add(bone)
 						}
 					}
 				}
@@ -609,7 +611,7 @@ abstract class Slot(pool: SingleObjectPool<out Slot>) :  TransformObject(pool) {
 	}
 
 	protected fun _updateGlobalTransformMatrix(isCache: Boolean): Unit {
-		val parentMatrix = if (this._parent!!._boneData!!.isBone) this._parent!!.globalTransformMatrix else (this._parent as Surface)._getGlobalTransformMatrix(this.global.x, this.global.y)
+		val parentMatrix = if (this._parent!!._boneData!!.isBone) this._parent!!.globalTransformMatrix else (this._parent as Surface)._getGlobalTransformMatrix(this.global.xf, this.global.yf)
 		this.globalTransformMatrix.copyFrom(this._localMatrix)
 		this.globalTransformMatrix.concat(parentMatrix)
 
@@ -994,9 +996,9 @@ abstract class Slot(pool: SingleObjectPool<out Slot>) :  TransformObject(pool) {
 
 		_helpMatrix.copyFrom(this.globalTransformMatrix)
 		_helpMatrix.invert()
-		_helpMatrix.transformPoint(x, y, _helpPoint)
+		_helpMatrix.transform(x, y, _helpPoint)
 
-		return this._boundingBoxData!!.containsPoint(_helpPoint.x.toDouble(), _helpPoint.y.toDouble())
+		return this._boundingBoxData!!.containsPoint(_helpPoint.xf.toDouble(), _helpPoint.yf.toDouble())
 	}
 	/**
 	 * - Check whether a specific segment intersects a custom bounding box for the slot.
@@ -1041,44 +1043,44 @@ abstract class Slot(pool: SingleObjectPool<out Slot>) :  TransformObject(pool) {
 		this.updateTransformAndMatrix()
 		_helpMatrix.copyFrom(this.globalTransformMatrix)
 		_helpMatrix.invert()
-		_helpMatrix.transformPoint(xA, yA, _helpPoint)
-		val xA = _helpPoint.x
-		val yA = _helpPoint.y
-		_helpMatrix.transformPoint(xB, yB, _helpPoint)
-		val xB = _helpPoint.x
-		val yB = _helpPoint.y
+		_helpMatrix.transform(xA, yA, _helpPoint)
+		val xA = _helpPoint.xf
+		val yA = _helpPoint.yf
+		_helpMatrix.transform(xB, yB, _helpPoint)
+		val xB = _helpPoint.xf
+		val yB = _helpPoint.yf
 
 		val intersectionCount = this._boundingBoxData!!.intersectsSegment(xA.toDouble(),
 			yA.toDouble(), xB.toDouble(), yB.toDouble(), intersectionPointA, intersectionPointB, normalRadians)
 		if (intersectionCount > 0) {
 			if (intersectionCount == 1 || intersectionCount == 2) {
 				if (intersectionPointA != null) {
-					this.globalTransformMatrix.transformPoint(intersectionPointA.x, intersectionPointA.y, intersectionPointA)
+					this.globalTransformMatrix.transform(intersectionPointA.xf, intersectionPointA.yf, intersectionPointA)
 					if (intersectionPointB != null) {
-						intersectionPointB.x = intersectionPointA.x
-						intersectionPointB.y = intersectionPointA.y
+						intersectionPointB.xf = intersectionPointA.xf
+						intersectionPointB.yf = intersectionPointA.yf
 					}
 				}
 				else if (intersectionPointB != null) {
-					this.globalTransformMatrix.transformPoint(intersectionPointB.x, intersectionPointB.y, intersectionPointB)
+					this.globalTransformMatrix.transform(intersectionPointB.xf, intersectionPointB.yf, intersectionPointB)
 				}
 			}
 			else {
 				if (intersectionPointA != null) {
-					this.globalTransformMatrix.transformPoint(intersectionPointA.x, intersectionPointA.y, intersectionPointA)
+					this.globalTransformMatrix.transform(intersectionPointA.xf, intersectionPointA.yf, intersectionPointA)
 				}
 
 				if (intersectionPointB != null) {
-					this.globalTransformMatrix.transformPoint(intersectionPointB.x, intersectionPointB.y, intersectionPointB)
+					this.globalTransformMatrix.transform(intersectionPointB.xf, intersectionPointB.yf, intersectionPointB)
 				}
 			}
 
 			if (normalRadians != null) {
-				this.globalTransformMatrix.transformPoint(cos(normalRadians.x), sin(normalRadians.x), _helpPoint, true)
-				normalRadians.x = atan2(_helpPoint.y, _helpPoint.x)
+				this.globalTransformMatrix.deltaTransformPoint(cos(normalRadians.xf), sin(normalRadians.xf), _helpPoint)
+				normalRadians.xf = atan2(_helpPoint.yf, _helpPoint.xf)
 
-				this.globalTransformMatrix.transformPoint(cos(normalRadians.y), sin(normalRadians.y), _helpPoint, true)
-				normalRadians.y = atan2(_helpPoint.y, _helpPoint.x)
+				this.globalTransformMatrix.deltaTransformPoint(cos(normalRadians.yf), sin(normalRadians.yf), _helpPoint)
+				normalRadians.yf = atan2(_helpPoint.yf, _helpPoint.xf)
 			}
 		}
 
@@ -1198,7 +1200,7 @@ abstract class Slot(pool: SingleObjectPool<out Slot>) :  TransformObject(pool) {
 	var displayList: ArrayList<Any?> get() {
 		val displays = ArrayList<Any?>()
 		this._displayFrames.fastForEach { displayFrame ->
-			displays.push(displayFrame.display)
+            displays.add(displayFrame.display)
 		}
 
 		return displays
@@ -1333,12 +1335,12 @@ abstract class Slot(pool: SingleObjectPool<out Slot>) :  TransformObject(pool) {
 
 	///**
 	// * - Deprecated, please refer to {@link #display}.
-	// * @deprecated
+	// * deprecated
 	// * @language en_US
 	// */
 	///**
 	// * - 已废弃，请参考 {@link #display}。
-	// * @deprecated
+	// * deprecated
 	// * @language zh_CN
 	// */
 	//fun getDisplay(): Any {
@@ -1346,12 +1348,12 @@ abstract class Slot(pool: SingleObjectPool<out Slot>) :  TransformObject(pool) {
 	//}
 	///**
 	// * - Deprecated, please refer to {@link #display}.
-	// * @deprecated
+	// * deprecated
 	// * @language en_US
 	// */
 	///**
 	// * - 已废弃，请参考 {@link #display}。
-	// * @deprecated
+	// * deprecated
 	// * @language zh_CN
 	// */
 	//fun setDisplay(value: Any) {

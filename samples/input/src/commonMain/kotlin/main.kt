@@ -6,7 +6,7 @@ import com.soywiz.korge.view.*
 
 suspend fun main() = Korge {
 	var line = 0
-	fun textLine(text: String) = text(text).position(2, line++ * 20 + 5).apply { filtering = false }
+	fun textLine(text: String) = textOld(text).position(2, line++ * 20 + 5).apply { filtering = false }
 	fun nowTime() = DateTime.now().local.format(DateFormat("HH:mm:ss.SSS"))
 
 	textLine("Events :")
@@ -28,11 +28,21 @@ suspend fun main() = Korge {
 	//stage.addEventListener<KeyEvent> { keysEvText.text = "${nowTime()}:$it" }
 	//stage.addEventListener<MouseEvent> { mouseEvText.text = "${nowTime()}:$it" }
 	stage.addEventListener<ReshapeEvent> { resizeText.text = "Resize ${nowTime()} $it" }
-	//stage.addEventListener<GamePadConnectionEvent> { gamepadConnectedText.text = "${nowTime()}:$it" }
+	stage.addEventListener<GamePadConnectionEvent> { gamepadConnectedText.text = "${nowTime()}:$it" }
 	//stage.addEventListener<GamePadUpdateEvent> {
 	//	gamepadUpdateText.text = "${nowTime()}:$it"
 	//	gamepadUpdate2Text.text = "" + it.gamepads.lastOrNull { it.connected }?.rawButtonsPressed
 	//}
+
+    //stage.addComponent(object : GamepadComponent {
+    //    override val view: View = stage
+    //    override fun onGamepadEvent(views: Views, event: GamePadUpdateEvent) {
+    //        println(event)
+    //    }
+    //    override fun onGamepadEvent(views: Views, event: GamePadConnectionEvent) {
+    //        println(event)
+    //    }
+    //})
 
 	gamepad {
 		button.invoke { gamepadButtonText.text = "$it" }
@@ -40,8 +50,8 @@ suspend fun main() = Korge {
 	}
 
 	keys {
-		onKeyDown { keysDownText.text = "Key:Down ${nowTime()} ${it.key}" }
-		onKeyUp { keysUpText.text = "Key:Up ${nowTime()} ${it.key}" }
+		down { keysDownText.text = "Key:Down ${nowTime()} ${it.key}" }
+		up { keysUpText.text = "Key:Up ${nowTime()} ${it.key}" }
 	}
 
 	mouse {

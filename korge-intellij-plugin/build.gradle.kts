@@ -44,6 +44,7 @@ sourceSets {
     this.maybeCreate("main").apply {
         java {
             srcDirs("src/main/kotlin")
+            //srcDirs("src/main/kotlin-debug")
         }
         resources {
             srcDirs("src/main/resources")
@@ -55,6 +56,11 @@ sourceSets {
 val korgeVersion: String by project
 //val kotlinVersion: String by project
 
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
 dependencies {
 	//implementation("com.soywiz.korlibs.korge.plugins:korge-build:$korgeVersion")
     //implementation(project(":korte"))
@@ -62,8 +68,10 @@ dependencies {
     implementation(project(":korge-swf"))
     implementation(project(":korge-dragonbones"))
     implementation(project(":korge-spine"))
-    implementation(project(":korge-box2d"))
-	implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation(project(":kbox2d"))
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    testImplementation(kotlin("test"))
+    testImplementation(kotlin("test-junit"))
 	//implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.9.8")
 	//implementation("javax.xml.bind:jaxb-api:2.3.1")
 	//implementation("com.sun.xml.bind:jaxb-impl:2.3.1")
@@ -76,7 +84,7 @@ dependencies {
 
 val globalProps = properties
 
-version = "2.0.0.0-beta-2"
+version = "2.0.0.0-beta-3"
 
 extensions.getByType<org.jetbrains.intellij.IntelliJPluginExtension>().apply {
 	//version = "IC-2019.3"; setPlugins("gradle", "java")

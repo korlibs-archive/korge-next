@@ -3,18 +3,17 @@ package com.soywiz.korge.view
 import com.soywiz.kds.*
 import com.soywiz.kds.iterators.*
 import com.soywiz.klock.*
-import com.soywiz.klock.hr.*
 import com.soywiz.kmem.*
 import com.soywiz.korag.*
 import com.soywiz.korag.log.*
 import com.soywiz.korev.*
 import com.soywiz.korge.*
 import com.soywiz.korge.annotations.*
-import com.soywiz.korge.debug.*
 import com.soywiz.korge.debug.ObservableProperty
 import com.soywiz.korge.input.*
 import com.soywiz.korge.internal.*
 import com.soywiz.korge.render.*
+import com.soywiz.korge.resources.*
 import com.soywiz.korge.stat.*
 import com.soywiz.korge.view.ktree.*
 import com.soywiz.korgw.*
@@ -26,7 +25,10 @@ import com.soywiz.korio.*
 import com.soywiz.korio.async.*
 import com.soywiz.korio.file.*
 import com.soywiz.korio.file.std.*
+import com.soywiz.korio.lang.Environment
+import com.soywiz.korio.resources.*
 import com.soywiz.korio.stream.*
+import com.soywiz.korio.util.OS
 import com.soywiz.korma.geom.*
 import com.soywiz.korui.*
 import kotlinx.coroutines.*
@@ -44,23 +46,39 @@ class Views constructor(
     val ag: AG,
     val injector: AsyncInjector,
     val input: Input,
-    val timeProvider: HRTimeProvider,
+    val timeProvider: TimeProvider,
     val stats: Stats,
-    val gameWindow: GameWindow
+    val gameWindow: GameWindow,
+    val gameId: String = "korgegame",
+    val settingsFolder: String? = null
 ) :
     Extra by Extra.Mixin(),
     EventDispatcher by EventDispatcher.Mixin(),
-    CoroutineScope, ViewsScope, ViewsContainer,
+    CoroutineScope, ViewsContainer,
 	BoundsProvider,
     DialogInterface by gameWindow,
     AsyncCloseable,
-    KTreeSerializerHolder
+    KTreeSerializerHolder,
+    ResourcesContainer
 {
     override val views = this
 
     override val serializer = KTreeSerializer(this)
 
     val keys get() = input.keys
+
+    val gameIdFolder get() = gameId.replace("\\", "").replace("/", "").replace("..", "")
+
+    val realSettingsFolder: String by lazy {
+        when {
+            settingsFolder != null -> settingsFolder!!
+            else -> when {
+                OS.isMac -> "/Users/${Environment["USER"]}/Library/Preferences/$gameIdFolder"
+                OS.isWindows -> "${Environment["APPDATA"]}/$gameIdFolder"
+                else -> "${Environment["HOME"]}/.config/$gameIdFolder"
+            }
+        }
+    }
 
     var name: String? = null
     var currentVfs: VfsFile = resourcesVfs
@@ -70,7 +88,11 @@ class Views constructor(
 	var clearEachFrame = true
 	var clearColor: RGBA = Colors.BLACK
 	val propsTriggers = hashMapOf<String, (View, String, String) -> Unit>()
-	var clampElapsedTimeTo = HRTimeSpan.fromMilliseconds(100.0)
+	var clampElapsedTimeTo = 100.0.milliseconds
+
+    override val resources: Resources = Resources(coroutineContext, currentVfs)
+
+    val globalResources: Resources get() = resources
 
     var editingMode: Boolean = false
 
@@ -241,12 +263,12 @@ class Views constructor(
                         debugViews = !debugViews
                         gameWindow.debug = debugViews
                     }
-                    stagedViews.fastForEach { it._components?.key?.fastForEach { it.onKeyEvent(views, e) } }
+                    stagedViews.fastForEach { it._components?.key?.fastForEach { it.apply { views.onKeyEvent(e) } } }
                 }
 				is GamePadConnectionEvent -> stagedViews.fastForEach { it._components?.gamepad?.fastForEach { it.onGamepadEvent(views, e) } }
 				is GamePadUpdateEvent -> stagedViews.fastForEach { it._components?.gamepad?.fastForEach { it.onGamepadEvent(views, e) } }
-				is GamePadButtonEvent -> stagedViews.fastForEach { it._components?.gamepad?.fastForEach { it.onGamepadEvent(views, e) } }
-				is GamePadStickEvent -> stagedViews.fastForEach { it._components?.gamepad?.fastForEach { it.onGamepadEvent(views, e) } }
+				//is GamePadButtonEvent -> stagedViews.fastForEach { it._components?.gamepad?.fastForEach { it.onGamepadEvent(views, e) } }
+				//is GamePadStickEvent -> stagedViews.fastForEach { it._components?.gamepad?.fastForEach { it.onGamepadEvent(views, e) } }
                 else -> stagedViews.fastForEach { it._components?.event?.fastForEach { it.onEvent(e) } }
 			}
 		} catch (e: PreventDefaultException) {
@@ -268,6 +290,7 @@ class Views constructor(
 		}
 
         onAfterRender(renderContext)
+        renderContext.flush()
     }
 
 	fun frameUpdateAndRender(fixedSizeStep: TimeSpan = TimeSpan.NIL) {
@@ -282,19 +305,15 @@ class Views constructor(
 		//println("Render($lastTime -> $currentTime): $delta")
 		lastTime = currentTime
 		if (fixedSizeStep != TimeSpan.NIL) {
-			update(fixedSizeStep.hr)
+			update(fixedSizeStep)
 		} else {
 			update(adelta)
 		}
 		render()
 	}
 
-    @Deprecated("")
-    fun update(dtMs: Int) {
-        update(dtMs.hrMilliseconds)
-    }
 
-	fun update(elapsed: HRTimeSpan) {
+	fun update(elapsed: TimeSpan) {
 		//println(this)
 		//println("Update: $dtMs")
 		input.startFrame(elapsed)
@@ -428,31 +447,18 @@ class ViewsLog(
 	val injector: AsyncInjector = AsyncInjector(),
 	val ag: AG = LogAG(),
 	val input: Input = Input(),
-	val timeProvider: HRTimeProvider = HRTimeProvider,
+	val timeProvider: TimeProvider = TimeProvider,
 	val stats: Stats = Stats(),
 	val gameWindow: GameWindow = GameWindowLog()
 ) : CoroutineScope {
 	val views = Views(coroutineContext + AsyncInjectorContext(injector), ag, injector, input, timeProvider, stats, gameWindow)
 }
 
-fun Views.texture(bmp: Bitmap, mipmaps: Boolean = false): Texture =
-	Texture(Texture.Base(ag.createTexture(bmp, mipmaps), bmp.width, bmp.height))
-
-fun Views.texture(bmp: BitmapSlice<Bitmap>, mipmaps: Boolean = false): Texture =
-	Texture(Texture.Base(ag.createTexture(bmp, mipmaps), bmp.width, bmp.height))
-
+fun Views.texture(bmp: Bitmap, mipmaps: Boolean = false): Texture = Texture(Texture.Base(ag.createTexture(bmp, mipmaps), bmp.width, bmp.height))
+fun Views.texture(bmp: BitmapSlice<Bitmap>, mipmaps: Boolean = false): Texture = Texture(Texture.Base(ag.createTexture(bmp, mipmaps), bmp.width, bmp.height))
 fun Bitmap.texture(views: Views, mipmaps: Boolean = false) = views.texture(this, mipmaps)
-
-fun Views.texture(width: Int, height: Int, mipmaps: Boolean = false) =
-	texture(Bitmap32(width, height), mipmaps)
-
-suspend fun Views.texture(bmp: ByteArray, mipmaps: Boolean = false): Texture =
-	texture(nativeImageFormatProvider.decode(bmp), mipmaps)
-
-@Deprecated("Use ViewsContainer")
-interface ViewsScope {
-    val views: Views
-}
+fun Views.texture(width: Int, height: Int, mipmaps: Boolean = false) = texture(Bitmap32(width, height), mipmaps)
+suspend fun Views.texture(bmp: ByteArray, mipmaps: Boolean = false): Texture = texture(nativeImageFormatProvider.decode(bmp), mipmaps)
 
 interface ViewsContainer {
 	val views: Views
@@ -502,28 +508,27 @@ private fun getAllDescendantViewsBase(view: View, out: ArrayList<View>, reversed
 }
 
 @OptIn(KorgeInternal::class)
-fun View.updateSingleView(dtMsD: Double, tempViews: ArrayList<View> = arrayListOf()) {
+fun View.updateSingleView(delta: TimeSpan, tempViews: ArrayList<View> = arrayListOf()) {
     getAllDescendantViews(this, tempViews).fastForEach { view ->
         view._components?.update?.fastForEach { comp ->
-            comp.update(dtMsD * view.globalSpeed)
+            comp.update(delta * view.globalSpeed)
         }
     }
 }
 
-@Deprecated("")
-@OptIn(KorgeInternal::class)
-fun View.updateSingleViewWithViews(views: Views, dtMsD: Double, tempViews: ArrayList<View> = arrayListOf()) {
-    getAllDescendantViews(this, tempViews).fastForEach { view ->
-        view._components?.updateWV?.fastForEach { comp ->
-            comp.update(views, dtMsD * view.globalSpeed)
-        }
-    }
-}
+//@OptIn(KorgeInternal::class)
+//fun View.updateSingleViewWithViews(views: Views, dtMsD: Double, tempViews: ArrayList<View> = arrayListOf()) {
+//    getAllDescendantViews(this, tempViews).fastForEach { view ->
+//        view._components?.updateWV?.fastForEach { comp ->
+//            comp.update(views, (dtMsD * view.globalSpeed).milliseconds)
+//        }
+//    }
+//}
 
 @OptIn(KorgeInternal::class)
 fun View.updateSingleViewWithViewsAll(
     views: Views,
-    delta: HRTimeSpan,
+    delta: TimeSpan,
     tempViews: ArrayList<View> = arrayListOf()
 ) {
     getAllDescendantViews(this, tempViews).fastForEach { view ->
@@ -549,3 +554,5 @@ interface BoundsProvider {
 }
 
 var UiApplication.views by Extra.PropertyThis<UiApplication, Views?> { null }
+
+suspend fun views(): Views = injector().get()

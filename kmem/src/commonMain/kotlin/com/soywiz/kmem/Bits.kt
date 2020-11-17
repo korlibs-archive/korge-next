@@ -67,9 +67,6 @@ fun Int.reverseBits(): Int {
     return v
 }
 
-@Deprecated("", ReplaceWith("v.countLeadingZeros()"))
-fun clz32(v: Int): Int = v.countLeadingZeros()
-
 /** Returns the number of leading zeros of the bits of [this] integer */
 inline fun Int.countLeadingZeros(): Int = this.countLeadingZeroBits()
 
@@ -101,6 +98,8 @@ fun Int.extract(offset: Int, count: Int): Int = (this ushr offset) and count.mas
 fun Int.extract(offset: Int): Boolean = ((this ushr offset) and 1) != 0
 /** Extracts a bits at [offset] from [this] [Int] (returning a [Boolean]) */
 fun Int.extractBool(offset: Int) = this.extract(offset)
+/** Extracts 4 bits at [offset] from [this] [Int] */
+fun Int.extract4(offset: Int): Int = (this ushr offset) and 0xF
 /** Extracts 8 bits at [offset] from [this] [Int] */
 fun Int.extract8(offset: Int): Int = (this ushr offset) and 0xFF
 /** Extracts 16 bits at [offset] from [this] [Int] */
@@ -147,6 +146,10 @@ fun Int.insertScaledFF(value: Int, offset: Int, count: Int): Int = if (count == 
 
 /** Check if [this] has all the bits set in [bits] set */
 infix fun Int.hasFlags(bits: Int) = (this and bits) == bits
+infix fun Int.hasBits(bits: Int) = (this and bits) == bits
+
+infix fun Long.hasFlags(bits: Long) = (this and bits) == bits
+infix fun Long.hasBits(bits: Long) = (this and bits) == bits
 
 /** Creates an integer with only bit [bit] set */
 fun bit(bit: Int) = 1 shl bit
@@ -156,3 +159,12 @@ fun Int.unsetBits(bits: Int) = this and bits.inv()
 
 /** Returns the integer [this] with the [bits] set */
 fun Int.setBits(bits: Int) = this or bits
+
+/** Returns the integer [this] with the [bits] set or unset depending on the [set] parameter */
+fun Int.setBits(bits: Int, set: Boolean): Int = if (set) setBits(bits) else unsetBits(bits)
+
+fun Int.without(bits: Int) = this and bits.inv()
+fun Int.with(bits: Int) = this or bits
+
+fun Long.without(bits: Long) = this and bits.inv()
+fun Long.with(bits: Long) = this or bits

@@ -151,11 +151,10 @@ class RenderContext2D(
     inline fun scissor(x: Int, y: Int, width: Int, height: Int, block: () -> Unit) = scissor(tempScissor.setTo(x, y, width, height), block)
 
     /** Temporarily sets the [scissor] (visible rendering area) to [x], [y], [width] and [height] while [block] is executed. */
-    @Deprecated("Kotlin/Native boxes inline+Number")
-    inline fun scissor(x: Number, y: Number, width: Number, height: Number, block: () -> Unit) = scissor(x.toInt(), y.toInt(), width.toInt(), height.toInt(), block)
+    inline fun scissor(x: Double, y: Double, width: Double, height: Double, block: () -> Unit) = scissor(x.toInt(), y.toInt(), width.toInt(), height.toInt(), block)
 
     /** Temporarily sets the [scissor] (visible rendering area) to [x], [y], [width] and [height] while [block] is executed. */
-    inline fun scissor(x: Double, y: Double, width: Double, height: Double, block: () -> Unit) = scissor(x.toInt(), y.toInt(), width.toInt(), height.toInt(), block)
+    inline fun scissor(x: Float, y: Float, width: Float, height: Float, block: () -> Unit) = scissor(x.toInt(), y.toInt(), width.toInt(), height.toInt(), block)
 
     /** Temporarily sets the [scissor] (visible rendering area) to [rect] is executed. */
     inline fun scissor(rect: Rectangle, block: () -> Unit) =
@@ -181,10 +180,10 @@ class RenderContext2D(
 
         batch.flush()
         if (scissor != null) {
-            val left = m.fastTransformX(scissor.left.toDouble(), scissor.top.toDouble()).toInt()
-            val top = m.fastTransformY(scissor.left.toDouble(), scissor.top.toDouble()).toInt()
-            val right = m.fastTransformX(scissor.right.toDouble(), scissor.bottom.toDouble()).toInt()
-            val bottom = m.fastTransformY(scissor.right.toDouble(), scissor.bottom.toDouble()).toInt()
+            val left = m.transformX(scissor.left.toDouble(), scissor.top.toDouble()).toInt()
+            val top = m.transformY(scissor.left.toDouble(), scissor.top.toDouble()).toInt()
+            val right = m.transformX(scissor.right.toDouble(), scissor.bottom.toDouble()).toInt()
+            val bottom = m.transformY(scissor.right.toDouble(), scissor.bottom.toDouble()).toInt()
 
             returnScissor = scissorPool.alloc().setTo(left, top, right - left, bottom - top)
 

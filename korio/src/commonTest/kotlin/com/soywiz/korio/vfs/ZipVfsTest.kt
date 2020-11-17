@@ -7,7 +7,8 @@ import com.soywiz.korio.file.std.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korio.serialization.xml.*
 import com.soywiz.korio.stream.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import kotlin.test.*
 
 @Suppress("EXPERIMENTAL_FEATURE_WARNING")
@@ -88,7 +89,7 @@ class ZipVfsTest {
 
 			assertEquals(
 				"[/hello, /hello/compressedWorld.txt, /hello/world.txt]",
-				helloZip.listRecursive().toList().map { it.fullName }.toString()
+				helloZip.listRecursive().map { it.fullName }.toList().toString()
 			)
 
 			println(helloZip.stat())
@@ -124,25 +125,22 @@ class ZipVfsTest {
 		}
 	}
 
-	@Test
-	@Ignore
-	fun testZip1() = suspendTestNoBrowser {
-		val mem = MemoryVfs()
-		//UrlVfs("https://github.com/soywiz/korge-tools/releases/download/binaries/rhubarb-lip-sync-1.4.2-win32.zip").copyTo(LocalVfs["c:/temp/file.zip"])
-
-		//val zip = LocalVfs("c:/temp/rhubarb-lip-sync-1.4.2-osx.zip").openAsZip()
-		localVfs("c:/temp/rhubarb-lip-sync-1.4.2-win32.zip").openAsZip { zip ->
-			//zip.copyTo(mem) // IOException
-			zip.copyToTree(mem) // IOException
-
-			//assertEquals(
-			//	listOf("/rhubarb-lip-sync-1.4.2-osx"),
-			//	zip.list().map { it.fullname }.toList()
-			//)
-			//val mem = MemoryVfs()
-			//zip.copyToTree(mem)
-		}
-	}
+	//@Test
+	//fun testZip1() = suspendTestNoBrowser {
+	//	val mem = MemoryVfs()
+	//	//UrlVfs("https://github.com/soywiz/korge-tools/releases/download/binaries/rhubarb-lip-sync-1.4.2-win32.zip").copyTo(LocalVfs["c:/temp/file.zip"])
+	//	//val zip = LocalVfs("c:/temp/rhubarb-lip-sync-1.4.2-osx.zip").openAsZip()
+	//	localVfs("c:/temp/rhubarb-lip-sync-1.4.2-win32.zip").openAsZip { zip ->
+	//		//zip.copyTo(mem) // IOException
+	//		zip.copyToTree(mem) // IOException
+	//		//assertEquals(
+	//		//	listOf("/rhubarb-lip-sync-1.4.2-osx"),
+	//		//	zip.list().map { it.fullname }.toList()
+	//		//)
+	//		//val mem = MemoryVfs()
+	//		//zip.copyToTree(mem)
+	//	}
+	//}
 
 	@Test
 	fun testReadChunk() = suspendTestNoBrowser {

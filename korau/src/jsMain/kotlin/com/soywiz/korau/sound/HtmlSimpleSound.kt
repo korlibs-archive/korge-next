@@ -8,13 +8,43 @@ import kotlinx.coroutines.*
 import org.khronos.webgl.*
 import org.w3c.dom.*
 import org.w3c.dom.events.*
-import kotlin.browser.*
+import kotlinx.browser.*
 import kotlin.coroutines.*
 
-class MediaElementAudioSourceNodeWithAudioElement(
-	val node: MediaElementAudioSourceNode,
-	val audio: HTMLAudioElement
-)
+class AudioBufferOrHTMLMediaElement(
+    val audioBuffer: AudioBuffer?,
+    val htmlAudioElement: HTMLAudioElement?,
+) {
+    constructor(audioBuffer: AudioBuffer?) : this(audioBuffer, null)
+    constructor(htmlMediaElement: HTMLAudioElement?) : this(null, htmlMediaElement)
+
+    val isNull get() = audioBuffer == null && htmlAudioElement == null
+    val isNotNull get() = !isNull
+
+    val duration: Double? get() = when {
+        audioBuffer != null -> audioBuffer.duration
+        htmlAudioElement != null -> htmlAudioElement.duration
+        else -> null
+    }
+    val numberOfChannels: Int get() = audioBuffer?.numberOfChannels ?: 1
+}
+
+fun createAudioElement(
+    src: String,
+    currentTime: Double = 0.0,
+    autoplay: Boolean = false,
+    crossOrigin: String? = "anonymous"
+): Audio {
+    val out = Audio(src)
+    out.crossOrigin = crossOrigin
+    out.currentTime = currentTime
+    out.autoplay = autoplay
+    out.pause()
+    return out
+}
+
+fun HTMLAudioElement.clone(): Audio =
+    createAudioElement(this.src, this.currentTime, this.autoplay, this.crossOrigin)
 
 object HtmlSimpleSound {
 	val ctx: BaseAudioContext? = try {
@@ -36,27 +66,45 @@ object HtmlSimpleSound {
 	val unlock = unlockDeferred as Deferred<Unit>
 
 	class SimpleSoundChannel(
-		val buffer: AudioBuffer,
+		val buffer: AudioBufferOrHTMLMediaElement,
 		val ctx: BaseAudioContext,
         val params: PlaybackParameters,
         val coroutineContext: CoroutineContext
 	) {
         var gainNode: GainNode? = null
         var pannerNode: PannerNode? = null
-        var sourceNode: AudioBufferSourceNode? = null
+        var sourceNode: AudioScheduledSourceNode? = null
+        var realHtmlAudioElement: HTMLAudioElement? = null
 
         fun createNode(startTime: TimeSpan) {
+            realHtmlAudioElement?.pause()
+            sourceNode?.disconnect()
+
+            val htmlAudioElement = buffer.htmlAudioElement
+            val audioBuffer = buffer.audioBuffer
+
             ctx.destination.apply {
                 pannerNode = panner {
                     gainNode = gain {
-                        this.gain.value = 1.0
-                        sourceNode = source(buffer) {
-                            //start(0.0)
+                        when {
+                            htmlAudioElement != null -> {
+                                realHtmlAudioElement = htmlAudioElement.clone()
+                                sourceNode = source(realHtmlAudioElement!!)
+                            }
+                            audioBuffer != null -> {
+                                sourceNode = source(audioBuffer)
+                            }
                         }
                     }
                 }
+                updateNodes()
             }
-            sourceNode?.start(0.0, startTime.seconds)
+            if (realHtmlAudioElement != null) {
+                realHtmlAudioElement?.currentTime = startTime.seconds
+                realHtmlAudioElement?.play()
+            } else {
+                sourceNode?.start(0.0, startTime.seconds)
+            }
         }
 
         var startedAt = DateTime.now()
@@ -76,15 +124,15 @@ object HtmlSimpleSound {
                         val deferred = CompletableDeferred<Unit>()
                         //println("sourceNode: $sourceNode, ctx?.state=${ctx?.state}, buffer.duration=${buffer.duration}")
                         if (sourceNode == null || ctx?.state != "running") {
-                            window.setTimeout({ deferred.complete(Unit) }, (buffer.duration * 1000).toInt())
+                            window.setTimeout({ deferred.complete(Unit) }, ((buffer.asDynamic().duration.unsafeCast<Double>()) * 1000).toInt())
                         } else {
                             sourceNode?.onended = {
                                 deferred.complete(Unit)
                             }
                         }
-                        times = times.oneLess
                         //println("awaiting sound")
                         deferred.await()
+                        times = times.oneLess
                         //println("sound awaited")
                         if (!times.hasMore) break
                     }
@@ -92,7 +140,14 @@ object HtmlSimpleSound {
                     //println("sound completed")
 
                     running = false
-                    sourceNode?.stop()
+                    val realHtmlAudioElement = this.realHtmlAudioElement
+                    if (realHtmlAudioElement != null) {
+                        realHtmlAudioElement.pause()
+                        realHtmlAudioElement.currentTime = 0.0
+                        //sourceNode?.stop()
+                    } else {
+                        sourceNode?.stop()
+                    }
                     gainNode = null
                     pannerNode = null
                     sourceNode = null
@@ -100,39 +155,90 @@ object HtmlSimpleSound {
             }
         }
 
-        var job = createJobAt(params.startTime)
-
 		var currentTime: TimeSpan
             get() = DateTime.now() - startedAt
             set(value) = run {
-                job.cancel()
+                job?.cancel()
                 job = createJobAt(value)
             }
-        var volume: Double = 1.0
+        var volume: Double = params.volume
             set(value) = run {
                 field = value
-                gainNode?.gain?.value = value
+                updateVolume()
             }
-        var pitch: Double = 1.0
+        var pitch: Double = params.pitch
             set(value) = run {
                 field = value
+                updatePitch()
             }
-        var panning: Double = 0.0
+        var panning: Double = params.panning
             set(value) = run {
-                pannerNode?.setPosition(panning, 0.0, 0.0)
                 field = value
+                updatePanning()
             }
 
-		private var running = true
+
+
+        private var running = true
+        var pausedAt: TimeSpan? = null
+
+        fun updateNodes() {
+            updateVolume()
+            updatePitch()
+            updatePanning()
+        }
+
+        fun updateVolume() {
+            gainNode?.gain?.value = volume
+        }
+
+        fun updatePitch() {
+        }
+
+        fun updatePanning() {
+            pannerNode?.setPosition(panning, 0.0, 0.0)
+            pannerNode?.setOrientation(0.0, 1.0, 0.0)
+        }
+
 		//val playing get() = running && currentTime < buffer.duration
-        val playing get() = running.also {
+        val playing: Boolean
+            get() = running.also {
             //println("playing: $running")
         }
 
-		fun stop() {
-            job.cancel()
+        fun pause() {
+            this.pausedAt = currentTime
+            if (realHtmlAudioElement != null) {
+                realHtmlAudioElement?.pause()
+            } else {
+                stop()
+            }
+        }
+
+        fun resume() {
+            if (realHtmlAudioElement != null) {
+                realHtmlAudioElement?.play()
+            } else {
+                this.pausedAt?.let { currentTime = it }
+            }
+            this.pausedAt = null
+        }
+
+        fun stop() {
+            job?.cancel()
 		}
-	}
+
+        fun play() {
+            if (job != null && realHtmlAudioElement != null) {
+                realHtmlAudioElement?.play()
+            } else {
+                stop()
+                job = createJobAt(params.startTime)
+            }
+        }
+
+        var job: Job? = null
+    }
 
 	fun AudioNode.panner(callback: PannerNode.() -> Unit = {}): PannerNode? {
 		val ctx = ctx ?: return null
@@ -150,6 +256,16 @@ object HtmlSimpleSound {
 		return node
 	}
 
+    fun AudioNode.sourceAny(buffer: AudioBufferOrHTMLMediaElement, callback: AudioScheduledSourceNode.() -> Unit = {}): AudioScheduledSourceNode? {
+        val audioBuffer = buffer.audioBuffer
+        val htmlAudioElement = buffer.htmlAudioElement
+        return when {
+            audioBuffer != null -> source(audioBuffer) { callback() }
+            htmlAudioElement != null -> source(htmlAudioElement) { callback() }
+            else -> error("Unexpected buffer $buffer")
+        }
+    }
+
 	fun AudioNode.source(buffer: AudioBuffer, callback: AudioBufferSourceNode.() -> Unit = {}): AudioBufferSourceNode? {
 		val ctx = ctx ?: return null
 		val node = ctx.createBufferSource()
@@ -159,20 +275,31 @@ object HtmlSimpleSound {
 		return node
 	}
 
-	fun playSound(buffer: AudioBuffer, params: PlaybackParameters, coroutineContext: CoroutineContext): SimpleSoundChannel? {
-        //println("playSound[1]")
-        return ctx?.let {
-            //println("playSound[2]")
-            SimpleSoundChannel(buffer, it, params, coroutineContext)
-        }
+    fun AudioNode.source(buffer: HTMLAudioElement, callback: MediaElementAudioSourceNode.() -> Unit = {}): MediaElementAudioSourceNode? {
+        val ctx = ctx ?: return null
+        val node = ctx.createMediaElementSource(buffer)
+        callback(node)
+        node.connect(this)
+        return node
     }
 
-	fun stopSound(channel: AudioBufferSourceNode?) {
+    fun playSound(buffer: AudioBufferOrHTMLMediaElement, params: PlaybackParameters, coroutineContext: CoroutineContext): SimpleSoundChannel? {
+        return ctx?.let { SimpleSoundChannel(buffer, it, params, coroutineContext) }
+    }
+
+    fun stopSound(channel: AudioBufferSourceNode?) {
 		channel?.disconnect(0)
 		channel?.stop(0.0)
 	}
 
+    fun ensureUnlockStart() {
+        unlock
+    }
+
 	suspend fun waitUnlocked(): BaseAudioContext? {
+        if (!unlock.isCompleted) {
+            console.warn("Waiting for key or mouse down to start sound...")
+        }
 		unlock.await()
 		return ctx
 	}
@@ -194,30 +321,27 @@ object HtmlSimpleSound {
 		}
 	}
 
-	suspend fun loadSoundBuffer(url: String): MediaElementAudioSourceNodeWithAudioElement? {
+	fun loadSoundBuffer(url: String): HTMLAudioElement? {
 		if (ctx == null) return null
-		val audioPool = document.createElement("audio").unsafeCast<HTMLAudioElement>()
-		audioPool.currentTime = 0.0
-		audioPool.pause()
-		audioPool.autoplay = false
-		audioPool.src = url
-		return MediaElementAudioSourceNodeWithAudioElement(ctx.createMediaElementSource(audioPool), audioPool)
+		return createAudioElement(url)
 	}
 
-	suspend fun playSoundBuffer(buffer: MediaElementAudioSourceNodeWithAudioElement?) {
+    /*
+	suspend fun playSoundBuffer(buffer: HTMLAudioElement?) {
 		if (ctx != null) {
 			buffer?.audio?.play()
 			buffer?.node?.connect(ctx.destination)
 		}
 	}
 
-	suspend fun stopSoundBuffer(buffer: MediaElementAudioSourceNodeWithAudioElement?) {
+	suspend fun stopSoundBuffer(buffer: HTMLAudioElement?) {
 		if (ctx != null) {
 			buffer?.audio?.pause()
 			buffer?.audio?.currentTime = 0.0
 			buffer?.node?.disconnect(ctx.destination)
 		}
 	}
+    */
 
 	suspend fun loadSound(data: ByteArray): AudioBuffer? = loadSound(data.unsafeCast<Int8Array>().buffer, "ByteArray")
 
@@ -308,8 +432,8 @@ open external class BaseAudioContext {
 external class AudioContext : BaseAudioContext
 external class webkitAudioContext : BaseAudioContext
 
-external interface MediaElementAudioSourceNode : AudioNode {
-
+external interface MediaElementAudioSourceNode : AudioScheduledSourceNode {
+    val mediaElement: HTMLMediaElement
 }
 
 external interface AudioScheduledSourceNode : AudioNode {
@@ -327,7 +451,7 @@ external interface AudioBufferSourceNode : AudioScheduledSourceNode {
 	var playbackRate: Double
 }
 
-external interface AudioBuffer {
+external class AudioBuffer {
 	val duration: Double
 	val length: Int
 	val numberOfChannels: Int

@@ -16,7 +16,7 @@ open class MP3 : MP3Base() {
 
 open class MP3Base : AudioFormat("mp3") {
 	override suspend fun tryReadInfo(data: AsyncStream, props: AudioDecodingProps): Info? = try {
-        val parser = Parser(data)
+        val parser = Parser(data, data.getLength())
         val (duration, decodingTime) = measureTimeWithResult {
             when (props.exactTimings) {
                 null -> parser.getDurationExact() // Try to guess what's better based on VBR?
@@ -49,7 +49,7 @@ open class MP3Base : AudioFormat("mp3") {
         }
     }
 
-	class Parser(val data: AsyncStream) {
+	class Parser(val data: AsyncStream, val dataLength: Long) {
 		var info: Mp3Info? = null
 
 		//Read first mp3 frame only...  bind for CBR constant bit rate MP3s
@@ -71,46 +71,75 @@ open class MP3Base : AudioFormat("mp3") {
 		private suspend fun _getDuration(use_cbr_estimate: Boolean, emit: ((filePosition: Long, totalMicroseconds: Double, info: Mp3Info) -> Unit)? = null): TimeSpan {
 			data.position = 0
 			val fd = data.duplicate()
+            val len = fd.getLength()
 
 			var durationMicroseconds = 0.0
 			val offset = this.skipID3v2Tag(fd.readStream(100))
-			fd.position = offset
+            var pos = offset
 
 			var info: Mp3Info? = null
 
             var nframes = 0
-			while (!fd.eof()) {
-				val block2 = UByteArrayInt(fd.readBytesUpTo(10))
-				if (block2.size < 10) break
+            val block2 = UByteArrayInt(ByteArray(10))
 
-				if (block2[0] == 0xFF && ((block2[1] and 0xe0) != 0)) {
-                    val framePos = fd.position
-					info = parseFrameHeader(block2)
-                    emit?.invoke(framePos, durationMicroseconds, info)
-                    nframes++
-                    //println("FRAME: $nframes")
-					this.info = info
-					if (info.frameSize == 0) {
-                        return durationMicroseconds.microseconds
+            val fdbase = fd.base
+            val fdsync = fdbase.toSyncOrNull()
+
+            var nreads = 0
+            var nskips = 0
+            var nasync = 0
+
+            //println("fdbase: $fdbase")
+
+            try {
+                while (pos < len) {
+                    val block2Size = when {
+                        fdsync != null -> fdsync.read(pos, block2.bytes, 0, 10)
+                        else -> {
+                            nasync++
+                            fd.position = pos
+                            fd.readBytesUpTo(block2.bytes, 0, 10)
+                        }
                     }
-					fd.position += info.frameSize - 10
-					durationMicroseconds += (info.samples * 1_000_000L) / info.samplingRate
-				} else if (block2.bytes.openSync().readString(3) == "TAG") {
-					fd.position += 128 - 10 //skip over id3v1 tag size
-				} else {
-					fd.position -= 9
-				}
+                    nreads++
+                    if (block2Size < 10) break
+                    pos += block2Size
 
-				if ((info != null) && use_cbr_estimate) {
-					return estimateDuration(info.bitrate, info.channelMode.channels, offset.toInt()).microseconds
-				}
-			}
+                    when {
+                        block2[0] == 0xFF && ((block2[1] and 0xe0) != 0) -> {
+                            val framePos = fd.position
+                            info = parseFrameHeader(block2)
+                            emit?.invoke(framePos, durationMicroseconds, info)
+                            nframes++
+                            //println("FRAME: $nframes")
+                            this.info = info
+                            if (info.frameSize == 0) return durationMicroseconds.microseconds
+                            pos += info.frameSize - 10
+                            durationMicroseconds += (info.samples * 1_000_000L) / info.samplingRate
+                        }
+                        block2.bytes.openSync().readString(3) == "TAG" -> {
+                            pos += 128 - 10 //skip over id3v1 tag size
+                        }
+                        else -> {
+                            pos -= 9
+                            nskips++
+                        }
+                    }
+
+                    if ((info != null) && use_cbr_estimate) {
+                        return estimateDuration(info.bitrate, info.channelMode.channels, offset.toInt()).microseconds
+                    }
+                }
+            } finally {
+                //println("MP3.Parser._getDuration: nreads=$nreads, nskips=$nskips, nasync=$nasync")
+                //printStackTrace()
+            }
 			return durationMicroseconds.microseconds
 		}
 
 		private suspend fun estimateDuration(bitrate: Int, channels: Int, offset: Int): Long {
 			val kbps = (bitrate * 1_000) / 8
-			val dataSize = data.getLength() - offset
+			val dataSize = dataLength - offset
 			return dataSize * (2 / channels) * 1_000_000L / kbps
 		}
 
@@ -118,17 +147,20 @@ open class MP3Base : AudioFormat("mp3") {
 			val b = block.duplicate()
 
 			if (b.readString(3, Charsets.LATIN1) == "ID3") {
-				val id3v2_major_version = b.readU8()
-				val id3v2_minor_version = b.readU8()
-				val id3v2_flags = b.readU8()
-				val flag_unsynchronisation = id3v2_flags.extract(7)
-				val flag_extended_header = id3v2_flags.extract(6)
-				val flag_experimental_ind = id3v2_flags.extract(5)
-				val flag_footer_present = id3v2_flags.extract(4)
-				val z0 = b.readU8();
-				val z1 = b.readU8();
-				val z2 = b.readU8();
-				val z3 = b.readU8()
+                val bb = b.readBytesExact(7)
+				val id3v2_major_version = bb.readU8(0)
+				val id3v2_minor_version = bb.readU8(1)
+				val id3v2_flags = bb.readU8(2)
+				val z0 = bb.readU8(3)
+				val z1 = bb.readU8(4)
+				val z2 = bb.readU8(5)
+				val z3 = bb.readU8(6)
+
+                val flag_unsynchronisation = id3v2_flags.extract(7)
+                val flag_extended_header = id3v2_flags.extract(6)
+                val flag_experimental_ind = id3v2_flags.extract(5)
+                val flag_footer_present = id3v2_flags.extract(4)
+
 				if (((z0 and 0x80) == 0) && ((z1 and 0x80) == 0) && ((z2 and 0x80) == 0) && ((z3 and 0x80) == 0)) {
 					val header_size = 10
 					val tag_size =
@@ -141,6 +173,8 @@ open class MP3Base : AudioFormat("mp3") {
 		}
 
 		companion object {
+            suspend operator fun invoke(data: AsyncStream) = Parser(data, data.getLength())
+
 			enum class ChannelMode(val id: Int, val channels: Int) {
 				STEREO(0b00, 2),
 				JOINT_STEREO(0b01, 1),
@@ -156,13 +190,17 @@ open class MP3Base : AudioFormat("mp3") {
 			val layers = intArrayOf(-1, 3, 2, 1)
 
 			val bitrates = mapOf(
-				"V1L1" to intArrayOf(0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448),
-				"V1L2" to intArrayOf(0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384),
-				"V1L3" to intArrayOf(0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320),
-				"V2L1" to intArrayOf(0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256),
-				"V2L2" to intArrayOf(0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160),
-				"V2L3" to intArrayOf(0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160)
+                getBitrateKey(1, 1) to intArrayOf(0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448),
+                getBitrateKey(1, 2) to intArrayOf(0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384),
+                getBitrateKey(1, 3) to intArrayOf(0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320),
+                getBitrateKey(2, 1) to intArrayOf(0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256),
+                getBitrateKey(2, 2) to intArrayOf(0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160),
+                getBitrateKey(2, 3) to intArrayOf(0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160)
 			)
+
+            fun getBitrateKey(version: Int, layer: Int): Int {
+                return version * 10 + layer
+            }
 
 			val sampleRates = mapOf(
 				"1" to intArrayOf(44100, 48000, 32000),
@@ -185,7 +223,7 @@ open class MP3Base : AudioFormat("mp3") {
 				val samples: Int
 			)
 
-			suspend fun parseFrameHeader(f4: UByteArrayInt): Mp3Info {
+			fun parseFrameHeader(f4: UByteArrayInt): Mp3Info {
 				val b0 = f4[0]
 				val b1 = f4[1]
 				val b2 = f4[2]
@@ -198,7 +236,7 @@ open class MP3Base : AudioFormat("mp3") {
 				val layer = layers[b1.extract(1, 2)]
 
 				val protection_bit = b1.extract(0, 1)
-				val bitrate_key = "V%dL%d".format(simple_version, layer)
+				val bitrate_key = getBitrateKey(simple_version, layer)
 				val bitrate_idx = b2.extract(4, 4)
 
 				val bitrate = bitrates[bitrate_key]?.get(bitrate_idx) ?: 0

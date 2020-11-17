@@ -4,17 +4,19 @@ val enableKotlinNative: String by project
 val doEnableKotlinNative get() = enableKotlinNative == "true"
 
 val isWindows get() = org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_WINDOWS)
+val isMacos get() = org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_MAC)
 
 fun org.jetbrains.kotlin.gradle.dsl.KotlinTargetContainerWithPresetFunctions.nativeTargets(): List<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
     return when {
         isWindows -> listOf(mingwX64())
-        else -> listOf(linuxX64(), mingwX64(), macosX64())
+        isMacos -> listOf(macosX64(), iosArm64(), iosX64())
+        else -> listOf(linuxX64(), mingwX64(), macosX64(), iosArm64(), iosX64())
     }
 }
 
 if (doEnableKotlinNative) {
 	kotlin {
-		for (target in nativeTargets()) {
+		for (target in nativeTargets() ) {
 			target.compilations["main"].cinterops {
                 if (target.name == "mingwX64") maybeCreate("win32_winmm")
                 if (target.name == "linuxX64") maybeCreate("linux_OpenAL")
@@ -22,6 +24,7 @@ if (doEnableKotlinNative) {
 				maybeCreate("stb_vorbis")
 			}
 		}
+
 	}
 }
 
@@ -41,7 +44,7 @@ korlibs {
     def nativeTargets = [
         "mingwX64", "macosX64",
         *(korlibs.linuxEnabled ? ["linuxX64"] : []),
-        "iosX64", "iosArm32", "iosArm64",
+        "iosX64", "iosArm64",
         "tvosX64", "tvosArm64",
         "watchosX86", "watchosArm32", "watchosArm64"
     ]

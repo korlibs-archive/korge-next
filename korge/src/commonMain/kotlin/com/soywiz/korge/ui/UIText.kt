@@ -3,14 +3,8 @@ package com.soywiz.korge.ui
 import com.soywiz.korge.html.*
 import com.soywiz.korge.input.*
 import com.soywiz.korge.view.*
+import com.soywiz.korim.text.*
 import com.soywiz.korma.geom.*
-
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun Container.uiText(
-    text: String, width: Number, height: Number,
-    skin: TextSkin = defaultTextSkin,
-    block: @ViewDslMarker UIText.() -> Unit = {}
-): UIText = uiText(text, width.toDouble(), height.toDouble(), skin, block)
 
 inline fun Container.uiText(
     text: String,
@@ -31,7 +25,7 @@ class UIText(
     var textColor by uiObservable(skin.normal.color) { updateText() }
     var textSize by uiObservable(skin.normal.size) { updateText() }
     var textFont by uiObservable(skin.normal.font) { updateText() }
-    var textAlignment by uiObservable(Html.Alignment.MIDDLE_CENTER) { updateText() }
+    var textAlignment by uiObservable(TextAlignment.MIDDLE_CENTER) { updateText() }
 
     protected var bover by uiObservable(false) { updateState() }
     protected var bpressing by uiObservable(false) { updateState() }
@@ -91,14 +85,14 @@ class UIText(
     }
 
     private fun updateText() {
-        textView.format = Html.Format(face = textFont, size = textSize, color = textColor, align = textAlignment)
-        textView.setTextBounds(Rectangle(0, 0, width, height))
+        textView.setFormat(face = textFont, size = textSize, color = textColor, align = textAlignment)
+        textView.setTextBounds(Rectangle(0.0, 0.0, width, height))
         textView.setText(text)
     }
 
     override fun onSizeChanged() {
         super.onSizeChanged()
         background.size(width, height)
-        textView.setTextBounds(Rectangle(0, 0, width, height))
+        textView.setTextBounds(Rectangle(0.0, 0.0, width, height))
     }
 }

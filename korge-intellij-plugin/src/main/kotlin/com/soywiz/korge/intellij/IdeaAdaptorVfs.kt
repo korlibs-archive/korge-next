@@ -7,6 +7,7 @@ import com.soywiz.korio.async.*
 import com.soywiz.korio.file.*
 import com.soywiz.korio.file.std.*
 import com.soywiz.korio.stream.*
+import com.soywiz.korio.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import java.io.*
@@ -99,7 +100,7 @@ class IdeaAdaptorVfs(val file: VirtualFile) : Vfs() {
 
 	override fun getAbsolutePath(path: String): String = accessSure(path).toString()
 
-	override suspend fun list(path: String): ReceiveChannel<VfsFile> {
-		return accessSure(path).children.map { VfsFile(this@IdeaAdaptorVfs, "$path/${it.name}") }.toChannel()
+	override suspend fun listSimple(path: String): List<VfsFile> {
+		return accessSure(path).children.map { VfsFile(this@IdeaAdaptorVfs, "$path/${it.name}") }
 	}
 }

@@ -19,6 +19,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
 import com.intellij.openapi.vfs.*
 import com.soywiz.klock.hr.*
+import com.soywiz.klock.milliseconds
 import com.soywiz.korag.*
 import com.soywiz.korge.*
 import com.soywiz.korge.awt.*
@@ -45,6 +46,7 @@ import java.awt.datatransfer.*
 import java.awt.event.*
 import java.beans.*
 import javax.swing.*
+import com.soywiz.korev.dispatch
 
 open class KorgeBaseKorgeFileEditor(
     val project: Project,
@@ -143,7 +145,7 @@ open class KorgeBaseKorgeFileEditor(
                     }
                     container.changeTo(module.mainScene, fileToEdit)
                     //viewsDebuggerComponent?.setRootView(stage)
-                    stage.timers.interval(500.hrMilliseconds) {
+                    stage.timers.interval(500.milliseconds) {
                         viewsDebuggerComponent?.update()
                     }
                     //println("[G] ${Thread.currentThread()}")
@@ -158,12 +160,12 @@ open class KorgeBaseKorgeFileEditor(
         }.component.also { component ->
             val listener = object : MouseAdapter() {
                 override fun mouseReleased(e: MouseEvent) {
-                    println("mouseReleased")
+                    //println("mouseReleased")
                     executePendingWriteActions()
                 }
 
                 override fun mouseMoved(e: MouseEvent) {
-                    println("mouseMoved")
+                    //println("mouseMoved")
                     executePendingWriteActions()
                 }
             }
@@ -210,13 +212,26 @@ open class KorgeBaseKorgeFileEditor(
                                 updateState()
                             }
                         }
-                        toolbarButton("Play/Pause", "Plays/Pauses the animations") {
+                        val playPauseButton = toolbarButton("Play/Pause", "Plays/Pauses the animations") {
                             fun updateState() {
                                 component.isSelected = viewsDebuggerActions?.playing == true
                             }
                             updateState()
                             click {
+                                //viewsDebuggerActions?.views?.dispatch(com.soywiz.korge.awt.KTreeSaveEvent())
+                                viewsDebuggerActions?.views?.save2Handlers?.invoke(Unit)
                                 viewsDebuggerActions?.togglePlay()
+                                updateState()
+                            }
+                        }
+                        toolbarButton("Reset", "Resets the animation to its initial version before playing") {
+                            fun updateState() {
+                                playPauseButton.component.isSelected = viewsDebuggerActions?.playing == true
+                            }
+                            click {
+                                viewsDebuggerActions?.toggleReset()
+                                //viewsDebuggerActions?.views?.dispatch(com.soywiz.korge.awt.KTreeRestoreEvent())
+                                viewsDebuggerActions?.views?.restore2Handlers?.invoke(Unit)
                                 updateState()
                             }
                         }

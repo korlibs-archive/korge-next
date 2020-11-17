@@ -2,11 +2,10 @@ package com.soywiz.korge.samples.minesweeper
 
 import com.soywiz.klock.*
 import com.soywiz.korau.sound.*
-import com.soywiz.korge.html.*
 import com.soywiz.korge.render.*
 import com.soywiz.korge.view.*
 import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.font.*
+import com.soywiz.korim.text.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korma.random.*
 import kotlin.random.*
@@ -16,8 +15,8 @@ class Board(
 	parent: Container,
 	val imageSet: BmpSlice,
 	val imageSlices: List<BmpSlice>,
-	val click: NativeSound,
-	val boom: NativeSound,
+	val click: Sound,
+	val boom: Sound,
 	// Width, height and quantity of mines are established
 	// Board characteristics: width, height, number of mines
 	val bwidth: Int,
@@ -46,12 +45,11 @@ class Board(
 		// Creating text with time
 		//timeText = new Text("", 50, 50, Text.Align.center, Text.Align.middle, Color.white, new Font("Arial", 40));
 		//timeText = Text("", 50, 50, Text.Align.center, Text.Align.middle, Color.white, Font.fromResource("font.ttf", 40));
-		val FONT_HEIGHT = 24.0
-		//timeText = text("00:00", font = DefaultTtfFont.toBitmapFont(32), textSize = FONT_HEIGHT).apply {
-        timeText = text("00:00", textSize = FONT_HEIGHT).apply {
+		val FONT_HEIGHT = 32.0
+        timeText = text("00:00", font = views.minesweeperFont, textSize = FONT_HEIGHT).apply {
 			centerXBetween(0.0, this@Board.width)
-			y = -FONT_HEIGHT - 5
-			format.align = Html.Alignment.CENTER
+			y = -FONT_HEIGHT - 16
+			alignment = TextAlignment.CENTER
 		}
 
 		//The board is centered on the screen
@@ -354,7 +352,7 @@ class Board(
 					imageSlices[board[py][px]]
 				}
 
-				images[py][px].texture = image
+				images[py][px].bitmap = image
 			}
 		}
 		super.renderInternal(ctx)

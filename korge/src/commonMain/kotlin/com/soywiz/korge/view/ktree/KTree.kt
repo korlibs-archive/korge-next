@@ -11,9 +11,10 @@ import com.soywiz.korge.view.BlendMode
 import com.soywiz.korge.view.grid.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
-import com.soywiz.korim.vector.*
+import com.soywiz.korim.text.*
 import com.soywiz.korio.file.*
 import com.soywiz.korio.serialization.xml.*
+import com.soywiz.korma.geom.*
 import kotlin.jvm.*
 import kotlin.reflect.*
 
@@ -130,8 +131,8 @@ open class KTreeSerializer(val views: Views) : KTreeSerializerHolder, Extra by E
     val extensionsByName = LinkedHashMap<String, KTreeSerializerExtension>()
 
     init {
-        register(TextButton.Serializer)
-        register(Text2.Serializer)
+        register(UITextButton.Serializer)
+        register(Text.Serializer)
         register(UIProgressBar.Serializer)
         register(UICheckBox.Serializer)
     }
@@ -225,6 +226,10 @@ open class KTreeSerializer(val views: Views) : KTreeSerializerHolder, Extra by E
             prop.set(xml.double(prop.name, defaultValue))
         }
 
+        fun angleDegrees(prop: KMutableProperty0<Angle>, defaultValue: Angle) {
+            prop.set(xml.double(prop.name, defaultValue.degrees).degrees)
+        }
+
         fun color(prop: KMutableProperty0<RGBA>, defaultValue: RGBA) {
             prop.set(Colors[(xml.strNull(prop.name) ?: defaultValue.hexString)])
         }
@@ -243,11 +248,11 @@ open class KTreeSerializer(val views: Views) : KTreeSerializerHolder, Extra by E
         double(view::ratio, 0.0)
         double(view::x, 0.0)
         double(view::y, 0.0)
-        double(view::rotationDegrees, 0.0)
+        angleDegrees(view::rotation, 0.degrees)
         double(view::scaleX, 1.0)
         double(view::scaleY, 1.0)
-        double(view::skewXDegrees, 0.0)
-        double(view::skewYDegrees, 0.0)
+        angleDegrees(view::skewX, 0.degrees)
+        angleDegrees(view::skewY, 0.degrees)
         if (view is RectBase) {
             double(view::anchorX, 0.0)
             double(view::anchorY, 0.0)
@@ -258,9 +263,9 @@ open class KTreeSerializer(val views: Views) : KTreeSerializerHolder, Extra by E
             double(view::width, 100.0)
             double(view::height, 100.0)
         }
-        if (view is Text2) {
+        if (view is Text) {
             string(view::text, "Text")
-            double(view::fontSize, 10.0)
+            double(view::textSize, 10.0)
             //view.fontSource = xml.str("fontSource", "")
             view.verticalAlign = VerticalAlign(xml.str("verticalAlign"))
             view.horizontalAlign = HorizontalAlign(xml.str("horizontalAlign"))
@@ -299,6 +304,9 @@ open class KTreeSerializer(val views: Views) : KTreeSerializerHolder, Extra by E
         fun add(prop: KProperty0<*>) {
             properties[prop.name] = prop.get()
         }
+        fun add(prop: KProperty0<Angle>) {
+            properties[prop.name] = prop.get().degrees
+        }
 
         if (view.name !== null) add(view::name)
         if (view.colorMul != Colors.WHITE) {
@@ -310,11 +318,11 @@ open class KTreeSerializer(val views: Views) : KTreeSerializerHolder, Extra by E
         if (view.ratio != 0.0) add(view::ratio)
         if (view.x != 0.0) add(view::x)
         if (view.y != 0.0) add(view::y)
-        if (view.rotationDegrees != 0.0) add(view::rotationDegrees)
+        if (view.rotation != 0.radians) add(view::rotation)
         if (view.scaleX != 1.0) add(view::scaleX)
         if (view.scaleY != 1.0) add(view::scaleY)
-        if (view.skewXDegrees != 0.0) add(view::skewXDegrees)
-        if (view.skewYDegrees != 0.0) add(view::skewYDegrees)
+        if (view.skewX != 0.degrees) add(view::skewX)
+        if (view.skewY != 0.degrees) add(view::skewY)
         if (view is RectBase) {
             if (view.anchorX != 0.0) add(view::anchorX)
             if (view.anchorY != 0.0) add(view::anchorY)
@@ -351,8 +359,8 @@ open class KTreeSerializer(val views: Views) : KTreeSerializerHolder, Extra by E
                 is Image -> Xml("image", rproperties)
                 is TreeViewRef -> Xml("treeviewref", rproperties)
                 is TiledMapViewRef -> Xml("tiledmapref", rproperties)
-                is Text2 -> Xml("text", rproperties)
-                is TextButton -> Xml("uitextbutton", rproperties)
+                is Text -> Xml("text", rproperties)
+                is UITextButton -> Xml("uitextbutton", rproperties)
                 is Container -> Xml("container", rproperties) {
                     view.forEachChildren { this@Xml.node(viewTreeToKTree(it, currentVfs, level + 1)) }
                 }

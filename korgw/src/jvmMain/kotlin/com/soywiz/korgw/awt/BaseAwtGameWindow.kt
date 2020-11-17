@@ -1,13 +1,13 @@
 package com.soywiz.korgw.awt
 
-import com.soywiz.kgl.*
-import com.soywiz.klock.hr.*
+import com.soywiz.klock.*
 import com.soywiz.kmem.*
 import com.soywiz.korev.*
 import com.soywiz.korgw.*
 import com.soywiz.korgw.osx.*
 import com.soywiz.korgw.platform.*
-import com.soywiz.korim.color.*
+import com.soywiz.korgw.win32.*
+import com.soywiz.korgw.x11.*
 import com.soywiz.korio.async.*
 import com.soywiz.korio.file.*
 import com.soywiz.korio.file.std.*
@@ -23,6 +23,7 @@ import javax.swing.*
 
 abstract class BaseAwtGameWindow : GameWindow() {
     abstract override val ag: AwtAg
+
     //val fvsync get() = vsync
     val fvsync get() = false
     open val ctx: BaseOpenglContext? = null
@@ -170,6 +171,7 @@ abstract class BaseAwtGameWindow : GameWindow() {
 
                 //gl.clearColor(1f, 1f, 1f, 1f)
                 //gl.clear(gl.COLOR_BUFFER_BIT)
+                updateGamepads()
                 frame()
                 gl.flush()
                 gl.finish()
@@ -178,13 +180,34 @@ abstract class BaseAwtGameWindow : GameWindow() {
         //Toolkit.getDefaultToolkit().sync();
     }
 
-
-
-    val frameScaleFactor: Double get() = run {
-        getDisplayScalingFactor(component)
-        //val res = frame.toolkit.getDesktopProperty("apple.awt.contentScaleFactor") as? Number
-        //if (res != null) return res.toDouble()
+    private fun updateGamepads() {
+        when {
+            OS.isWindows -> {
+                xinputEventAdapter.updateGamepadsWin32(this)
+            }
+            OS.isLinux -> {
+                linuxJoyEventAdapter.updateGamepads(this)
+            }
+            OS.isMac -> {
+                macosGamepadEventAdapter.updateGamepads(this)
+            }
+            else -> {
+                //println("undetected OS: ${OS.rawName}")
+            }
+        }
     }
+
+    private val xinputEventAdapter by lazy { XInputEventAdapter() }
+    private val linuxJoyEventAdapter by lazy { LinuxJoyEventAdapter() }
+    private val macosGamepadEventAdapter by lazy { MacosGamepadEventAdapter() }
+
+
+    val frameScaleFactor: Double
+        get() = run {
+            getDisplayScalingFactor(component)
+            //val res = frame.toolkit.getDesktopProperty("apple.awt.contentScaleFactor") as? Number
+            //if (res != null) return res.toDouble()
+        }
 
     val nonScaledWidth get() = contentComponent.width.toDouble()
     val nonScaledHeight get() = contentComponent.height.toDouble()
@@ -416,12 +439,37 @@ abstract class BaseAwtGameWindow : GameWindow() {
         }
         EventQueue.invokeLater {
             component.isVisible = true
+            component.repaint()
+            //fullscreen = true
+
+            // keys.up(Key.ENTER) { if (it.alt) gameWindow.toggleFullScreen() }
+            if (OS.isWindows) {
+                (component as? Frame?)?.apply {
+                    val frame = this
+                    val insets = frame.insets
+                    frame.isAlwaysOnTop = true
+                    // @TODO: HACK so the windows grabs focus on Windows 10 at least when launching on gradle daemon
+                    try {
+                        val robot = Robot()
+                        val pos = MouseInfo.getPointerInfo().location
+                        val bounds = frame.bounds
+                        bounds.setFrameFromDiagonal(bounds.minX + insets.left, bounds.minY + insets.top, bounds.maxX - insets.right, bounds.maxY - insets.bottom)
+
+                        //println("frame.bounds: ${frame.bounds}")
+                        //println("frame.bounds: ${bounds}")
+                        //println("frame.insets: ${insets}")
+                        //println(frame.contentPane.bounds)
+                        robot.mouseMove(bounds.centerX.toInt(), bounds.centerY.toInt())
+                        robot.mousePress(InputEvent.BUTTON1_MASK)
+                        robot.mouseRelease(InputEvent.BUTTON1_MASK)
+                        robot.mouseMove(pos.x, pos.y)
+                    } catch (e: Throwable) {
+                    }
+                    frame.isAlwaysOnTop = false
+                }
+            }
         }
 
-        EventQueue.invokeLater {
-            //println("repaint!")
-            component.repaint()
-        }
         //val timer = Timer(1000 / 60, ActionListener { component.repaint() })
         //timer.start()
 
@@ -476,7 +524,7 @@ abstract class BaseAwtGameWindow : GameWindow() {
                     else -> {
                         //println("running[bb]")
                         val nanos = System.nanoTime()
-                        val frameTimeNanos = (1.0 / fps.toDouble()).hrSeconds.nanosecondsInt
+                        val frameTimeNanos = (1.0 / fps.toDouble()).seconds.nanosecondsInt
                         val delayNanos = frameTimeNanos - (nanos % frameTimeNanos)
                         if (delayNanos > 0) {
                             //println(delayNanos / 1_000_000)

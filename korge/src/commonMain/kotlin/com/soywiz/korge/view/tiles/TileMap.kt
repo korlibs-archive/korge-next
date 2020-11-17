@@ -19,12 +19,12 @@ inline fun Container.tileMap(map: IntArray2, tileset: TileSet, repeatX: TileMap.
 inline fun Container.tileMap(map: Bitmap32, tileset: TileSet, repeatX: TileMap.Repeat = TileMap.Repeat.NONE, repeatY: TileMap.Repeat = repeatX, callback: @ViewDslMarker TileMap.() -> Unit = {}) =
 	TileMap(map.toIntArray2(), tileset).repeat(repeatX, repeatY).addTo(this, callback)
 
+@PublishedApi
+internal fun Bitmap32.toIntArray2() = IntArray2(width, height, data.ints)
+
 @OptIn(KorgeInternal::class)
 open class TileMap(val intMap: IntArray2, val tileset: TileSet) : View() {
-    @PublishedApi
-    internal val _map = Bitmap32(intMap.width, intMap.height, RgbaArray(intMap.data))
-	@Deprecated("kept for compatiblity")
-	val map get() = _map
+    private var contentVersion = 0
 	constructor(map: Bitmap32, tileset: TileSet) : this(map.toIntArray2(), tileset)
 
 	val tileWidth = tileset.width.toDouble()
@@ -50,25 +50,35 @@ open class TileMap(val intMap: IntArray2, val tileset: TileSet) : View() {
     private val tt3 = Point(0, 0)
 
     // Analogous to Bitmap32.locking
-    fun lock() = _map.lock()
-    fun unlock() = _map.unlock()
-    inline fun lock(block: () -> Unit) = _map.lock(block = block)
+    fun lock() {
+    }
+    fun unlock() {
+        contentVersion++
+    }
+    inline fun <T> lock(block: () -> T): T {
+        lock()
+        try {
+            return block()
+        } finally {
+            unlock()
+        }
+    }
 
     private var cachedContentVersion = 0
 	private fun computeVertexIfRequired(ctx: RenderContext) {
-		if (!dirtyVertices && cachedContentVersion == _map.contentVersion) return
-        cachedContentVersion = _map.contentVersion
+		if (!dirtyVertices && cachedContentVersion == contentVersion) return
+        cachedContentVersion = contentVersion
         dirtyVertices = false
         val m = globalMatrix
 
         val renderTilesCounter = ctx.stats.counter("renderedTiles")
 
-        val posX = m.fastTransformX(0.0, 0.0)
-        val posY = m.fastTransformY(0.0, 0.0)
-        val dUX = m.fastTransformX(tileWidth, 0.0) - posX
-        val dUY = m.fastTransformY(tileWidth, 0.0) - posY
-        val dVX = m.fastTransformX(0.0, tileHeight) - posX
-        val dVY = m.fastTransformY(0.0, tileHeight) - posY
+        val posX = m.transformX(0.0, 0.0)
+        val posY = m.transformY(0.0, 0.0)
+        val dUX = m.transformX(tileWidth, 0.0) - posX
+        val dUY = m.transformY(tileWidth, 0.0) - posY
+        val dVX = m.transformX(0.0, tileHeight) - posX
+        val dVY = m.transformY(0.0, tileHeight) - posY
 
         val colMul = renderColorMul
         val colAdd = renderColorAdd
@@ -115,7 +125,13 @@ open class TileMap(val intMap: IntArray2, val tileset: TileSet) : View() {
                 val flipY = cell.extract(30)
                 val rotate = cell.extract(29)
 
+                count++
+
+                //println("CELL_DATA: $cellData")
+
                 val tex = tileset[cellData] ?: continue
+
+                //println("CELL_DATA_TEX: $tex")
 
                 val info = verticesPerTex.getOrPut(tex.bmp) {
                     infosPool.alloc().also { info ->
@@ -162,10 +178,9 @@ open class TileMap(val intMap: IntArray2, val tileset: TileSet) : View() {
                 }
 
                 info.icount += 6
-                count++
             }
         }
-        renderTilesCounter?.increment(count)
+        renderTilesCounter.increment(count)
 	}
 
     private val indices = IntArray(4)

@@ -29,12 +29,11 @@ import com.dragonbones.core.*
 import com.dragonbones.event.*
 import com.dragonbones.model.*
 import com.dragonbones.util.*
-import com.dragonbones.internal.fastForEach
+import com.soywiz.kds.iterators.*
 import com.soywiz.korge.debug.*
-import com.soywiz.korge.render.*
 import com.soywiz.korge.view.*
 import com.soywiz.korim.color.*
-import com.soywiz.korio.file.*
+import com.soywiz.korim.vector.*
 import com.soywiz.korma.geom.vector.*
 import com.soywiz.korui.*
 
@@ -63,10 +62,10 @@ class KorgeDbArmatureDisplay : Container(), IArmatureProxy {
 
 	// Do not use the time from DragonBones, but the UpdateComponent
 	init {
-		addUpdatable {
+        addUpdater {
 			returnEvents()
 			//_armature?.advanceTimeForChildren(it.toDouble() / 1000.0)
-			_armature?.advanceTime(it.toDouble() / 1000.0)
+			_armature?.advanceTime(it.seconds)
 			dispatchQueuedEvents()
 		}
 	}
@@ -110,18 +109,18 @@ class KorgeDbArmatureDisplay : Container(), IArmatureProxy {
 				for (i in 0 until bones.length) {
 					val bone = bones[i]
 					val boneLength = bone.boneData.length
-					val startX = bone.globalTransformMatrix.tx
-					val startY = bone.globalTransformMatrix.ty
-					val endX = startX + bone.globalTransformMatrix.a * boneLength
-					val endY = startY + bone.globalTransformMatrix.b * boneLength
+					val startX = bone.globalTransformMatrix.txf
+					val startY = bone.globalTransformMatrix.tyf
+					val endX = startX + bone.globalTransformMatrix.af * boneLength
+					val endY = startY + bone.globalTransformMatrix.bf * boneLength
 
-					boneDrawer.lineStyle(2.0, Colors.PURPLE, 0.7)
-					boneDrawer.moveTo(startX.toDouble(), startY.toDouble())
-					boneDrawer.lineTo(endX, endY)
-					boneDrawer.lineStyle(0.0, Colors.BLACK, 0.0)
-					boneDrawer.beginFill(Colors.PURPLE, 0.7)
-					boneDrawer.circle(startX.toDouble(), startY.toDouble(), 3.0)
-					boneDrawer.endFill()
+                    boneDrawer.stroke(Colors.PURPLE.withAd(0.7), StrokeInfo(thickness = 2.0)) {
+                        boneDrawer.moveTo(startX.toDouble(), startY.toDouble())
+                        boneDrawer.lineTo(endX, endY)
+                    }
+                    boneDrawer.fill(Colors.PURPLE, 0.7) {
+                        boneDrawer.circle(startX.toDouble(), startY.toDouble(), 3.0)
+                    }
 				}
 
 				val slots = armature.getSlots()
@@ -138,59 +137,55 @@ class KorgeDbArmatureDisplay : Container(), IArmatureProxy {
 							this._debugDrawer?.addChild(child)
 						}
 
-						child.clear()
-						child.lineStyle(2.0, Colors.RED, 0.7)
+						child.stroke(Colors.RED.withAd(0.7), StrokeInfo(thickness = 2.0)) {
 
-						when (boundingBoxData.type) {
-							BoundingBoxType.Rectangle -> {
-								child.rect(
-									-boundingBoxData.width * 0.5,
-									-boundingBoxData.height * 0.5,
-									boundingBoxData.width,
-									boundingBoxData.height
-								)
-							}
+                            when (boundingBoxData.type) {
+                                BoundingBoxType.Rectangle -> {
+                                    child.rect(
+                                        -boundingBoxData.width * 0.5,
+                                        -boundingBoxData.height * 0.5,
+                                        boundingBoxData.width,
+                                        boundingBoxData.height
+                                    )
+                                }
 
-							BoundingBoxType.Ellipse -> {
-								child.rect(
-									-boundingBoxData.width * 0.5,
-									-boundingBoxData.height * 0.5,
-									boundingBoxData.width,
-									boundingBoxData.height
-								)
-							}
+                                BoundingBoxType.Ellipse -> {
+                                    child.rect(
+                                        -boundingBoxData.width * 0.5,
+                                        -boundingBoxData.height * 0.5,
+                                        boundingBoxData.width,
+                                        boundingBoxData.height
+                                    )
+                                }
 
-							BoundingBoxType.Polygon -> {
-								val vertices = (boundingBoxData as PolygonBoundingBoxData).vertices
-								//for (let i = 0, l = vertices.length; i < l; i += 2) {
-								for (i in 0 until vertices.size step 2) {
-									val x = vertices[i]
-									val y = vertices[i + 1]
+                                BoundingBoxType.Polygon -> {
+                                    val vertices = (boundingBoxData as PolygonBoundingBoxData).vertices
+                                    //for (let i = 0, l = vertices.length; i < l; i += 2) {
+                                    for (i in 0 until vertices.size step 2) {
+                                        val x = vertices[i]
+                                        val y = vertices[i + 1]
 
-									if (i == 0) {
-										child.moveTo(x, y)
-									} else {
-										child.lineTo(x, y)
-									}
-								}
+                                        if (i == 0) {
+                                            child.moveTo(x, y)
+                                        } else {
+                                            child.lineTo(x, y)
+                                        }
+                                    }
 
-								child.lineTo(vertices[0], vertices[1])
-							}
+                                    child.lineTo(vertices[0], vertices[1])
+                                }
 
-							else -> {
+                                else -> {
 
-							}
-						}
-
-						child.endFill()
+                                }
+                            }
+                        }
 						slot.updateTransformAndMatrix()
 						slot.updateGlobalTransform()
 
 						val transform = slot.global
-						val m = com.soywiz.korma.geom.Matrix()
-						slot.globalTransformMatrix.toMatrix2d(m)
 						//println("SET TRANSFORM: $transform")
-						child.setMatrix(m)
+						child.setMatrix(slot.globalTransformMatrix)
 					} else {
 						val child = this._debugDrawer?.getChildByName(slot.name)
 						if (child != null) {

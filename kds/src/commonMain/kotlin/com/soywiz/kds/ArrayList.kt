@@ -38,9 +38,49 @@ class IntArrayList(capacity: Int = 7) : Collection<Int> {
 
     fun clear() = run { length = 0 }
 
-    fun add(value: Int) {
+    fun add(v0: Int) {
         ensure(1)
-        data[length++] = value
+        data[length++] = v0
+    }
+
+    fun add(v0: Int, v1: Int) {
+        ensure(2)
+        data[length++] = v0
+        data[length++] = v1
+    }
+
+    fun add(v0: Int, v1: Int, v2: Int) {
+        ensure(3)
+        data[length++] = v0
+        data[length++] = v1
+        data[length++] = v2
+    }
+
+    fun add(v0: Int, v1: Int, v2: Int, v3: Int) {
+        ensure(4)
+        data[length++] = v0
+        data[length++] = v1
+        data[length++] = v2
+        data[length++] = v3
+    }
+
+    fun add(v0: Int, v1: Int, v2: Int, v3: Int, v4: Int) {
+        ensure(5)
+        data[length++] = v0
+        data[length++] = v1
+        data[length++] = v2
+        data[length++] = v3
+        data[length++] = v4
+    }
+
+    fun add(v0: Int, v1: Int, v2: Int, v3: Int, v4: Int, v5: Int) {
+        ensure(6)
+        data[length++] = v0
+        data[length++] = v1
+        data[length++] = v2
+        data[length++] = v3
+        data[length++] = v4
+        data[length++] = v5
     }
 
     operator fun plusAssign(value: Int) = add(value)
@@ -57,7 +97,7 @@ class IntArrayList(capacity: Int = 7) : Collection<Int> {
     fun add(values: IntArrayList) = add(values.data, 0, values.size)
     fun add(values: Iterable<Int>) = run { for (v in values) add(v) }
 
-    operator fun get(index: Int): Int = getAt(index)
+    operator fun get(index: Int): Int = data[index]
 
     /** Gets an item of the list without boxing */
     fun getAt(index: Int): Int = data[index]
@@ -112,9 +152,6 @@ class IntArrayList(capacity: Int = 7) : Collection<Int> {
         length += count
     }
 
-    @Deprecated("", ReplaceWith("swap(indexA, indexB)"))
-    fun swapIndices(indexA: Int, indexB: Int) = swap(indexA, indexB)
-
     fun swap(indexA: Int, indexB: Int) {
         val l = this.getAt(indexA)
         val r = this.getAt(indexB)
@@ -148,7 +185,7 @@ class IntArrayList(capacity: Int = 7) : Collection<Int> {
     // Data
     override fun hashCode(): Int = data.contentHashCode(0, size)
     override fun equals(other: Any?): Boolean {
-        if (other is IntArrayList) return data.contentEquals(other.data)
+        if (other is IntArrayList) return size == other.size && data.contentEquals(other.data, 0, size)
         if (other is List<*>) return other == this
         return false
     }
@@ -200,9 +237,44 @@ class DoubleArrayList(capacity: Int = 7) : Collection<Double> {
 
     fun clear() = run { length = 0 }
 
-    fun add(value: Double) {
+    fun add(v0: Double) {
         ensure(1)
-        data[length++] = value
+        data[length++] = v0
+    }
+    fun add(v0: Double, v1: Double) {
+        ensure(2)
+        data[length++] = v0
+        data[length++] = v1
+    }
+    fun add(v0: Double, v1: Double, v2: Double) {
+        ensure(3)
+        data[length++] = v0
+        data[length++] = v1
+        data[length++] = v2
+    }
+    fun add(v0: Double, v1: Double, v2: Double, v3: Double) {
+        ensure(4)
+        data[length++] = v0
+        data[length++] = v1
+        data[length++] = v2
+        data[length++] = v3
+    }
+    fun add(v0: Double, v1: Double, v2: Double, v3: Double, v4: Double) {
+        ensure(5)
+        data[length++] = v0
+        data[length++] = v1
+        data[length++] = v2
+        data[length++] = v3
+        data[length++] = v4
+    }
+    fun add(v0: Double, v1: Double, v2: Double, v3: Double, v4: Double, v5: Double) {
+        ensure(6)
+        data[length++] = v0
+        data[length++] = v1
+        data[length++] = v2
+        data[length++] = v3
+        data[length++] = v4
+        data[length++] = v5
     }
 
     operator fun plusAssign(value: Double) = add(value)
@@ -219,7 +291,7 @@ class DoubleArrayList(capacity: Int = 7) : Collection<Double> {
     fun add(values: DoubleArrayList) = add(values.data, 0, values.size)
     fun add(values: Iterable<Double>) = run { for (v in values) add(v) }
 
-    operator fun get(index: Int): Double = getAt(index)
+    operator fun get(index: Int): Double = data[index]
 
     /** Gets an item of the list without boxing */
     fun getAt(index: Int): Double = data[index]
@@ -274,9 +346,6 @@ class DoubleArrayList(capacity: Int = 7) : Collection<Double> {
         length += count
     }
 
-    @Deprecated("", ReplaceWith("swap(indexA, indexB)"))
-    fun swapIndices(indexA: Int, indexB: Int) = swap(indexA, indexB)
-
     fun swap(indexA: Int, indexB: Int) {
         val l = this.getAt(indexA)
         val r = this.getAt(indexB)
@@ -310,7 +379,7 @@ class DoubleArrayList(capacity: Int = 7) : Collection<Double> {
     // Data
     override fun hashCode(): Int = data.contentHashCode(0, size)
     override fun equals(other: Any?): Boolean {
-        if (other is DoubleArrayList) return data.contentEquals(other.data)
+        if (other is DoubleArrayList) return size == other.size && data.contentEquals(other.data, 0, size)
         if (other is List<*>) return other == this
         return false
     }
@@ -381,7 +450,7 @@ class FloatArrayList(capacity: Int = 7) : Collection<Float> {
     fun add(values: FloatArrayList) = add(values.data, 0, values.size)
     fun add(values: Iterable<Float>) = run { for (v in values) add(v) }
 
-    operator fun get(index: Int): Float = getAt(index)
+    operator fun get(index: Int): Float = data[index]
 
     /** Gets an item of the list without boxing */
     fun getAt(index: Int): Float = data[index]
@@ -436,9 +505,6 @@ class FloatArrayList(capacity: Int = 7) : Collection<Float> {
         length += count
     }
 
-    @Deprecated("", ReplaceWith("swap(indexA, indexB)"))
-    fun swapIndices(indexA: Int, indexB: Int) = swap(indexA, indexB)
-
     fun swap(indexA: Int, indexB: Int) {
         val l = this.getAt(indexA)
         val r = this.getAt(indexB)
@@ -472,7 +538,7 @@ class FloatArrayList(capacity: Int = 7) : Collection<Float> {
     // Data
     override fun hashCode(): Int = data.contentHashCode(0, size)
     override fun equals(other: Any?): Boolean {
-        if (other is FloatArrayList) return data.contentEquals(other.data)
+        if (other is FloatArrayList) return size == other.size && data.contentEquals(other.data, 0, size)
         if (other is List<*>) return other == this
         return false
     }

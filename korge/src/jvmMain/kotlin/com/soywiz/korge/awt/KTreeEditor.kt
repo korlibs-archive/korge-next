@@ -1,12 +1,12 @@
 package com.soywiz.korge.awt
 
+import com.soywiz.kds.*
 import com.soywiz.kmem.*
 import com.soywiz.korev.*
 import com.soywiz.korge.input.*
 import com.soywiz.korge.render.*
 import com.soywiz.korge.scene.*
 import com.soywiz.korge.view.*
-import com.soywiz.korge.view.camera2.*
 import com.soywiz.korge.view.ktree.*
 import com.soywiz.korgw.*
 import com.soywiz.korim.color.*
@@ -51,6 +51,12 @@ class AnchorPointResult(
         )
     }
 }
+
+//class KTreeSaveEvent : Event()
+//class KTreeRestoreEvent : Event()
+
+val Views.save2Handlers by extraProperty { Signal<Unit>() }
+val Views.restore2Handlers by extraProperty { Signal<Unit>() }
 
 abstract class BaseKorgeFileToEdit(val file: VfsFile) {
     val onRequestSave = Signal<String>()
@@ -142,8 +148,12 @@ suspend fun ktreeEditor(fileToEdit: BaseKorgeFileToEdit): Module {
             load(file.readKTree(views) as Container)
         }
 
+        fun serialize(): String {
+            return root.viewTreeToKTree(views).toOuterXmlIndentedString()
+        }
+
         fun save(message: String) {
-            fileToEdit.save(root.viewTreeToKTree(views).toOuterXmlIndentedString(), message)
+            fileToEdit.save(serialize(), message)
         }
 
         fileToEdit.onChanged {
@@ -153,6 +163,27 @@ suspend fun ktreeEditor(fileToEdit: BaseKorgeFileToEdit): Module {
         views.debugSavedHandlers.add {
             save(it.toString())
         }
+
+        var saved: String? = null
+
+        //println("KORGE.KTreeEditor")
+
+        views.save2Handlers {
+            //println("KTreeSaveEvent!")
+            saved = serialize()
+        }
+        views.restore2Handlers {
+            //println("KTreeRestoreEvent! : $saved")
+            if (saved != null) {
+                load(saved!!)
+            }
+        }
+        //views.addEventListener<KTreeSaveEvent> {
+        //    println("KTreeSaveEvent!")
+        //    saved = serialize()
+        //}
+        //views.addEventListener<KTreeRestoreEvent> {
+        //}
 
         load(fileToEdit.file)
 
@@ -168,7 +199,7 @@ suspend fun ktreeEditor(fileToEdit: BaseKorgeFileToEdit): Module {
         var movingCameraMouse = false
 
         stage.keys {
-            downNew { e ->
+            down { e ->
                 when (e.key) {
                     Key.UP -> actions.moveView(0, -1, e.shift)
                     Key.DOWN -> actions.moveView(0, +1, e.shift)
@@ -176,7 +207,7 @@ suspend fun ktreeEditor(fileToEdit: BaseKorgeFileToEdit): Module {
                     Key.RIGHT -> actions.moveView(+1, 0, e.shift)
                 }
             }
-            upNew { e ->
+            up { e ->
             }
             /*
             upNew { e ->
@@ -219,12 +250,12 @@ suspend fun ktreeEditor(fileToEdit: BaseKorgeFileToEdit): Module {
                 if (!smallX && !smallY) {
                     ctx.draw(camera.content.globalMatrix) {
                         if (gridShowing) {
-                            grid.draw(ctx, RectangleInt(0, 0, root.width, root.height))
+                            grid.draw(ctx, RectangleInt(0.0, 0.0, root.width, root.height))
                         }
                     }
                 }
             }
-            val rectBounds = Rectangle.fromBounds(mat.transform(0, 0), mat.transform(root.width, root.height))
+            val rectBounds = Rectangle.fromBounds(mat.transform(0.0, 0.0), mat.transform(root.width, root.height))
             ctx.drawVector(Colors.BLACK) {
                 rect(rectBounds)
             }
@@ -413,7 +444,7 @@ suspend fun ktreeEditor(fileToEdit: BaseKorgeFileToEdit): Module {
                                 val deltaAngle = currentAngle - initialAngle
                                 view.rotation = (selectedViewInitialRotation + deltaAngle)
                                 if (e.isShiftDown) {
-                                    view.rotationDegrees = view.rotationDegrees.nearestAlignedTo(15.0)
+                                    view.rotation = view.rotation.degrees.nearestAlignedTo(15.0).degrees
                                 }
                             }
                             null -> {

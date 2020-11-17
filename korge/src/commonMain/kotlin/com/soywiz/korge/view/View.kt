@@ -1,23 +1,19 @@
-@file:UseExperimental(KorgeInternal::class)
+@file:OptIn(KorgeInternal::class)
 
 package com.soywiz.korge.view
 
 import com.soywiz.kds.*
 import com.soywiz.kds.iterators.*
 import com.soywiz.klock.*
-import com.soywiz.klock.hr.*
 import com.soywiz.korev.*
+import com.soywiz.korge.baseview.*
 import com.soywiz.korge.component.*
 import com.soywiz.korge.debug.*
 import com.soywiz.korge.internal.*
 import com.soywiz.korge.render.*
 import com.soywiz.korge.view.filter.*
-import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
-import com.soywiz.korim.format.*
 import com.soywiz.korim.vector.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.file.std.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korio.util.*
 import com.soywiz.korio.util.encoding.*
@@ -26,11 +22,7 @@ import com.soywiz.korma.geom.shape.*
 import com.soywiz.korma.geom.vector.*
 import com.soywiz.korma.interpolation.*
 import com.soywiz.korui.*
-import kotlin.collections.set
-import kotlin.reflect.*
-
-@Deprecated("", replaceWith = ReplaceWith("View"))
-typealias DisplayObject = View
+import com.soywiz.krypto.encoding.*
 
 /**
  * KorGE includes a DOM-based tree of views that makes a chain of affine transforms starting with the [Stage], that is the root node.
@@ -62,12 +54,14 @@ typealias DisplayObject = View
 abstract class View internal constructor(
     /** Indicates if this class is a container or not. This is only overrided by Container. This check is performed like this, to avoid type checks. That might be an expensive operation in some targets. */
     val isContainer: Boolean
-) : Renderable
-    , Extra by Extra.Mixin()
+) : BaseView(), Renderable
+    , Extra
     , KorgeDebugNode
     , BView
 //, EventDispatcher by EventDispatcher.Mixin()
 {
+    override var extra: LinkedHashMap<String, Any?>? = null
+
     override val bview: View get() = this
     override val bviewAll: List<View> by lazy { listOf(this) }
 
@@ -115,12 +109,6 @@ abstract class View internal constructor(
      * itself is going to change like cameras, viewports and the Stage.
      */
     interface Reference // View that breaks batching Viewport
-
-    @KorgeInternal
-    @Deprecated("Not used by now")
-    enum class HitTestType {
-        BOUNDING, SHAPE
-    }
 
     open var hitShape: VectorPath? = null
     open var hitShapes: List<VectorPath>? = null
@@ -186,9 +174,9 @@ abstract class View internal constructor(
 
     private var _scaleX: Double = 1.0
     private var _scaleY: Double = 1.0
-    private var _skewX: Double = 0.0
-    private var _skewY: Double = 0.0
-    private var _rotation: Angle = 0.radians
+    private var _skewX: Angle = 0.0.radians
+    private var _skewY: Angle = 0.0.radians
+    private var _rotation: Angle = 0.0.radians
 
     /** Position of the view. **@NOTE**: If plan to change its values manually. You should call [View.invalidateMatrix] later to keep the matrix in sync */
     var pos = Point()
@@ -243,41 +231,17 @@ abstract class View internal constructor(
 
     /** Local skewing in the X axis of this view */
     var skewX: Angle
-        get() = skewXRadians.radians
-        set(v) { skewXRadians = v.radians }
+        get() = ensureTransform()._skewX
+        set(v) { ensureTransform(); if (_skewX != v) {
+            _skewX = v; invalidateMatrix()
+        } }
 
     /** Local skewing in the Y axis of this view */
     var skewY: Angle
-        get() = skewYRadians.radians
-        set(v) { skewYRadians = v.radians }
-
-    /** Local skewing in the X axis of this view */
-    var skewXRadians: Double
-        get() = ensureTransform()._skewX
-        set(v) {
-            ensureTransform(); if (_skewX != v) {
-                _skewX = v; invalidateMatrix()
-            }
-        }
-
-    /** Local skewing in the Y axis of this view */
-    var skewYRadians: Double
         get() = ensureTransform()._skewY
-        set(v) {
-            ensureTransform(); if (_skewY != v) {
-                _skewY = v; invalidateMatrix()
-            }
-        }
-
-    /** Local skewing in the X axis of this view */
-    var skewXDegrees: Double
-        get() = skewX.degrees
-        set(v) { skewX = v.degrees }
-
-    /** Local skewing in the Y axis of this view */
-    var skewYDegrees: Double
-        get() = skewY.degrees
-        set(v) { skewY = v.degrees }
+        set(v) { ensureTransform(); if (_skewY != v) {
+            _skewY = v; invalidateMatrix()
+        } }
 
     /** Local rotation of this view */
     var rotation: Angle
@@ -286,22 +250,6 @@ abstract class View internal constructor(
             ensureTransform(); if (_rotation != v) {
                 _rotation = v; invalidateMatrix()
             }
-        }
-
-    /** Local rotation in radians of this view */
-    @Deprecated("Use rotation instead")
-    var rotationRadians: Double
-        get() = rotation.radians
-        set(v) {
-            rotation = v.radians
-        }
-
-    /** Local rotation in degrees of this view */
-    @Deprecated("Use rotation instead")
-    var rotationDegrees: Double
-        get() = rotation.degrees
-        set(v) {
-            rotation = v.degrees
         }
 
     /** The global x position of this view */
@@ -396,7 +344,7 @@ abstract class View internal constructor(
      * @NOTE: If you don't have this value computed, you can use [ColorTransform.aR] aB, aG and aA to control the
      * per component values. You should call the [View.invalidate] method after that.
      */
-    var colorAdd: Int
+    var colorAdd: ColorAdd
         get() = _colorTransform.colorAdd;
         set(v) {
             _colorTransform.colorAdd = v
@@ -420,44 +368,6 @@ abstract class View internal constructor(
         set(value) {
             this.colorMul = value
         }
-
-    // region Properties
-    private val _props = linkedMapOf<String, Any?>()
-
-    /** Immutable map of custom String properties attached to this view. Should use [hasProp], [getProp] and [addProp] methods to control this */
-    val props: Map<String, Any?> get() = _props
-
-    /** Checks if this view has the [key] property */
-    fun hasProp(key: String) = key in _props
-
-    /** Gets the [key] property of this view as a [String] or [default] when not found */
-    fun getPropString(key: String, default: String = "") = _props[key]?.toString() ?: default
-
-    /** Gets the [key] property of this view as an [Double] or [default] when not found */
-    fun getPropDouble(key: String, default: Double = 0.0): Double {
-        val value = _props[key]
-        if (value is Number) return value.toDouble()
-        if (value is String) return value.toDoubleOrNull() ?: default
-        return default
-    }
-
-    /** Gets the [key] property of this view as an [Int] or [default] when not found */
-    fun getPropInt(key: String, default: Int = 0) = getPropDouble(key, default.toDouble()).toInt()
-
-    /** Adds or replaces the property [key] with the [value] */
-    fun addProp(key: String, value: Any?) {
-        _props[key] = value
-        //val componentGen = views.propsTriggers[key]
-        //if (componentGen != null) {
-        //	componentGen(this, key, value)
-        //}
-    }
-
-    /** Adds a list of [values] properties at once */
-    fun addProps(values: Map<String, Any?>) {
-        for (pair in values) addProp(pair.key, pair.value)
-    }
-    // endregion
 
     private val tempTransform = Matrix.Transform()
     //private val tempMatrix = Matrix2d()
@@ -547,140 +457,6 @@ abstract class View internal constructor(
     internal var validLocalProps = true
     internal var validLocalMatrix = true
 
-    // region Components
-
-    @KorgeInternal
-    @PublishedApi
-    internal var _components: Components? = null
-
-    @KorgeInternal
-    @PublishedApi
-    internal val componentsSure: Components
-        get() {
-            if (_components == null) _components = Components()
-            return _components!!
-        }
-
-    /** Creates a typed [T] component (using the [gen] factory function) if the [View] doesn't have any of that kind, or returns a component of that type if already attached */
-    @Deprecated("")
-    inline fun <reified T : Component> getOrCreateComponent(gen: (View) -> T): T =
-        componentsSure.getOrCreateComponent(this, T::class, gen)
-
-    inline fun <reified T : Component> getOrCreateComponentOther(gen: (View) -> T): T =
-        componentsSure.getOrCreateComponent(this, T::class, gen)
-
-    inline fun <reified T : MouseComponent> getOrCreateComponentMouse(gen: (View) -> T): T =
-        componentsSure.getOrCreateComponent(this, T::class, gen)
-
-    inline fun <reified T : KeyComponent> getOrCreateComponentKey(gen: (View) -> T): T =
-        componentsSure.getOrCreateComponent(this, T::class, gen)
-
-    inline fun <reified T : GamepadComponent> getOrCreateComponentGamepad(gen: (View) -> T): T =
-        componentsSure.getOrCreateComponent(this, T::class, gen)
-
-    inline fun <reified T : TouchComponent> getOrCreateComponentTouch(gen: (View) -> T): T =
-        componentsSure.getOrCreateComponent(this, T::class, gen)
-
-    inline fun <reified T : EventComponent> getOrCreateComponentEvent(gen: (View) -> T): T =
-        componentsSure.getOrCreateComponent(this, T::class, gen)
-
-    inline fun <reified T : UpdateComponentWithViews> getOrCreateComponentUpdateWithViews(gen: (View) -> T): T =
-        componentsSure.getOrCreateComponent(this, T::class, gen)
-
-    inline fun <reified T : UpdateComponent> getOrCreateComponentUpdate(gen: (View) -> T): T =
-        componentsSure.getOrCreateComponent(this, T::class, gen)
-
-    inline fun <reified T : ResizeComponent> getOrCreateComponentResize(gen: (View) -> T): T =
-        componentsSure.getOrCreateComponent(this, T::class, gen)
-
-    inline fun <reified T : UpdateComponent> getComponentUpdate(): T? = componentsSure.getComponentUpdate<T>()
-
-    /** Removes a specific [c] component from the view */
-    fun removeComponent(c: Component) {
-        _components?.remove(c)
-    }
-
-    fun removeComponent(c: MouseComponent) {
-        _components?.remove(c)
-    }
-
-    fun removeComponent(c: KeyComponent) {
-        _components?.remove(c)
-    }
-
-    fun removeComponent(c: GamepadComponent) {
-        _components?.remove(c)
-    }
-
-    fun removeComponent(c: TouchComponent) {
-        _components?.remove(c)
-    }
-
-    fun removeComponent(c: EventComponent) {
-        _components?.remove(c)
-    }
-
-    fun removeComponent(c: UpdateComponentWithViews) {
-        _components?.remove(c)
-    }
-
-    fun removeComponent(c: UpdateComponent) {
-        _components?.remove(c)
-    }
-
-    fun removeComponent(c: ResizeComponent) {
-        _components?.remove(c)
-    }
-
-    //fun removeComponents(c: KClass<out Component>) { components?.removeAll { it.javaClass.isSubtypeOf(c) } }
-    /** Removes a set of components of the type [c] from the view */
-    @Deprecated("")
-    fun removeComponents(c: KClass<out Component>) {
-        _components?.removeAll(c)
-    }
-
-    /** Removes all the components attached to this view */
-    fun removeAllComponents(): Unit {
-        _components?.removeAll()
-    }
-
-    /** Adds a component to this view */
-    fun addComponent(c: Component): Component = componentsSure.add(c)
-    fun addComponent(c: MouseComponent) = componentsSure.add(c)
-    fun addComponent(c: KeyComponent) = componentsSure.add(c)
-    fun addComponent(c: GamepadComponent) = componentsSure.add(c)
-    fun addComponent(c: TouchComponent) = componentsSure.add(c)
-    fun addComponent(c: EventComponent) = componentsSure.add(c)
-    fun addComponent(c: UpdateComponentWithViews) = componentsSure.add(c)
-    fun addComponent(c: UpdateComponent) = componentsSure.add(c)
-    fun addComponent(c: ResizeComponent) = componentsSure.add(c)
-
-    /** Adds a block that will be executed per frame to this view. This is deprecated, and you should use [addUpdater] instead that uses [TimeSpan] to provide the elapsed time */
-    @Deprecated("Use addUpdater, since this method uses dtMs: Int instead of a TimeSpan due to bugs in initial Kotlin inline classes")
-    fun addUpdatable(updatable: (dtMs: Int) -> Unit): Cancellable {
-        val component = object : UpdateComponentV2 {
-            override val view: View get() = this@View
-            override fun update(dt: HRTimeSpan) = updatable(dt.millisecondsInt)
-        }.attach()
-        component.update(0.0)
-        return Cancellable { component.detach() }
-    }
-
-    /** Registers a [block] that will be executed once in the next frame that this [View] is displayed with the [Views] singleton */
-    fun deferWithViews(block: (views: Views) -> Unit) {
-        addComponent(DeferWithViewsUpdateComponentWithViews(this@View, block))
-    }
-
-    internal class DeferWithViewsUpdateComponentWithViews(override val view: View, val block: (views: Views) -> Unit) :
-        UpdateComponentWithViews {
-        override fun update(views: Views, ms: Double) {
-            block(views)
-            detach()
-        }
-    }
-
-// endregion
-
     private var _localMatrix = Matrix()
 
     /**
@@ -692,7 +468,7 @@ abstract class View internal constructor(
             if (!validLocalMatrix) {
                 validLocalMatrix = true
                 _requireInvalidate = true
-                _localMatrix.setTransform(x, y, scaleX, scaleY, rotation, skewXRadians, skewYRadians)
+                _localMatrix.setTransform(x, y, scaleX, scaleY, rotation, skewX, skewY)
             }
             return _localMatrix
         }
@@ -803,16 +579,16 @@ abstract class View internal constructor(
     val renderColorMul: RGBA get() = renderColorTransform.colorMul
 
     /** The concatenated/global version of the local [colorAdd] */
-    val renderColorAdd: Int get() = renderColorTransform.colorAdd
+    val renderColorAdd: ColorAdd get() = renderColorTransform.colorAdd
 
     /** The concatenated/global version of the local [alpha] */
     val renderAlpha: Double get() = renderColorTransform.mA
 
     /** Computes the local X coordinate of the mouse using the coords from the [Views] object */
-    fun localMouseX(views: Views): Double = this.globalMatrixInv.fastTransformX(views.input.mouse)
+    fun localMouseX(views: Views): Double = this.globalMatrixInv.transformX(views.input.mouse)
 
     /** Computes the local Y coordinate of the mouse using the coords from the [Views] object */
-    fun localMouseY(views: Views): Double = this.globalMatrixInv.fastTransformY(views.input.mouse)
+    fun localMouseY(views: Views): Double = this.globalMatrixInv.transformY(views.input.mouse)
 
     /** Computes the local X and Y coordinate of the mouse using the coords from the [Views] object. You can use the [target] parameter to specify a target [Point] to avoid allocation. */
     fun localMouseXY(views: Views, target: Point = Point()): Point =
@@ -1005,14 +781,14 @@ abstract class View internal constructor(
         var out = this::class.portableSimpleName
         if (x != 0.0 || y != 0.0) out += ":pos=(${x.str},${y.str})"
         if (scaleX != 1.0 || scaleY != 1.0) out += ":scale=(${scaleX.str},${scaleY.str})"
-        if (skewXRadians != 0.0 || skewYRadians != 0.0) out += ":skew=(${skewXRadians.str},${skewYRadians.str})"
-        if (rotationRadians != 0.0) out += ":rotation=(${rotationDegrees.str}º)"
+        if (skewX.radians != 0.0 || skewY.radians != 0.0) out += ":skew=(${skewX.degrees.str},${skewY.degrees.str})"
+        if (rotation.absoluteValue != 0.radians) out += ":rotation=(${rotation.degrees.str}º)"
         if (name != null) out += ":name=($name)"
         if (blendMode != BlendMode.INHERIT) out += ":blendMode=($blendMode)"
         if (!visible) out += ":visible=$visible"
         if (alpha != 1.0) out += ":alpha=$alpha"
         if (this.colorMul.rgb != Colors.WHITE.rgb) out += ":colorMul=${this.colorMul.hexString}"
-        if (colorAdd != 0x7f7f7f7f) out += ":colorAdd=${colorAdd.shex}"
+        if (colorAdd != ColorAdd.NEUTRAL) out += ":colorAdd=${colorAdd.shex}"
         return out
     }
 
@@ -1026,10 +802,18 @@ abstract class View internal constructor(
     fun globalToLocalXY(x: Double, y: Double, out: Point = Point()): Point = this.globalMatrixInv.transform(x, y, out)
 
     /** Converts the global point [x], [y] (using root/stage as reference) into the X in the local coordinate system. */
-    fun globalToLocalX(x: Double, y: Double): Double = this.globalMatrixInv.fastTransformX(x, y)
+    fun globalToLocalX(x: Double, y: Double): Double = this.globalMatrixInv.transformX(x, y)
 
     /** Converts the global point [x], [y] (using root/stage as reference) into the Y in the local coordinate system. */
-    fun globalToLocalY(x: Double, y: Double): Double = this.globalMatrixInv.fastTransformY(x, y)
+    fun globalToLocalY(x: Double, y: Double): Double = this.globalMatrixInv.transformY(x, y)
+
+    fun globalToLocalDX(x0: Double, y0: Double, x1: Double, y1: Double): Double = globalToLocalX(x1, y1) - globalToLocalX(x0, y0)
+    fun globalToLocalDY(x0: Double, y0: Double, x1: Double, y1: Double): Double = globalToLocalY(x1, y1) - globalToLocalY(x0, y0)
+    fun globalToLocalDXY(x0: Double, y0: Double, x1: Double, y1: Double, out: Point = Point()): Point = out.setTo(
+        globalToLocalDX(x0, y0, x1, y1),
+        globalToLocalDY(x0, y0, x1, y1),
+    )
+    fun globalToLocalDXY(p0: IPoint, p1: IPoint, out: Point = Point()): Point = globalToLocalDXY(p0.x, p0.y, p1.x, p1.y, out)
 
     /** Converts the local point [p] into a global point (using root/stage as reference). Allows to define [out] to avoid allocation. */
     fun localToGlobal(p: IPoint, out: Point = Point()): Point = localToGlobalXY(p.x, p.y, out)
@@ -1038,10 +822,10 @@ abstract class View internal constructor(
     fun localToGlobalXY(x: Double, y: Double, out: Point = Point()): Point = this.globalMatrix.transform(x, y, out)
 
     /** Converts the local point [x], [y] into a global X coordinate (using root/stage as reference). */
-    fun localToGlobalX(x: Double, y: Double): Double = this.globalMatrix.fastTransformX(x, y)
+    fun localToGlobalX(x: Double, y: Double): Double = this.globalMatrix.transformX(x, y)
 
     /** Converts the local point [x], [y] into a global Y coordinate (using root/stage as reference). */
-    fun localToGlobalY(x: Double, y: Double): Double = this.globalMatrix.fastTransformY(x, y)
+    fun localToGlobalY(x: Double, y: Double): Double = this.globalMatrix.transformY(x, y)
 
     // Version with View.Reference as reference
     /** Converts a point [p] in the nearest ancestor marked as [View.Reference] into the local coordinate system. Allows to define [out] to avoid allocation. */
@@ -1051,10 +835,10 @@ abstract class View internal constructor(
     fun renderToLocalXY(x: Double, y: Double, out: Point = Point()): Point = this.globalMatrixInv.transform(x, y, out)
 
     /** Converts a point [x], [y] in the nearest ancestor marked as [View.Reference] into the local X coordinate. */
-    fun renderToLocalX(x: Double, y: Double): Double = this.globalMatrixInv.fastTransformX(x, y)
+    fun renderToLocalX(x: Double, y: Double): Double = this.globalMatrixInv.transformX(x, y)
 
     /** Converts a point [x], [y] in the nearest ancestor marked as [View.Reference] into the local Y coordinate. */
-    fun renderToLocalY(x: Double, y: Double): Double = this.globalMatrixInv.fastTransformY(x, y)
+    fun renderToLocalY(x: Double, y: Double): Double = this.globalMatrixInv.transformY(x, y)
 
     /** Converts the local point [p] into a point in the nearest ancestor masked as [View.Reference]. Allows to define [out] to avoid allocation. */
     fun localToRender(p: IPoint, out: Point = Point()): Point = localToRenderXY(p.x, p.y, out)
@@ -1063,10 +847,10 @@ abstract class View internal constructor(
     fun localToRenderXY(x: Double, y: Double, out: Point = Point()): Point = this.globalMatrix.transform(x, y, out)
 
     /** Converts the local point [x],[y] into a X coordinate in the nearest ancestor masked as [View.Reference]. */
-    fun localToRenderX(x: Double, y: Double): Double = this.globalMatrix.fastTransformX(x, y)
+    fun localToRenderX(x: Double, y: Double): Double = this.globalMatrix.transformX(x, y)
 
     /** Converts the local point [x],[y] into a Y coordinate in the nearest ancestor masked as [View.Reference]. */
-    fun localToRenderY(x: Double, y: Double): Double = this.globalMatrix.fastTransformY(x, y)
+    fun localToRenderY(x: Double, y: Double): Double = this.globalMatrix.transformY(x, y)
 
     /**
      * Determines the view at the global point defined by [x] and [y] if any, or null
@@ -1087,6 +871,8 @@ abstract class View internal constructor(
         if (res != null) return res
         return if (this is Stage) this else null
     }
+    fun hitTest(x: Float, y: Float): View? = hitTest(x.toDouble(), y.toDouble())
+    fun hitTest(x: Int, y: Int): View? = hitTest(x.toDouble(), y.toDouble())
 
     fun hitTestAny(x: Double, y: Double): Boolean = hitTest(x, y) != null
 
@@ -1206,8 +992,8 @@ abstract class View internal constructor(
         _localMatrix.identity()
         pos.setTo(0.0, 0.0)
         _scaleX = 1.0; _scaleY = 1.0
-        _skewX = 0.0; _skewY = 0.0
-        _rotation = 0.radians
+        _skewX = 0.0.radians; _skewY = 0.0.radians
+        _rotation = 0.0.radians
         validLocalMatrix = false
         invalidate()
     }
@@ -1304,10 +1090,10 @@ abstract class View internal constructor(
         val concat = this.getConcatMatrix(target ?: this, boundsTemp)
 
         bb.reset()
-        bb.add(concat.fastTransformX(p1x, p1y), concat.fastTransformY(p1x, p1y))
-        bb.add(concat.fastTransformX(p2x, p2y), concat.fastTransformY(p2x, p2y))
-        bb.add(concat.fastTransformX(p3x, p3y), concat.fastTransformY(p3x, p3y))
-        bb.add(concat.fastTransformX(p4x, p4y), concat.fastTransformY(p4x, p4y))
+        bb.add(concat.transformX(p1x, p1y), concat.transformY(p1x, p1y))
+        bb.add(concat.transformX(p2x, p2y), concat.transformY(p2x, p2y))
+        bb.add(concat.transformX(p3x, p3y), concat.transformY(p3x, p3y))
+        bb.add(concat.transformX(p4x, p4y), concat.transformY(p4x, p4y))
 
         bb.getBounds(out)
         return out
@@ -1410,8 +1196,8 @@ abstract class View internal constructor(
             uiEditableValue(Pair(view::scaledWidth, view::scaledHeight), min = -1000.0, max = 1000.0, clamp = false, name = "size")
             uiEditableValue(view::scale, min = 0.0, max = 1.0, clamp = false)
             uiEditableValue(Pair(view::scaleX, view::scaleY), min = 0.0, max = 1.0, clamp = false, name = "scaleXY")
-            uiEditableValue(view::rotationDegrees, min = -360.0, max = +360.0, clamp = true, name = "rotation")
-            uiEditableValue(Pair(view::skewXDegrees, view::skewYDegrees), min = -360.0, max = +360.0, name = "skew")
+            uiEditableValue(view::rotation, name = "rotation")
+            uiEditableValue(Pair(view::skewX, view::skewY), name = "skew")
             uiEditableValue(view::visible)
         }
 
@@ -1547,41 +1333,27 @@ fun View.replaceWith(view: View): Boolean {
 
 /** Adds a block that will be executed per frame to this view. As parameter the block will receive a [TimeSpan] with the time elapsed since the previous frame. */
 fun <T : View> T.addUpdater(updatable: T.(dt: TimeSpan) -> Unit): Cancellable {
-    val component = object : UpdateComponentV2 {
+    val component = object : UpdateComponent {
         override val view: View get() = this@addUpdater
-        override fun update(dt: HRTimeSpan) {
-            updatable(this@addUpdater, dt.timeSpan)
+        override fun update(dt: TimeSpan) {
+            updatable(this@addUpdater, dt)
         }
     }.attach()
-    component.update(HRTimeSpan.ZERO)
+    component.update(TimeSpan.ZERO)
     return Cancellable { component.detach() }
 }
 
-/** Adds a block that will be executed per frame to this view. As parameter the block will receive a [TimeSpan] with the time elapsed since the previous frame. */
-fun <T : View> T.addHrUpdater(updatable: T.(dt: HRTimeSpan) -> Unit): Cancellable {
-    val component = object : UpdateComponentV2 {
-        override val view: View get() = this@addHrUpdater
-        override fun update(dt: HRTimeSpan) {
-            updatable(this@addHrUpdater, dt)
-        }
-    }.attach()
-    component.update(HRTimeSpan.ZERO)
-    return Cancellable { component.detach() }
+fun <T : View> T.addOptFixedUpdater(time: TimeSpan = TimeSpan.NIL, updatable: T.(dt: TimeSpan) -> Unit): Cancellable = when (time) {
+    TimeSpan.NIL -> addUpdater(updatable)
+    else -> addFixedUpdater(time) { updatable(time) }
 }
-
-fun <T : View> T.addFixedUpdater(
-    time: TimeSpan,
-    initial: Boolean = true,
-    limitCallsPerFrame: Int = 16,
-    updatable: T.() -> Unit
-): Cancellable = addFixedUpdater(time.hr, initial, limitCallsPerFrame, updatable)
 
 fun <T : View> T.addFixedUpdater(
     timesPerSecond: Frequency,
     initial: Boolean = true,
     limitCallsPerFrame: Int = 16,
     updatable: T.() -> Unit
-): Cancellable = addFixedUpdater(timesPerSecond.timeSpan.hr, initial, limitCallsPerFrame, updatable)
+): Cancellable = addFixedUpdater(timesPerSecond.timeSpan, initial, limitCallsPerFrame, updatable)
 
 /**
  * Adds an [updatable] block that will be executed every [time] time, the calls will be discretized on each frame and will handle accumulations.
@@ -1589,16 +1361,16 @@ fun <T : View> T.addFixedUpdater(
  * To avoid executing too much blocks, when there is a long pause, [limitCallsPerFrame] limits the number of times the block can be executed in a single frame.
  */
 fun <T : View> T.addFixedUpdater(
-    time: HRTimeSpan,
+    time: TimeSpan,
     initial: Boolean = true,
     limitCallsPerFrame: Int = 16,
     updatable: T.() -> Unit
 ): Cancellable {
     val tickTime = time
-    var accum = 0.hrNanoseconds
-    val component = object : UpdateComponentV2 {
+    var accum = 0.0.milliseconds
+    val component = object : UpdateComponent {
         override val view: View get() = this@addFixedUpdater
-        override fun update(dt: HRTimeSpan) {
+        override fun update(dt: TimeSpan) {
             accum += dt
             //println("UPDATE: accum=$accum, tickTime=$tickTime")
             var calls = 0
@@ -1608,14 +1380,14 @@ fun <T : View> T.addFixedUpdater(
                 calls++
                 if (calls >= limitCallsPerFrame) {
                     // We do not accumulate for the next frame in this case
-                    accum = 0.hrNanoseconds
+                    accum = 0.0.milliseconds
                     break
                 }
             }
             if (calls > 0) {
                 // Do not accumulate for small fractions since this would cause hiccups!
                 if (accum < tickTime * 0.25) {
-                    accum = 0.hrNanoseconds
+                    accum = 0.0.milliseconds
                 }
             }
         }
@@ -1629,7 +1401,7 @@ fun <T : View> T.addFixedUpdater(
 fun <T : View> T.onNextFrame(updatable: T.(views: Views) -> Unit) {
     object : UpdateComponentWithViews {
         override val view: View get() = this@onNextFrame
-        override fun update(views: Views, ms: Double) {
+        override fun update(views: Views, dt: TimeSpan) {
             removeFromView()
             updatable(this@onNextFrame, views)
         }
@@ -1758,7 +1530,7 @@ fun <T : View> T.size(width: Double, height: Double): T {
     this.height = height
     return this
 }
-
+fun <T : View> T.size(width: Float, height: Float): T = size(width.toDouble(), height.toDouble())
 fun <T : View> T.size(width: Int, height: Int): T = size(width.toDouble(), height.toDouble())
 
 /** Returns a list of all the non-null [View.name] values of this and the descendants */
@@ -1803,22 +1575,27 @@ fun <T : View> T.xy(x: Double, y: Double): T {
     this.y = y
     return this
 }
-
+fun <T : View> T.xy(x: Float, y: Float): T = xy(x.toDouble(), y.toDouble())
 fun <T : View> T.xy(x: Int, y: Int): T = xy(x.toDouble(), y.toDouble())
 
 /** Chainable method returning this that sets [View.x] and [View.y] */
-fun <T : View> T.position(x: Int, y: Int): T = xy(x.toDouble(), y.toDouble())
 fun <T : View> T.position(x: Double, y: Double): T = xy(x, y)
+fun <T : View> T.position(x: Float, y: Float): T = xy(x.toDouble(), y.toDouble())
+fun <T : View> T.position(x: Int, y: Int): T = xy(x.toDouble(), y.toDouble())
 
 fun <T : View> T.positionX(x: Double): T {
     this.x = x
     return this
 }
+fun <T : View> T.positionX(x: Float): T = positionX(x.toDouble())
+fun <T : View> T.positionX(x: Int): T = positionX(x.toDouble())
 
 fun <T : View> T.positionY(y: Double): T {
     this.y = y
     return this
 }
+fun <T : View> T.positionY(y: Float): T = positionY(y.toDouble())
+fun <T : View> T.positionY(y: Int): T = positionY(y.toDouble())
 
 fun View.getPositionRelativeTo(view: View, out: Point = Point()): Point {
     val mat = this.parent!!.getConcatMatrix(view, false)
@@ -1845,30 +1622,29 @@ fun View.getPointRelativeToInv(pos: Point, view: View, out: Point = Point()): Po
     return out
 }
 
-/** Chainable method returning this that sets [View.x] */
-fun <T : View> T.positionX(x: Int): T = positionX(x.toDouble())
-
-/** Chainable method returning this that sets [View.y] */
-fun <T : View> T.positionY(y: Int): T = positionY(y.toDouble())
-
 /** Chainable method returning this that sets [this] View in the middle between [x1] and [x2] */
 fun <T : View> T.centerXBetween(x1: Double, x2: Double): T {
     this.x = (x2 + x1 - this.width) / 2
     return this
 }
+fun <T : View> T.centerXBetween(x1: Float, x2: Float): T = centerXBetween(x1.toDouble(), x2.toDouble())
+fun <T : View> T.centerXBetween(x1: Int, x2: Int): T = centerXBetween(x1.toDouble(), x2.toDouble())
 
 /** Chainable method returning this that sets [this] View in the middle between [y1] and [y2] */
 fun <T : View> T.centerYBetween(y1: Double, y2: Double): T {
     this.y = (y2 + y1 - this.height) / 2
     return this
 }
+fun <T : View> T.centerYBetween(y1: Float, y2: Float): T = centerYBetween(y1.toDouble(), y2.toDouble())
+fun <T : View> T.centerYBetween(y1: Int, y2: Int): T = centerYBetween(y1.toDouble(), y2.toDouble())
 
 /**
  * Chainable method returning this that sets [this] View
  * in the middle between [x1] and [x2] and in the middle between [y1] and [y2]
  */
-fun <T : View> T.centerBetween(x1: Double, y1: Double, x2: Double, y2: Double): T =
-    this.centerXBetween(x1, x2).centerYBetween(y1, y2)
+fun <T : View> T.centerBetween(x1: Double, y1: Double, x2: Double, y2: Double): T = this.centerXBetween(x1, x2).centerYBetween(y1, y2)
+fun <T : View> T.centerBetween(x1: Float, y1: Float, x2: Float, y2: Float): T = centerBetween(x1.toDouble(), y1.toDouble(), x2.toDouble(), y2.toDouble())
+fun <T : View> T.centerBetween(x1: Int, y1: Int, x2: Int, y2: Int): T = centerBetween(x1.toDouble(), y1.toDouble(), x2.toDouble(), y2.toDouble())
 
 /**
  * Chainable method returning this that sets [View.x] so that
@@ -1900,7 +1676,7 @@ fun <T : View> T.alignXY(other: View, ratio: Double, inside: Boolean, doX: Boole
     val ratioM1_1 = (ratio * 2 - 1)
     val rratioM1_1 = if (inside) ratioM1_1 else -ratioM1_1
     val iratio = if (inside) ratio else 1.0 - ratio
-    println("this: $this, other: $other, bounds=$bounds, scaledWidth=$scaledWidth, scaledHeight=$scaledHeight, width=$width, height=$height, scale=$scale, $scaleX, $scaleY")
+    //println("this: $this, other: $other, bounds=$bounds, scaledWidth=$scaledWidth, scaledHeight=$scaledHeight, width=$width, height=$height, scale=$scale, $scaleX, $scaleY")
     if (doX) {
         x = (bounds.x + (bounds.width * ratio)) - (this.scaledWidth * iratio) - (padding * rratioM1_1)
     } else {
@@ -1922,69 +1698,69 @@ fun <T : View> T.alignY(other: View, ratio: Double, inside: Boolean, padding: Do
  * [this] View's left side is aligned with the [other] View's left side
  */
 // @TODO: What about rotations? we might need to adjust y too?
-fun <T : View> T.alignLeftToLeftOf(other: View, padding: Double = 0.0): T {
-    return alignX(other, 0.0, inside = true, padding = padding)
-}
+fun <T : View> T.alignLeftToLeftOf(other: View, padding: Double = 0.0): T = alignX(other, 0.0, inside = true, padding = padding)
+fun <T : View> T.alignLeftToLeftOf(other: View, padding: Float): T = alignLeftToLeftOf(other, padding.toDouble())
+fun <T : View> T.alignLeftToLeftOf(other: View, padding: Int): T = alignLeftToLeftOf(other, padding.toDouble())
 
 /**
  * Chainable method returning this that sets [View.x] so that
  * [this] View's left side is aligned with the [other] View's right side
  */
-fun <T : View> T.alignLeftToRightOf(other: View, padding: Double = 0.0): T {
-    return alignX(other, 1.0, inside = false, padding = padding)
-}
+fun <T : View> T.alignLeftToRightOf(other: View, padding: Double = 0.0): T = alignX(other, 1.0, inside = false, padding = padding)
+fun <T : View> T.alignLeftToRightOf(other: View, padding: Float): T = alignLeftToRightOf(other, padding.toDouble())
+fun <T : View> T.alignLeftToRightOf(other: View, padding: Int): T = alignLeftToRightOf(other, padding.toDouble())
 
 /**
  * Chainable method returning this that sets [View.x] so that
  * [this] View's right side is aligned with the [other] View's left side
  */
-fun <T : View> T.alignRightToLeftOf(other: View, padding: Double = 0.0): T {
-    return alignX(other, 0.0, inside = false, padding = padding)
-}
+fun <T : View> T.alignRightToLeftOf(other: View, padding: Double = 0.0): T = alignX(other, 0.0, inside = false, padding = padding)
+fun <T : View> T.alignRightToLeftOf(other: View, padding: Float): T = alignRightToLeftOf(other, padding.toDouble())
+fun <T : View> T.alignRightToLeftOf(other: View, padding: Int): T = alignRightToLeftOf(other, padding.toDouble())
 
 /**
  * Chainable method returning this that sets [View.x] so that
  * [this] View's right side is aligned with the [other] View's right side
  */
-fun <T : View> T.alignRightToRightOf(other: View, padding: Double = 0.0): T {
-    return alignX(other, 1.0, inside = true, padding = padding)
-}
+fun <T : View> T.alignRightToRightOf(other: View, padding: Double = 0.0): T = alignX(other, 1.0, inside = true, padding = padding)
+fun <T : View> T.alignRightToRightOf(other: View, padding: Float): T = alignRightToRightOf(other, padding.toDouble())
+fun <T : View> T.alignRightToRightOf(other: View, padding: Int): T = alignRightToRightOf(other, padding.toDouble())
 
 /**
  * Chainable method returning this that sets [View.y] so that
  * [this] View's top side is aligned with the [other] View's top side
  */
-fun <T : View> T.alignTopToTopOf(other: View, padding: Double = 0.0): T {
-    return alignY(other, 0.0, inside = true, padding = padding)
-}
+fun <T : View> T.alignTopToTopOf(other: View, padding: Double = 0.0): T = alignY(other, 0.0, inside = true, padding = padding)
+fun <T : View> T.alignTopToTopOf(other: View, padding: Float): T = alignTopToTopOf(other, padding.toDouble())
+fun <T : View> T.alignTopToTopOf(other: View, padding: Int): T = alignTopToTopOf(other, padding.toDouble())
 
 /**
  * Chainable method returning this that sets [View.y] so that
  * [this] View's top side is aligned with the [other] View's bottom side
  */
-fun <T : View> T.alignTopToBottomOf(other: View, padding: Double = 0.0): T {
-    return alignY(other, 1.0, inside = false, padding = padding)
-}
+fun <T : View> T.alignTopToBottomOf(other: View, padding: Double = 0.0): T = alignY(other, 1.0, inside = false, padding = padding)
+fun <T : View> T.alignTopToBottomOf(other: View, padding: Float): T = alignTopToBottomOf(other, padding.toDouble())
+fun <T : View> T.alignTopToBottomOf(other: View, padding: Int): T = alignTopToBottomOf(other, padding.toDouble())
 
 /**
  * Chainable method returning this that sets [View.y] so that
  * [this] View's bottom side is aligned with the [other] View's top side
  */
-fun <T : View> T.alignBottomToTopOf(other: View, padding: Double = 0.0): T {
-    return alignY(other, 0.0, inside = false, padding = padding)
-}
+fun <T : View> T.alignBottomToTopOf(other: View, padding: Double = 0.0): T = alignY(other, 0.0, inside = false, padding = padding)
+fun <T : View> T.alignBottomToTopOf(other: View, padding: Float): T = alignBottomToTopOf(other, padding.toDouble())
+fun <T : View> T.alignBottomToTopOf(other: View, padding: Int): T = alignBottomToTopOf(other, padding.toDouble())
 
 /**
  * Chainable method returning this that sets [View.y] so that
  * [this] View's bottom side is aligned with the [other] View's bottom side
  */
-fun <T : View> T.alignBottomToBottomOf(other: View, padding: Double = 0.0): T {
-    return alignY(other, 1.0, inside = true, padding = padding)
-}
+fun <T : View> T.alignBottomToBottomOf(other: View, padding: Double = 0.0): T = alignY(other, 1.0, inside = true, padding = padding)
+fun <T : View> T.alignBottomToBottomOf(other: View, padding: Float): T = alignBottomToBottomOf(other, padding.toDouble())
+fun <T : View> T.alignBottomToBottomOf(other: View, padding: Int): T = alignBottomToBottomOf(other, padding.toDouble())
 
 /** Chainable method returning this that sets [View.rotation] */
 fun <T : View> T.rotation(rot: Angle): T {
-    this.rotationRadians = rot.radians
+    this.rotation = rot
     return this
 }
 
@@ -2001,75 +1777,16 @@ fun <T : View> T.scale(sx: Double, sy: Double = sx): T {
     this.scaleY = sy
     return this
 }
+fun <T : View> T.scale(sx: Float, sy: Float = sx): T = scale(sx.toDouble(), sy.toDouble())
+fun <T : View> T.scale(sx: Int, sy: Int = sx): T = scale(sx.toDouble(), sy.toDouble())
 
 /** Chainable method returning this that sets [View.alpha] */
 fun <T : View> T.alpha(alpha: Double): T {
     this.alpha = alpha
     return this
 }
-
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.skewRadians(sx: Number, sy: Number): T = skew(sx.radians, sy.radians)
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.scale(sx: Number, sy: Number = sx): T = scale(sx.toDouble(), sy.toDouble())
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.alpha(alpha: Number): T = alpha(alpha.toDouble())
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.rotation(rot: Number): T = this.rotation(rot.toDouble().radians)
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.rotationDegrees(degs: Number): T = rotation(degs.toDouble().degrees)
-
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.xy(x: Number, y: Number): T = xy(x.toDouble(), y.toDouble())
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.position(x: Number, y: Number): T = xy(x.toDouble(), y.toDouble())
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.positionX(x: Number): T = positionX(x.toDouble())
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.positionY(y: Number): T = positionY(y.toDouble())
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.size(width: Number, height: Number): T = size(width.toDouble(), height.toDouble())
-
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun View.hitTest(x: Number, y: Number): View? = hitTest(x.toDouble(), y.toDouble())
-
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.centerXBetween(x1: Number, x2: Number): T = centerXBetween(x1.toDouble(), x2.toDouble())
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.centerYBetween(y1: Number, y2: Number): T = centerYBetween(y1.toDouble(), y2.toDouble())
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.centerBetween(x1: Number, y1: Number, x2: Number, y2: Number): T =
-    centerBetween(x1.toDouble(), y1.toDouble(), x2.toDouble(), y2.toDouble())
-
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.alignLeftToLeftOf(other: View, padding: Number): T =
-    alignLeftToLeftOf(other, padding.toDouble())
-
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.alignLeftToRightOf(other: View, padding: Number): T =
-    alignLeftToRightOf(other, padding.toDouble())
-
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.alignRightToLeftOf(other: View, padding: Number): T =
-    alignRightToLeftOf(other, padding.toDouble())
-
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.alignRightToRightOf(other: View, padding: Number): T =
-    alignRightToRightOf(other, padding.toDouble())
-
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.alignTopToTopOf(other: View, padding: Number): T = alignTopToTopOf(other, padding.toDouble())
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.alignTopToBottomOf(other: View, padding: Number): T =
-    alignTopToBottomOf(other, padding.toDouble())
-
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.alignBottomToTopOf(other: View, padding: Number): T =
-    alignBottomToTopOf(other, padding.toDouble())
-
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun <T : View> T.alignBottomToBottomOf(other: View, padding: Number): T =
-    alignBottomToBottomOf(other, padding.toDouble())
+fun <T : View> T.alpha(alpha: Float): T = alpha(alpha.toDouble())
+fun <T : View> T.alpha(alpha: Int): T = alpha(alpha.toDouble())
 
 @Target(AnnotationTarget.TYPE, AnnotationTarget.CLASS) annotation class ViewDslMarker
 // @TODO: This causes issues having to put some explicit this@ when it shouldn't be required

@@ -4,15 +4,32 @@ import com.soywiz.kds.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
 import com.soywiz.korim.font.*
-import com.soywiz.korim.vector.paint.*
+import com.soywiz.korim.paint.*
+import com.soywiz.korim.text.*
 import com.soywiz.korim.vector.renderer.*
 import com.soywiz.korio.lang.*
-import com.soywiz.korio.util.*
 import com.soywiz.korma.geom.*
+import com.soywiz.korma.geom.shape.*
 import com.soywiz.korma.geom.vector.*
 import kotlin.math.*
 
 open class Context2d constructor(val renderer: Renderer) : Disposable, VectorBuilder {
+    companion object {
+        @Deprecated(
+            "",
+            ReplaceWith("com.soywiz.korim.vector.StrokeInfo(thickness, pixelHinting, scaleMode, startCap, endCap, lineJoin, miterLimit)", "com.soywiz.korim.vector.StrokeInfo"),
+            level = DeprecationLevel.ERROR
+        )
+        fun StrokeInfo(
+            thickness: Double = 1.0, pixelHinting: Boolean = false,
+            scaleMode: LineScaleMode = LineScaleMode.NORMAL,
+            startCap: LineCap = LineCap.BUTT,
+            endCap: LineCap = LineCap.BUTT,
+            lineJoin: LineJoin = LineJoin.MITER,
+            miterLimit: Double = 20.0
+        ) = com.soywiz.korim.vector.StrokeInfo(thickness, pixelHinting, scaleMode, startCap, endCap, lineJoin, miterLimit)
+    }
+
     var debug: Boolean
         get() = renderer.debug
         set(value) = run { renderer.debug = value }
@@ -98,6 +115,13 @@ open class Context2d constructor(val renderer: Renderer) : Disposable, VectorBui
         val transformTransform by lazy { transform.toTransform() }
         val scaledLineWidth get() = lineWidth * transformTransform.scaleAvg.absoluteValue.toFloat()
 
+        var alignment: TextAlignment
+            get() = TextAlignment.fromAlign(horizontalAlign, verticalAlign)
+            set(value) {
+                horizontalAlign = value.horizontal
+                verticalAlign = value.vertical
+            }
+
         var lineCap: LineCap
             get() = startLineCap
             set(value) {
@@ -123,14 +147,20 @@ open class Context2d constructor(val renderer: Renderer) : Disposable, VectorBui
     var startLineCap: LineCap ; get() = state.startLineCap ; set(value) = run { state.startLineCap = value }
     var endLineCap: LineCap ; get() = state.endLineCap ; set(value) = run { state.endLineCap = value }
     var lineJoin: LineJoin ; get() = state.lineJoin ; set(value) = run { state.lineJoin = value }
-	var strokeStyle: Paint ; get() = state.strokeStyle ; set(value) = run { state.strokeStyle = value }
-	var fillStyle: Paint ; get() = state.fillStyle ; set(value) = run { state.fillStyle = value }
+	var strokeStyle: Paint; get() = state.strokeStyle ; set(value) = run { state.strokeStyle = value }
+	var fillStyle: Paint; get() = state.fillStyle ; set(value) = run { state.fillStyle = value }
     var fontRegistry: FontRegistry ; get() = state.fontRegistry ; set(value) = run { state.fontRegistry = value }
 	var font: Font ; get() = state.font ; set(value) = run { state.font = value }
     var fontName: String ; get() = font.name ; set(value) = run { font = fontRegistry[value] }
     var fontSize: Double ; get() = state.fontSize ; set(value) = run { state.fontSize = value }
-	var verticalAlign: VerticalAlign ; get() = state.verticalAlign ; set(value) = run { state.verticalAlign = value }
-	var horizontalAlign: HorizontalAlign ; get() = state.horizontalAlign ; set(value) = run { state.horizontalAlign = value }
+	var verticalAlign: VerticalAlign; get() = state.verticalAlign ; set(value) = run { state.verticalAlign = value }
+	var horizontalAlign: HorizontalAlign; get() = state.horizontalAlign ; set(value) = run { state.horizontalAlign = value }
+    var alignment: TextAlignment
+        get() = TextAlignment.fromAlign(horizontalAlign, verticalAlign)
+        set(value) {
+            horizontalAlign = value.horizontal
+            verticalAlign = value.vertical
+        }
 	var globalAlpha: Double ; get() = state.globalAlpha ; set(value) = run { state.globalAlpha = value }
     var globalCompositeOperation: CompositeOperation ; get() = state.globalCompositeOperation ; set(value) = run { state.globalCompositeOperation = value }
 
@@ -179,8 +209,6 @@ open class Context2d constructor(val renderer: Renderer) : Disposable, VectorBui
 		}
 	}
 
-	inline fun fillStyle(color: RGBA, callback: () -> Unit) = fillStyle(createColor(color), callback)
-
 	inline fun keepApply(callback: Context2d.() -> Unit) = this.apply { keep { callback() } }
 
 	inline fun keep(callback: () -> Unit) {
@@ -214,6 +242,11 @@ open class Context2d constructor(val renderer: Renderer) : Disposable, VectorBui
 	inline fun translate(tx: Number, ty: Number) = translate(tx.toDouble(), ty.toDouble())
 	inline fun rotate(angle: Number) = rotate(angle.toDouble())
 	inline fun rotateDeg(degs: Number) = rotateDeg(degs.toDouble())
+
+    inline fun scale(sx: Int, sy: Int = sx) = scale(sx.toDouble(), sy.toDouble())
+    inline fun translate(tx: Int, ty: Int) = translate(tx.toDouble(), ty.toDouble())
+    inline fun rotate(angle: Int) = rotate(angle.toDouble())
+    inline fun rotateDeg(degs: Int) = rotateDeg(degs.toDouble())
 
     inline fun scale(sx: Double, sy: Double = sx, block: () -> Unit) = keep { scale(sx, sy).also { block() } }
     inline fun rotate(angle: Angle, block: () -> Unit) = keep { rotate(angle).also { block() } }
@@ -328,17 +361,14 @@ open class Context2d constructor(val renderer: Renderer) : Disposable, VectorBui
 		}
 	}
 
-    inline fun fill(color: RGBA, block: () -> Unit) {
-        block()
-        fill(ColorPaint(color))
-    }
-
-    inline fun fill(paint: Paint, block: () -> Unit) {
+    inline fun fill(paint: Paint, begin: Boolean = true, block: () -> Unit) {
+        if (begin) beginPath()
         block()
         fill(paint)
     }
 
-    inline fun stroke(paint: Paint, lineWidth: Double = this.lineWidth, lineCap: LineCap = this.lineCap, lineJoin: LineJoin = this.lineJoin, callback: () -> Unit) {
+    inline fun stroke(paint: Paint, lineWidth: Double = this.lineWidth, lineCap: LineCap = this.lineCap, lineJoin: LineJoin = this.lineJoin, begin: Boolean = true, callback: () -> Unit) {
+        if (begin) beginPath()
 		callback()
         this.lineWidth = lineWidth
         this.lineCap = lineCap
@@ -346,13 +376,9 @@ open class Context2d constructor(val renderer: Renderer) : Disposable, VectorBui
 		stroke(paint)
 	}
 
-	inline fun stroke(color: RGBA, lineWidth: Double = this.lineWidth, lineCap: LineCap = this.lineCap, lineJoin: LineJoin = this.lineJoin, callback: () -> Unit) {
-		callback()
-        this.lineWidth = lineWidth
-        this.lineCap = lineCap
-        this.lineJoin = lineJoin
-		stroke(ColorPaint(color))
-	}
+    inline fun stroke(paint: Paint, info: StrokeInfo, begin: Boolean = true, callback: () -> Unit) {
+        stroke(paint, info.thickness, info.startCap, info.lineJoin, begin, callback)
+    }
 
     inline fun fillStroke(fill: Paint, stroke: Paint, callback: () -> Unit) {
         callback()
@@ -361,14 +387,33 @@ open class Context2d constructor(val renderer: Renderer) : Disposable, VectorBui
     }
 
     fun fillStroke() = run { fill(); stroke() }
-	fun clip() = clip(Winding.NON_ZERO)
-    fun clip(winding: Winding) = run {
-        if (state.clip == null) {
-            state.clip = GraphicsPath()
+    fun unclip() = clip(null)
+    fun clip(path: VectorPath? = state.path, winding: Winding = Winding.NON_ZERO) {
+        if (path != null) {
+            if (state.clip == null) {
+                state.clip = GraphicsPath()
+            }
+            state.clip!!.clear()
+            state.clip!!.winding = winding
+            state.clip!!.write(path)
+        } else {
+            state.clip = null
         }
-        state.clip!!.clear()
-        state.clip!!.winding = winding
-        state.clip!!.write(state.path)
+    }
+
+    inline fun clip(path: VectorPath?, winding: Winding = Winding.NON_ZERO, block: () -> Unit) {
+        val oldClip = state.clip
+        state.clip = null
+        try {
+            clip(path, winding)
+            block()
+        } finally {
+            state.clip = oldClip
+        }
+    }
+
+    inline fun clip(path: VectorPath.() -> Unit, winding: Winding = Winding.NON_ZERO, block: () -> Unit) {
+        clip(buildPath { path() }, winding, block)
     }
 
     fun drawShape(
@@ -413,13 +458,15 @@ open class Context2d constructor(val renderer: Renderer) : Disposable, VectorBui
     inline fun createRadialGradient(x0: Number, y0: Number, r0: Number, x1: Number, y1: Number, r1: Number, cycle: CycleMethod = CycleMethod.NO_CYCLE, transform: Matrix = Matrix()) = RadialGradientPaint(x0, y0, r0, x1, y1, r1, cycle, transform)
     inline fun createSweepGradient(x0: Number, y0: Number, transform: Matrix = Matrix()) = SweepGradientPaint(x0, y0, transform)
 
-    fun createColor(color: RGBA) = ColorPaint(color)
+    fun createColor(color: RGBA): RGBA = color
 	fun createPattern(
 		bitmap: Bitmap,
 		repeat: Boolean = false,
 		smooth: Boolean = true,
 		transform: Matrix = Matrix()
-	) = BitmapPaint(bitmap, transform, repeat, smooth)
+	) = createPattern(
+        bitmap, CycleMethod.fromRepeat(repeat), CycleMethod.fromRepeat(repeat), smooth, transform
+    )
 
     fun createPattern(
         bitmap: Bitmap,
@@ -471,14 +518,6 @@ open class Context2d constructor(val renderer: Renderer) : Disposable, VectorBui
     inline fun drawImage(image: Bitmap, x: Number, y: Number, width: Number = image.width.toDouble(), height: Number = image.height.toDouble())
         = drawImage(image, x.toDouble(), y.toDouble(), width.toDouble(), height.toDouble())
 
-    data class StrokeInfo(
-        val thickness: Double = 1.0, val pixelHinting: Boolean = false,
-        val scaleMode: LineScaleMode = LineScaleMode.NORMAL,
-        val startCap: LineCap = LineCap.BUTT,
-        val endCap: LineCap = LineCap.BUTT,
-        val lineJoin: LineJoin = LineJoin.MITER,
-        val miterLimit: Double = 20.0
-    )
 }
 
 fun RGBA.toFill() = ColorPaint(this)
@@ -520,19 +559,17 @@ fun SizedDrawable.render(): NativeImage = render(native = true) as NativeImage
 fun SizedDrawable.renderNoNative(): Bitmap32 = render(native = false) as Bitmap32
 
 fun SizedDrawable.render(native: Boolean): Bitmap {
-    val image = NativeImageOrBitmap32(this.width, this.height, native = native)
-    val ctx = image.getContext2d()
-    this.draw(ctx)
-    return image
+    return NativeImageOrBitmap32(this.width, this.height, native = native).context2d {
+        this@render.draw(this)
+    }
 }
 
 fun Drawable.renderToImage(width: Int, height: Int): NativeImage = renderToImage(width, height, native = true) as NativeImage
 
 fun Drawable.renderToImage(width: Int, height: Int, native: Boolean): Bitmap {
-    val image = NativeImageOrBitmap32(width, height, native = native)
-    val ctx = image.getContext2d()
-    this.draw(ctx)
-    return image
+    return NativeImageOrBitmap32(width, height, native = native).context2d {
+        this@renderToImage.draw(this)
+    }
 }
 
 private fun VectorBuilder.write(path: VectorPath) {

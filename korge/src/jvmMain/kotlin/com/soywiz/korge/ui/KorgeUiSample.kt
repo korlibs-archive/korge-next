@@ -4,23 +4,23 @@ import com.soywiz.korge.*
 import com.soywiz.korge.view.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.format.*
-import com.soywiz.korio.util.encoding.*
+import com.soywiz.krypto.encoding.*
 import kotlinx.coroutines.*
 
 object KorgeUiSample {
     @JvmStatic
     fun main(args: Array<String>): Unit = runBlocking {
         Korge {
-            uiButton(64, 64, skin = UISkin(normal = DEFAULT_CHECKED_SKIN_IMG.sliceWithSize(0, 0, 64, 64))) {
+            uiButton(64.0, 64.0, skin = UISkin(normal = DEFAULT_CHECKED_SKIN_IMG.sliceWithSize(0, 0, 64, 64))) {
                 position(130, 270)
             }
-            uiButton(64, 64, skin = UISkin(normal = DEFAULT_CHECKED_SKIN_IMG.sliceWithSize(64, 0, 64, 64))) {
+            uiButton(64.0, 64.0, skin = UISkin(normal = DEFAULT_CHECKED_SKIN_IMG.sliceWithSize(64, 0, 64, 64))) {
                 position(130, 340)
             }
-            uiButton(64, 64, skin = UISkin(normal = DEFAULT_CHECKED_SKIN_IMG.sliceWithSize(128, 0, 64, 64))) {
+            uiButton(64.0, 64.0, skin = UISkin(normal = DEFAULT_CHECKED_SKIN_IMG.sliceWithSize(128, 0, 64, 64))) {
                 position(130, 410)
             }
-            uiButton(64, 64, skin = UISkin(normal = DEFAULT_CHECKED_SKIN_IMG.sliceWithSize(192, 0, 64, 64))) {
+            uiButton(64.0, 64.0, skin = UISkin(normal = DEFAULT_CHECKED_SKIN_IMG.sliceWithSize(192, 0, 64, 64))) {
                 position(130, 480)
             }
         }

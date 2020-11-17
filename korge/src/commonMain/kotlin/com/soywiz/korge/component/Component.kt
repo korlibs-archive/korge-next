@@ -1,10 +1,11 @@
 package com.soywiz.korge.component
 
 import com.soywiz.kds.iterators.*
-import com.soywiz.klock.hr.*
+import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.milliseconds
 import com.soywiz.korge.view.*
 import com.soywiz.korev.*
+import com.soywiz.korge.baseview.*
 import kotlin.reflect.*
 
 /**
@@ -12,10 +13,10 @@ import kotlin.reflect.*
  * The most common case of Component is the [UpdateComponent]
  */
 interface Component {
-    val view: View
+    val view: BaseView
 }
 
-@Deprecated("Unoptimized")
+//Deprecated("Unoptimized")
 fun <T : Component> T.attach(): T {
     this.view.addComponent(this); return this
 }
@@ -52,10 +53,8 @@ fun ResizeComponent.attach(): ResizeComponent {
     this.view.addComponent(this); return this
 }
 
-@Deprecated("Unoptimized")
-fun <T : Component> T.detach(): T {
-    this.view.removeComponent(this); return this
-}
+//Deprecated("Unoptimized")
+fun <T : Component> T.detach(): T { this.view.removeComponent(this); return this }
 
 fun MouseComponent.detach(): MouseComponent {
     this.view.removeComponent(this); return this
@@ -133,7 +132,7 @@ interface MouseComponent : Component {
  * }
  */
 interface KeyComponent : Component {
-    fun onKeyEvent(views: Views, event: KeyEvent)
+    fun Views.onKeyEvent(event: KeyEvent)
 }
 
 /**
@@ -156,11 +155,6 @@ interface KeyComponent : Component {
 interface GamepadComponent : Component {
     fun onGamepadEvent(views: Views, event: GamePadUpdateEvent)
     fun onGamepadEvent(views: Views, event: GamePadConnectionEvent)
-
-    @Deprecated("")
-    fun onGamepadEvent(views: Views, event: GamePadButtonEvent)
-    @Deprecated("")
-    fun onGamepadEvent(views: Views, event: GamePadStickEvent)
 }
 
 /**
@@ -177,9 +171,7 @@ interface EventComponent : Component {
  * It is like [UpdateComponent] but includes a reference to the [Views] itself.
  */
 interface UpdateComponentWithViews : Component {
-    @Deprecated("")
-    fun update(views: Views, ms: Double)
-    fun update(views: Views, delta: HRTimeSpan) = update(views, delta.millisecondsDouble)
+    fun update(views: Views, dt: TimeSpan)
 }
 
 /**
@@ -195,21 +187,12 @@ interface UpdateComponentWithViews : Component {
  * ```
  */
 interface UpdateComponent : Component {
-    @Deprecated("")
-    fun update(ms: Double)
-    @Suppress("DEPRECATION")
-    fun update(delta: HRTimeSpan): Unit = update(delta.millisecondsDouble)
+    fun update(dt: TimeSpan)
 }
 
-interface UpdateComponentV2 : UpdateComponent {
-    @Suppress("DEPRECATION")
-    override fun update(ms: Double): Unit = update(ms.milliseconds.hr)
-    override fun update(dt: HRTimeSpan)
-}
-
-abstract class FixedUpdateComponent(override val view: View, val step: HRTimeSpan, val maxAccumulated: Int = 10) : UpdateComponentV2 {
-    var accumulated = 0.hrSeconds
-    final override fun update(dt: HRTimeSpan) {
+abstract class FixedUpdateComponent(override val view: BaseView, val step: TimeSpan, val maxAccumulated: Int = 10) : UpdateComponent {
+    var accumulated = 0.milliseconds
+    final override fun update(dt: TimeSpan) {
         accumulated += dt
         if (accumulated >= step * maxAccumulated) {
             accumulated = step * maxAccumulated
@@ -233,9 +216,9 @@ interface ResizeComponent : Component {
     fun resized(views: Views, width: Int = views.nativeWidth, height: Int = views.nativeHeight)
 
     companion object {
-        operator fun invoke(view: View, block: Views.(width: Int, height: Int) -> Unit): ResizeComponent =
+        operator fun invoke(view: BaseView, block: Views.(width: Int, height: Int) -> Unit): ResizeComponent =
             object : ResizeComponent {
-                override val view: View = view
+                override val view: BaseView = view
                 override fun resized(views: Views, width: Int, height: Int) {
                     block(views, width, height)
                 }
@@ -243,7 +226,7 @@ interface ResizeComponent : Component {
     }
 }
 
-fun <T : View> T.onStageResized(firstTrigger: Boolean = true, block: Views.(width: Int, height: Int) -> Unit): T = this.apply {
+fun <T : BaseView> T.onStageResized(firstTrigger: Boolean = true, block: Views.(width: Int, height: Int) -> Unit): T = this.apply {
     if (firstTrigger) {
         deferWithViews { views -> block(views, views.actualVirtualWidth, views.actualVirtualHeight) }
     }
@@ -251,7 +234,7 @@ fun <T : View> T.onStageResized(firstTrigger: Boolean = true, block: Views.(widt
 }
 
 /*
-open class Component(val view: View) : EventDispatcher by view, Cancellable {
+open class Component(val view: BaseView) : EventDispatcher by view, Cancellable {
 	val detatchCloseables = arrayListOf<Closeable>()
 
 	fun attach() = view.addComponent(this)
@@ -425,10 +408,10 @@ class Components {
     }
 
     inline fun <reified T : Component> getOrCreateComponent(
-        view: View,
+        view: BaseView,
         array: ArrayList<T>,
         clazz: KClass<out T>,
-        gen: (View) -> T
+        gen: (BaseView) -> T
     ): T {
         var component: T? = findFirstComponentOfType(array, clazz)
         if (component == null) {
@@ -438,52 +421,52 @@ class Components {
         return component
     }
 
-    inline fun <reified T : Component> getOrCreateComponent(view: View, clazz: KClass<out T>, gen: (View) -> T): T =
+    inline fun <reified T : Component> getOrCreateComponent(view: BaseView, clazz: KClass<out T>, gen: (BaseView) -> T): T =
         getOrCreateComponent(view, eother, clazz, gen) as T
 
     inline fun <reified T : MouseComponent> getOrCreateComponent(
-        view: View,
+        view: BaseView,
         clazz: KClass<out T>,
-        gen: (View) -> T
+        gen: (BaseView) -> T
     ): T = getOrCreateComponent(view, emouse, clazz, gen) as T
 
-    inline fun <reified T : KeyComponent> getOrCreateComponent(view: View, clazz: KClass<out T>, gen: (View) -> T): T =
+    inline fun <reified T : KeyComponent> getOrCreateComponent(view: BaseView, clazz: KClass<out T>, gen: (BaseView) -> T): T =
         getOrCreateComponent(view, ekey, clazz, gen) as T
 
     inline fun <reified T : GamepadComponent> getOrCreateComponent(
-        view: View,
+        view: BaseView,
         clazz: KClass<out T>,
-        gen: (View) -> T
+        gen: (BaseView) -> T
     ): T = getOrCreateComponent(view, egamepad, clazz, gen) as T
 
     inline fun <reified T : TouchComponent> getOrCreateComponent(
-        view: View,
+        view: BaseView,
         clazz: KClass<out T>,
-        gen: (View) -> T
+        gen: (BaseView) -> T
     ): T = getOrCreateComponent(view, etouch, clazz, gen) as T
 
     inline fun <reified T : EventComponent> getOrCreateComponent(
-        view: View,
+        view: BaseView,
         clazz: KClass<out T>,
-        gen: (View) -> T
+        gen: (BaseView) -> T
     ): T = getOrCreateComponent(view, eevent, clazz, gen) as T
 
     inline fun <reified T : UpdateComponentWithViews> getOrCreateComponent(
-        view: View,
+        view: BaseView,
         clazz: KClass<out T>,
-        gen: (View) -> T
+        gen: (BaseView) -> T
     ): T = getOrCreateComponent(view, eupdateWV, clazz, gen) as T
 
     inline fun <reified T : UpdateComponent> getOrCreateComponent(
-        view: View,
+        view: BaseView,
         clazz: KClass<out T>,
-        gen: (View) -> T
+        gen: (BaseView) -> T
     ): T = getOrCreateComponent(view, eupdate, clazz, gen) as T
 
     inline fun <reified T : ResizeComponent> getOrCreateComponent(
-        view: View,
+        view: BaseView,
         clazz: KClass<out T>,
-        gen: (View) -> T
+        gen: (BaseView) -> T
     ): T = getOrCreateComponent(view, eresize, clazz, gen) as T
 
     inline fun <reified T : UpdateComponent> getComponentUpdate(): T? = findFirstComponentOfType(eupdate, T::class) as T?

@@ -1,27 +1,26 @@
 package com.soywiz.korim.format
 
 import com.soywiz.klock.*
-import com.soywiz.klock.hr.*
 import com.soywiz.kmem.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
 import com.soywiz.korim.font.Font
+import com.soywiz.korim.paint.*
 import com.soywiz.korim.vector.*
-import com.soywiz.korim.vector.paint.*
 import com.soywiz.korim.vector.renderer.Renderer
 import com.soywiz.korio.file.*
 import com.soywiz.korio.file.std.*
 import com.soywiz.korio.util.*
-import com.soywiz.korio.util.encoding.*
 import com.soywiz.korma.geom.*
 import com.soywiz.korma.geom.vector.*
+import com.soywiz.krypto.encoding.*
 import kotlinx.coroutines.*
 import org.khronos.webgl.*
 import org.khronos.webgl.set
 import org.w3c.dom.*
 import org.w3c.dom.url.*
 import org.w3c.files.*
-import kotlin.browser.*
+import kotlinx.browser.*
 import kotlin.coroutines.*
 import kotlin.js.*
 import kotlin.math.*
@@ -71,16 +70,16 @@ open class HtmlNativeImage(val texSourceBase: TexImageSource, width: Int, height
 
     val ctx: CanvasRenderingContext2D by lazy { lazyCanvasElement.getContext("2d").unsafeCast<CanvasRenderingContext2D>() }
 
-    private var lastRefresh = 0.0.hrNanoseconds
+    private var lastRefresh = 0.0.milliseconds
     override fun readPixelsUnsafe(x: Int, y: Int, width: Int, height: Int, out: RgbaArray, offset: Int) {
         if (width <= 0 || height <= 0) return
         val size = width * height
 
         if (texSourceBase is HTMLVideoElement) {
             // Must refresh
-            val now = PerformanceCounter.hr
+            val now = PerformanceCounter.reference
             val elapsedTime = now - lastRefresh
-            if (elapsedTime >= 16.hrMilliseconds) {
+            if (elapsedTime >= 16.milliseconds) {
                 lastRefresh = now
                 ctx.clearRect(0.0, 0.0, width.toDouble(), height.toDouble())
                 ctx.drawImage(texSourceBase, 0.0, 0.0)
@@ -154,7 +153,9 @@ object HtmlNativeImageFormatProvider : NativeImageFormatProvider() {
 
 	override fun mipmap(bmp: Bitmap): NativeImage {
 		val out = NativeImage(ceil(bmp.width * 0.5).toInt(), ceil(bmp.height * 0.5).toInt())
-		out.getContext2d(antialiasing = true).renderer.drawImage(bmp, 0.0, 0.0, out.width.toDouble(), out.height.toDouble())
+        out.context2d(antialiased = true) {
+            renderer.drawImage(bmp, 0.0, 0.0, out.width.toDouble(), out.height.toDouble())
+        }
 		return out
 	}
 }
@@ -267,7 +268,12 @@ class CanvasContext2dRenderer(private val canvas: HTMLCanvasElementLike) : Rende
 		}
 	}
 
+    private var cachedFontSize: Double = Double.NaN
+    private var cachedFontName: String = ""
 	private fun setFont(font: Font, fontSize: Double) {
+        if (font.name == cachedFontName && fontSize == cachedFontSize) return
+        cachedFontName = font.name
+        cachedFontSize = fontSize
 		ctx.font = "${fontSize}px '${font.name}'"
 	}
 
@@ -311,12 +317,14 @@ class CanvasContext2dRenderer(private val canvas: HTMLCanvasElementLike) : Rende
         else -> "source-over" // Default
     }
 
-	private fun setState(state: Context2d.State, fill: Boolean, fontSize: Double) {
+	private fun setState(state: Context2d.State, fill: Boolean, doSetFont: Boolean) {
 		ctx.globalAlpha = state.globalAlpha
         ctx.globalCompositeOperation = state.globalCompositeOperation.toJsStr()
-		setFont(state.font, state.fontSize)
+        if (doSetFont) {
+            setFont(state.font, state.fontSize)
+        }
 		if (fill) {
-			ctx.fillStyle = state.fillStyle.toJsStr()
+            ctx.fillStyle = state.fillStyle.toJsStr()
 		} else {
             ctx.lineWidth = state.lineWidth
 			ctx.lineJoin = when (state.lineJoin) {
@@ -329,7 +337,7 @@ class CanvasContext2dRenderer(private val canvas: HTMLCanvasElementLike) : Rende
 				LineCap.ROUND -> CanvasLineCap.ROUND
 				LineCap.SQUARE -> CanvasLineCap.SQUARE
 			}
-			ctx.strokeStyle = state.strokeStyle.toJsStr()
+            ctx.strokeStyle = state.strokeStyle.toJsStr()
 		}
 	}
 
@@ -361,7 +369,7 @@ class CanvasContext2dRenderer(private val canvas: HTMLCanvasElementLike) : Rende
         //println("RENDER: $width,$height,fill=$fill")
         //println(" fillStyle=${ctx.fillStyle}, transform=${state.transform}")
 		keep {
-			setState(state, fill, state.fontSize)
+			setState(state, fill, doSetFont = false)
 			ctx.beginPath()
 
 			state.path.visitCmds(

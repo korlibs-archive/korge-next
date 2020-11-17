@@ -3,24 +3,23 @@ package com.soywiz.korge3d
 import com.soywiz.kds.iterators.fastForEachWithIndex
 import com.soywiz.kmem.clamp
 import com.soywiz.korag.AG
-import com.soywiz.korge.ui.DefaultUIFont
+import com.soywiz.korge.ui.*
 import com.soywiz.korim.font.BitmapFont
 import com.soywiz.korma.geom.Matrix3D
 import com.soywiz.korma.geom.Vector3D
 import com.soywiz.korma.geom.invert
 
 @Korge3DExperimental
-fun Container3D.text3D(str:String, v1: Vector3D,  v2: Vector3D,  v3: Vector3D,  v4: Vector3D): Text3D {
-    return  Text3D(str, v1, v2, v3, v4).addTo(this)
-}
+fun Container3D.text3D(str: String, v1: Vector3D, v2: Vector3D, v3: Vector3D, v4: Vector3D): Text3D =
+    Text3D(str, v1, v2, v3, v4).addTo(this)
 
 @Korge3DExperimental
 class Text3D(
-    var text:String,
+    var text: String,
     var v1: Vector3D, var v2: Vector3D, var v3: Vector3D, var v4: Vector3D
 ) : View3D() {
 
-    var font: BitmapFont = DefaultUIFont.font as BitmapFont
+    var font: BitmapFont = DefaultUIBitmapFont
 
     protected open fun prepareExtraModelMatrix(mat: Matrix3D) {
         mat.identity()
@@ -58,7 +57,7 @@ class Text3D(
 
         ctx.dynamicVertexBufferPool.alloc { vertexBuffer ->
             //vertexBuffer.upload(mesh.data)
-            vertexBuffer.upload(mesh.fbuffer)
+            vertexBuffer.upload(mesh.vertexBuffer)
 
             //tempMat2.invert()
             //tempMat3.multiply(ctx.cameraMatInv, this.localTransform.matrix)
@@ -120,7 +119,7 @@ class Text3D(
         }
     }
 
-    private fun createMesh(ctx:RenderContext3D) :Mesh3D {
+    private fun createMesh(ctx: RenderContext3D): Mesh3D {
         val str = this.text
 
         val meshBuilder3D = MeshBuilder3D()
@@ -150,14 +149,14 @@ class Text3D(
             val h = tex.height //(tex.y1-tex.y0) * font.fontSize.toFloat()
             dv1.x = (dx + glyph.xoffset).toFloat()
             dv1.y = (dy + glyph.yoffset).toFloat()
-            dv2.x = dv1.x+w
+            dv2.x = dv1.x + w
             dv2.y = dv1.y
-            dv3.x = dv1.x+w
-            dv3.y = dv1.y+h
+            dv3.x = dv1.x + w
+            dv3.y = dv1.y + h
             dv4.x = dv1.x
-            dv4.y = dv1.y+h
-            t1.x=tex.left.toFloat()
-            t1.y=tex.top.toFloat()
+            dv4.y = dv1.y + h
+            t1.x = tex.left.toFloat()
+            t1.y = tex.top.toFloat()
             t2.x = tex.right.toFloat()
             t2.y = tex.top.toFloat()
             t3.x = tex.right.toFloat()
@@ -166,7 +165,7 @@ class Text3D(
             t4.y = tex.bottom.toFloat()
             meshBuilder3D.faceRectangle(
                 dv1, dv2, dv3, dv4,
-                t1,t2,t3,t4
+                t1, t2, t3, t4
             )
 
             val kerningOffset = font.kernings[BitmapFont.Kerning.buildKey(c1, c2)]?.amount ?: 0

@@ -4,6 +4,7 @@ import com.soywiz.kds.iterators.*
 import com.soywiz.korev.*
 import com.soywiz.korge.debug.*
 import com.soywiz.korge.render.*
+import com.soywiz.korio.resources.*
 import com.soywiz.korma.geom.*
 import com.soywiz.korui.*
 import kotlinx.coroutines.*
@@ -15,12 +16,14 @@ class Stage(override val views: Views) : Container()
     , View.Reference
     , CoroutineScope by views
     , EventDispatcher by EventDispatcher.Mixin()
-    , ViewsScope, ViewsContainer
+    , ViewsContainer
+    , ResourcesContainer
 {
     val injector get() = views.injector
     val ag get() = views.ag
     val gameWindow get() = views.gameWindow
     override val stage: Stage = this
+    override val resources get() = views.resources
 
     /** Mouse coordinates relative to the [Stage] singleton */
     val mouseXY: Point = Point(0.0, 0.0)

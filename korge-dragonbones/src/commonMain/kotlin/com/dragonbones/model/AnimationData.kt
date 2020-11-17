@@ -23,7 +23,7 @@ package com.dragonbones.model
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import com.dragonbones.core.*
-import com.dragonbones.internal.fastForEach
+import com.soywiz.kds.iterators.*
 import com.dragonbones.util.*
 import com.soywiz.kds.*
 import kotlin.math.*
@@ -266,7 +266,7 @@ class AnimationData(pool: SingleObjectPool<AnimationData>) :  BaseObject(pool) {
 	fun addBoneTimeline(timelineName: String, timeline: TimelineData) {
 		val timelines = this.boneTimelines.getOrPut(timelineName) { arrayListOf() }
 		if (timelines.indexOf(timeline) < 0) {
-			timelines.push(timeline)
+			timelines.add(timeline)
 		}
 	}
 
@@ -276,7 +276,7 @@ class AnimationData(pool: SingleObjectPool<AnimationData>) :  BaseObject(pool) {
 	fun addSlotTimeline(timelineName: String, timeline: TimelineData) {
 		val timelines = this.slotTimelines.getOrPut(timelineName) { arrayListOf() }
 		if (timelines.indexOf(timeline) < 0) {
-			timelines.push(timeline)
+			timelines.add(timeline)
 		}
 	}
 
@@ -286,7 +286,7 @@ class AnimationData(pool: SingleObjectPool<AnimationData>) :  BaseObject(pool) {
 	fun addConstraintTimeline(timelineName: String, timeline: TimelineData) {
 		val timelines = this.constraintTimelines.getOrPut(timelineName) { arrayListOf() }
 		if (timelines.indexOf(timeline) < 0) {
-			timelines.push(timeline)
+			timelines.add(timeline)
 		}
 	}
 
@@ -296,7 +296,7 @@ class AnimationData(pool: SingleObjectPool<AnimationData>) :  BaseObject(pool) {
 	fun addAnimationTimeline(timelineName: String, timeline: TimelineData): Unit {
 		val timelines = this.animationTimelines.getOrPut(timelineName) { arrayListOf() }
 		if (timelines.indexOf(timeline) < 0) {
-			timelines.push(timeline)
+			timelines.add(timeline)
 		}
 	}
 

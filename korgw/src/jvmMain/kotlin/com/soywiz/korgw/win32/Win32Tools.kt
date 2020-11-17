@@ -1,5 +1,6 @@
 package com.soywiz.korgw.win32
 
+import com.soywiz.kgl.*
 import com.soywiz.korgw.platform.*
 import com.soywiz.korim.bitmap.*
 import com.sun.jna.*
@@ -101,7 +102,8 @@ class Win32OpenglContext(val hDC: WinDef.HDC, val doubleBuffered: Boolean = fals
             WinGDI.PFD_DRAW_TO_WINDOW or WinGDI.PFD_SUPPORT_OPENGL or (if (doubleBuffered) WinGDI.PFD_DOUBLEBUFFER else 0)
         //pfd.dwFlags = WinGDI.PFD_DRAW_TO_WINDOW or WinGDI.PFD_SUPPORT_OPENGL;
         pfd.iPixelType = WinGDI.PFD_TYPE_RGBA.toByte()
-        pfd.cColorBits = 32
+        pfd.cColorBits = 24
+        pfd.cStencilBits = 8.toByte()
         //pfd.cColorBits = 24
         pfd.cDepthBits = 16
     }
@@ -123,8 +125,11 @@ class Win32OpenglContext(val hDC: WinDef.HDC, val doubleBuffered: Boolean = fals
 
     init {
         makeCurrent()
-        println("GL_VERSION: " + Win32KmlGl.getString(Win32KmlGl.VERSION))
-        println("GL_VENDOR: " + Win32KmlGl.getString(Win32KmlGl.VENDOR))
+        Win32KmlGl.apply {
+            println("GL_VERSION: ${getString(VERSION)}, GL_VENDOR: ${getString(VENDOR)}")
+            println("GL_RED_BITS: ${getIntegerv(RED_BITS)}, GL_GREEN_BITS: ${getIntegerv(GREEN_BITS)}, GL_BLUE_BITS: ${getIntegerv(BLUE_BITS)}, GL_ALPHA_BITS: ${getIntegerv(ALPHA_BITS)}")
+            println("GL_DEPTH_BITS: ${getIntegerv(DEPTH_BITS)}, GL_STENCIL_BITS: ${getIntegerv(STENCIL_BITS)}")
+        }
     }
 
     override fun makeCurrent() {

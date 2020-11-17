@@ -2,21 +2,16 @@ package com.soywiz.korgw
 
 import com.soywiz.kgl.toInt
 import com.soywiz.kmem.*
-import com.soywiz.korag.AG
-import com.soywiz.korag.AGConfig
-import com.soywiz.korag.AGOpenglFactory
+import com.soywiz.korag.*
 import com.soywiz.korev.*
-import com.soywiz.korim.bitmap.Bitmap
-import com.soywiz.korim.bitmap.Bitmap32
-import com.soywiz.korio.file.VfsFile
-import com.soywiz.korio.net.URL
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korio.file.*
+import com.soywiz.korio.net.*
 import com.soywiz.korma.geom.*
 import kotlinx.cinterop.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import platform.windows.*
-import kotlin.math.max
-import kotlin.math.min
+import kotlin.math.*
+
 
 //override val ag: AG = AGNative()
 
@@ -129,14 +124,35 @@ class WindowsGameWindow : EventLoopGameWindow() {
         }
     }
 
+    private var fsX = 0
+    private var fsY = 0
+    private var fsW = 128
+    private var fsH = 128
     override var fullscreen: Boolean
-        get() = memScoped {
-            val placement = alloc<WINDOWPLACEMENT>()
-            GetWindowPlacement(hwnd, placement.ptr)
-            placement.showCmd.toInt() == SW_MAXIMIZE.toInt()
-        }
+        get() = GetWindowLongPtrA(hwnd, GWL_STYLE.convert()).toLong().hasBits(WS_POPUP.toLong())
         set(value) {
-            ShowWindow(hwnd, if (value) SW_MAXIMIZE else SW_RESTORE)
+            if (fullscreen == value) return
+            memScoped {
+                val style = GetWindowLongPtrA(hwnd, GWL_STYLE.convert())
+                if (value) {
+                    val rect = alloc<RECT>()
+                    GetWindowRect(hwnd, rect.ptr)
+                    fsX = rect.left
+                    fsY = rect.top
+                    fsW = rect.width
+                    fsH = rect.height
+
+                    SetWindowLongPtrA(hwnd, GWL_STYLE.convert(), style.toLong().without(WS_OVERLAPPEDWINDOW.toLong()).with(WS_POPUP.toLong()).convert())
+                    MoveWindow(hwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), TRUE)
+                    SetWindowLongPtrA(hwnd, GWL_EXSTYLE.convert(), 0.convert())
+                    //ShowWindow(hwnd, SW_MAXIMIZE)
+                } else {
+                    SetWindowLongPtrA(hwnd, GWL_STYLE.convert(), style.toLong().without(WS_POPUP.toLong()).with(WS_OVERLAPPEDWINDOW.toLong()).convert())
+                    MoveWindow(hwnd, fsX, fsY, fsW, fsH, TRUE)
+                    SetWindowLongPtrA(hwnd, GWL_EXSTYLE.convert(), 256.convert())
+                    //ShowWindow(hwnd, SW_RESTORE)
+                }
+            }
         }
 
     override var visible: Boolean
@@ -166,6 +182,9 @@ class WindowsGameWindow : EventLoopGameWindow() {
             val rect = alloc<RECT>()
             val borderSize = getBorderSize()
             GetWindowRect(hwnd, rect.ptr)
+            //println("setSize: width=$width, height=$height")
+            //println("RECT: ${rect.left}, ${rect.top}, ${rect.width}, ${rect.height}")
+            //println("BORDER: ${borderSize.width}, ${borderSize.height}")
             MoveWindow(hwnd, rect.left, rect.top, width + borderSize.width, height + borderSize.height, true.toInt().convert())
         }
         Unit
@@ -231,6 +250,7 @@ class WindowsGameWindow : EventLoopGameWindow() {
     }
 
     override fun doHandleEvents() {
+        xInputEventAdapter.updateGamepadsWin32(this)
         memScoped {
             val msg = alloc<MSG>()
             while (
@@ -293,8 +313,8 @@ class WindowsGameWindow : EventLoopGameWindow() {
                 winStyle.convert(),
                 min(max(0, (screenWidth - realWidth) / 2), screenWidth - 16).convert(),
                 min(max(0, (screenHeight - realHeight) / 2), screenHeight - 16).convert(),
-                windowWidth.convert(),
-                windowHeight.convert(),
+                realWidth.convert(),
+                realHeight.convert(),
                 null, null, null, null
             )
             println("ERROR: " + GetLastError())
@@ -335,6 +355,10 @@ class WindowsGameWindow : EventLoopGameWindow() {
             this.key = KEYS[keyCode] ?: com.soywiz.korev.Key.UNKNOWN
             this.keyCode = keyCode
             this.character = keyCode.toChar()
+            this.alt = GetKeyState(VK_MENU) < 0
+            this.ctrl = GetKeyState(VK_CONTROL) < 0
+            this.shift = GetKeyState(VK_SHIFT) < 0
+            this.meta = GetKeyState(VK_LWIN) < 0 || GetKeyState(VK_RWIN) < 0
         })
     }
 
@@ -363,10 +387,10 @@ class WindowsGameWindow : EventLoopGameWindow() {
             this.y = ey
             this.button = MouseButton[ebutton]
             this.buttons = buttons
-            this.isAltDown = false
+            this.isAltDown = GetKeyState(VK_MENU) < 0
             this.isCtrlDown = control
             this.isShiftDown = shift
-            this.isMetaDown = false
+            this.isMetaDown = GetKeyState(VK_LWIN) < 0 || GetKeyState(VK_RWIN) < 0
             this.scrollDeltaY = scrollDeltaY
             //this.scaleCoords = false
         })
@@ -388,6 +412,8 @@ val _WM_MBUTTONUP: UINT = WM_MBUTTONUP.convert()
 val _WM_RBUTTONUP: UINT = WM_RBUTTONUP.convert()
 val _WM_KEYDOWN: UINT = WM_KEYDOWN.convert()
 val _WM_KEYUP: UINT = WM_KEYUP.convert()
+val _WM_SYSKEYDOWN: UINT = WM_SYSKEYDOWN.convert()
+val _WM_SYSKEYUP: UINT = WM_SYSKEYUP.convert()
 val _WM_CLOSE: UINT = WM_CLOSE.convert()
 
 @Suppress("UNUSED_PARAMETER")
@@ -419,8 +445,6 @@ fun WndProc(hWnd: HWND?, message: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
                 wglSwapIntervalEXT?.invoke(0)
 
                 println("GL_CONTEXT: ${windowsGameWindow.glRenderContext}")
-
-                windowsGameWindow.ag.__ready()
             }
         }
         _WM_SIZE -> {
@@ -440,8 +464,8 @@ fun WndProc(hWnd: HWND?, message: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
             kotlin.system.exitProcess(0.convert())
         }
         _WM_MOUSEMOVE -> {
-            val x = lParam.toInt().extract(0, 8)
-            val y = lParam.toInt().extract(16, 8)
+            val x = lParam.toInt().extract(0, 16)
+            val y = lParam.toInt().extract(16, 16)
             mouseMove(x, y, wParam.toInt())
         }
         _WM_MOUSEWHEEL -> {
@@ -457,6 +481,8 @@ fun WndProc(hWnd: HWND?, message: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
         _WM_RBUTTONUP -> mouseButton(2, false, wParam.toInt())
         _WM_KEYDOWN -> windowsGameWindow.keyUpdate(wParam.toInt(), true)
         _WM_KEYUP -> windowsGameWindow.keyUpdate(wParam.toInt(), false)
+        _WM_SYSKEYDOWN -> windowsGameWindow.keyUpdate(wParam.toInt(), true)
+        _WM_SYSKEYUP -> windowsGameWindow.keyUpdate(wParam.toInt(), false)
         _WM_CLOSE -> {
             kotlin.system.exitProcess(0)
         }
@@ -502,6 +528,9 @@ private var mouseX: Int = 0
 
 @ThreadLocal
 private var mouseY: Int = 0
+
+@ThreadLocal
+private val xInputEventAdapter = XInputEventAdapter()
 
 //@ThreadLocal
 //private val buttons = BooleanArray(16)

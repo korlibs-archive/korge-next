@@ -1,18 +1,20 @@
 package com.soywiz.korim.vector
 
+import com.soywiz.korim.format.*
 import com.soywiz.korim.vector.format.*
+import com.soywiz.korim.vector.format.SVG
 import com.soywiz.korio.async.*
+import com.soywiz.korio.file.std.*
 import kotlin.test.*
 
 class SvgTest {
 	@Test
-	//@Ignore
 	fun name() = suspendTest {
 		val logo = SVG(SAMPLE_LOGO)
 		//val img = logo.render().toBmp32()
 		val img = logo.renderNoNative()
 
-		//img.writeTo(LocalVfs("c:/temp/logo.png"), formats = PNG)
+		//img.writeTo(localVfs("c:/temp/logo.png"), formats = PNG)
 	}
 
 	val SAMPLE_LOGO = """

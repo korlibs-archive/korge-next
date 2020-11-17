@@ -10,8 +10,13 @@ abstract class KmlGl : Extra by Extra.Mixin(), IKmlGl {
     val DEPTH_BUFFER_BIT: Int = 0x0100
     val STENCIL_BUFFER_BIT: Int = 0x0400
     val COLOR_BUFFER_BIT: Int = 0x4000
-    val FALSE: Int = 0x0000
-    val TRUE: Int = 0x0001
+    // @TODO: Error on Kotlin/Native iOS framework
+    //While building module 'GameMain' imported from /Users/soywiz/projects/untitled/build/platforms/ios/app/ViewController.h:3:
+    //In file included from <module-includes>:1:
+    //../../bin/iosX64/debugFramework/GameMain.framework/Headers/GameMain.h:2726:1: error: property requires fields to be named
+    //@property (readonly) int32_t FALSE __attribute__((swift_name("FALSE")));
+    val GFALSE: Int = 0x0000
+    val GTRUE: Int = 0x0001
     val POINTS: Int = 0x0000
     val LINES: Int = 0x0001
     val LINE_LOOP: Int = 0x0002
@@ -59,6 +64,7 @@ abstract class KmlGl : Extra by Extra.Mixin(), IKmlGl {
     val BACK: Int = 0x0405
     val FRONT_AND_BACK: Int = 0x0408
     val TEXTURE_2D: Int = 0x0DE1
+    val TEXTURE_3D: Int = 0x806F
     val CULL_FACE: Int = 0x0B44
     val BLEND: Int = 0x0BE2
     val DITHER: Int = 0x0BD0
@@ -193,6 +199,7 @@ abstract class KmlGl : Extra by Extra.Mixin(), IKmlGl {
     val TEXTURE_MIN_FILTER: Int = 0x2801
     val TEXTURE_WRAP_S: Int = 0x2802
     val TEXTURE_WRAP_T: Int = 0x2803
+    val TEXTURE_WRAP_R: Int = 0x8072
     val TEXTURE: Int = 0x1702
     val TEXTURE_CUBE_MAP: Int = 0x8513
     val TEXTURE_BINDING_CUBE_MAP: Int = 0x8514

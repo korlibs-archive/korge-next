@@ -5,7 +5,7 @@
 	<id>com.soywiz.korge.korge-intellij-plugin</id>
 
 	<name>Korge</name>
-	<version>2.0.0.0-beta-2</version>
+	<version>2.0.0.0-beta-3</version>
 	<vendor email="soywiz@gmail.com" url="https://korge.soywiz.com/">Korge</vendor>
 
 	<description><![CDATA[
@@ -13,6 +13,10 @@
 	]]></description>
 
 	<change-notes><!-- language: HTML --><![CDATA[
+		<h3>2.0.0.0-beta-3</h3>
+		<ul>
+		    <li>Supports MacOS BigSur</li>
+		</ul>
 		<h3>2.0.0.0-beta-2</h3>
 		<ul>
 		    <li>Some fixes on the Bitmap debug node renderer</li>
@@ -136,7 +140,7 @@
         </group>
 
         <group id="KorgeNew">
-            <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewGroup1"/>
+            <add-to-group group-id="NewGroup" anchor="last"/>
 
             <separator/>
 
@@ -211,10 +215,13 @@
 
         <applicationService serviceImplementation="com.soywiz.korge.intellij.config.KorgeGlobalSettings" />
 
-        <debugger.nodeRenderer implementation="com.soywiz.korge.intellij.debug.KorimBitmapDebugNodeRenderer" order="first" />
-        <debugger.nodeRenderer implementation="com.soywiz.korge.intellij.debug.KorimBmpSliceDebugNodeRenderer" order="first" />
-        <debugger.nodeRenderer implementation="com.soywiz.korge.intellij.debug.KorimDrawableDebugNodeRenderer" order="first" />
-        <debugger.nodeRenderer implementation="com.soywiz.korge.intellij.debug.KorimKorgeViewImageDebugNodeRenderer" order="first" />
+        <!-- TODO: Disable temporarily as we were getting errors about not finding the com.sun.jdi package -->
+        <!--
+        <debugger.nodeRenderer implementation="com.soywiz.korge.intellij.debug.KorimBitmapDebugNodeRenderer" />
+        <debugger.nodeRenderer implementation="com.soywiz.korge.intellij.debug.KorimBmpSliceDebugNodeRenderer" />
+        <debugger.nodeRenderer implementation="com.soywiz.korge.intellij.debug.KorimDrawableDebugNodeRenderer" />
+        <debugger.nodeRenderer implementation="com.soywiz.korge.intellij.debug.KorimKorgeViewImageDebugNodeRenderer" />
+        -->
 
         <referenceInjector implementation="com.soywiz.korge.intellij.references.ResourceReferenceInjector" />
 

@@ -1,7 +1,6 @@
 import com.soywiz.klock.*
 import com.soywiz.korev.*
 import com.soywiz.korge.*
-import com.soywiz.korge.atlas.*
 import com.soywiz.korge.input.*
 import com.soywiz.korge.lipsync.*
 import com.soywiz.korge.view.*
@@ -16,14 +15,14 @@ suspend fun main() = Korge {
 	addEventListener<LipSyncEvent> {
 		println(it)
 		if (it.name == "lisa") {
-			lips2.texture = atlas["lisa-${it.lip}.png"]
+			lips2.bitmap = atlas["lisa-${it.lip}.png"]
 		}
 	}
 	var playing = true
 	fun play() = launchImmediately {
 		fun handler(event: LipSyncEvent) {
 			views.dispatch(event)
-			lips.texture = atlas["lisa-${event.lip}.png"]
+			lips.bitmap = atlas["lisa-${event.lip}.png"]
 			playing = event.time > 0.milliseconds
 		}
 

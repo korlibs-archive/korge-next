@@ -2,8 +2,9 @@ package com.soywiz.korim.vector.renderer
 
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.font.*
+import com.soywiz.korim.paint.*
 import com.soywiz.korim.vector.*
-import com.soywiz.korim.vector.paint.*
+import com.soywiz.korim.paint.*
 import com.soywiz.korma.geom.*
 import com.soywiz.korma.geom.vector.*
 
@@ -22,8 +23,8 @@ abstract class Renderer {
     }
 
     private var bufferingLevel = 0
-    protected fun isBuffering() = bufferingLevel > 0
-    open protected fun flush() = Unit
+    protected open fun isBuffering() = bufferingLevel > 0
+    protected open fun flush() = Unit
     fun bufferingStart() = bufferingLevel++
     fun bufferingEnd() {
         bufferingLevel--
@@ -78,7 +79,7 @@ open class DummyRenderer(override val width: Int, override val height: Int) : Re
 }
 
 abstract class BufferedRenderer : Renderer() {
-    abstract fun flushCommands()
+    abstract fun flushCommands(commands: List<RenderCommand>)
 
     data class RenderCommand(
         val state: Context2d.State,
@@ -101,5 +102,5 @@ abstract class BufferedRenderer : Renderer() {
     //    if (!isBuffering()) flush()
     //}
 
-    final override fun flush() = flushCommands()
+    final override fun flush() = flushCommands(commands)
 }

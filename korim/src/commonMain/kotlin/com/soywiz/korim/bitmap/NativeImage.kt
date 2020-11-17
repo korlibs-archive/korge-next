@@ -4,7 +4,7 @@ import com.soywiz.korim.color.*
 import com.soywiz.korim.format.*
 import com.soywiz.korim.vector.*
 import com.soywiz.korio.lang.*
-import com.soywiz.korio.util.encoding.*
+import com.soywiz.krypto.encoding.*
 
 abstract class NativeImage(width: Int, height: Int, val data: Any?, premultiplied: Boolean) : Bitmap(width, height, 32, premultiplied, null) {
     /** Allow to force to use a texture id from OpenGL. For example a video texture from Android */
@@ -52,8 +52,8 @@ fun Bitmap.toUri(): String {
 	return "data:image/png;base64," + PNG.encode(this, ImageEncodingProps("out.png")).toBase64()
 }
 
-fun NativeImageOrBitmap32(width: Int, height: Int, native: Boolean = true) =
-    if (native) NativeImage(width, height) else Bitmap32(width, height, premultiplied = true)
+fun NativeImageOrBitmap32(width: Int, height: Int, native: Boolean = true, premultiplied: Boolean? = null) =
+    if (native) NativeImage(width, height, premultiplied) else Bitmap32(width, height, premultiplied = premultiplied ?: true)
 fun NativeImage(width: Int, height: Int, premultiplied: Boolean? = null) = nativeImageFormatProvider.create(width, height, premultiplied)
 
 fun NativeImage(
@@ -65,11 +65,12 @@ fun NativeImage(
 ): NativeImage {
 	val bmp = NativeImage(width, height)
 	try {
-		val ctx = bmp.getContext2d()
-		ctx.keep {
-			ctx.scale(scaleX, scaleY)
-			ctx.draw(d)
-		}
+		bmp.context2d {
+            keep {
+                scale(scaleX, scaleY)
+                draw(d)
+            }
+        }
 	} catch (e: Throwable) {
 		e.printStackTrace()
 	}

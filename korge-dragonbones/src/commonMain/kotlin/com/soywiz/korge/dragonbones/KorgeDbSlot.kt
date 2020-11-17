@@ -51,7 +51,7 @@ class KorgeDbSlot(pool: SingleObjectPool<KorgeDbSlot>) : Slot(pool) {
 	}
 
 	private var _textureScale: Double = 1.0
-	private var _renderDisplay: DisplayObject? = null
+	private var _renderDisplay: View? = null
 
 	override fun _onClear() {
 		super._onClear()
@@ -70,7 +70,7 @@ class KorgeDbSlot(pool: SingleObjectPool<KorgeDbSlot>) : Slot(pool) {
 	}
 
 	override fun _onUpdateDisplay() {
-		this._renderDisplay = (if (this._display != null) this._display else this._rawDisplay) as DisplayObject
+		this._renderDisplay = (if (this._display != null) this._display else this._rawDisplay) as View
 	}
 
 	override fun _addDisplay() {
@@ -80,7 +80,7 @@ class KorgeDbSlot(pool: SingleObjectPool<KorgeDbSlot>) : Slot(pool) {
 
 	override fun _replaceDisplay(value: Any) {
 		val container = this._armature?.display as KorgeDbArmatureDisplay
-		val prevDisplay = value as DisplayObject
+		val prevDisplay = value as View
 		container.addChild(this._renderDisplay!!)
 		container.swapChildren(this._renderDisplay!!, prevDisplay)
 		container.removeChild(prevDisplay)
@@ -146,7 +146,8 @@ class KorgeDbSlot(pool: SingleObjectPool<KorgeDbSlot>) : Slot(pool) {
 	override fun _updateFrame() {
 		var currentTextureData = this._textureData as KorgeDbTextureData?
 
-		if (this._displayIndex >= 0 && this._display !== null && currentTextureData !== null) {
+        val geometryData = this._geometryData
+        if (this._displayIndex >= 0 && this._display !== null && currentTextureData !== null) {
 			var currentTextureAtlasData = currentTextureData.parent as KorgeDbTextureAtlasData
 
 			if (this._armature?.replacedTexture != null) { // Update replaced texture atlas.
@@ -164,16 +165,15 @@ class KorgeDbSlot(pool: SingleObjectPool<KorgeDbSlot>) : Slot(pool) {
 
 			val renderTexture = currentTextureData.renderTexture
 			if (renderTexture !== null) {
-				if (this._geometryData !== null) { // Mesh.
-					val data = this._geometryData!!.data!!
+				if (geometryData !== null) { // Mesh.
+					val data = geometryData.data!!
 					val intArray = data.intArray!!
 					val floatArray = data.floatArray!!
-					val vertexCount =
-						intArray[this._geometryData!!.offset + BinaryOffset.GeometryVertexCount].toInt()
+					val vertexCount = intArray[geometryData.offset + BinaryOffset.GeometryVertexCount].toInt()
 					val triangleCount =
-						intArray[this._geometryData!!.offset + BinaryOffset.GeometryTriangleCount].toInt()
+						intArray[geometryData.offset + BinaryOffset.GeometryTriangleCount].toInt()
 					var vertexOffset =
-						intArray[this._geometryData!!.offset + BinaryOffset.GeometryFloatOffset].toInt()
+						intArray[geometryData.offset + BinaryOffset.GeometryFloatOffset].toInt()
 
 					if (vertexOffset < 0) {
 						vertexOffset += 65536 // Fixed out of bounds bug.
@@ -183,10 +183,8 @@ class KorgeDbSlot(pool: SingleObjectPool<KorgeDbSlot>) : Slot(pool) {
 					val scale = this._armature!!._armatureData!!.scale
 
 					val meshDisplay = this._renderDisplay as Mesh
-					val textureAtlasWidth =
-						if (currentTextureAtlasData.width > 0.0) currentTextureAtlasData.width else renderTexture.bmp.width
-					val textureAtlasHeight =
-						if (currentTextureAtlasData.height > 0.0) currentTextureAtlasData.height else renderTexture.bmp.height
+					val textureAtlasWidth = if (currentTextureAtlasData.width > 0.0) currentTextureAtlasData.width else renderTexture.bmp.width
+					val textureAtlasHeight = if (currentTextureAtlasData.height > 0.0) currentTextureAtlasData.height else renderTexture.bmp.height
 					val region = currentTextureData.region
 
 					meshDisplay.vertices = Float32BufferAlloc(vertexCount * 2)
@@ -203,8 +201,7 @@ class KorgeDbSlot(pool: SingleObjectPool<KorgeDbSlot>) : Slot(pool) {
 
 					//for (let i = 0; i < triangleCount * 3; ++i) {
 					for (i in 0 until triangleCount * 3) {
-						meshDisplay.indices[i] =
-								intArray[this._geometryData!!.offset + BinaryOffset.GeometryVertexIndices + i].toInt()
+						meshDisplay.indices[i] = intArray[geometryData.offset + BinaryOffset.GeometryVertexIndices + i].toInt()
 					}
 
 					//for (let i = 0, l = vertexCount * 2; i < l; i += 2) {
@@ -227,7 +224,7 @@ class KorgeDbSlot(pool: SingleObjectPool<KorgeDbSlot>) : Slot(pool) {
 					meshDisplay.indexDirty++
 					meshDisplay.name = this.name
 
-					val isSkinned = this._geometryData!!.weight !== null
+					val isSkinned = geometryData!!.weight !== null
 					val isSurface = this._parent?._boneData?.isSurface ?: false
 					if (isSkinned || isSurface) {
 						this._identityTransform()
@@ -235,7 +232,7 @@ class KorgeDbSlot(pool: SingleObjectPool<KorgeDbSlot>) : Slot(pool) {
 				} else { // Normal texture.
 					this._textureScale = currentTextureData.parent!!.scale * this._armature!!._armatureData!!.scale
 					val normalDisplay = this._renderDisplay as Image
-					normalDisplay.texture = renderTexture
+					normalDisplay.bitmap = renderTexture
 					//normalDisplay.name = renderTexture.name
 					normalDisplay.name = this.name
 				}
@@ -246,7 +243,7 @@ class KorgeDbSlot(pool: SingleObjectPool<KorgeDbSlot>) : Slot(pool) {
 			}
 		}
 
-		if (this._geometryData !== null) {
+		if (geometryData !== null) {
 			val meshDisplay = this._renderDisplay as Mesh
 			//meshDisplay.texture = null as any
 			meshDisplay.texture = null
@@ -313,8 +310,8 @@ class KorgeDbSlot(pool: SingleObjectPool<KorgeDbSlot>) : Slot(pool) {
 						yL += deformVertices[iF++].toFloat()
 					}
 
-					xG += matrix.transformX(xL.toFloat(), yL.toFloat()) * weight
-					yG += matrix.transformY(xL.toFloat(), yL.toFloat()) * weight
+					xG += matrix.transformXf(xL, yL) * weight
+					yG += matrix.transformYf(xL, yL) * weight
 				}
 
 				meshDisplay.vertices[iD++] = xG
@@ -347,8 +344,8 @@ class KorgeDbSlot(pool: SingleObjectPool<KorgeDbSlot>) : Slot(pool) {
 				if (isSurface) {
 					val matrix = (this._parent as Surface)._getGlobalTransformMatrix(x, y)
 
-					meshDisplay.vertices[i + 0] = matrix.transformX(x, y).toFloat()
-					meshDisplay.vertices[i + 1] = matrix.transformY(x, y).toFloat()
+					meshDisplay.vertices[i + 0] = matrix.transformXf(x, y).toFloat()
+					meshDisplay.vertices[i + 1] = matrix.transformYf(x, y).toFloat()
 				} else {
 					meshDisplay.vertices[i + 0] = x.toFloat()
 					meshDisplay.vertices[i + 1] = y.toFloat()
@@ -369,21 +366,21 @@ class KorgeDbSlot(pool: SingleObjectPool<KorgeDbSlot>) : Slot(pool) {
         val rd = this._renderDisplay
 
 		if (rd === this._rawDisplay || rd === this._meshDisplay) {
-			val x = transform.x - (this.globalTransformMatrix.a * this._pivotX + this.globalTransformMatrix.c * this._pivotY)
-			val y = transform.y - (this.globalTransformMatrix.b * this._pivotX + this.globalTransformMatrix.d * this._pivotY)
+			val x = transform.xf - (this.globalTransformMatrix.af * this._pivotX + this.globalTransformMatrix.cf * this._pivotY)
+			val y = transform.yf - (this.globalTransformMatrix.bf * this._pivotX + this.globalTransformMatrix.df * this._pivotY)
             if (rd != null) {
                 rd.position(x, y)
                 rd.scale(transform.scaleX * this._textureScale, transform.scaleY * this._textureScale)
             }
 		} else {
             if (rd != null) {
-                rd.position(transform.x.toDouble(), transform.y.toDouble())
+                rd.position(transform.xf.toDouble(), transform.yf.toDouble())
                 rd.scale(transform.scaleX.toDouble(), transform.scaleY.toDouble())
             }
 		}
 
         if (rd != null) {
-            rd.rotationRadians = transform.rotation.toDouble()
+            rd.rotation = transform.rotation.radians
             rd.skew(-transform.skew.toDouble().radians, 0.0.radians)
         }
 	}

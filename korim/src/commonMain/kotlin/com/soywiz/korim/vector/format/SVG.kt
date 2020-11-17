@@ -5,8 +5,9 @@ import com.soywiz.kds.expect
 import com.soywiz.kds.mapWhile
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
+import com.soywiz.korim.paint.*
+import com.soywiz.korim.text.*
 import com.soywiz.korim.vector.*
-import com.soywiz.korim.vector.paint.*
 import com.soywiz.korio.lang.invalidOp
 import com.soywiz.korio.lang.printStackTrace
 import com.soywiz.korio.lang.substr
@@ -19,7 +20,6 @@ import com.soywiz.korio.util.isLetterOrUnderscore
 import com.soywiz.korio.util.isNumeric
 import com.soywiz.korma.geom.Matrix
 import com.soywiz.korma.geom.Rectangle
-import com.soywiz.korma.geom.a
 import com.soywiz.korma.geom.vector.*
 import kotlin.collections.set
 import kotlin.math.*
@@ -725,28 +725,3 @@ class SVG(val root: Xml, val warningProcessor: ((message: String) -> Unit)? = nu
 		}
 	}
 }
-
-// @TODO: Move to korma
-private inline fun VectorBuilder.rCubicTo(cx1: Number, cy1: Number, cx2: Number, cy2: Number, ax: Number, ay: Number, relative: Boolean) =
-    if (relative) rCubicTo(cx1, cy1, cx2, cy2, ax, ay) else cubicTo(cx1, cy1, cx2, cy2, ax, ay)
-
-private inline fun VectorBuilder.rQuadTo(cx: Number, cy: Number, ax: Number, ay: Number, relative: Boolean) =
-    if (relative) rQuadTo(cx, cy, ax, ay) else quadTo(cx, cy, ax, ay)
-
-private inline fun VectorBuilder.rLineTo(ax: Number, ay: Number, relative: Boolean) =
-    if (relative) rLineTo(ax, ay) else lineTo(ax, ay)
-
-private inline fun VectorBuilder.rMoveTo(ax: Number, ay: Number, relative: Boolean) =
-    if (relative) rMoveTo(ax, ay) else moveTo(ax, ay)
-
-private inline fun VectorBuilder.rMoveToH(ax: Number, relative: Boolean) =
-    if (relative) rMoveToH(ax) else moveToH(ax)
-
-private inline fun VectorBuilder.rMoveToV(ay: Number, relative: Boolean) =
-    if (relative) rMoveToV(ay) else moveToV(ay)
-
-private inline fun VectorBuilder.rLineToH(ax: Number, relative: Boolean) =
-    if (relative) rLineToH(ax) else lineToH(ax)
-
-private inline fun VectorBuilder.rLineToV(ay: Number, relative: Boolean) =
-    if (relative) rLineToV(ay) else lineToV(ay)

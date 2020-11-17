@@ -17,6 +17,23 @@ abstract class KlockLocale {
     open val monthsShort: List<String> by klockLazyOrGet { months.map { it.substr(0, 3) } }
     open val daysOfWeekShort: List<String> by klockLazyOrGet { daysOfWeek.map { it.substr(0, 3) } }
 
+    open val ordinals = Array(32) {
+        if (it in 11..13) {
+            "${it}th"
+        } else {
+            when (it % 10) {
+                1 -> "${it}st"
+                2 -> "${it}nd"
+                3 -> "${it}rd"
+                else -> "${it}th"
+            }
+        }
+    }
+
+    open fun getOrdinalByDay(day: Int): String = ordinals[day]
+
+    open fun getDayByOrdinal(ordinal: String): Int = ordinals.indexOf(ordinal)
+
     //open val monthsShort: List<String> by klockAtomicLazy { months.map { it.substr(0, 3) } }
     //open val daysOfWeekShort: List<String> by klockAtomicLazy { daysOfWeek.map { it.substr(0, 3) } }
     /*
@@ -38,8 +55,6 @@ abstract class KlockLocale {
     }
     */
 
-	@Deprecated("Use months3", ReplaceWith("monthsShort"))
-	val months3 get() = monthsShort
 	open val h12Marker = listOf("AM", "OM")
 
 	// This might be required for some languages like chinese?
@@ -86,11 +101,11 @@ abstract class KlockLocale {
 		override val firstDayOfWeek: DayOfWeek = DayOfWeek.Sunday
 
 		override val daysOfWeek: List<String> = listOf(
-			"sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"
+			"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
 		)
 		override val months: List<String> = listOf(
-			"january", "february", "march", "april", "may", "june",
-			"july", "august", "september", "october", "november", "december"
+			"January", "February", "March", "April", "May", "June",
+			"July", "August", "September", "October", "November", "December"
 		)
 
 		override val formatTimeMedium = format("h:mm:ss a")

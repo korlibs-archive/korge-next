@@ -3,9 +3,11 @@ package com.soywiz.korau.sound
 import com.soywiz.klock.*
 
 class AudioChannel {
-    private var channel: NativeSoundChannel? = null
+    private var channel: SoundChannel? = null
 
-    val playing get() = channel?.playing ?: false
+    val state get() = channel?.state ?: SoundChannelState.INITIAL
+
+    val playing get() = state.playingOrPaused
     val current get() = channel?.current ?: 0.seconds
     val total get() = channel?.total ?: 0.seconds
 
@@ -32,7 +34,7 @@ class AudioChannel {
     fun panning(value: Double): AudioChannel = this.apply { panning = value }
 
     fun play(
-        sound: NativeSound,
+        sound: Sound,
         times: PlaybackTimes = 1.playbackTimes,
         startTime: TimeSpan = 0.seconds,
     ): AudioChannel {

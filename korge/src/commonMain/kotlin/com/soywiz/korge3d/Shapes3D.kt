@@ -37,8 +37,7 @@ class Shape3D(
 
 
 @Korge3DExperimental
-@Deprecated("Kotlin/Native boxes inline+Number")
-inline fun Container3D.cube(width: Number, height: Number, depth: Number, callback: Cube3D.() -> Unit = {}): Cube3D = cube(width.toDouble(), height.toDouble(), depth.toDouble(), callback)
+inline fun Container3D.cube(width: Int, height: Int, depth: Int, callback: Cube3D.() -> Unit = {}): Cube3D = cube(width.toDouble(), height.toDouble(), depth.toDouble(), callback)
 
 @Korge3DExperimental
 inline fun Container3D.cube(
@@ -75,13 +74,13 @@ class Cube3D(var width: Double, var height: Double, var depth: Double) : ViewWit
                     val dx = dirs[0]
                     val dy = dirs[1]
 
-                    vertex(pos - dx - dy, normal, Vector3D(0f, 0f, 0f))
-                    vertex(pos + dx - dy, normal, Vector3D(1f, 0f, 0f))
-                    vertex(pos - dx + dy, normal, Vector3D(0f, 1f, 0f))
+                    addVertex(pos - dx - dy, normal, Vector3D(0f, 0f, 0f))
+                    addVertex(pos + dx - dy, normal, Vector3D(1f, 0f, 0f))
+                    addVertex(pos - dx + dy, normal, Vector3D(0f, 1f, 0f))
 
-                    vertex(pos - dx + dy, normal, Vector3D(0f, 1f, 0f))
-                    vertex(pos + dx - dy, normal, Vector3D(1f, 0f, 0f))
-                    vertex(pos + dx + dy, normal, Vector3D(1f, 1f, 0f))
+                    addVertex(pos - dx + dy, normal, Vector3D(0f, 1f, 0f))
+                    addVertex(pos + dx - dy, normal, Vector3D(1f, 0f, 0f))
+                    addVertex(pos + dx + dy, normal, Vector3D(1f, 1f, 0f))
                 }
 
                 face(Vector3D(0f, +.5f, 0f))

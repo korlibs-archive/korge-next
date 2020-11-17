@@ -39,11 +39,11 @@ object Demo1 {
 			val cube8 = cube().position(0, 0, +5)
 
 			var tick = 0
-			addUpdatable {
+			addUpdater {
 				val angle = (tick / 4.0).degrees
 				camera.positionLookingAt(
 					cos(angle * 2) * 4, cos(angle * 3) * 4, -sin(angle) * 4, // Orbiting camera
-					0, 1, 0
+					0.0, 1.0, 0.0
 				)
 				tick++
 			}
@@ -98,11 +98,11 @@ object Demo2 {
             */
 
 			var tick = 0
-			addUpdatable {
+            addUpdater {
 				val angle = (tick / 1.0).degrees
 				camera.positionLookingAt(
 					cos(angle * 1) * 4, 0.0, -sin(angle * 1) * 4, // Orbiting camera
-					0, 0, 0
+					0.0, 0.0, 0.0
 				)
 				tick++
 			}
@@ -115,7 +115,7 @@ object Demo2 {
 			val angle = 360.degrees * ratio
 			camera.positionLookingAt(
 				cos(angle) * distance, 0.0, sin(angle) * distance, // Orbiting camera
-				v.transform.translation.x, v.transform.translation.y, v.transform.translation.z
+				v.transform.translation.x.toDouble(), v.transform.translation.y.toDouble(), v.transform.translation.z.toDouble()
 			)
 		}
 	}
@@ -177,7 +177,7 @@ object Demo3 {
 
 
 			val animator = Animator3D(library.animationDefs.values, mainSceneView)
-			addUpdatable {
+            addUpdater {
 				animator.update(it)
 			}
 

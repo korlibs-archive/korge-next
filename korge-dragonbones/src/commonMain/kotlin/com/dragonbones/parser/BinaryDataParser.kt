@@ -26,7 +26,8 @@ import com.dragonbones.core.*
 import com.dragonbones.model.*
 import com.dragonbones.util.*
 import com.soywiz.kds.*
-import com.dragonbones.internal.fastForEach
+import com.soywiz.kds.iterators.*
+import com.soywiz.klogger.*
 import com.soywiz.kmem.*
 import com.soywiz.korio.serialization.json.*
 import kotlin.math.*
@@ -392,7 +393,7 @@ class BinaryDataParser(pool: BaseObjectPool = BaseObjectPool())  :  ObjectDataPa
 		val tag = NewUint8Buffer(rawData as MemBuffer, 0, 8)
         val data = rawData.getData()
 		if (tag[0] != 'D'.toInt() || tag[1] != 'B'.toInt() || tag[2] != 'D'.toInt() || tag[3] != 'T'.toInt()) {
-			console.assert(false, "Nonsupport data.")
+			Console.assert(false, "Nonsupport data.")
 			return null
 		}
 
@@ -410,12 +411,12 @@ class BinaryDataParser(pool: BaseObjectPool = BaseObjectPool())  :  ObjectDataPa
 	//	private var _binaryDataParserInstance: BinaryDataParser? = null
 	//	/**
 	//	 * - Deprecated, please refer to {@link dragonBones.BaseFactory#parseDragonBonesData()}.
-	//	 * @deprecated
+	//	 * deprecated
 	//	 * @language en_US
 	//	 */
 	//	/**
 	//	 * - 已废弃，请参考 {@link dragonBones.BaseFactory#parseDragonBonesData()}。
-	//	 * @deprecated
+	//	 * deprecated
 	//	 * @language zh_CN
 	//	 */
 	//	fun getInstance(): BinaryDataParser {

@@ -50,18 +50,7 @@ class Edge {
             val Cy: Double = b.ay.toDouble()
             val Dx: Double = b.bx.toDouble()
             val Dy: Double = b.by.toDouble()
-            val a1 = By - Ay
-            val b1 = Ax - Bx
-            val c1 = a1 * (Ax) + b1 * (Ay)
-            val a2 = Dy - Cy
-            val b2 = Cx - Dx
-            val c2 = a2 * (Cx) + b2 * (Cy)
-            val determinant = a1 * b2 - a2 * b1
-            if (determinant == 0.0) return false
-            val x = (b2 * c1 - b1 * c2) / determinant
-            val y = (a1 * c2 - a2 * c1) / determinant
-            out(floorCeil(x), floorCeil(y))
-            return true
+            return getIntersectXY(Ax, Ay, Bx, By, Cx, Cy, Dx, Dy) { x, y -> out(floorCeil(x), floorCeil(y)) }
         }
 
         inline fun getIntersectXY(Ax: Double, Ay: Double, Bx: Double, By: Double, Cx: Double, Cy: Double, Dx: Double, Dy: Double, out: (x: Double, y: Double) -> Unit): Boolean {
@@ -122,11 +111,18 @@ class Edge {
     val maxY get() = max(ay, by)
 
     @Suppress("ConvertTwoComparisonsToRangeCheck")
-    fun containsY(y: Int): Boolean = y >= ay && y < by
-    //fun containsY(y: Int): Boolean = y in ay until by // @TODO: Kotlin/Native at least on Debug doesn't optimize this
+    //fun containsY(y: Int): Boolean = if (ay == by) y == ay else if (wind >= 0) y >= ay && y < by else y > ay && y <= by
+    fun containsY(y: Int): Boolean {
+        return y >= ay && y < by
+        //val a = if (wind >= 0) y >= ay && y < by else y > ay && y <= by
+        //val b = y >= ay && y < by
+        //if (a != b) {
+        //    println("wind=$wind, y=$y, ay=$ay, by=$by, a=$a, b=$b")
+        //}
+        //return a
+    }
 
-    @Deprecated("")
-    fun containsYNear(y: Int, offset: Int): Boolean = y >= (ay - offset) && y < (by + offset)
+    //fun containsYNear(y: Int, offset: Int): Boolean = y >= (ay - offset) && y < (by + offset)
     //fun containsY(y: Int): Boolean = y in ay..by
     //fun containsYNear(y: Int, offset: Int): Boolean = y >= (ay - offset) && y <= (by + offset)
     fun intersectX(y: Int): Int = if (isCoplanarY) ax else ((y - h) * dx) / dy

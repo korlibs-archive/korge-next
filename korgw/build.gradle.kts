@@ -4,10 +4,13 @@ val enableKotlinNative: String by project
 val doEnableKotlinNative get() = enableKotlinNative == "true"
 
 val isWindows get() = org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_WINDOWS)
+val isMacos get() = org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_MAC)
+val hasAndroid = project.extensions.findByName("android") != null
 
 fun org.jetbrains.kotlin.gradle.dsl.KotlinTargetContainerWithPresetFunctions.nativeTargets(): List<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
     return when {
         isWindows -> listOf(mingwX64())
+        isMacos -> listOf(macosX64(), iosArm64(), iosX64())
         else -> listOf(linuxX64(), mingwX64(), macosX64())
     }
 }
@@ -23,9 +26,12 @@ if (doEnableKotlinNative) {
 }
 
 dependencies {
-    commonMainApi(project(":korui"))
+    add("commonMainApi", project(":korim"))
 	add("jvmMainApi", "net.java.dev.jna:jna:$jnaVersion")
 	add("jvmMainApi", "net.java.dev.jna:jna-platform:$jnaVersion")
+    if (hasAndroid) {
+        add("androidMainApi", "com.android.support:appcompat-v7:28.0.0")
+    }
 }
 
 /*
@@ -35,7 +41,7 @@ apply plugin: com.soywiz.korlibs.KorlibsPlugin
 
 korlibs {
     exposeVersion()
-    //dependencyCInteropsExternal("com.soywiz.korlibs.korim:korim:$korimVersion", "stb_image", ["linuxX64", "iosX64", "iosArm32", "iosArm64"])
+    //dependencyCInteropsExternal("com.soywiz.korlibs.korim:korim:$korimVersion", "stb_image", ["linuxX64", "iosX64", "iosArm64"])
     //dependencyCInterops("GL", ["linuxX64"])
 
     dependencies {

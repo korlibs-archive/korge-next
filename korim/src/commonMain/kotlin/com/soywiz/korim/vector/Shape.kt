@@ -4,8 +4,8 @@ import com.soywiz.kds.iterators.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
 import com.soywiz.korim.font.Font
-import com.soywiz.korim.format.SVG
-import com.soywiz.korim.vector.paint.*
+import com.soywiz.korim.paint.*
+import com.soywiz.korim.text.*
 import com.soywiz.korio.serialization.xml.*
 import com.soywiz.korio.util.*
 import com.soywiz.korma.geom.*
@@ -208,8 +208,10 @@ private fun colorToSvg(color: RGBA): String {
 	val g = color.g
 	val b = color.b
 	val af = color.af
-	return "rgba($r,$g,$b,$af)"
+	return "rgba($r,$g,$b,${af.smallNiceStr})"
 }
+
+private val Float.smallNiceStr: String get() = if (round(this) == this) "${this.toInt()}" else "$this"
 
 fun Paint.toSvg(svg: SvgBuilder): String {
 	val id = svg.defs.size
@@ -228,37 +230,34 @@ fun Paint.toSvg(svg: SvgBuilder): String {
 				Xml.Tag("stop", mapOf("offset" to "${ratio * 100}%", "stop-color" to colorToSvg(color)), listOf())
 			}
 
-			when (this) {
-				is GradientPaint -> {
-					when (this.kind) {
-						GradientKind.LINEAR -> {
-							svg.defs += Xml.Tag(
-								"linearGradient",
-								mapOf(
-									"id" to "def$id",
-									"x1" to "$x0", "y1" to "$y0",
-									"x2" to "$x1", "y2" to "$y1",
-									"gradientTransform" to transform.toSvg()
-								),
-								stops
-							)
-						}
-                        GradientKind.RADIAL -> {
-							svg.defs += Xml.Tag(
-								"radialGradient",
-								mapOf(
-									"id" to "def$id",
-									"cx" to "$x0", "cy" to "$y0",
-									"fx" to "$x1", "fy" to "$y1",
-									"r" to "$r1",
-									"gradientTransform" to transform.toSvg()
-								),
-								stops
-							)
-						}
-					}
-				}
-			}
+            when (this.kind) {
+                GradientKind.LINEAR -> {
+                    svg.defs += Xml.Tag(
+                        "linearGradient",
+                        mapOf(
+                            "id" to "def$id",
+                            "x1" to "$x0", "y1" to "$y0",
+                            "x2" to "$x1", "y2" to "$y1",
+                            "gradientTransform" to transform.toSvg()
+                        ),
+                        stops
+                    )
+                }
+                GradientKind.RADIAL -> {
+                    svg.defs += Xml.Tag(
+                        "radialGradient",
+                        mapOf(
+                            "id" to "def$id",
+                            "cx" to "$x0", "cy" to "$y0",
+                            "fx" to "$x1", "fy" to "$y1",
+                            "r" to "$r1",
+                            "gradientTransform" to transform.toSvg()
+                        ),
+                        stops
+                    )
+                }
+            }
+
 			return "url(#def$id)"
 		}
 		is BitmapPaint -> {
@@ -301,10 +300,10 @@ object EmptyShape : Shape {
 }
 
 data class FillShape(
-	override val path: GraphicsPath,
-	override val clip: GraphicsPath?,
-	override val paint: Paint,
-	override val transform: Matrix = Matrix()
+        override val path: GraphicsPath,
+        override val clip: GraphicsPath?,
+        override val paint: Paint,
+        override val transform: Matrix = Matrix()
 ) : StyledShape {
 	override fun drawInternal(c: Context2d) {
 		c.fill(paint)
@@ -323,48 +322,22 @@ data class FillShape(
 }
 
 data class PolylineShape(
-    override val path: GraphicsPath,
-    override val clip: GraphicsPath?,
-    override val paint: Paint,
-    override val transform: Matrix,
-    val thickness: Double,
-    val pixelHinting: Boolean,
-    val scaleMode: LineScaleMode,
-    val startCaps: LineCap,
-    val endCaps: LineCap,
-    val lineJoin: LineJoin,
-    val miterLimit: Double
+        override val path: GraphicsPath,
+        override val clip: GraphicsPath?,
+        override val paint: Paint,
+        override val transform: Matrix,
+        val thickness: Double,
+        val pixelHinting: Boolean,
+        val scaleMode: LineScaleMode,
+        val startCaps: LineCap,
+        val endCaps: LineCap,
+        val lineJoin: LineJoin,
+        val miterLimit: Double
 ) : StyledShape {
-    @Suppress("unused")
-    @Deprecated("Use lineJoin instead", replaceWith = ReplaceWith("lineJoin.name"))
-    val joints: String? = lineJoin.name
-
-    @Deprecated("Use constructor with lineJoin: LineJoin")
-    constructor(
-        path: GraphicsPath,
-        clip: GraphicsPath?,
-        paint: Paint,
-        transform: Matrix,
-        thickness: Double,
-        pixelHinting: Boolean,
-        scaleMode: LineScaleMode,
-        startCaps: LineCap,
-        endCaps: LineCap,
-        joints: String?,
-        miterLimit: Double
-    ) : this(path, clip, paint, transform, thickness, pixelHinting, scaleMode, startCaps, endCaps, when (joints) {
-        null -> LineJoin.MITER
-        "MITER", "miter" -> LineJoin.MITER
-        "BEVEL", "bevel" -> LineJoin.BEVEL
-        "SQUARE", "square" -> LineJoin.SQUARE
-        "ROUND", "round" -> LineJoin.ROUND
-        else -> LineJoin.MITER
-    }, miterLimit)
-
     private val tempBB = BoundsBuilder()
     private val tempRect = Rectangle()
 
-    override fun addBounds(bb: BoundsBuilder): Unit {
+    override fun addBounds(bb: BoundsBuilder) {
         tempBB.reset()
         tempBB.add(path)
         tempBB.getBounds(tempRect)

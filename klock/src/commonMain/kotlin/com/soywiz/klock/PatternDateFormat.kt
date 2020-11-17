@@ -58,11 +58,7 @@ data class PatternDateFormat @JvmOverloads constructor(
                     continue
                 }
             }
-            val chunk = s.readChunk {
-                val c = s.readChar()
-                while (s.hasMore && s.tryRead(c)) Unit
-            }
-            chunks.add(chunk)
+            chunks.add(s.tryReadOrNull("do") ?: s.readRepeatedChar())
         }
     }.toList()
 
@@ -70,6 +66,7 @@ data class PatternDateFormat @JvmOverloads constructor(
         when (it) {
             "E", "EE", "EEE", "EEEE", "EEEEE", "EEEEEE" -> """(\w+)"""
             "z", "zzz" -> """([\w\s\-\+\:]+)"""
+            "do" -> """(\d{1,2}\w+)"""
             "d" -> """(\d{1,2})"""
             "dd" -> """(\d{2})"""
             "M" -> """(\d{1,5})"""
@@ -132,14 +129,15 @@ data class PatternDateFormat @JvmOverloads constructor(
         for (name in chunks) {
             val nlen = name.length
             out += when (name) {
-                "E", "EE", "EEE" -> realLocale.daysOfWeekShort[utc.dayOfWeek.index0].capitalize()
-                "EEEE", "EEEEE", "EEEEEE" -> realLocale.daysOfWeek[utc.dayOfWeek.index0].capitalize()
+                "E", "EE", "EEE" -> DayOfWeek[utc.dayOfWeek.index0].localShortName(realLocale)
+                "EEEE", "EEEEE", "EEEEEE" -> DayOfWeek[utc.dayOfWeek.index0].localName(realLocale)
                 "z", "zzz" -> dd.offset.timeZone
                 "d", "dd" -> utc.dayOfMonth.padded(nlen)
+                "do" -> realLocale.getOrdinalByDay(utc.dayOfMonth)
                 "M", "MM" -> utc.month1.padded(nlen)
-                "MMM" -> realLocale.months[utc.month0].substr(0, 3).capitalize()
-                "MMMM" -> realLocale.months[utc.month0].capitalize()
-                "MMMMM" -> realLocale.months[utc.month0].substr(0, 1).capitalize()
+                "MMM" -> Month[utc.month1].localName(realLocale).substr(0, 3)
+                "MMMM" -> Month[utc.month1].localName(realLocale)
+                "MMMMM" -> Month[utc.month1].localName(realLocale).substr(0, 1)
                 "y" -> utc.yearInt
                 "yy" -> (utc.yearInt % 100).padded(2)
                 "yyy" -> (utc.yearInt % 1000).padded(3)
@@ -208,26 +206,12 @@ data class PatternDateFormat @JvmOverloads constructor(
             when (name) {
                 "E", "EE", "EEE", "EEEE", "EEEEE", "EEEEEE" -> Unit // day of week (Sun | Sunday)
                 "z", "zzz" -> { // timezone (GMT)
-					val tzOffset = tzNames.namesToOffsets[value.toUpperCase()]
-					if (tzOffset != null) {
-						offset = tzOffset
-					} else {
-						var sign = +1
-						val reader = MicroStrReader(value)
-						reader.tryRead("GMT")
-						reader.tryRead("UTC")
-						if (reader.tryRead("+")) sign = +1
-						if (reader.tryRead("-")) sign = -1
-						val part = reader.readRemaining().replace(":", "")
-						val hours = part.substr(0, 2).padStart(2, '0').toIntOrNull() ?: 0
-						val minutes = part.substr(2, 2).padStart(2, '0').toIntOrNull() ?: 0
-						val roffset = hours.hours + minutes.minutes
-						offset = if (sign > 0) +roffset else -roffset
-					}
-				}
+                    offset = MicroStrReader(value).readTimeZoneOffset(tzNames)
+                }
                 "d", "dd" -> day = value.toInt()
+                "do" -> day = realLocale.getDayByOrdinal(value)
                 "M", "MM" -> month = value.toInt()
-                "MMM" -> month = realLocale.monthsShort.indexOf(value.toLowerCase()) + 1
+                "MMM" -> month = realLocale.monthsShort.indexOf(value) + 1
                 "y", "yyyy", "YYYY" -> fullYear = value.toInt()
                 "yy" -> if (doThrow) throw RuntimeException("Not guessing years from two digits.") else return null
                 "yyy" -> fullYear = value.toInt() + if (value.toInt() < 800) 2000 else 1000 // guessing year...
@@ -272,7 +256,7 @@ data class PatternDateFormat @JvmOverloads constructor(
                         }
                     }
                 }
-                "MMMM" -> month = realLocale.months.indexOf(value.toLowerCase()) + 1
+                "MMMM" -> month = realLocale.months.indexOf(value) + 1
                 "MMMMM" -> if (doThrow) throw RuntimeException("Not possible to get the month from one letter.") else return null
                 "a" -> isPm = value == "pm"
                 else -> {
@@ -298,4 +282,11 @@ private fun mconvertRangeZero(value: Int, size: Int): Int {
 private fun mconvertRangeNonZero(value: Int, size: Int): Int {
     val res = (value umod size)
     return if (res == 0) size else res
+}
+
+private fun MicroStrReader.readRepeatedChar(): String {
+    return readChunk {
+        val c = readChar()
+        while (hasMore && (tryRead(c))) Unit
+    }
 }

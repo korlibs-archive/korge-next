@@ -1,6 +1,5 @@
 package com.soywiz.korge.ui
 
-import com.soywiz.korge.html.*
 import com.soywiz.korge.input.*
 import com.soywiz.korge.tests.*
 import com.soywiz.korge.view.*
@@ -8,7 +7,6 @@ import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
 import com.soywiz.korim.font.*
 import com.soywiz.korim.format.*
-import com.soywiz.korio.file.*
 import com.soywiz.korio.file.std.*
 import com.soywiz.korio.net.*
 import com.soywiz.korio.util.*
@@ -21,8 +19,8 @@ class UiTest : ViewsForTesting() {
 
         //uiSkin(OtherUISkin()) {
         defaultUISkin = OtherUISkin()
-        defaultUIFont = Html.FontFace.Font(resourcesVfs["uifont.fnt"].readBitmapFontWithMipmaps())
-        textButton(256.0, 32.0) {
+        defaultUIFont = resourcesVfs["uifont.fnt"].readBitmapFont()
+        uiTextButton(256.0, 32.0) {
             text = "Disabled Button"
             position(128, 128)
             onClick {
@@ -30,7 +28,7 @@ class UiTest : ViewsForTesting() {
             }
             disable()
         }
-        textButton(256.0, 32.0) {
+        uiTextButton(256.0, 32.0) {
             text = "Enabled Button"
             position(128, 128 + 32)
             onClick {
@@ -65,7 +63,7 @@ class UiTest : ViewsForTesting() {
         }) {
 
             for (n in 0 until 16) {
-                textButton(text = "HELLO $n").position(0, n * 64)
+                uiTextButton(text = "HELLO $n").position(0, n * 64)
             }
         }
 
@@ -97,10 +95,6 @@ class UiTest : ViewsForTesting() {
             //font = Html.FontFace.Bitmap(resourcesVfs["uifont.fnt"].readBitmapFontWithMipmaps())
         )
     }
-
-    private suspend fun VfsFile.readBitmapFontWithMipmaps(imageFormat: ImageFormat = RegisteredImageFormats, mipmaps: Boolean = true): BitmapFont =
-        readBitmapFont(imageFormat).also { it.atlas.mipmaps(mipmaps) }
-
 
     private class NativeProcess(views: Views) : NativeProcessBase(views) {
     }

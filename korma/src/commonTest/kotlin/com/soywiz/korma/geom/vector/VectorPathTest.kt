@@ -26,7 +26,9 @@ class VectorPathTest {
         val g = VectorPath()
         g.circle(0, 0, 100)
         println(g.readStats())
-        println(g.numberOfIntersections(0, 0))
+        //println(g.numberOfIntersections(0, 0))
+        assertEquals(true, g.containsPoint(0, -1))
+        assertEquals(true, g.containsPoint(0, +1))
         assertEquals(true, g.containsPoint(0, 0))
         assertEquals(false, g.containsPoint(120, 0))
         assertEquals(false, g.containsPoint(-100, -100))
@@ -198,5 +200,27 @@ class VectorPathTest {
         assertEquals(true, VectorPath.intersects(path1, Matrix().translate(100.0, 0.0), path1, Matrix().translate(50.0, 0.0)))
         assertEquals(false, VectorPath.intersects(path1, Matrix().translate(101.0, 0.0), path1, Matrix()))
         assertEquals(false, VectorPath.intersects(path1, Matrix(), path1, Matrix().translate(101.0, 0.0)))
+    }
+
+    @Test
+    fun testVisitEdgesSimplified() {
+        val log = arrayListOf<String>()
+        buildPath {
+            moveTo(100, 100)
+            quadTo(100, 200, 200, 200)
+            close()
+        }.visitEdgesSimple(
+            { x0, y0, x1, y1 -> log.add("line(${x0.toInt()}, ${y0.toInt()}, ${x1.toInt()}, ${y1.toInt()})") },
+            { x0, y0, x1, y1, x2, y2, x3, y3 -> log.add("cubic(${x0.toInt()}, ${y0.toInt()}, ${x1.toInt()}, ${y1.toInt()}, ${x2.toInt()}, ${y2.toInt()}, ${x3.toInt()}, ${y3.toInt()})") },
+            { log.add("close") },
+        )
+        assertEquals(
+            """
+                cubic(100, 100, 100, 166, 133, 200, 200, 200)
+                line(200, 200, 100, 100)
+                close
+            """.trimIndent(),
+            log.joinToString("\n")
+        )
     }
 }

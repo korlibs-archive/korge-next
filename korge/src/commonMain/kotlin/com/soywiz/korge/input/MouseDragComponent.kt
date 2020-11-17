@@ -1,15 +1,18 @@
 package com.soywiz.korge.input
 
-import com.soywiz.korge.view.View
-import com.soywiz.korge.view.Views
+import com.soywiz.korge.view.*
 import com.soywiz.korma.geom.Point
 
 data class MouseDragInfo(
+    val view: View,
     var dx: Double = 0.0,
     var dy: Double = 0.0,
     var start: Boolean = false,
     var end: Boolean = false
 ) {
+    val localDX get() = view.parent?.globalToLocalDX(0.0, 0.0, dx, dy) ?: dx
+    val localDY get() = view.parent?.globalToLocalDY(0.0, 0.0, dx, dy) ?: dy
+
     fun set(dx: Double, dy: Double, start: Boolean, end: Boolean): MouseDragInfo {
         this.dx = dx
         this.dy = dy
@@ -27,7 +30,7 @@ fun <T : View> T.onMouseDrag(callback: Views.(MouseDragInfo) -> Unit): T {
     var cy = 0.0
     val view = this
 
-    val info = MouseDragInfo()
+    val info = MouseDragInfo(view)
     val mousePos = Point()
 
     fun views() = view.stage!!.views
@@ -71,17 +74,18 @@ fun <T : View> T.onMouseDrag(callback: Views.(MouseDragInfo) -> Unit): T {
     return this
 }
 
-fun <T : View> T.draggable(): T {
+fun <T : View> T.draggable(selector: View = this, onDrag: ((MouseDragInfo) -> Unit)? = null): T {
     val view = this
     var sx = 0.0
     var sy = 0.0
-    onMouseDrag { info ->
+    selector.onMouseDrag { info ->
         if (info.start) {
             sx = view.x
             sy = view.y
         }
-        view.x = sx + info.dx
-        view.y = sy + info.dy
+        view.x = sx + info.localDX
+        view.y = sy + info.localDY
+        onDrag?.invoke(info)
         //println("DRAG: $dx, $dy, $start, $end")
     }
     return this
