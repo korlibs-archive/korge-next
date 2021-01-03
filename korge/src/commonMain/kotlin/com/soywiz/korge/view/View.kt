@@ -1468,12 +1468,10 @@ fun <T : View> T.onNextFrame(updatable: T.(views: Views) -> Unit) {
 // @TODO: This should be computed and invalidated when a view is attached to a container
 val View?.ancestorCount: Int get() {
     var count = 0
-    var node = this
-    while (node != null) {
-        node = node.parent
-        if (node != null) {
-            count++
-        }
+    var parent = this?.parent
+    while (parent != null) {
+        count++
+        parent = parent.parent
     }
     return count
     /*
