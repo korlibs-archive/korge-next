@@ -33,7 +33,7 @@ import com.soywiz.krypto.encoding.*
  * [View] itself can't contain children, but the [Container] class and subclasses allow to have children.
  * Typical non-container views are: [Image], [SolidRect] or [Text].
  *
- * Most views doesn't have the concept of size. They act just as points (x,y) or rather affine transforms (since they also include scale, rotation and skew)
+ * Most views don't have the concept of size. They act just as points (x,y) or rather affine transforms (since they also include scale, rotation and skew)
  *
  * ## Properties
  *
@@ -52,7 +52,7 @@ import com.soywiz.krypto.encoding.*
  */
 @OptIn(KorgeInternal::class)
 abstract class View internal constructor(
-    /** Indicates if this class is a container or not. This is only overrided by Container. This check is performed like this, to avoid type checks. That might be an expensive operation in some targets. */
+    /** Indicates if this class is a container or not. This is only overridden by Container. This check is performed like this, to avoid type checks. That might be an expensive operation in some targets. */
     val isContainer: Boolean
 ) : BaseView(), Renderable
     , Extra
@@ -129,9 +129,9 @@ abstract class View internal constructor(
     var propagateEvents = true
 
     /**
-     * Views marked with this, break batching by acting as reference point for computing vertices.
-     * Specially useful for containers whose most of their child are less likely to change but the container
-     * itself is going to change like cameras, viewports and the Stage.
+     * Views marked with this, break batching by acting as a reference point to compute vertices.
+     * Specially useful for containers most children of which are less likely to change but while the containers
+     * themselves are going to change (like cameras, viewports and the [Stage]).
      */
     interface Reference // View that breaks batching Viewport
 
@@ -203,9 +203,8 @@ abstract class View internal constructor(
     private var _skewY: Angle = 0.0.radians
     private var _rotation: Angle = 0.0.radians
 
-    /** Position of the view. **@NOTE**: If plan to change its values manually. You should call [View.invalidateMatrix] later to keep the matrix in sync */
+    /** Position of the view. **@NOTE**: If [pos] coordinates are manually changed, you should call [View.invalidateMatrix] later to keep the matrix in sync */
     var pos = Point()
-        get() = field
         set(value) {
             field.copyFrom(value)
             invalidateMatrix()
@@ -415,7 +414,7 @@ abstract class View internal constructor(
     /** The ancestor view without parents. When attached (visible or invisible), this is the [Stage]. When no parents, it is [this] */
     val root: View get() = parent?.root ?: this
 
-    /** When included in the three, this returns the stage. When not attached yet, this will return null. */
+    /** When included in the tree, this returns the stage. When not attached yet, this will return null. */
     open val stage: Stage? get() = root as? Stage?
 
     /** Determines if mouse events will be handled for this view and its children */
@@ -662,7 +661,7 @@ abstract class View internal constructor(
 
     /**
      * An optional [Filter] attached to this view.
-     * Filters allow to render this view to a texture, and to controls how to render that texture (using shaders, repeating the texture, etc.).
+     * Filters allow to render this view to a texture, and to control how to render that texture (using shaders, repeating the texture, etc.).
      * You add multiple filters by creating a composite filter [ComposedFilter].
      */
     var filter: Filter? = null
