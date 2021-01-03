@@ -130,7 +130,7 @@ abstract class View internal constructor(
 
     /**
      * Views marked with this, break batching by acting as a reference point to compute vertices.
-     * Specially useful for containers most children of which are less likely to change but while the containers
+     * Specially useful for containers most children of which are less likely to change while the containers
      * themselves are going to change (like cameras, viewports and the [Stage]).
      */
     interface Reference // View that breaks batching Viewport
@@ -1064,7 +1064,7 @@ abstract class View internal constructor(
                 val commonAncestor = View.commonAncestor(this, target)
                 when {
                     commonAncestor !== null -> {
-                        if (target?.parent == null && inclusive) {
+                        if (target.parent == null && inclusive) {
                             return out.copyFrom(globalMatrix)
                         }
                         out.multiply(globalMatrix, target.globalMatrixInv)
@@ -1208,7 +1208,7 @@ abstract class View internal constructor(
     /**
      * Allows to clone this view.
      * This method is inadvisable in normal circumstances.
-     * This might not work property if the [View] doesn't override the [createInstance] method.
+     * This might not work properly if the [View] doesn't override the [createInstance] method.
      */
     open fun clone(): View = createInstance().apply {
         this@apply.copyPropsFrom(this@View)
@@ -1262,7 +1262,7 @@ abstract class View internal constructor(
 val View.width: Double get() = unscaledWidth
 val View.height: Double get() = unscaledHeight
 
-// Doesn't seems to work
+// Doesn't seem to work
 //operator fun <T : View, R> T.invoke(callback: T.() -> R): R = this.apply(callback)
 
 
@@ -1341,20 +1341,20 @@ class ViewTransform(var view: View) {
 */
 
 /**
- * Determines if the local coords [x], [y], hits this view or any of this descendants.
- * Returns the view hitting or null
+ * Determines if the given coords [x] and [y] hit this view or any of its descendants.
+ * Returns the view that was hit or null
  */
 fun View.hitTest(x: Int, y: Int): View? = hitTest(x.toDouble(), y.toDouble())
 
 /**
- * Determines if the local coords [pos], hits this view or any of this descendants.
- * Returns the view hitting or null
+ * Determines if the given coords [pos] hit this view or any of its descendants.
+ * Returns the view that was hit or null
  */
 fun View.hitTest(pos: IPoint): View? = hitTest(pos.x, pos.y)
 //fun View.hitTest(pos: Point): View? = hitTest(pos.x, pos.y)
 
 /**
- * Checks if this view has an [ancestor].
+ * Checks if this view has the specified [ancestor].
  */
 fun View.hasAncestor(ancestor: View): Boolean {
     return if (this == ancestor) true else this.parent?.hasAncestor(ancestor) ?: false
@@ -1367,7 +1367,7 @@ fun View?.commonAncestor(ancestor: View?): View? {
 /**
  * Replaces this view in its parent with [view].
  * Returns true if the replacement was successful.
- * If this view doesn't have a parent or [view] is the same as [this], returns null.
+ * If this view doesn't have a parent or [view] is the same as [this], returns false.
  */
 @OptIn(KorgeInternal::class)
 fun View.replaceWith(view: View): Boolean {
@@ -1410,7 +1410,7 @@ fun <T : View> T.addFixedUpdater(
 /**
  * Adds an [updatable] block that will be executed every [time] time, the calls will be discretized on each frame and will handle accumulations.
  * The [initial] properly allows to adjust if the [updatable] will be called immediately after calling this function.
- * To avoid executing too much blocks, when there is a long pause, [limitCallsPerFrame] limits the number of times the block can be executed in a single frame.
+ * To avoid executing too many blocks, when there is a long pause, [limitCallsPerFrame] limits the number of times the block can be executed in a single frame.
  */
 fun <T : View> T.addFixedUpdater(
     time: TimeSpan,
@@ -1418,7 +1418,6 @@ fun <T : View> T.addFixedUpdater(
     limitCallsPerFrame: Int = 16,
     updatable: T.() -> Unit
 ): Cancellable {
-    val tickTime = time
     var accum = 0.0.milliseconds
     val component = object : UpdateComponent {
         override val view: View get() = this@addFixedUpdater
@@ -1426,8 +1425,8 @@ fun <T : View> T.addFixedUpdater(
             accum += dt
             //println("UPDATE: accum=$accum, tickTime=$tickTime")
             var calls = 0
-            while (accum >= tickTime * 0.75) {
-                accum -= tickTime
+            while (accum >= time * 0.75) {
+                accum -= time
                 updatable(this@addFixedUpdater)
                 calls++
                 if (calls >= limitCallsPerFrame) {
@@ -1438,7 +1437,7 @@ fun <T : View> T.addFixedUpdater(
             }
             if (calls > 0) {
                 // Do not accumulate for small fractions since this would cause hiccups!
-                if (accum < tickTime * 0.25) {
+                if (accum < time * 0.25) {
                     accum = 0.0.milliseconds
                 }
             }
@@ -1522,7 +1521,7 @@ fun View?.dumpToString(): String {
 }
 
 /**
- * Iterates all the descendants [View]s including this calling the [handler].
+ * Iterates all the descendant [View]s including this calling the [handler].
  * Iteration happens in [Pre-order (NLR)](https://en.wikipedia.org/wiki/Tree_traversal#Pre-order_(NLR)).
  */
 fun View?.foreachDescendant(handler: (View) -> Unit) {
