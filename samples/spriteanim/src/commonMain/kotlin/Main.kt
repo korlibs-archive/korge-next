@@ -6,6 +6,8 @@ import com.soywiz.korge.view.*
 import com.soywiz.korim.format.*
 import com.soywiz.korio.file.std.*
 
+const val PADDING = 5.0
+
 suspend fun main() = Korge(width = 512, height = 512) {
 	val spriteMap = resourcesVfs["character.png"].readBitmap()
 
@@ -73,6 +75,9 @@ suspend fun main() = Korge(width = 512, height = 512) {
         /** Allows to know the appropriate moment to stop the movement animation. */
         private var isMoving = false
 
+        val assignedKeyDesc: String
+            get() = assignments.map { it.key }.joinToString("/")
+
         fun handleKeys(inputKeys: InputKeys, disp: Double) {
             // Let's check if any movement keys were pressed during this frame
             val anyMovement: Boolean = assignments // Iterate all registered movement keys
@@ -91,14 +96,23 @@ suspend fun main() = Korge(width = 512, height = 512) {
         }
     }
 
-    val player1 = PlayerCharacter(spriteAnimationDown, Key.UP, Key.DOWN, Key.LEFT, Key.RIGHT).apply {
-        scale(3.0)
-        xy(100, 200)
-    }
-    val player2 = PlayerCharacter(spriteAnimationDown, Key.W, Key.S, Key.A, Key.D).apply {
+    val player1 = PlayerCharacter(spriteAnimationDown, Key.W, Key.S, Key.A, Key.D).apply {
         scale(3.0)
         xy(100, 100)
     }
+
+    text("Player 1 controls: ${player1.assignedKeyDesc}") { position(PADDING, PADDING) }
+
+    val player2 = PlayerCharacter(spriteAnimationDown, Key.UP, Key.DOWN, Key.LEFT, Key.RIGHT).apply {
+        scale(3.0)
+        xy(300, 100)
+    }
+
+    text("Player 2 controls: ${player2.assignedKeyDesc}") {
+        positionY(PADDING)
+        alignRightToRightOf(parent!!, PADDING)
+    }
+
 
     addChild(player1)
     addChild(player2)
