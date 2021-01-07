@@ -25,10 +25,7 @@ class GameHolder(private val stage: Stage) {
             val fadeoutOverlay = stage.solidRect(WIDTH, HEIGHT, color = Colors.BLACK.withA(0))
             fadeoutOverlay.tween(fadeoutOverlay::color[Colors.BLACK], time = 500.milliseconds)
 
-            // Remove old children (clear the whole stage)
-            while (stage.numChildren > 0) {
-                stage.getChildAt(0).removeFromParent()
-            }
+            stage.removeChildren()
 
             // Recreate the game
             game = Game(stage)
