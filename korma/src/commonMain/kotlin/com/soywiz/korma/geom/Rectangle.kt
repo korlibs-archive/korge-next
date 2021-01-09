@@ -208,6 +208,11 @@ val IRectangleInt.top get() = y
 val IRectangleInt.right get() = x + width
 val IRectangleInt.bottom get() = y + height
 
+val IRectangleInt.topLeft get() = PointInt(left, top)
+val IRectangleInt.topRight get() = PointInt(right, top)
+val IRectangleInt.bottomLeft get() = PointInt(left, bottom)
+val IRectangleInt.bottomRight get() = PointInt(right, bottom)
+
 inline class RectangleInt(val rect: Rectangle) : IRectangleInt {
     override var x: Int
         set(value) = run { rect.x = value.toDouble() }
