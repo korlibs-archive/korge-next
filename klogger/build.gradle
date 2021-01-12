@@ -1,0 +1,7 @@
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    commonMainApi("org.jetbrains.kotlinx:atomicfu:0.15.1")
+}
