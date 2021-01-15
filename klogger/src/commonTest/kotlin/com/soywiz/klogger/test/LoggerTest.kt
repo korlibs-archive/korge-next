@@ -8,7 +8,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class LoggerTest {
-	var out = atomic(listOf<String>())
+	val out = atomic(listOf<String>())
 
 	@Test
 	fun simple() {

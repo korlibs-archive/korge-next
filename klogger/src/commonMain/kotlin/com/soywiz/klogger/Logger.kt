@@ -122,8 +122,8 @@ fun Logger.setOutput(output: Logger.Output): Logger = this.apply { this.output =
 
 private typealias AtomicLinkedHashMap<K, V> = AtomicRef<LinkedHashMap<K, V>>
 
-private operator fun <K, V> AtomicLinkedHashMap<K, V>.get(key: K) = value[key]
-private operator fun <K, V> AtomicLinkedHashMap<K, V>.set(key: K, value: V) = updateMap { this[key] = value }
+private inline operator fun <K, V> AtomicLinkedHashMap<K, V>.get(key: K) = value[key]
+private inline operator fun <K, V> AtomicLinkedHashMap<K, V>.set(key: K, value: V) = updateMap { this[key] = value }
 
 private inline fun <K, V> AtomicLinkedHashMap<K, V>.updateMap(updater: LinkedHashMap<K, V>.() -> Unit) =
     this.update { LinkedHashMap(it).apply(updater) }
