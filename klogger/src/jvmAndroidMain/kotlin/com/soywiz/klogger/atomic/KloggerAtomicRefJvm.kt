@@ -2,9 +2,9 @@ package com.soywiz.klogger.atomic
 
 import java.util.concurrent.atomic.AtomicReference
 
-actual class KloggerAtomicRef<T> actual constructor(initial: T) {
+internal actual class KloggerAtomicRef<T> actual constructor(initial: T) {
     @PublishedApi
-    internal val ref = AtomicReference<T>(initial)
+    internal val ref = AtomicReference(initial)
 
     actual val value: T get() = ref.get()
     actual inline fun update(block: (T) -> T) {

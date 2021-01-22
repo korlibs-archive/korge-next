@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class LoggerTest {
-	val out = kloggerAtomicRef(listOf<String>())
+	private val out = kloggerAtomicRef(listOf<String>())
 
 	@Test
 	fun simple() {
