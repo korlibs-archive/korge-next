@@ -3,12 +3,12 @@ package com.soywiz.klogger.atomic
 import kotlin.reflect.KProperty
 
 internal expect class KloggerAtomicRef<T>(initial: T) {
-    val value: T
+    var value: T
     inline fun update(block: (T) -> T)
 }
 
 internal operator fun <T> KloggerAtomicRef<T>.setValue(receiver: Any?, prop: KProperty<*>, newValue: T) {
-    update { newValue }
+    value = newValue
 }
 
 internal operator fun <T> KloggerAtomicRef<T>.getValue(receiver: Any?, prop: KProperty<*>): T {
