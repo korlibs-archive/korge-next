@@ -3,8 +3,7 @@ package com.soywiz.klogger.atomic
 import kotlin.native.concurrent.*
 
 internal actual class KloggerAtomicRef<T> actual constructor(initial: T) {
-    @PublishedApi
-    internal val ref = FreezableAtomicReference(initial.freeze())
+    private val ref = FreezableAtomicReference(initial.freeze())
 
     actual val value: T get() = ref.value
     actual inline fun update(block: (T) -> T) {
