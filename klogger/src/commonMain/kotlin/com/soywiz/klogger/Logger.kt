@@ -30,15 +30,15 @@ class Logger private constructor(val name: String, val dummy: Boolean) {
     val isLocalOutputSet: Boolean get() = Logger_outputs[name] != null
 
     companion object {
-        private val Logger_loggers: AtomicMap<String, Logger> = kloggerAtomicRef(emptyMap())
-        private val Logger_levels: AtomicMap<String, Level?> = kloggerAtomicRef(emptyMap())
-        private val Logger_outputs: AtomicMap<String, Output?> = kloggerAtomicRef(emptyMap())
+        private val Logger_loggers: AtomicMap<String, Logger> = AtomicMap(emptyMap())
+        private val Logger_levels: AtomicMap<String, Level?> = AtomicMap(emptyMap())
+        private val Logger_outputs: AtomicMap<String, Output?> = AtomicMap(emptyMap())
 
         /** The default [Level] used for all [Logger] that doesn't have its [Logger.level] set */
-        var defaultLevel: Level? by kloggerAtomicRef(null)
+        var defaultLevel: Level? by KloggerAtomicRef(null)
 
         /** The default [Output] used for all [Logger] that doesn't have its [Logger.output] set */
-        var defaultOutput: Output by kloggerAtomicRef(DefaultLogOutput)
+        var defaultOutput: Output by KloggerAtomicRef(DefaultLogOutput)
 
         /** Gets a [Logger] from its [name] */
         operator fun invoke(name: String) = Logger_loggers[name] ?: Logger(name, true)
@@ -125,6 +125,6 @@ private typealias AtomicMap<K, V> = KloggerAtomicRef<Map<K, V>>
 
 private inline operator fun <K, V> AtomicMap<K, V>.get(key: K) = value[key]
 private inline operator fun <K, V> AtomicMap<K, V>.set(key: K, value: V) {
-    this.value = HashMap(this.value).also { it[key] = value }
+    this.update { HashMap(it).also { nmap -> nmap[key] = value } }
 }
 
