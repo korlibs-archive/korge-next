@@ -320,7 +320,7 @@ class BatchBuilder2D constructor(
 	fun drawVertices(array: TexturedVertexArray, vcount: Int = array.vcount, icount: Int = array.isize) {
 		ensure(icount, vcount)
 
-        val minValue = if(icount < array.isize) icount else array.isize
+    val minValue = if(icount < array.isize) icount else array.isize
 
 		for (idx in 0 until minValue) addIndex(vertexCount + array.indices[idx])
 		//for (p in array.points) addVertex(p.x, p.y, p.tx, p.ty, p.colMul, p.colAdd)

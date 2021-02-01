@@ -2,10 +2,20 @@ package com.soywiz.klogger.atomic
 
 import kotlin.native.concurrent.*
 
-actual fun <T> kloggerAtomicRef(initial: T): KloggerAtomicRef<T> = object : KloggerAtomicRef<T>() {
-    private val ref = FreezableAtomicReference<T>(initial.freeze())
+internal actual class KloggerAtomicRef<T> actual constructor(initial: T) {
+    private val ref = FreezableAtomicReference(initial.freeze())
 
-    override var value: T
+    actual var value: T
         get() = ref.value
-        set(value) { ref.value = value.freeze() }
+        set(value) {
+            ref.value = value
+        }
+
+    actual inline fun update(block: (T) -> T) {
+        //synchronized(ref) { ref.set(ref.get()) }
+        do {
+            val old = ref.value
+            val new = block(old).freeze()
+        } while (!ref.compareAndSet(old, new))
+    }
 }

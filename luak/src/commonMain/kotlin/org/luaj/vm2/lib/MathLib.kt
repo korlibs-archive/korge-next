@@ -25,6 +25,9 @@ import org.luaj.vm2.LuaDouble
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.Varargs
+import org.luaj.vm2.internal.*
+import org.luaj.vm2.internal.max2
+import kotlin.native.concurrent.*
 import kotlin.random.Random
 
 /**
@@ -243,7 +246,7 @@ open class MathLib : TwoArgFunction() {
             var i = 2
             val n = args.narg()
             while (i <= n) {
-                m = kotlin.math.max(m, args.checkdouble(i))
+                m = max2(m, args.checkdouble(i))
                 ++i
             }
             return LuaValue.valueOf(m)
@@ -256,7 +259,7 @@ open class MathLib : TwoArgFunction() {
             var i = 2
             val n = args.narg()
             while (i <= n) {
-                m = kotlin.math.min(m, args.checkdouble(i))
+                m = min2(m, args.checkdouble(i))
                 ++i
             }
             return LuaValue.valueOf(m)
@@ -313,8 +316,11 @@ open class MathLib : TwoArgFunction() {
         /** Pointer to the latest MathLib instance, used only to dispatch
          * math.exp to tha correct platform math library.
          */
-        @kotlin.jvm.JvmField
-        var MATHLIB: MathLib? = null
+        var MATHLIB: MathLib?
+            get() = MathLib_MATHLIB
+            set(value) {
+                MathLib_MATHLIB = value
+            }
 
         /** compute power using installed math library, or default if there is no math library installed  */
 
@@ -370,3 +376,6 @@ open class MathLib : TwoArgFunction() {
     }
 
 }
+
+@ThreadLocal
+private var MathLib_MATHLIB: MathLib? = null

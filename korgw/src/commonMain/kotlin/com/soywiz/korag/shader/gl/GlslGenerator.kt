@@ -52,11 +52,14 @@ class GlslGenerator constructor(
 
 	private fun errorType(type: VarType): Nothing = invalidOp("Don't know how to serialize type $type")
 
-    fun precToString(prec: Precision) = when (prec) {
-        Precision.DEFAULT -> ""
-        Precision.LOW -> "lowp "
-        Precision.MEDIUM -> "mediump "
-        Precision.HIGH -> "highp "
+    fun precToString(prec: Precision) = when {
+        !gles -> ""
+        else -> when (prec) {
+            Precision.DEFAULT -> ""
+            Precision.LOW -> "lowp "
+            Precision.MEDIUM -> "mediump "
+            Precision.HIGH -> "highp "
+        }
     }
 
 	fun typeToString(type: VarType) = when (type) {
