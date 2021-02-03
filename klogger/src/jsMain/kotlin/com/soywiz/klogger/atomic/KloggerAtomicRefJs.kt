@@ -1,5 +1,10 @@
 package com.soywiz.klogger.atomic
 
-actual fun <T> kloggerAtomicRef(initial: T): KloggerAtomicRef<T> = object : KloggerAtomicRef<T>() {
-    override var value: T = initial
+internal actual class KloggerAtomicRef<T> actual constructor(initial: T) {
+
+    actual var value: T = initial
+
+    actual inline fun update(block: (T) -> T) {
+        value = block(value)
+    }
 }

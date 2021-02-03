@@ -1,5 +1,7 @@
 package com.soywiz.korui.layout
 
+import com.soywiz.kgl.internal.*
+import com.soywiz.kgl.internal.max2
 import com.soywiz.kmem.*
 import com.soywiz.korio.util.*
 import com.soywiz.korma.geom.*
@@ -95,12 +97,12 @@ sealed class Length {
 	}
 
 	data class VMIN(val v: Double) : Fixed() {
-		override fun calc(ctx: LengthContext): Int = (v * min(ctx.viewportWidth1pc, ctx.viewportHeight1pc)).toInt()
+		override fun calc(ctx: LengthContext): Int = (v * min2(ctx.viewportWidth1pc, ctx.viewportHeight1pc)).toInt()
 		override fun toString() = "${v}em"
 	}
 
 	data class VMAX(val v: Double) : Fixed() {
-		override fun calc(ctx: LengthContext): Int = (v * max(ctx.viewportWidth1pc, ctx.viewportHeight1pc)).toInt()
+		override fun calc(ctx: LengthContext): Int = (v * max2(ctx.viewportWidth1pc, ctx.viewportHeight1pc)).toInt()
 		override fun toString() = "${v}em"
 	}
 
@@ -119,7 +121,15 @@ sealed class Length {
 		override fun toString() = "($a * $scale)"
 	}
 
-	abstract fun calc(ctx: LengthContext): Int
+    data class Max(val a: Length, val b: Length) : Length() {
+        override fun calc(ctx: LengthContext): Int = max2(a.calc(ctx), b.calc(ctx))
+    }
+
+    data class Min(val a: Length, val b: Length) : Length() {
+        override fun calc(ctx: LengthContext): Int = min2(a.calc(ctx), b.calc(ctx))
+    }
+
+    abstract fun calc(ctx: LengthContext): Int
 
 	companion object {
 		val ZERO = PT(0.0)
@@ -143,6 +153,8 @@ sealed class Length {
 	operator fun minus(that: Length): Length = Length.Binop(this, that, "-") { a, b -> a - b }
 	operator fun times(that: Double): Length = Length.Scale(this, that)
 	operator fun times(that: Int): Length = Length.Scale(this, that.toDouble())
+    operator fun div(that: Double): Length = Length.Scale(this, 1.0 / that)
+    operator fun div(that: Int): Length = Length.Scale(this, 1.0 / that.toDouble())
 }
 
 object MathEx {
@@ -158,9 +170,13 @@ fun Length?.calcMax(ctx: Length.LengthContext, default: Int = ctx.size): Int = t
 //operator fun Length?.plus(that: Length?): Length? = Length.Binop(this, that, "+") { a, b -> a + b }
 //operator fun Length?.minus(that: Length?): Length? = Length.Binop(this, that, "-") { a, b -> a - b }
 operator fun Length?.times(that: Double): Length? = Length.Scale(this, that)
+operator fun Length?.div(that: Double): Length? = Length.Scale(this, 1.0 / that)
 
 interface LengthExtensions {
     companion object : LengthExtensions
+
+    fun max(a: Length, b: Length): Length = Length.Max(a, b)
+    fun min(a: Length, b: Length): Length = Length.Min(a, b)
 
     //val Int.px: Length get() = Length.PX(this.toDouble())
     val Int.mm: Length get() = Length.MM(this.toDouble())

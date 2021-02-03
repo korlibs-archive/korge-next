@@ -20,6 +20,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.net.*
 import javax.swing.*
+import java.awt.GraphicsDevice
 
 abstract class BaseAwtGameWindow : GameWindow() {
     abstract override val ag: AwtAg
@@ -327,15 +328,23 @@ abstract class BaseAwtGameWindow : GameWindow() {
             }
         })
 
+        var waitingRobotEvents = true
         fun handleMouseEvent(e: MouseEvent) {
-            queue {
-                val ev = when (e.id) {
-                    MouseEvent.MOUSE_MOVED -> com.soywiz.korev.MouseEvent.Type.MOVE
-                    MouseEvent.MOUSE_CLICKED -> com.soywiz.korev.MouseEvent.Type.CLICK
-                    MouseEvent.MOUSE_PRESSED -> com.soywiz.korev.MouseEvent.Type.DOWN
-                    MouseEvent.MOUSE_RELEASED -> com.soywiz.korev.MouseEvent.Type.UP
-                    else -> com.soywiz.korev.MouseEvent.Type.MOVE
+            val ev = when (e.id) {
+                MouseEvent.MOUSE_MOVED -> com.soywiz.korev.MouseEvent.Type.MOVE
+                MouseEvent.MOUSE_CLICKED -> com.soywiz.korev.MouseEvent.Type.CLICK
+                MouseEvent.MOUSE_PRESSED -> com.soywiz.korev.MouseEvent.Type.DOWN
+                MouseEvent.MOUSE_RELEASED -> com.soywiz.korev.MouseEvent.Type.UP
+                else -> com.soywiz.korev.MouseEvent.Type.MOVE
+            }
+            if (waitingRobotEvents) {
+                if (ev == com.soywiz.korev.MouseEvent.Type.CLICK) {
+                    waitingRobotEvents = false
                 }
+                return
+            }
+            //println("MOUSE EVENT: $ev : ${e.button}")
+            queue {
                 val button = MouseButton[e.button - 1]
                 val factor = frameScaleFactor
                 val sx = e.x * factor
@@ -460,10 +469,13 @@ abstract class BaseAwtGameWindow : GameWindow() {
                         //println("frame.bounds: ${bounds}")
                         //println("frame.insets: ${insets}")
                         //println(frame.contentPane.bounds)
+                        //println("START ROBOT")
+                        waitingRobotEvents = true
                         robot.mouseMove(bounds.centerX.toInt(), bounds.centerY.toInt())
-                        robot.mousePress(InputEvent.BUTTON1_MASK)
-                        robot.mouseRelease(InputEvent.BUTTON1_MASK)
+                        robot.mousePress(InputEvent.BUTTON3_MASK)
+                        robot.mouseRelease(InputEvent.BUTTON3_MASK)
                         robot.mouseMove(pos.x, pos.y)
+                        //println("END ROBOT")
                     } catch (e: Throwable) {
                     }
                     frame.isAlwaysOnTop = false
@@ -504,6 +516,7 @@ abstract class BaseAwtGameWindow : GameWindow() {
         }
 
         println("running: ${Thread.currentThread()}")
+
         while (running) {
             if (fvsync) {
                 Thread.sleep(1L)
@@ -554,5 +567,9 @@ abstract class BaseAwtGameWindow : GameWindow() {
         frameDispose()
 
         //exitProcess(0) // Don't do this since we might continue in the e2e test
+    }
+
+    override fun computeDisplayRefreshRate(): Int {
+        return this.window.getScreenDevice().displayMode.refreshRate
     }
 }
