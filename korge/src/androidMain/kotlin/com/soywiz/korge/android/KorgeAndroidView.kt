@@ -20,6 +20,9 @@ import com.soywiz.korgw.AndroidGameWindowNoActivity
 import com.soywiz.korio.Korio
 import com.soywiz.korio.android.withAndroidContext
 import com.soywiz.korio.file.std.cleanUpResourcesVfs
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -32,6 +35,8 @@ class KorgeAndroidView(context: Context) : RelativeLayout(context, null) {
 
     private val renderEvent = RenderEvent()
     private val initEvent = InitEvent()
+
+    private var moduleLoaded = false
 
     inner class KorgeViewAGOpenGL : AGOpengl() {
 
@@ -48,95 +53,108 @@ class KorgeAndroidView(context: Context) : RelativeLayout(context, null) {
     }
 
     fun unloadModule() {
-        mGLView?.let { removeView(it) }
-        gameWindow?.dispatchDestroyEvent()
-        gameWindow?.coroutineContext = null
-        gameWindow?.close()
-        gameWindow?.exit()
-        mGLView = null
-        gameWindow = null
-        agOpenGl = null
-        cleanUpResourcesVfs()
+
+        if(moduleLoaded) {
+
+            gameWindow?.dispatchDestroyEvent()
+            gameWindow?.coroutineContext = null
+            gameWindow?.close()
+            gameWindow?.exit()
+            mGLView = null
+            gameWindow = null
+            agOpenGl = null
+            cleanUpResourcesVfs()
+
+            CoroutineScope(Dispatchers.Main).launch {
+                mGLView?.let { removeView(it) }
+            }
+
+            moduleLoaded = false
+        }
     }
 
     fun loadModule(module: Module) {
 
-        agOpenGl = KorgeViewAGOpenGL()
-        gameWindow = AndroidGameWindowNoActivity(module.windowSize.width, module.windowSize.height, agOpenGl!!)
+        if(!moduleLoaded) {
 
-        mGLView = object : GLSurfaceView(context) {
+            agOpenGl = KorgeViewAGOpenGL()
+            gameWindow = AndroidGameWindowNoActivity(module.windowSize.width, module.windowSize.height, agOpenGl!!)
 
-            val view = this
+            mGLView = object : GLSurfaceView(context) {
 
-            init {
+                val view = this
 
-                var contextLost = false
-                var surfaceChanged = false
-                var initialized = false
+                init {
 
-                setEGLContextClientVersion(2)
+                    var contextLost = false
+                    var surfaceChanged = false
+                    var initialized = false
 
-                setRenderer(object : Renderer {
-                    override fun onSurfaceCreated(unused: GL10, config: EGLConfig) {
-                        contextLost = true
-                    }
+                    setEGLContextClientVersion(2)
 
-                    override fun onDrawFrame(unused: GL10) {
-
-                        if (contextLost) {
-                            contextLost = false
-                            agOpenGl?.contextLost()
+                    setRenderer(object : Renderer {
+                        override fun onSurfaceCreated(unused: GL10, config: EGLConfig) {
+                            contextLost = true
                         }
 
-                        if (!initialized) {
-                            initialized = true
-                            gameWindow?.dispatch(initEvent)
+                        override fun onDrawFrame(unused: GL10) {
+
+                            if (contextLost) {
+                                contextLost = false
+                                agOpenGl?.contextLost()
+                            }
+
+                            if (!initialized) {
+                                initialized = true
+                                gameWindow?.dispatch(initEvent)
+                            }
+
+                            if (surfaceChanged) {
+                                surfaceChanged = false
+                                gameWindow?.dispatchReshapeEvent(0, 0, view.width, view.height)
+                            }
+
+                            gameWindow?.coroutineDispatcher?.executePending(0.milliseconds)
+                            gameWindow?.dispatch(renderEvent)
                         }
 
-                        if (surfaceChanged) {
-                            surfaceChanged = false
-                            gameWindow?.dispatchReshapeEvent(0, 0, view.width, view.height)
+                        override fun onSurfaceChanged(unused: GL10, width: Int, height: Int) {
+                            surfaceChanged = true
                         }
-
-                        gameWindow?.coroutineDispatcher?.executePending(0.milliseconds)
-                        gameWindow?.dispatch(renderEvent)
-                    }
-
-                    override fun onSurfaceChanged(unused: GL10, width: Int, height: Int) {
-                        surfaceChanged = true
-                    }
-                })
-            }
-
-            private val touchesEventPool = Pool { TouchEvent() }
-            private val coordinates = MotionEvent.PointerCoords()
-            private var lastTouchEvent: TouchEvent = TouchEvent()
-
-            @SuppressLint("ClickableViewAccessibility")
-            override fun onTouchEvent(ev: MotionEvent): Boolean {
-
-                val currentTouchEvent = synchronized(touchesEventPool) {
-
-                    val currentTouchEvent = touchesEventPool.alloc()
-
-                    currentTouchEvent.startFrame(
-                        when (ev.actionMasked) {
-                            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> TouchEvent.Type.START
-                            MotionEvent.ACTION_MOVE -> TouchEvent.Type.MOVE
-                            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> TouchEvent.Type.END
-                            else -> TouchEvent.Type.END
-                        }
-                    )
-
-                    for (n in 0 until ev.pointerCount) {
-                        ev.getPointerCoords(n, coordinates)
-                        currentTouchEvent.touch(ev.getPointerId(n), coordinates.x.toDouble(), coordinates.y.toDouble())
-                    }
-
-                    currentTouchEvent
+                    })
                 }
 
-                // TODO Originally it was like this, but doesn't compile
+                private val touchesEventPool = Pool { TouchEvent() }
+                private val coordinates = MotionEvent.PointerCoords()
+                private var lastTouchEvent: TouchEvent = TouchEvent()
+
+                @SuppressLint("ClickableViewAccessibility")
+                override fun onTouchEvent(ev: MotionEvent): Boolean {
+
+                    if(moduleLoaded) {
+
+                        val currentTouchEvent = synchronized(touchesEventPool) {
+
+                            val currentTouchEvent = touchesEventPool.alloc()
+
+                            currentTouchEvent.startFrame(
+                                when (ev.actionMasked) {
+                                    MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> TouchEvent.Type.START
+                                    MotionEvent.ACTION_MOVE -> TouchEvent.Type.MOVE
+                                    MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> TouchEvent.Type.END
+                                    else -> TouchEvent.Type.END
+                                }
+                            )
+
+                            for (n in 0 until ev.pointerCount) {
+                                ev.getPointerCoords(n, coordinates)
+                                currentTouchEvent.touch(ev.getPointerId(n), coordinates.x.toDouble(), coordinates.y.toDouble())
+                            }
+
+                            currentTouchEvent
+                        }
+
+                        // TODO Originally it was like this, but doesn't compile
 //                gameWindow?.let { gameWindow ->
 //                    gameWindow.coroutineContext?.let { coroutineContext ->
 //                        gameWindow.coroutineDispatcher.dispatch(coroutineContext) {
@@ -145,28 +163,32 @@ class KorgeAndroidView(context: Context) : RelativeLayout(context, null) {
 //                    }
 //                }
 
-                // TODO check if this works fine instead of the previous TODO
-                gameWindow?.dispatch(currentTouchEvent)
-
-                return true
-            }
-        }
-
-        addView(mGLView)
-
-        gameWindow?.let { gameWindow ->
-
-            Korio(context) {
-                try {
-                    withAndroidContext(context) {
-                        withContext(coroutineContext + gameWindow) {
-                            Korge(Korge.Config(module = module))
-                        }
+                        // TODO check if this works fine instead of the previous TODO
+                        gameWindow?.dispatch(currentTouchEvent)
                     }
-                } finally {
-                    println("${javaClass::getName} completed!")
+
+                    return true
                 }
             }
+
+            addView(mGLView)
+
+            gameWindow?.let { gameWindow ->
+
+                Korio(context) {
+                    try {
+                        withAndroidContext(context) {
+                            withContext(coroutineContext + gameWindow) {
+                                Korge(Korge.Config(module = module))
+                            }
+                        }
+                    } finally {
+                        println("${javaClass::getName} completed!")
+                    }
+                }
+            }
+
+            moduleLoaded = true
         }
     }
 }
