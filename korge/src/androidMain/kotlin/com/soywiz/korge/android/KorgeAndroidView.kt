@@ -17,6 +17,7 @@ import com.soywiz.korev.dispatch
 import com.soywiz.korge.Korge
 import com.soywiz.korge.scene.Module
 import com.soywiz.korgw.AndroidGameWindowNoActivity
+import com.soywiz.korgw.TouchEventHandler
 import com.soywiz.korio.Korio
 import com.soywiz.korio.android.withAndroidContext
 import com.soywiz.korio.file.std.cleanUpResourcesVfs
@@ -54,7 +55,7 @@ class KorgeAndroidView(context: Context) : RelativeLayout(context, null) {
 
     fun unloadModule() {
 
-        if(moduleLoaded) {
+        if (moduleLoaded) {
 
             gameWindow?.dispatchDestroyEvent()
             gameWindow?.coroutineContext = null
@@ -75,7 +76,7 @@ class KorgeAndroidView(context: Context) : RelativeLayout(context, null) {
 
     fun loadModule(module: Module) {
 
-        if(!moduleLoaded) {
+        if (!moduleLoaded) {
 
             agOpenGl = KorgeViewAGOpenGL()
             gameWindow = AndroidGameWindowNoActivity(module.windowSize.width, module.windowSize.height, agOpenGl!!)
@@ -124,49 +125,26 @@ class KorgeAndroidView(context: Context) : RelativeLayout(context, null) {
                     })
                 }
 
-                private val touchesEventPool = Pool { TouchEvent() }
-                private val coordinates = MotionEvent.PointerCoords()
-                private var lastTouchEvent: TouchEvent = TouchEvent()
+                private val touches = TouchEventHandler()
+                private val coords = MotionEvent.PointerCoords()
 
                 @SuppressLint("ClickableViewAccessibility")
                 override fun onTouchEvent(ev: MotionEvent): Boolean {
 
-                    if(moduleLoaded) {
+                    val gameWindow = gameWindow ?: return false
+                    val gameWindowCoroutineContext = gameWindow.coroutineContext ?: return false
 
-                        val currentTouchEvent = synchronized(touchesEventPool) {
-
-                            val currentTouchEvent = touchesEventPool.alloc()
-
-                            currentTouchEvent.startFrame(
-                                when (ev.actionMasked) {
-                                    MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> TouchEvent.Type.START
-                                    MotionEvent.ACTION_MOVE -> TouchEvent.Type.MOVE
-                                    MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> TouchEvent.Type.END
-                                    else -> TouchEvent.Type.END
-                                }
-                            )
-
-                            for (n in 0 until ev.pointerCount) {
-                                ev.getPointerCoords(n, coordinates)
-                                currentTouchEvent.touch(ev.getPointerId(n), coordinates.x.toDouble(), coordinates.y.toDouble())
-                            }
-
-                            currentTouchEvent
+                    touches.handleEvent(gameWindow, gameWindowCoroutineContext, when (ev.action) {
+                        MotionEvent.ACTION_DOWN -> TouchEvent.Type.START
+                        MotionEvent.ACTION_MOVE -> TouchEvent.Type.MOVE
+                        MotionEvent.ACTION_UP -> TouchEvent.Type.END
+                        else -> TouchEvent.Type.END
+                    }, { currentTouchEvent ->
+                        for (n in 0 until ev.pointerCount) {
+                            ev.getPointerCoords(n, coords)
+                            currentTouchEvent.touch(ev.getPointerId(n), coords.x.toDouble(), coords.y.toDouble())
                         }
-
-                        // TODO Originally it was like this, but doesn't compile
-//                gameWindow?.let { gameWindow ->
-//                    gameWindow.coroutineContext?.let { coroutineContext ->
-//                        gameWindow.coroutineDispatcher.dispatch(coroutineContext) {
-//                            gameWindow?.dispatch(currentTouchEvent)
-//                        }
-//                    }
-//                }
-
-                        // TODO check if this works fine instead of the previous TODO
-                        gameWindow?.dispatch(currentTouchEvent)
-                    }
-
+                    })
                     return true
                 }
             }
