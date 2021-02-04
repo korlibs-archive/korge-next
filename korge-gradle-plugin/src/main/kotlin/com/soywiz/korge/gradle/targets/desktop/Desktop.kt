@@ -48,7 +48,7 @@ val Project.prepareKotlinNativeBootstrap: Task get() = tasks.createOnce("prepare
                 line("fun main(args: Array<String>): Unit = RootGameMain.runMain(args)")
                 line("object RootGameMain") {
                     line("fun runMain() = runMain(arrayOf())")
-                    line("@Suppress(\"UNUSED_PARAMETER\") fun runMain(args: Array<String>): Unit = com.soywiz.korio.Korio { ${korge.realEntryPoint}() }")
+                    line("@Suppress(\"UNUSED_PARAMETER\") fun runMain(args: Array<String>): Unit = com.soywiz.korio.Korio { ${korge.realEntryPoint}(args) }")
                 }
             }
             if (!output.exists() || output.readText() != text) output.writeText(text)
