@@ -72,14 +72,17 @@ data class Matrix(
         }
     }
 
-    fun setTo(a: Double, b: Double, c: Double, d: Double, tx: Double, ty: Double): Matrix = this.apply {
+    fun setTo(a: Double, b: Double, c: Double, d: Double, tx: Double, ty: Double): Matrix {
         this.a = a
         this.b = b
         this.c = c
         this.d = d
         this.tx = tx
         this.ty = ty
+
+        return this
     }
+
     fun setTo(a: Float, b: Float, c: Float, d: Float, tx: Float, ty: Float): Matrix = setTo(a.toDouble(), b.toDouble(), c.toDouble(), d.toDouble(), tx.toDouble(), ty.toDouble())
     fun setTo(a: Int, b: Int, c: Int, d: Int, tx: Int, ty: Int): Matrix = setTo(a.toDouble(), b.toDouble(), c.toDouble(), d.toDouble(), tx.toDouble(), ty.toDouble())
 
@@ -92,7 +95,7 @@ data class Matrix(
         return this
     }
 
-    fun rotate(angle: Angle) = this.apply {
+    fun rotate(angle: Angle) {
         val theta = angle.radians
         val cos = cos(theta)
         val sin = sin(theta)
@@ -134,21 +137,21 @@ data class Matrix(
     fun prescale(sx: Float, sy: Float = sx) = prescale(sx.toDouble(), sy.toDouble())
     fun prescale(sx: Int, sy: Int = sx) = prescale(sx.toDouble(), sy.toDouble())
 
-    fun translate(dx: Double, dy: Double) = this.apply { this.tx += dx; this.ty += dy }
+    fun translate(dx: Double, dy: Double): Matrix { this.tx += dx; this.ty += dy; return this }
     fun translate(dx: Float, dy: Float) = translate(dx.toDouble(), dy.toDouble())
     fun translate(dx: Int, dy: Int) = translate(dx.toDouble(), dy.toDouble())
 
-    fun pretranslate(dx: Double, dy: Double) = this.apply { tx += a * dx + c * dy; ty += b * dx + d * dy }
+    fun pretranslate(dx: Double, dy: Double)  { tx += a * dx + c * dy; ty += b * dx + d * dy }
     fun pretranslate(dx: Float, dy: Float) = pretranslate(dx.toDouble(), dy.toDouble())
     fun pretranslate(dx: Int, dy: Int) = pretranslate(dx.toDouble(), dy.toDouble())
 
-    fun prerotate(angle: Angle) = this.apply {
+    fun prerotate(angle: Angle) {
         val m = Matrix()
         m.rotate(angle)
         this.premultiply(m)
     }
 
-    fun preskew(skewX: Angle, skewY: Angle) = this.apply {
+    fun preskew(skewX: Angle, skewY: Angle) {
         val m = Matrix()
         m.skew(skewX, skewY)
         this.premultiply(m)

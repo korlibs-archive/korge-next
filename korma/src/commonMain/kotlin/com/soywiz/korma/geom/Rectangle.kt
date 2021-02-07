@@ -101,7 +101,10 @@ data class Rectangle(
     infix fun intersectsX(that: Rectangle): Boolean = that.left <= this.right && that.right >= this.left
     infix fun intersectsY(that: Rectangle): Boolean = that.top <= this.bottom && that.bottom >= this.top
 
-    fun setToIntersection(a: Rectangle, b: Rectangle) = this.apply { a.intersection(b, this) }
+    fun setToIntersection(a: Rectangle, b: Rectangle): Rectangle {
+        a.intersection(b, this)
+        return this
+    }
 
     infix fun intersection(that: Rectangle) = intersection(that, Rectangle())
 
@@ -180,6 +183,13 @@ data class Rectangle(
     fun ceil(): Rectangle {
         setTo(kotlin.math.ceil(x), kotlin.math.ceil(y), kotlin.math.ceil(width), kotlin.math.ceil(height))
         return this
+    }
+
+    fun zeroSelf() {
+        x = 0.0
+        y = 0.0
+        width = 0.0
+        height = 0.0
     }
 }
 
@@ -261,18 +271,27 @@ inline class RectangleInt(val rect: Rectangle) : IRectangleInt {
 
 fun RectangleInt.setTo(that: RectangleInt) = setTo(that.x, that.y, that.width, that.height)
 
-fun RectangleInt.setTo(x: Int, y: Int, width: Int, height: Int) = this.apply {
+fun RectangleInt.setTo(x: Int, y: Int, width: Int, height: Int): RectangleInt {
     this.x = x
     this.y = y
     this.width = width
     this.height = height
+
+    return this
 }
 
-fun RectangleInt.setPosition(x: Int, y: Int) = this.apply { this.x = x; this.y = y }
+fun RectangleInt.setPosition(x: Int, y: Int):RectangleInt {
+    this.x = x
+    this.y = y
 
-fun RectangleInt.setSize(width: Int, height: Int) = this.apply {
+    return this
+}
+
+fun RectangleInt.setSize(width: Int, height: Int): RectangleInt {
     this.width = width
     this.height = height
+
+    return this
 }
 
 fun RectangleInt.getPosition(out: PointInt = PointInt()): PointInt = out.setTo(x, y)

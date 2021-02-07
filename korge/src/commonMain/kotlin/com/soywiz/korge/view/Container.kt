@@ -221,10 +221,15 @@ open class Container : View(true) {
 
 	override fun getLocalBoundsInternal(out: Rectangle) {
 		bb.reset()
-		forEachChild { child: View ->
-			child.getBounds(this, tempRect)
-			bb.add(tempRect)
-		}
+//		forEachChild { child: View ->
+//			child.getBounds(this, tempRect)
+//			bb.add(tempRect)
+//		}
+        // Use regular for loop to avoid function callback in JS
+        for (child in children) {
+            child.getBounds(this, tempRect)
+            bb.add(tempRect)
+        }
         bb.getBounds(out)
 	}
 

@@ -1179,7 +1179,7 @@ abstract class View internal constructor(
 
     private val _localBounds: Rectangle = Rectangle()
     open fun getLocalBoundsInternal(out: Rectangle = _localBounds): Unit {
-        out.setTo(0, 0, 0, 0)
+        out.zeroSelf()
     }
 
     protected open fun createInstance(): View =
