@@ -27,8 +27,8 @@ plugins {
 
 	java
     kotlin("multiplatform") version kotlinVersion
-    id("org.jetbrains.intellij") version "0.6.1" apply false
-    id("org.jetbrains.dokka") version "1.4.10.2" apply false
+    id("org.jetbrains.intellij") version "0.6.5" apply false
+    //id("org.jetbrains.dokka") version "1.4.10.2" apply false
 
     //`maven-publish`
     //id("com.gradle.plugin-publish") version "0.12.0" apply false
@@ -211,6 +211,12 @@ subprojects {
                 compilations.all {
                     kotlinOptions.jvmTarget = "1.8"
                     kotlinOptions.suppressWarnings = true
+
+                    // @TODO:
+                    // Tested on Kotlin 1.4.30:
+                    // Class org.luaj.vm2.WeakTableTest.WeakKeyTableTest
+                    // java.lang.AssertionError: expected:<null> but was:<mydata-111>
+                    //kotlinOptions.useIR = true
                 }
             }
             js(org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType.IR) {
