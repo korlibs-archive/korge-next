@@ -184,13 +184,6 @@ data class Rectangle(
         setTo(kotlin.math.ceil(x), kotlin.math.ceil(y), kotlin.math.ceil(width), kotlin.math.ceil(height))
         return this
     }
-
-    fun zeroSelf() {
-        x = 0.0
-        y = 0.0
-        width = 0.0
-        height = 0.0
-    }
 }
 
 inline fun Rectangle.setTo(x: Number, y: Number, width: Number, height: Number) =
