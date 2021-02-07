@@ -99,12 +99,14 @@ data class TouchEvent(
         val MAX_TOUCHES = 10
     }
     private val bufferTouches = Array(MAX_TOUCHES) { Touch(it) }
-    private val _touches = LinkedHashSet<Touch>()
-    val touches: Set<Touch> get() = _touches
+    private val _touches = FastArrayList<Touch>()
+    val touches: List<Touch> get() = _touches
+    var actionTouch: Touch? = null
 
     fun startFrame(type: Type) {
         this.type = type
         this.currentTime = DateTime.now()
+        actionTouch = null
         _touches.clear()
     }
 
@@ -115,6 +117,9 @@ data class TouchEvent(
         touch.y = y
         touch.status = status
         _touches.add(touch)
+        if (status != Touch.Status.KEEP) {
+            actionTouch = touch
+        }
     }
 
     fun copyFrom(other: TouchEvent) {
