@@ -52,8 +52,10 @@ include(":kbox2d")
 include(":korge-dragonbones")
 include(":korge-spine")
 include(":korge-swf")
-//include(":korge-intellij-plugin")
+include(":korge-intellij-plugin")
 include(":korge-gradle-plugin")
+
+enableFeaturePreview("GRADLE_METADATA")
 
 /*
 for (sample in (File(rootProject.projectDir, "samples").takeIf { it.isDirectory }?.listFiles() ?: arrayOf())) {
