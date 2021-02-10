@@ -23,7 +23,7 @@ inline fun Container.tileMap(map: Bitmap32, tileset: TileSet, repeatX: TileMap.R
 internal fun Bitmap32.toIntArray2() = IntArray2(width, height, data.ints)
 
 @OptIn(KorgeInternal::class)
-open class TileMap(val intMap: IntArray2, val tileset: TileSet, val smoothing: Boolean) : View() {
+open class TileMap(val intMap: IntArray2, val tileset: TileSet, var smoothing: Boolean = true) : View() {
     private var contentVersion = 0
 	constructor(map: Bitmap32, tileset: TileSet, smoothing: Boolean) : this(map.toIntArray2(), tileset, smoothing)
 
