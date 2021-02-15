@@ -7,6 +7,7 @@ import com.soywiz.kgl.*
 import com.soywiz.kgl.internal.*
 import com.soywiz.kgl.internal.min2
 import com.soywiz.klock.*
+import com.soywiz.klogger.*
 import com.soywiz.kmem.*
 import com.soywiz.korag.internal.setFloats
 import com.soywiz.korag.shader.Program
@@ -41,6 +42,11 @@ abstract class AGOpengl : AG() {
     open val webgl: Boolean = false
 
     override var devicePixelRatio: Double = 1.0
+
+    override fun contextLost() {
+        Console.info("AG.contextLost()", this, gl, gl.root)
+        contextVersion++
+    }
 
     //val queue = Deque<(gl: GL) -> Unit>()
 
@@ -207,7 +213,7 @@ abstract class AGOpengl : AG() {
         val currentRenderBuffer = this.currentRenderBuffer ?: return
         if (currentRenderBuffer === mainRenderBuffer) {
             var realScissors: Rectangle? = finalScissorBL
-            realScissors?.setTo(0, 0, realBackWidth, realBackHeight)
+            realScissors?.setTo(0.0, 0.0, realBackWidth.toDouble(), realBackHeight.toDouble())
             if (scissor != null) {
                 tempRect.setTo(currentRenderBuffer.x + scissor.x, ((currentRenderBuffer.y + currentRenderBuffer.height) - (scissor.y + scissor.height)), (scissor.width), scissor.height)
                 realScissors = realScissors?.intersection(tempRect, realScissors)
@@ -253,7 +259,7 @@ abstract class AGOpengl : AG() {
         val scissor = batch.scissor
 
         val vattrs = vertexLayout.attributes
-        val vattrspos = vertexLayout.attributePositionsLong
+        val vattrspos = vertexLayout.attributePositions
 
         //finalScissor.setTo(0, 0, backWidth, backHeight)
         applyScissorState(scissor)
@@ -293,7 +299,7 @@ abstract class AGOpengl : AG() {
                 val elementCount = att.type.elementCount
                 if (loc >= 0) {
                     gl.enableVertexAttribArray(loc)
-                    gl.vertexAttribPointer(loc, elementCount, glElementType, att.normalized, totalSize, off)
+                    gl.vertexAttribPointer(loc, elementCount, glElementType, att.normalized, totalSize, off.toLong())
                 }
             }
         }
@@ -567,7 +573,7 @@ abstract class AGOpengl : AG() {
                     id = gl.createProgram()
 
                     if (GlslGenerator.DEBUG_GLSL) {
-                        println("OpenglAG: Creating program ${program.name} with id $id because contextVersion: $oldCachedVersion != $contextVersion")
+                        Console.warn("OpenglAG: Creating program ${program.name} with id $id because contextVersion: $oldCachedVersion != $contextVersion")
                     }
 
                     //println("GL_SHADING_LANGUAGE_VERSION: $glslVersionInt : $glslVersionString")
@@ -580,7 +586,7 @@ abstract class AGOpengl : AG() {
                     }
 
                     if (GlslGenerator.DEBUG_GLSL) {
-                        println("GLSL version: requested=$glSlVersion, guessed=$guessedGlSlVersion, forced=${GlslGenerator.FORCE_GLSL_VERSION}. used=$usedGlSlVersion")
+                        Console.trace("GLSL version: requested=$glSlVersion, guessed=$guessedGlSlVersion, forced=${GlslGenerator.FORCE_GLSL_VERSION}. used=$usedGlSlVersion")
                     }
 
                     fragmentShaderId = createShaderCompat(gl.FRAGMENT_SHADER) { compatibility ->
@@ -596,7 +602,7 @@ abstract class AGOpengl : AG() {
                     gl.getProgramiv(id, gl.LINK_STATUS, tempBuffer1)
                 }
                 if (GlslGenerator.DEBUG_GLSL) {
-                    println("OpenglAG: Created program ${program.name} with id $id in time=$time")
+                    Console.info("OpenglAG: Created program ${program.name} with id $id in time=$time")
                 }
             }
         }

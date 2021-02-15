@@ -27,11 +27,6 @@ plugins {
 
 	java
     kotlin("multiplatform") version kotlinVersion
-    id("org.jetbrains.intellij") version "0.6.5" apply false
-    //id("org.jetbrains.dokka") version "1.4.10.2" apply false
-
-    //`maven-publish`
-    //id("com.gradle.plugin-publish") version "0.12.0" apply false
 }
 
 val kotlinVersion: String by project
@@ -146,7 +141,6 @@ allprojects {
 
 subprojects {
     val doConfigure =
-        project.name != "korge-intellij-plugin" &&
             project.name != "korge-gradle-plugin" &&
             project.hasBuildGradle()
 
@@ -211,6 +205,8 @@ subprojects {
                 compilations.all {
                     kotlinOptions.jvmTarget = "1.8"
                     kotlinOptions.suppressWarnings = true
+                    kotlinOptions.freeCompilerArgs = listOf("-Xno-param-assertions")
+                    //kotlinOptions.
 
                     // @TODO:
                     // Tested on Kotlin 1.4.30:
@@ -796,12 +792,22 @@ samples {
     }
 }
 
+val gitVersion = try {
+    Runtime.getRuntime().exec("git describe --abbrev=8 --tags --dirty".split(" ").toTypedArray(), arrayOf(), rootDir).inputStream.reader()
+        .readText().lines().first().trim()
+} catch (e: Throwable) {
+    e.printStackTrace()
+    "unknown"
+}
+
+
 val buildVersionsFile = file("korge-gradle-plugin/src/main/kotlin/com/soywiz/korge/gradle/BuildVersions.kt")
 val oldBuildVersionsText = buildVersionsFile.readText()
 val newBuildVersionsText = oldBuildVersionsText
     .replace(Regex("const val KORLIBS_VERSION = \"(.*?)\""), "const val KORLIBS_VERSION = \"${project.version}\"")
     .replace(Regex("const val KLOCK = \"(.*?)\""), "const val KLOCK = \"${project.version}\"")
     .replace(Regex("const val KDS = \"(.*?)\""), "const val KDS = \"${project.version}\"")
+    .replace(Regex("const val KRYPTO = \"(.*?)\""), "const val KRYPTO = \"${project.version}\"")
     .replace(Regex("const val KMEM = \"(.*?)\""), "const val KMEM = \"${project.version}\"")
     .replace(Regex("const val KORMA = \"(.*?)\""), "const val KORMA = \"${project.version}\"")
     .replace(Regex("const val KORIO = \"(.*?)\""), "const val KORIO = \"${project.version}\"")
@@ -810,6 +816,7 @@ val newBuildVersionsText = oldBuildVersionsText
     .replace(Regex("const val KORGW = \"(.*?)\""), "const val KORGW = \"${project.version}\"")
     .replace(Regex("const val KORGE = \"(.*?)\""), "const val KORGE = \"${project.version}\"")
     .replace(Regex("const val KOTLIN = \"(.*?)\""), "const val KOTLIN = \"${kotlinVersion}\"")
+    .replace(Regex("const val GIT = \"(.*?)\""), "const val GIT = \"${gitVersion}\"")
     .replace(Regex("const val JNA = \"(.*?)\""), "const val JNA = \"${jnaVersion}\"")
     .replace(Regex("const val ANDROID_BUILD = \"(.*?)\""), "const val ANDROID_BUILD = \"${androidBuildGradleVersion}\"")
     .replace(Regex("const val COROUTINES = \"(.*?)\""), "const val COROUTINES = \"${coroutinesVersion}\"")

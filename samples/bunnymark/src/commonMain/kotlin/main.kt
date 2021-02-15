@@ -6,6 +6,7 @@ import com.soywiz.korim.color.*
 import com.soywiz.korim.format.*
 import com.soywiz.korio.file.std.*
 import com.soywiz.korge.input.*
+import com.soywiz.korge.render.*
 import com.soywiz.korge.view.fast.FastSprite
 import com.soywiz.korge.view.fast.fastSpriteContainer
 import com.soywiz.korim.bitmap.BmpSlice
@@ -13,7 +14,6 @@ import com.soywiz.korim.bitmap.effect.BitmapEffect
 import com.soywiz.korim.bitmap.sliceWithSize
 import com.soywiz.korim.font.DefaultTtfFont
 import com.soywiz.korim.font.toBitmapFont
-import com.soywiz.korim.text.VerticalAlign
 import kotlin.random.Random
 
 //class BunnyFastSprite(tex: BmpSlice) : FastSprite(tex) {
@@ -32,7 +32,8 @@ class Bunny(tex: BmpSlice) : FastSprite(tex) {
 // bunnymark ported from PIXI.js
 // https://www.goodboydigital.com/pixijs/bunnymark/
 // https://www.goodboydigital.com/pixijs/bunnymark/js/bunnyBenchMark.js
-suspend fun main() = Korge(width = 800, height = 600, bgcolor = Colors["#2b2b9b"]) {
+suspend fun main() = Korge(width = 800, height = 600, bgcolor = Colors["#2b2b9b"], batchMaxQuads = BatchBuilder2D.MAX_BATCH_QUADS) {
+//suspend fun main() = Korge(width = 800, height = 600, bgcolor = Colors["#2b2b9b"]) {
     val wabbitTexture = resourcesVfs["bunnys.png"].readBitmap()
 
     val bunny1 = wabbitTexture.sliceWithSize(2, 47, 26, 37)
