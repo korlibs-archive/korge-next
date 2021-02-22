@@ -3,7 +3,7 @@ package com.soywiz.korma.geom
 import com.soywiz.korma.interpolation.Interpolable
 import com.soywiz.korma.interpolation.interpolate
 
-data class Anchor(val sx: Double, val sy: Double) : Interpolable<Anchor> {
+data class Anchor(var sx: Double, var sy: Double) : Interpolable<Anchor> {
     companion object {
         operator fun invoke(sx: Int, sy: Int) = Anchor(sx.toDouble(), sy.toDouble())
         operator fun invoke(sx: Float, sy: Float) = Anchor(sx.toDouble(), sy.toDouble())
