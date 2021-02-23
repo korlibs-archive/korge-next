@@ -26,19 +26,13 @@ data class AtlasInfo(
         false, false, frames
     )))
 
-    data class Rect(val x: Int, val y: Int, val w: Int, val h: Int) {
+	data class Rect(val x: Int, val y: Int, val w: Int, val h: Int) {
         val rect get() = Rectangle(x, y, w, h)
-        companion object {
-            val ZERO = Rect(0, 0, 0, 0)
-        }
-    }
+	}
 
-    data class Size(val width: Int, val height: Int) {
-        val size get() = com.soywiz.korma.geom.Size(width, height)
-        companion object {
-            val ZERO = Size(0, 0)
-        }
-    }
+	data class Size(val width: Int, val height: Int) {
+		val size get() = com.soywiz.korma.geom.Size(width, height)
+	}
 
 	data class Meta(
         val app: String = "app",

@@ -44,9 +44,9 @@ open class RectBase(
 	protected open val bheight get() = 0.0
 
     //@KorgeInternal
-    override val anchorDispX get() = (anchorX * bwidth)
+    override val anchorDispX get() = when { baseBitmap.trimmed -> (anchorX * baseBitmap.virtFrame.width - baseBitmap.virtFrame.x) else -> (anchorX * bwidth) }
     //@KorgeInternal
-    override val anchorDispY get() = (anchorY * bheight)
+    override val anchorDispY get() = when { baseBitmap.trimmed -> (anchorY * baseBitmap.virtFrame.height - baseBitmap.virtFrame.y) else -> (anchorY * bheight) }
 
     protected open val sLeft get() = -anchorDispX
 	protected open val sTop get() = -anchorDispY

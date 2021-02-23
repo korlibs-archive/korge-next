@@ -10,7 +10,6 @@ import com.soywiz.korim.bitmap.sliceWithSize
 
 class SpriteAnimation constructor(
     val sprites: List<BmpSlice>,
-    val regionDetails: List<AtlasInfo.Region>,
     val defaultTimePerFrame: TimeSpan = TimeSpan.NIL
 ) {
     companion object {
@@ -27,8 +26,8 @@ class SpriteAnimation constructor(
         ): SpriteAnimation {
             return SpriteAnimation(
                 FastArrayList<BmpSlice>().apply {
-                    for (row in 0 until rows) {
-                        for (col in 0 until columns) {
+                    for (row in 0 until rows){
+                        for (col in 0 until columns){
                             add(
                                 spriteMap.sliceWithSize(
                                     marginLeft + (spriteWidth + offsetBetweenColumns) * col,
@@ -40,8 +39,7 @@ class SpriteAnimation constructor(
                             )
                         }
                     }
-                },
-                FastArrayList()
+                }
             )
         }
     }
@@ -50,30 +48,11 @@ class SpriteAnimation constructor(
     val size: Int get() = sprites.size
     val firstSprite: BmpSlice get() = sprites[0]
     fun getSprite(index: Int): BmpSlice = sprites[index umod sprites.size]
-    fun getRegionDetail(index: Int): AtlasInfo.Region? {
-        return when {
-            regionDetails.isEmpty() -> null
-            else -> regionDetails[index umod regionDetails.size]
-        }
-    }
-
     operator fun get(index: Int) = getSprite(index)
 }
 
-fun Atlas.getSpriteAnimation(prefix: String = "", defaultTimePerFrame: TimeSpan = TimeSpan.NIL): SpriteAnimation {
-    val entries = this.entries.filter { it.filename.startsWith(prefix) }
-    return SpriteAnimation(
-        entries.map { it.slice }.toFastList(),
-        entries.map { it.info }.toFastList(),
-        defaultTimePerFrame
-    )
-}
+fun Atlas.getSpriteAnimation(prefix: String = "", defaultTimePerFrame: TimeSpan = TimeSpan.NIL): SpriteAnimation =
+    SpriteAnimation(this.entries.filter { it.filename.startsWith(prefix) }.map { it.slice }.toFastList(), defaultTimePerFrame)
 
-fun Atlas.getSpriteAnimation(regex: Regex, defaultTimePerFrame: TimeSpan = TimeSpan.NIL): SpriteAnimation {
-    val entries = this.entries.filter { regex.matches(it.filename) }
-    return SpriteAnimation(
-        entries.map { it.slice }.toFastList(),
-        entries.map { it.info }.toFastList(),
-        defaultTimePerFrame
-    )
-}
+fun Atlas.getSpriteAnimation(regex: Regex, defaultTimePerFrame: TimeSpan = TimeSpan.NIL): SpriteAnimation =
+    SpriteAnimation(this.entries.filter { regex.matches(it.filename) }.map { it.slice }.toFastList(), defaultTimePerFrame)

@@ -1,12 +1,9 @@
 package com.soywiz.korge.view
 
-import com.soywiz.kds.FastArrayList
 import com.soywiz.klock.*
 import com.soywiz.kmem.umod
-import com.soywiz.korim.atlas.AtlasInfo
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korio.async.Signal
-import com.soywiz.korma.geom.Anchor
 import com.soywiz.korma.geom.vector.VectorPath
 
 inline fun Container.sprite(
@@ -47,7 +44,7 @@ open class Sprite(
     smoothing: Boolean = true
 ) : BaseImage(bitmap, anchorX, anchorY, hitShape, smoothing) {
     constructor(
-        bitmap: Bitmap,
+        bitmap : Bitmap,
         anchorX: Double = 0.0,
         anchorY: Double = anchorX,
         hitShape: VectorPath? = null,
@@ -63,63 +60,7 @@ open class Sprite(
     ) : this(initialAnimation.firstSprite, anchorX, anchorY, hitShape, smoothing) {
         currentAnimation = initialAnimation
         setFrame(0)
-        // Apply given anchorXY to specific anchorXY of each animation frame
-        if (initialAnimation.regionDetails.isNotEmpty()) {
-            initialAnimation.regionDetails.forEach {
-                currentAnchorXY.add(
-                    Anchor(
-                        // spriteSourceSize.rect.x and .y are offsets in pixel within original (untrimmed) texture size
-                        // spriteSourceSize.rect.width and .height define the size of the trimmed texture
-                        // anchorX and anchorY needs to be "converted" to number of pixels within the original texture size
-                        // sourceSize.width and .height are the size of the original texture
-                        sx = (anchorX * it.sourceSize.width - it.spriteSourceSize.rect.x) / it.spriteSourceSize.rect.width,
-                        sy = (anchorY * it.sourceSize.height - it.spriteSourceSize.rect.y) / it.spriteSourceSize.rect.height
-                    )
-                )
-            }
-            anchor(currentAnchorXY[0])
-        }
     }
-
-    /**
-     * Apply given anchorX to each anchorX of all animation frames
-     */
-    override var anchorX: Double
-        get() = super.anchorX
-        set(value) {
-            super.anchorX = when {
-                currentAnchorXY.isEmpty() -> value
-                else -> {
-                    currentAnchorXY.forEachIndexed { index, it ->
-                        val originalSize = currentAnimation?.getRegionDetail(index)?.sourceSize ?: AtlasInfo.Size.ZERO
-                        val trimmedSize =
-                            currentAnimation?.getRegionDetail(index)?.spriteSourceSize ?: AtlasInfo.Rect.ZERO
-                        it.sx = (value * originalSize.width - trimmedSize.rect.x) / trimmedSize.rect.width
-                    }
-                    currentAnchorXY[currentSpriteIndex umod currentAnchorXY.size].sx
-                }
-            }
-        }
-
-    /**
-     * Apply given anchorY to each anchorY of all animation frames
-     */
-    override var anchorY: Double
-        get() = super.anchorY
-        set(value) {
-            super.anchorY = when {
-                currentAnchorXY.isEmpty() -> value
-                else -> {
-                    currentAnchorXY.forEachIndexed { index, it ->
-                        val originalSize = currentAnimation?.getRegionDetail(index)?.sourceSize ?: AtlasInfo.Size.ZERO
-                        val trimmedSize =
-                            currentAnimation?.getRegionDetail(index)?.spriteSourceSize ?: AtlasInfo.Rect.ZERO
-                        it.sy = (value * originalSize.height - trimmedSize.rect.y) / trimmedSize.rect.height
-                    }
-                    currentAnchorXY[currentSpriteIndex umod currentAnchorXY.size].sy
-                }
-            }
-        }
 
     private var animationRequested = false
     var totalFramesPlayed = 0
@@ -141,25 +82,25 @@ open class Sprite(
     private var _onAnimationStarted: Signal<SpriteAnimation>? = null
     private var _onFrameChanged: Signal<SpriteAnimation>? = null
 
-    val onAnimationCompleted: Signal<SpriteAnimation>
-        get() {
+    val onAnimationCompleted : Signal<SpriteAnimation>
+        get(){
             if (_onAnimationCompleted == null) _onAnimationCompleted = Signal()
             return _onAnimationCompleted!!
         }
 
-    val onAnimationStopped: Signal<SpriteAnimation>
+    val onAnimationStopped : Signal<SpriteAnimation>
         get() {
             if (_onAnimationStopped == null) _onAnimationStopped = Signal()
             return _onAnimationStopped!!
         }
 
-    val onAnimationStarted: Signal<SpriteAnimation>
+    val onAnimationStarted : Signal<SpriteAnimation>
         get() {
             if (_onAnimationStarted == null) _onAnimationStarted = Signal()
             return _onAnimationStarted!!
         }
 
-    val onFrameChanged: Signal<SpriteAnimation>
+    val onFrameChanged : Signal<SpriteAnimation>
         get() {
             if (_onFrameChanged == null) _onFrameChanged = Signal()
             return _onFrameChanged!!
@@ -178,18 +119,11 @@ open class Sprite(
         }
 
     private var currentAnimation: SpriteAnimation? = null
-    private var currentAnchorXY = FastArrayList<Anchor>()
 
     var currentSpriteIndex = 0
         private set(value) {
             field = value umod totalFrames
             bitmap = currentAnimation?.getSprite(value) ?: bitmap
-            // Only set anchor from array of frames when the sprite was initialized with a SpriteAnimation
-            if (currentAnchorXY.isNotEmpty()) {
-                val anchor = currentAnchorXY[value umod currentAnchorXY.size]
-                super.anchorX = anchor.sx
-                super.anchorY = anchor.sy
-            }
         }
 
     private var reversed = false
@@ -298,11 +232,10 @@ open class Sprite(
         }
     }
 
-    val totalFrames: Int
-        get() {
-            val ca = currentAnimation ?: return 1
-            return ca.size
-        }
+    val totalFrames: Int get() {
+        val ca = currentAnimation ?: return 1
+        return ca.size
+    }
 
     private fun updateCurrentAnimation(
         spriteAnimation: SpriteAnimation?,
@@ -327,8 +260,8 @@ open class Sprite(
         val endFrame = endFrame umod totalFrames
         currentAnimation?.let {
             val count = when {
-                startFrame > endFrame -> (if (reversed) startFrame - endFrame else it.spriteStackSize - (startFrame - endFrame))
-                endFrame > startFrame -> (if (reversed) (startFrame - endFrame) umod it.spriteStackSize else endFrame - startFrame)
+                startFrame > endFrame -> (if (reversed) startFrame - endFrame else it.spriteStackSize-(startFrame - endFrame))
+                endFrame > startFrame -> (if (reversed) (startFrame - endFrame) umod it.spriteStackSize else endFrame-startFrame)
                 else -> 0
             }
             val requestedFrames = count + (animationCyclesRequested * it.spriteStackSize)
