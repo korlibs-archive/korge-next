@@ -7,7 +7,7 @@ import com.soywiz.korma.geom.*
 
 /**
  * @property virtFrame This defines a virtual frame [RectangleInt] which surrounds the bounds [RectangleInt] of the [Bitmap].
- *                     It is used e.g. in a trimmed texture atlas to specify the original size of a single texture.
+ *                     It is used in a trimmed texture atlas to specify the original size of a single texture.
  *                     X and y of virtFrame is the offset of the virtual frame to the top left edge of
  *                     the bounds rectangle. Width and height defines the size of the virtual frame.
  */
@@ -16,8 +16,7 @@ abstract class BmpSlice(
     val bounds: RectangleInt,
     val name: String? = null,
     val rotated: Boolean = false,
-    val trimmed: Boolean = false,
-    val virtFrame: RectangleInt = RectangleInt(0, 0, bounds.width, bounds.height)
+    val virtFrame: RectangleInt? = null
 ) : Extra, Resourceable<BmpSlice> {
     override fun getOrNull() = this
     override suspend fun get() = this
@@ -44,6 +43,12 @@ abstract class BmpSlice(
     val height: Int get() = bounds.height
     val right get() = bounds.right
     val bottom get() = bounds.bottom
+
+    val trimmed: Boolean = virtFrame != null
+    val frameOffsetX: Int = virtFrame?.x ?: 0
+    val frameOffsetY: Int = virtFrame?.y ?: 0
+    val frameWidth: Int = virtFrame?.width ?: bounds.width
+    val frameHeight : Int = virtFrame?.height ?: bounds.height
 
 	var parent: Any? = null
 
@@ -74,9 +79,8 @@ class BitmapSlice<out T : Bitmap>(
     bounds: RectangleInt,
     name: String? = null,
     rotated: Boolean = false,
-    trimmed: Boolean = false,
-    virtFrame: RectangleInt = RectangleInt(0, 0, bounds.width, bounds.height)
-) : BmpSlice(bmp, bounds, name, rotated, trimmed, virtFrame), Extra by Extra.Mixin() {
+    virtFrame: RectangleInt? = null
+) : BmpSlice(bmp, bounds, name, rotated, virtFrame), Extra by Extra.Mixin() {
 	val premultiplied get() = bmp.premultiplied
 
 	fun extract(): T = bmp.extract(bounds.x, bounds.y, bounds.width, bounds.height)
@@ -101,7 +105,7 @@ class BitmapSlice<out T : Bitmap>(
         }
     }
 
-    fun withName(name: String? = null)  = BitmapSlice<T>(bmp, bounds, name, rotated, trimmed, virtFrame)
+    fun withName(name: String? = null)  = BitmapSlice<T>(bmp, bounds, name, rotated, virtFrame)
 
 	override fun toString(): String = "BitmapSlice($name:${SizeInt(bounds.width, bounds.height)})"
 }

@@ -17,7 +17,8 @@ class Atlas(val textures: Map<String, BitmapSlice<Bitmap>>, val info: AtlasInfo 
         val slice = texture.slice(info.frame.rect).let {
             // Define virtual frame with offsets "info.spriteSourceSize.x" and "info.spriteSourceSize.y"
             // and original texture size "info.sourceSize.width" and "info.sourceSize.height"
-            BitmapSlice(it.bmpBase, it.bounds, info.name, info.rotated, info.trimmed, virtFrame = RectangleInt(info.spriteSourceSize.x, info.spriteSourceSize.y, info.sourceSize.width, info.sourceSize.height))
+            BitmapSlice(it.bmpBase, it.bounds, info.name, info.rotated,
+                virtFrame = if (info.trimmed) RectangleInt(info.spriteSourceSize.x, info.spriteSourceSize.y, info.sourceSize.width, info.sourceSize.height) else null)
         }
         val name get() = info.name
         // @TODO: Use name instead
