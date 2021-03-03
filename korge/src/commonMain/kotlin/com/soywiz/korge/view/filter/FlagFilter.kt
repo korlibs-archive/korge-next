@@ -9,8 +9,6 @@ import com.soywiz.korag.shader.VarType
 import com.soywiz.korag.shader.storageFor
 import com.soywiz.korge.debug.uiEditableValue
 import com.soywiz.korge.view.Views
-import com.soywiz.korge.view.filter.Filter
-import com.soywiz.korge.view.filter.ShaderFilter
 import com.soywiz.korui.UiContainer
 import kotlin.math.PI
 import kotlin.math.absoluteValue
@@ -39,7 +37,7 @@ class FlagFilter(
 
         private val FRAGMENT_SHADER = FragmentShader {
             apply {
-                val x01 = fragmentCoords01.x - abs(ceil(u_amplitude)) / (u_TextureSize.x + 2.lit * abs(u_amplitude))
+                val x01 = fragmentCoords01.x - ceil(abs(u_amplitude)) / (u_TextureSize.x + 2.lit * ceil(abs(u_amplitude)))
                 val offsetY = sin((x01 * u_crestCount + u_Time * -u_cyclesPerSecond) * PI.lit) * u_amplitude * x01
                 out setTo tex(vec2(fragmentCoords.x, fragmentCoords.y - offsetY))
             }
