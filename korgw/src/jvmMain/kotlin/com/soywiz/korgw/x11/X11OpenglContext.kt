@@ -10,40 +10,57 @@ import com.sun.jna.platform.unix.*
 // https://www.khronos.org/opengl/wiki/Tutorial:_OpenGL_3.0_Context_Creation_(GLX)
 class X11OpenglContext(val d: X11.Display?, val w: X11.Drawable?, val scr: Int, val vi: XVisualInfo? = chooseVisuals(d, scr), val doubleBuffered: Boolean = true) : BaseOpenglContext {
     companion object {
+        const val GLX_SAMPLE_BUFFERS = 100000
+        const val GLX_SAMPLES = 100001
+
         @OptIn(ExperimentalStdlibApi::class)
         fun chooseVisuals(d: X11.Display?, scr: Int = X.XDefaultScreen(d)): XVisualInfo? {
-            for (specifyRenderType in listOf(true, false)) {
-                for (bitsPerColorComponent in listOf(8, 4, 0)) {
-                    for (depth in listOf(24, 16, 0)) {
-                        for (doubleBuffer in listOf(true, false)) {
-                            val attrs = buildList<Int> {
-                                if (specifyRenderType) {
-                                    //add(GLX_RENDER_TYPE)
-                                    //add(GLX_RGBA_BIT)
-                                    add(GLX_RGBA)
+            for (multisampling in listOf(true, false)) {
+                for (specifyRenderType in listOf(true, false)) {
+                    for (bitsPerColorComponent in listOf(8, 4, 0)) {
+                        for (depth in listOf(24, 16, 0)) {
+                            for (stencil in listOf(8, 0)) {
+                                for (doubleBuffer in listOf(true, false)) {
+                                    val attrs = buildList<Int> {
+                                        if (specifyRenderType) {
+                                            //add(GLX_RENDER_TYPE)
+                                            //add(GLX_RGBA_BIT)
+                                            add(GLX_RGBA)
+                                        }
+                                        if (doubleBuffer) {
+                                            add(GLX_DOUBLEBUFFER)
+                                            add(doubleBuffer.toInt())
+                                        }
+                                        if (depth != 0) {
+                                            add(GLX_DEPTH_SIZE)
+                                            add(depth)
+                                        }
+                                        if (stencil != 0) {
+                                            add(GLX_STENCIL_SIZE)
+                                            add(stencil)
+                                        }
+                                        if (bitsPerColorComponent != 0) {
+                                            add(GLX_RED_SIZE)
+                                            add(bitsPerColorComponent)
+                                            add(GLX_GREEN_SIZE)
+                                            add(bitsPerColorComponent)
+                                            add(GLX_BLUE_SIZE)
+                                            add(bitsPerColorComponent)
+                                        }
+                                        if (multisampling) {
+                                            add(GLX_SAMPLE_BUFFERS)
+                                            add(1)
+                                            add(GLX_SAMPLES)
+                                            add(4)
+                                        }
+                                        add(X11.None)
+                                    }.toIntArray()
+                                    val vi = X.glXChooseVisual(d, scr, attrs)
+                                    if (vi != null) {
+                                        println("VI: $vi (doubleBuffer=$doubleBuffer, depth=$depth, bitsPerColorComponent=$bitsPerColorComponent, specifyRenderType=$specifyRenderType)")
+                                        return vi
+                                    }
                                 }
-                                if (doubleBuffer) {
-                                    add(GLX_DOUBLEBUFFER)
-                                    add(doubleBuffer.toInt())
-                                }
-                                if (depth != 0) {
-                                    add(GLX_DEPTH_SIZE)
-                                    add(depth)
-                                }
-                                if (bitsPerColorComponent != 0) {
-                                    add(GLX_RED_SIZE)
-                                    add(bitsPerColorComponent)
-                                    add(GLX_GREEN_SIZE)
-                                    add(bitsPerColorComponent)
-                                    add(GLX_BLUE_SIZE)
-                                    add(bitsPerColorComponent)
-                                }
-                                add(X11.None)
-                            }.toIntArray()
-                            val vi = X.glXChooseVisual(d, scr, attrs)
-                            if (vi != null) {
-                                println("VI: $vi (doubleBuffer=$doubleBuffer, depth=$depth, bitsPerColorComponent=$bitsPerColorComponent, specifyRenderType=$specifyRenderType)")
-                                return vi
                             }
                         }
                     }
@@ -83,11 +100,19 @@ class X11OpenglContext(val d: X11.Display?, val w: X11.Drawable?, val scr: Int, 
         }
     }
 
+    override fun getCurrent(): Any? {
+        return X.glXGetCurrentDisplay()
+    }
+
     override fun makeCurrent() {
         val result = X.glXMakeCurrent(d, w, glc)
         //X.glXMakeContextCurrent(d, w, w, glc)
         //glXMakeContextCurrent()
         //println("makeCurrent: $result")
+    }
+
+    override fun releaseCurrent() {
+        X.glXMakeCurrent(d, w, null)
     }
 
     override fun swapBuffers() {

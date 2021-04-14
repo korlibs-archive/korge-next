@@ -1,7 +1,9 @@
 package com.soywiz.korgw.awt
 
+import com.soywiz.kgl.*
 import com.soywiz.klock.*
 import com.soywiz.kmem.*
+import com.soywiz.korag.*
 import com.soywiz.korev.*
 import com.soywiz.korgw.*
 import com.soywiz.korgw.osx.*
@@ -20,6 +22,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.net.*
 import javax.swing.*
+import java.awt.GraphicsDevice
 
 abstract class BaseAwtGameWindow : GameWindow() {
     abstract override val ag: AwtAg
@@ -32,7 +35,14 @@ abstract class BaseAwtGameWindow : GameWindow() {
     abstract val contentComponent: Component
     private var lastFactor = 0.0
 
-    val window by lazy { SwingUtilities.getWindowAncestor(component) ?: (component as Frame) }
+    private var _window: Window? = null
+    val window: Window? get() {
+        if (_window == null) {
+            _window = SwingUtilities.getWindowAncestor(component) ?: (component as? Window?)
+        }
+        return _window
+    }
+    val windowOrComponent get() = window ?: component
 
     override var cursor: Cursor = Cursor.DEFAULT
         set(value) {
@@ -94,90 +104,96 @@ abstract class BaseAwtGameWindow : GameWindow() {
         //GL.glClearColor(1f, 0f, 0f, 1f)
         //GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
-        val state = ag.createGlState()
-
-        ctx?.useContext(g, ag) { info ->
-            state.keep {
-            //run {
-                ctx?.swapInterval(1)
-
-                val g = g as Graphics2D
-                val gl = ag.gl
-                val factor = frameScaleFactor
-                if (lastFactor != factor) {
-                    lastFactor = factor
-                    reshaped = true
-                }
-
-                //println("RENDER[1]")
-
-                val viewport = info.viewport
-                val scissor = info.scissors
-                /*
-                gl.enableDisable(gl.SCISSOR_TEST, scissor != null)
-                if (scissor != null) {
-                    gl.scissor(scissor.x.toInt(), scissor.y.toInt(), scissor.width.toInt(), scissor.height.toInt())
-                }
-                if (viewport != null) {
-                    gl.viewport(viewport.x.toInt(), viewport.y.toInt(), viewport.width.toInt(), viewport.height.toInt())
-                } else {
-                    gl.viewport(0, 0, scaledWidth.toInt().coerceAtLeast(1), scaledHeight.toInt().coerceAtLeast(1))
-                }
-                gl.clearColor(.3f, .3f, .3f, 1f)
-                gl.clear(gl.COLOR_BUFFER_BIT)
-                */
-
-                //println("-- viewport=$viewport, scissors=$scissor")
-
-                if (component is JFrame) {
-                    //println("component.width: ${contentComponent.width}x${contentComponent.height}")
-                    ag.mainRenderBuffer.setSize(
-                        0, 0, (contentComponent.width * factor).toInt(), (contentComponent.height * factor).toInt(),
-                    )
-                } else {
-                    ag.mainRenderBuffer.scissor(scissor)
-                    if (viewport != null) {
-                        //val window = SwingUtilities.getWindowAncestor(contentComponent)
-                        //println("window=${window.width}x${window.height} : factor=$factor")
-
-                        val frame: Component = (window as? JFrame)?.contentPane ?: window
-
-                        ag.mainRenderBuffer.setSize(
-                            viewport.x, viewport.y, viewport.width, viewport.height,
-                            (frame.width * factor).toInt(),
-                            (frame.height * factor).toInt(),
-                        )
-                    } else {
-                        ag.mainRenderBuffer.setSize(
-                            0, 0, (component.width * factor).toInt(), (component.height * factor).toInt(),
-                        )
-                    }
-                }
-
-                //println(gl.getString(gl.VERSION))
-                //println(gl.versionString)
-                if (reshaped) {
-                    reshaped = false
-                    //println("RESHAPED!")
-                    dispatchReshapeEventEx(
-                        ag.mainRenderBuffer.x,
-                        ag.mainRenderBuffer.y,
-                        ag.mainRenderBuffer.width,
-                        ag.mainRenderBuffer.height,
-                        ag.mainRenderBuffer.fullWidth,
-                        ag.mainRenderBuffer.fullHeight,
-                    )
-                }
-
-                //gl.clearColor(1f, 1f, 1f, 1f)
-                //gl.clear(gl.COLOR_BUFFER_BIT)
-                updateGamepads()
-                frame()
-                gl.flush()
-                gl.finish()
-            }
-        }
+        ctx?.useContext(g, ag, paintInContextDelegate)
         //Toolkit.getDefaultToolkit().sync();
+    }
+
+    val paintInContextDelegate: (Graphics, BaseOpenglContext.ContextInfo) -> Unit = { g, info ->
+        paintInContext(g, info)
+    }
+
+    val state: KmlGlState by lazy { ag.createGlState() }
+
+    fun paintInContext(g: Graphics, info: BaseOpenglContext.ContextInfo) {
+        state.keep {
+            //run {
+            ctx?.swapInterval(1)
+
+            val g = g as Graphics2D
+            val gl = ag.gl
+            val factor = frameScaleFactor
+            if (lastFactor != factor) {
+                lastFactor = factor
+                reshaped = true
+            }
+
+            //println("RENDER[1]")
+
+            val viewport = info.viewport
+            val scissor = info.scissors
+            /*
+            gl.enableDisable(gl.SCISSOR_TEST, scissor != null)
+            if (scissor != null) {
+                gl.scissor(scissor.x.toInt(), scissor.y.toInt(), scissor.width.toInt(), scissor.height.toInt())
+            }
+            if (viewport != null) {
+                gl.viewport(viewport.x.toInt(), viewport.y.toInt(), viewport.width.toInt(), viewport.height.toInt())
+            } else {
+                gl.viewport(0, 0, scaledWidth.toInt().coerceAtLeast(1), scaledHeight.toInt().coerceAtLeast(1))
+            }
+            gl.clearColor(.3f, .3f, .3f, 1f)
+            gl.clear(gl.COLOR_BUFFER_BIT)
+            */
+
+            //println("-- viewport=$viewport, scissors=$scissor")
+
+            if (component is JFrame) {
+                //println("component.width: ${contentComponent.width}x${contentComponent.height}")
+                ag.mainRenderBuffer.setSize(
+                    0, 0, (contentComponent.width * factor).toInt(), (contentComponent.height * factor).toInt(),
+                )
+            } else {
+                ag.mainRenderBuffer.scissor(scissor)
+                if (viewport != null) {
+                    //val window = SwingUtilities.getWindowAncestor(contentComponent)
+                    //println("window=${window.width}x${window.height} : factor=$factor")
+
+                    val frameOrComponent = (window as? JFrame)?.contentPane ?: windowOrComponent
+
+                    ag.mainRenderBuffer.setSize(
+                        viewport.x, viewport.y, viewport.width, viewport.height,
+                        (frameOrComponent.width * factor).toInt(),
+                        (frameOrComponent.height * factor).toInt(),
+                    )
+                } else {
+                    ag.mainRenderBuffer.setSize(
+                        0, 0, (component.width * factor).toInt(), (component.height * factor).toInt(),
+                    )
+                }
+            }
+
+            //println(gl.getString(gl.VERSION))
+            //println(gl.versionString)
+            if (reshaped) {
+                reshaped = false
+                //println("RESHAPED!")
+                dispatchReshapeEventEx(
+                    ag.mainRenderBuffer.x,
+                    ag.mainRenderBuffer.y,
+                    ag.mainRenderBuffer.width,
+                    ag.mainRenderBuffer.height,
+                    ag.mainRenderBuffer.fullWidth,
+                    ag.mainRenderBuffer.fullHeight,
+                )
+            }
+
+            //gl.clearColor(1f, 1f, 1f, 1f)
+            //gl.clear(gl.COLOR_BUFFER_BIT)
+            updateGamepads()
+            frame()
+            gl.flush()
+            gl.finish()
+        }
     }
 
     private fun updateGamepads() {
@@ -244,15 +260,15 @@ abstract class BaseAwtGameWindow : GameWindow() {
     }
 
     override suspend fun openFileDialog(filter: String?, write: Boolean, multi: Boolean): List<VfsFile> {
-        val chooser = JFileChooser()
+        //val chooser = JFileChooser()
+        val mode = if (write) FileDialog.SAVE else FileDialog.LOAD
+        val chooser = FileDialog(this.component.getContainerFrame(), "Select file", mode)
+        chooser.setLocationRelativeTo(null)
         //chooser.fileFilter = filter // @TODO: Filters
-        chooser.isMultiSelectionEnabled = multi
-        val result = if (write) {
-            chooser.showSaveDialog(component)
-        } else {
-            chooser.showOpenDialog(component)
-        } == JFileChooser.APPROVE_OPTION
-        return if (result) chooser.selectedFiles.map { localVfs(it) } else listOf()
+        chooser.isMultipleMode = multi
+        //chooser.isMultiSelectionEnabled = multi
+        chooser.isVisible = true
+        return chooser.files.map { localVfs(it) }
     }
 
     fun dispatchReshapeEvent() {
@@ -327,15 +343,23 @@ abstract class BaseAwtGameWindow : GameWindow() {
             }
         })
 
+        var waitingRobotEvents = true
         fun handleMouseEvent(e: MouseEvent) {
-            queue {
-                val ev = when (e.id) {
-                    MouseEvent.MOUSE_MOVED -> com.soywiz.korev.MouseEvent.Type.MOVE
-                    MouseEvent.MOUSE_CLICKED -> com.soywiz.korev.MouseEvent.Type.CLICK
-                    MouseEvent.MOUSE_PRESSED -> com.soywiz.korev.MouseEvent.Type.DOWN
-                    MouseEvent.MOUSE_RELEASED -> com.soywiz.korev.MouseEvent.Type.UP
-                    else -> com.soywiz.korev.MouseEvent.Type.MOVE
+            val ev = when (e.id) {
+                MouseEvent.MOUSE_MOVED -> com.soywiz.korev.MouseEvent.Type.MOVE
+                MouseEvent.MOUSE_CLICKED -> com.soywiz.korev.MouseEvent.Type.CLICK
+                MouseEvent.MOUSE_PRESSED -> com.soywiz.korev.MouseEvent.Type.DOWN
+                MouseEvent.MOUSE_RELEASED -> com.soywiz.korev.MouseEvent.Type.UP
+                else -> com.soywiz.korev.MouseEvent.Type.MOVE
+            }
+            if (waitingRobotEvents) {
+                if (ev == com.soywiz.korev.MouseEvent.Type.CLICK) {
+                    waitingRobotEvents = false
                 }
+                return
+            }
+            //println("MOUSE EVENT: $ev : ${e.button}")
+            queue {
                 val button = MouseButton[e.button - 1]
                 val factor = frameScaleFactor
                 val sx = e.x * factor
@@ -427,6 +451,7 @@ abstract class BaseAwtGameWindow : GameWindow() {
 
         component.addMouseWheelListener { e -> handleMouseWheelEvent(e) }
 
+        component.setFocusTraversalKeysEnabled(false)
         component.addKeyListener(object : KeyAdapter() {
             override fun keyTyped(e: KeyEvent) = handleKeyEvent(e)
             override fun keyPressed(e: KeyEvent) = handleKeyEvent(e)
@@ -459,10 +484,13 @@ abstract class BaseAwtGameWindow : GameWindow() {
                         //println("frame.bounds: ${bounds}")
                         //println("frame.insets: ${insets}")
                         //println(frame.contentPane.bounds)
+                        //println("START ROBOT")
+                        waitingRobotEvents = true
                         robot.mouseMove(bounds.centerX.toInt(), bounds.centerY.toInt())
-                        robot.mousePress(InputEvent.BUTTON1_MASK)
-                        robot.mouseRelease(InputEvent.BUTTON1_MASK)
+                        robot.mousePress(InputEvent.BUTTON3_MASK)
+                        robot.mouseRelease(InputEvent.BUTTON3_MASK)
                         robot.mouseMove(pos.x, pos.y)
+                        //println("END ROBOT")
                     } catch (e: Throwable) {
                     }
                     frame.isAlwaysOnTop = false
@@ -503,6 +531,7 @@ abstract class BaseAwtGameWindow : GameWindow() {
         }
 
         println("running: ${Thread.currentThread()}")
+
         while (running) {
             if (fvsync) {
                 Thread.sleep(1L)
@@ -553,5 +582,10 @@ abstract class BaseAwtGameWindow : GameWindow() {
         frameDispose()
 
         //exitProcess(0) // Don't do this since we might continue in the e2e test
+    }
+
+    override fun computeDisplayRefreshRate(): Int {
+        val window = this.window ?: return 60
+        return window.getScreenDevice().cachedRefreshRate
     }
 }

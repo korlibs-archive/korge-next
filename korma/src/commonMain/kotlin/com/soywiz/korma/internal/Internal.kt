@@ -14,5 +14,22 @@ internal infix fun Double.umod(other: Double): Double {
     }
 }
 
+internal infix fun Float.umod(other: Float): Float {
+    val remainder = this % other
+    return when {
+        remainder < 0 -> remainder + other
+        else -> remainder
+    }
+}
+
 @PublishedApi
 internal fun floorCeil(v: Double): Double = if (v < 0.0) ceil(v) else floor(v)
+
+@PublishedApi internal fun min2(a: Int, b: Int) = if (a < b) a else b
+@PublishedApi internal fun max2(a: Int, b: Int) = if (a > b) a else b
+
+@PublishedApi internal fun min2(a: Float, b: Float) = if (a < b) a else b
+@PublishedApi internal fun max2(a: Float, b: Float) = if (a > b) a else b
+
+@PublishedApi internal fun min2(a: Double, b: Double) = if (a < b) a else b
+@PublishedApi internal fun max2(a: Double, b: Double) = if (a > b) a else b

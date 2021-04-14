@@ -4,6 +4,8 @@ import com.soywiz.kds.*
 import com.soywiz.kds.iterators.*
 import com.soywiz.korag.*
 import com.soywiz.korag.shader.*
+import com.soywiz.korge.internal.*
+import com.soywiz.korge.internal.max2
 import com.soywiz.korge3d.*
 import com.soywiz.korge3d.animation.*
 import com.soywiz.korge3d.internal.*
@@ -48,7 +50,7 @@ class ColladaParser {
 		val jointInputs: FastStringMap<Input>,
 		val skinSource: String
 	) {
-		val maxVcount = vcounts.map { it }.max() ?: 0
+		val maxVcount = vcounts.map { it }.maxOrNull() ?: 0
 		//fun toDef() = Library3D.SkinDef(bindShapeMatrix, skinSource, )
 	}
 
@@ -227,7 +229,7 @@ class ColladaParser {
 
 			// @TODO: We should use separate components
 			val combinedVertexData = floatArrayListOf()
-            val combinedIndexData = intArrayListOf()
+            val combinedIndexData = ShortArrayList()
 
 			val hasNormals = (nx.size >= px.size)
 			val hasTexture = TEXCOORD != null
@@ -254,7 +256,7 @@ class ColladaParser {
                         combinedVertexData.add(weightWeights[m][VERTEX_indices[n]])
 					}
 				}
-                combinedIndexData.add(n)
+                combinedIndexData.add(n.toShort())
 			}
 
 			//println(combinedData.toString())
@@ -266,7 +268,7 @@ class ColladaParser {
 					//combinedData.toFloatArray().toFBuffer(),
 					combinedVertexData.toFBuffer(),
                     combinedIndexData.toFBuffer(),
-                    AG.IndexType.UINT,
+                    AG.IndexType.USHORT,
                     combinedIndexData.size,
 					VertexLayout(buildList {
 						add(Shaders3D.a_pos)
@@ -344,7 +346,7 @@ class ColladaParser {
 						val source = sources[sourceId] ?: continue
 						inputs += Input(semantic, offset, source, intArrayListOf())
 					}
-					val stride = (inputs.map { it.offset }.max() ?: 0) + 1
+					val stride = (inputs.map { it.offset }.maxOrNull() ?: 0) + 1
 
 					for (i in inputs) {
 						for (n in 0 until v.size / stride) {
@@ -491,54 +493,59 @@ class ColladaParser {
 
 	fun Library3D.parseAnimations(xml: Xml) {
 		val sources = FastStringMap<SourceParam>()
-		for (animationXml in xml["library_animations"]["animation"]) {
-			val srcs = parseSources(animationXml, sources)
-			val animationId = animationXml.str("id")
-			val sourcesById = srcs.associateBy { it.id }
-			val samplerXml = animationXml["sampler"].firstOrNull()
-			val inputParams = FastStringMap<Source?>()
-			if (samplerXml != null) {
-				val samplerId = samplerXml.str("id")
-				for (inputXml in samplerXml["input"]) {
-					val inputSemantic = inputXml.str("semantic")
-					val inputSourceId = inputXml.str("source").trim('#')
-					inputParams[inputSemantic] = sourcesById[inputSourceId]
-				}
-				//println("$samplerId -> $inputParams")
-			}
-			val channelXml = animationXml["channel"].firstOrNull()
-			if (channelXml != null) {
-				val channelSource = channelXml.str("source").trim('#')
-				val channelTargetInfo = channelXml.str("target").split('/', limit = 2)
-				val channelTarget = channelTargetInfo.getOrElse(0) { "" }
-				val channelProp = channelTargetInfo.getOrElse(1) { "" }
-
-				val times = inputParams.getFloats("INPUT", "TIME")
-					?: error("Can't find INPUT.TIME for animationId=$animationId")
-				val interpolations = inputParams.getStrings("INTERPOLATION", "INTERPOLATION")
-					?: error("Can't find INTERPOLATION.INTERPOLATION for animationId=$animationId")
-				//val transforms = inputParams.getMatrices("OUTPUT", "TRANSFORM")
-				val outputSourceParam = inputParams["OUTPUT"]?.params?.values?.first()
-				val matrices = (outputSourceParam as? MatrixSourceParam?)?.matrices
-				val floats = (outputSourceParam as? FloatSourceParam?)?.floats?.toFloatArray()
-
-				//println("$channelSource -> $channelTarget")
-				val frames = Animation3D.Frames(
-					seconds = times,
-					interpolations = interpolations,
-					matrices = matrices,
-					floats = floats
-				)
-				animationDefs[animationId] = Animation3D(
-					animationId,
-					channelTarget, channelProp,
-					frames
-				)
-			}
-		}
+        parseAnimationNode(sources, xml["library_animations"]["animation"])
 	}
 
-	fun FastStringMap<Source?>.getMatrices(a: String, b: String): Array<Matrix3D>? =
+    private fun Library3D.parseAnimationNode(sources: FastStringMap<SourceParam>, animationXmls: Iterable<Xml>) {
+        for (animationXml in animationXmls) {
+            val srcs = parseSources(animationXml, sources)
+            val animationId = animationXml.str("id")
+            val sourcesById = srcs.associateBy { it.id }
+            val samplerXml = animationXml["sampler"].firstOrNull()
+            val inputParams = FastStringMap<Source?>()
+            if (samplerXml != null) {
+                val samplerId = samplerXml.str("id")
+                for (inputXml in samplerXml["input"]) {
+                    val inputSemantic = inputXml.str("semantic")
+                    val inputSourceId = inputXml.str("source").trim('#')
+                    inputParams[inputSemantic] = sourcesById[inputSourceId]
+                }
+                //println("$samplerId -> $inputParams")
+            }
+            val channelXml = animationXml["channel"].firstOrNull()
+            if (channelXml != null) {
+                val channelSource = channelXml.str("source").trim('#')
+                val channelTargetInfo = channelXml.str("target").split('/', limit = 2)
+                val channelTarget = channelTargetInfo.getOrElse(0) { "" }
+                val channelProp = channelTargetInfo.getOrElse(1) { "" }
+
+                val times = inputParams.getFloats("INPUT", "TIME")
+                    ?: error("Can't find INPUT.TIME for animationId=$animationId")
+                val interpolations = inputParams.getStrings("INTERPOLATION", "INTERPOLATION")
+                    ?: error("Can't find INTERPOLATION.INTERPOLATION for animationId=$animationId")
+                //val transforms = inputParams.getMatrices("OUTPUT", "TRANSFORM")
+                val outputSourceParam = inputParams["OUTPUT"]?.params?.values?.first()
+                val matrices = (outputSourceParam as? MatrixSourceParam?)?.matrices
+                val floats = (outputSourceParam as? FloatSourceParam?)?.floats?.toFloatArray()
+
+                //println("$channelSource -> $channelTarget")
+                val frames = Animation3D.Frames(
+                    seconds = times,
+                    interpolations = interpolations,
+                    matrices = matrices,
+                    floats = floats
+                )
+                animationDefs[animationId] = Animation3D(
+                    animationId,
+                    channelTarget, channelProp,
+                    frames
+                )
+            }
+            parseAnimationNode(sources, animationXml["animation"])
+        }
+    }
+
+    fun FastStringMap<Source?>.getMatrices(a: String, b: String): Array<Matrix3D>? =
 		(this[a]?.params?.get(b) as? MatrixSourceParam?)?.matrices
 
 	fun FastStringMap<Source?>.getStrings(a: String, b: String): Array<String>? =
@@ -658,7 +665,7 @@ class ColladaParser {
 					val inputs = arrayListOf<Input>()
 					for (input in triangles["input"]) {
 						val offset = input.getInt("offset") ?: 0
-						stride = max(stride, offset + 1)
+						stride = max2(stride, offset + 1)
 
 						val semantic = input.getString("semantic") ?: "unknown"
 						val source = input.getString("source")?.trim('#') ?: "unknown"

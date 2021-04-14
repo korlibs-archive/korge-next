@@ -13,6 +13,7 @@ import com.soywiz.korge.internal.*
 import com.soywiz.korge.scene.*
 import com.soywiz.korge.view.*
 import com.soywiz.korgw.*
+import com.soywiz.korinject.AsyncInjector
 import com.soywiz.korio.async.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korio.util.*
@@ -21,7 +22,7 @@ import kotlinx.coroutines.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
-open class ViewsForTesting @JvmOverloads constructor(
+open class ViewsForTesting(
     val frameTime: TimeSpan = 10.milliseconds,
     val windowSize: SizeInt = SizeInt(DefaultViewport.WIDTH, DefaultViewport.HEIGHT),
     val virtualSize: SizeInt = SizeInt(windowSize.size.clone()),
@@ -128,27 +129,30 @@ open class ViewsForTesting @JvmOverloads constructor(
         )
     }
 
-	//@Suppress("UNCHECKED_CAST")
-	//fun <T : Scene> testScene(
-	//	module: Module,
-	//	sceneClass: KClass<T>,
-	//	vararg injects: Any,
-	//	callback: suspend T.() -> Unit
-	//) = viewsTest {
-	//	//disableNativeImageLoading {
-	//	val sc = Korge.test(
-	//		Korge.Config(
-	//			module,
-	//			sceneClass = sceneClass,
-	//			sceneInjects = injects.toList(),
-	//			container = canvas,
-	//			eventDispatcher = eventDispatcher,
-	//			timeProvider = TimeProvider { testDispatcher.time })
-	//	)
-	//	callback(sc.currentScene as T)
-	//	//}
-	//}
+    suspend fun keyDown(key: Key) {
+        keyEvent(KeyEvent.Type.DOWN, key)
+        simulateFrame(count = 2)
+    }
 
+    suspend fun keyUp(key: Key) {
+        keyEvent(KeyEvent.Type.UP, key)
+        simulateFrame(count = 2)
+    }
+
+    private fun keyEvent(type: KeyEvent.Type, key: Key) {
+        gameWindow.dispatch(
+            KeyEvent(
+                type = type,
+                id = 0,
+                key = key,
+                keyCode = 0,
+                shift = false,
+                ctrl = false,
+                alt = false,
+                meta = false
+            )
+        )
+    }
     val View.viewMouse: MouseEvents get() {
         this.mouse.views = views
         return this.mouse
@@ -181,7 +185,9 @@ open class ViewsForTesting @JvmOverloads constructor(
 	}
 
 	// @TODO: Run a faster eventLoop where timers happen much faster
-	fun viewsTest(timeout: TimeSpan? = DEFAULT_SUSPEND_TEST_TIMEOUT, frameTime: TimeSpan = this.frameTime, block: suspend Stage.() -> Unit): Unit = suspendTest(timeout = timeout, cond = { !OS.isNative && !OS.isAndroid }) {
+    fun viewsTest(timeout: TimeSpan? = DEFAULT_SUSPEND_TEST_TIMEOUT, frameTime: TimeSpan = this.frameTime, block: suspend Stage.() -> Unit) =
+        suspendTest(timeout = timeout, cond = { OS.isJvm && !OS.isAndroid }) {
+        //suspendTest(timeout = timeout, cond = { !OS.isAndroid && !OS.isJs && !OS.isNative }) {
         Korge.prepareViewsBase(views, gameWindow, fixedSizeStep = frameTime)
 
 		injector.mapInstance<Module>(object : Module() {
@@ -216,6 +222,30 @@ open class ViewsForTesting @JvmOverloads constructor(
 		}
 	}
 
+    @Suppress("UNCHECKED_CAST")
+    inline fun <reified S : Scene> sceneTest(
+        module: Module? = null,
+        crossinline mappingsForTest: AsyncInjector.() -> Unit = {},
+        timeout: TimeSpan? = DEFAULT_SUSPEND_TEST_TIMEOUT,
+        frameTime: TimeSpan = this.frameTime,
+        crossinline block: suspend S.() -> Unit
+    ): Unit =
+        viewsTest(timeout, frameTime) {
+            module?.apply {
+                injector.configure()
+            }
+
+            injector.mappingsForTest()
+
+            val container = sceneContainer(views)
+            container.changeTo<S>()
+
+            with(container.currentScene as S) {
+                block()
+            }
+        }
+
+
     private var simulatedFrames = 0
     private var lastDelay = PerformanceCounter.reference
 	private suspend fun simulateFrame(count: Int = 1) {
@@ -232,6 +262,10 @@ open class ViewsForTesting @JvmOverloads constructor(
             }
 		}
 	}
+
+    suspend fun delayFrame() {
+        simulateFrame()
+    }
 
     class TimedTask2(val time: DateTime, val continuation: CancellableContinuation<Unit>?, val callback: Runnable?) {
         var exception: Throwable? = null

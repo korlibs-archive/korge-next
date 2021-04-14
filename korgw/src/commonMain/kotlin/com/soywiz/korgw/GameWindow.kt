@@ -2,10 +2,12 @@ package com.soywiz.korgw
 
 import com.soywiz.kds.*
 import com.soywiz.klock.*
+import com.soywiz.klogger.*
 import com.soywiz.kmem.setBits
 import com.soywiz.korag.*
 import com.soywiz.korag.log.*
 import com.soywiz.korev.*
+import com.soywiz.korgw.internal.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korio.*
 import com.soywiz.korio.async.*
@@ -17,6 +19,10 @@ import com.soywiz.korio.net.*
 import com.soywiz.korma.geom.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
+import kotlin.native.concurrent.*
+
+@ThreadLocal
+var GLOBAL_CHECK_GL = false
 
 expect fun CreateDefaultGameWindow(): GameWindow
 
@@ -28,6 +34,10 @@ interface DialogInterface {
     // @TODO: Provide current directory
     suspend fun openFileDialog(filter: String? = null, write: Boolean = false, multi: Boolean = false): List<VfsFile> =
         unsupported()
+}
+
+suspend fun DialogInterface.alertError(e: Throwable) {
+    alert(e.stackTraceToString().lines().take(16).joinToString("\n"))
 }
 
 open class GameWindowCoroutineDispatcherSetNow : GameWindowCoroutineDispatcher() {
@@ -98,18 +108,28 @@ open class GameWindowCoroutineDispatcher : CoroutineDispatcher(), Delay, Closeab
                     item.continuation?.resume(Unit)
                     item.callback?.run()
                 }
-                if ((now() - startTime) >= availableTime) break
+                if ((now() - startTime) >= availableTime) {
+                    informTooMuchCallbacksToHandleInThisFrame()
+                    break
+                }
             }
 
             while (tasks.isNotEmpty()) {
                 val task = tasks.dequeue()
                 task?.run()
-                if ((now() - startTime) >= availableTime) break
+                if ((now() - startTime) >= availableTime) {
+                    informTooMuchCallbacksToHandleInThisFrame()
+                    break
+                }
             }
         } catch (e: Throwable) {
             println("Error in GameWindowCoroutineDispatcher.executePending:")
             e.printStackTrace()
         }
+    }
+
+    open fun informTooMuchCallbacksToHandleInThisFrame() {
+        //Console.warn("Too much callbacks to handle in this frame")
     }
 
     override fun close() {
@@ -200,23 +220,19 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, Closeable, Cor
         addEventListener<RenderEvent>(block)
     }
 
-    protected open fun _setFps(fps: Int): Int {
-        return if (fps <= 0) 60 else fps
-    }
-
-    var counterTimePerFrame: TimeSpan = 0.0.milliseconds; private set
+    val counterTimePerFrame: TimeSpan get() = (1_000_000.0 / fps).microseconds
     val timePerFrame: TimeSpan get() = counterTimePerFrame
 
-    var fps: Int = 60
-        set(value) {
-            val value = _setFps(value)
-            field = value
-            counterTimePerFrame = (1_000_000.0 / value).microseconds
-        }
-
-    init {
-        fps = 60
+    open fun computeDisplayRefreshRate(): Int {
+        return 60
     }
+
+    private val fpsCached by IntTimedCache(1000.milliseconds) { computeDisplayRefreshRate() }
+
+    open var fps: Int
+        get() = fpsCached
+        @Deprecated("Deprecated setting fps")
+        set(value) = Unit
 
     open var title: String get() = ""; set(value) = Unit
     open val width: Int = 0
@@ -276,7 +292,10 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, Closeable, Cor
     fun exit(): Unit = close()
 
     var running = true; protected set
-    override fun close() = run {
+    private var closing = false
+    override fun close() {
+        if (closing) return
+        closing = true
         running = false
         println("GameWindow.close")
         coroutineDispatcher.close()
@@ -399,7 +418,10 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, Closeable, Cor
     fun dispatchDisposeEvent() = dispatch(disposeEvent)
     fun dispatchRenderEvent() = dispatchRenderEvent(true)
     fun dispatchRenderEvent(update: Boolean) = dispatch(renderEvent.also { it.update = update })
-    fun dispatchDropfileEvent(type: DropFileEvent.Type, files: List<VfsFile>?) = dispatch(dropFileEvent.also { it.type = type }.also { it.files = files })
+    fun dispatchDropfileEvent(type: DropFileEvent.Type, files: List<VfsFile>?) = dispatch(dropFileEvent.also {
+        it.type = type
+        it.files = files
+    })
     fun dispatchFullscreenEvent(fullscreen: Boolean) = dispatch(fullScreenEvent.also { it.fullscreen = fullscreen })
 
     fun dispatchReshapeEvent(x: Int, y: Int, width: Int, height: Int) {
@@ -493,6 +515,9 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, Closeable, Cor
     fun dispatchTouchEventStartEnd() = dispatchTouchEventStart(TouchEvent.Type.END)
     fun dispatchTouchEventStart(type: TouchEvent.Type) = touchEvent.startFrame(type)
     fun dispatchTouchEventAddTouch(id: Int, x: Double, y: Double) = touchEvent.touch(id, x, y)
+    fun dispatchTouchEventAddTouchAdd(id: Int, x: Double, y: Double) = touchEvent.touch(id, x, y, Touch.Status.ADD)
+    fun dispatchTouchEventAddTouchKeep(id: Int, x: Double, y: Double) = touchEvent.touch(id, x, y, Touch.Status.KEEP)
+    fun dispatchTouchEventAddTouchRemove(id: Int, x: Double, y: Double) = touchEvent.touch(id, x, y, Touch.Status.REMOVE)
     fun dispatchTouchEventEnd() = dispatch(touchEvent)
 
     // @TODO: Is this used?
@@ -646,4 +671,12 @@ fun GameWindow.configure(
     this.icon = icon
     if (fullscreen != null) this.fullscreen = fullscreen
     this.visible = true
+}
+
+fun GameWindow.onDragAndDropFileEvent(block: suspend (DropFileEvent) -> Unit) {
+    addEventListener<DropFileEvent> { event ->
+        launchImmediately(coroutineDispatcher) {
+            block(event)
+        }
+    }
 }

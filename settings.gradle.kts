@@ -4,14 +4,8 @@ pluginManagement {
 	repositories {
 		mavenCentral()
 		gradlePluginPortal()
-        // @TODO: https://github.com/korlibs/korte/issues/13
-        jcenter()
-        maven ("https://dl.bintray.com/kotlin/kotlin-dev")
-		maven ("https://dl.bintray.com/kotlin/kotlin-eap")
 	}
 }
-
-enableFeaturePreview("GRADLE_METADATA")
 
 /*
 for (file in rootDir.listFiles()) {
@@ -35,9 +29,6 @@ include(":korma-shape")
 include(":luak")
 include(":krypto")
 include(":korte")
-//include(":korte-ktor")
-//include(":korte-korio")
-//include(":korte-vertx")
 include(":korio")
 include(":korim")
 include(":korau")
@@ -45,14 +36,9 @@ include(":korgw")
 include(":korvi")
 include(":korge")
 include(":kbox2d")
-//include(":korge-box2d")
-//include(":korge-admob")
-//include(":korge-services")
-//include(":korge-billing")
 include(":korge-dragonbones")
 include(":korge-spine")
 include(":korge-swf")
-include(":korge-intellij-plugin")
 include(":korge-gradle-plugin")
 
 /*

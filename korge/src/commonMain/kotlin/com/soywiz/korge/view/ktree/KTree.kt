@@ -12,6 +12,7 @@ import com.soywiz.korge.view.grid.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
 import com.soywiz.korim.text.*
+import com.soywiz.korim.vector.*
 import com.soywiz.korio.file.*
 import com.soywiz.korio.serialization.xml.*
 import com.soywiz.korma.geom.*
@@ -188,6 +189,7 @@ open class KTreeSerializer(val views: Views) : KTreeSerializerHolder, Extra by E
             "ellipse" -> view = Ellipse(50.0, 50.0, Colors.RED)
             "container" -> view = Container()
             "image" -> view = Image(Bitmaps.transparent)
+            "vectorimage" -> view = VectorImage.createDefault()
             "treeviewref" -> view = TreeViewRef()
             "particle" -> view = ParticleEmitterView(ParticleEmitter())
             "animation" -> view = AnimationViewRef()
@@ -240,6 +242,9 @@ open class KTreeSerializer(val views: Views) : KTreeSerializerHolder, Extra by E
         fun stringNull(prop: KMutableProperty0<String?>) {
             prop.set(xml.strNull(prop.name))
         }
+        fun boolean(prop: KMutableProperty0<Boolean>, defaultValue: Boolean) {
+            prop.set(xml.boolean(prop.name, defaultValue))
+        }
 
         stringNull(view::name)
         color(view::colorMul, Colors.WHITE)
@@ -265,7 +270,8 @@ open class KTreeSerializer(val views: Views) : KTreeSerializerHolder, Extra by E
         }
         if (view is Text) {
             string(view::text, "Text")
-            double(view::textSize, 10.0)
+            double(view::textSize, Text.DEFAULT_TEXT_SIZE)
+            boolean(view::autoScaling, Text.DEFAULT_AUTO_SCALING)
             //view.fontSource = xml.str("fontSource", "")
             view.verticalAlign = VerticalAlign(xml.str("verticalAlign"))
             view.horizontalAlign = HorizontalAlign(xml.str("horizontalAlign"))
@@ -350,19 +356,20 @@ open class KTreeSerializer(val views: Views) : KTreeSerializerHolder, Extra by E
             result ?: when (view) {
                 is NinePatchEx -> Xml("ninepatch", rproperties)
                 is KTreeRoot -> Xml("ktree", mapOf("width" to view.width, "height" to view.height, "gridWidth" to view.grid.width, "gridHeight" to view.grid.height)) {
-                    view.forEachChildren { this@Xml.node(viewTreeToKTree(it, currentVfs, level + 1)) }
+                    view.forEachChild { this@Xml.node(viewTreeToKTree(it, currentVfs, level + 1)) }
                 }
                 is AnimationViewRef -> Xml("animation", rproperties)
                 is ParticleEmitterView -> Xml("particle", rproperties)
                 is SolidRect -> Xml("solidrect", rproperties)
                 is Ellipse -> Xml("ellipse", rproperties)
                 is Image -> Xml("image", rproperties)
+                is VectorImage -> Xml("vectorimage", rproperties)
                 is TreeViewRef -> Xml("treeviewref", rproperties)
                 is TiledMapViewRef -> Xml("tiledmapref", rproperties)
                 is Text -> Xml("text", rproperties)
                 is UITextButton -> Xml("uitextbutton", rproperties)
                 is Container -> Xml("container", rproperties) {
-                    view.forEachChildren { this@Xml.node(viewTreeToKTree(it, currentVfs, level + 1)) }
+                    view.forEachChild { this@Xml.node(viewTreeToKTree(it, currentVfs, level + 1)) }
                 }
                 else -> error("Don't know how to serialize $view")
             }
@@ -385,6 +392,17 @@ suspend fun VfsFile.readKTree(serializer: KTreeSerializerHolder, parent: Contain
 
 fun View.viewTreeToKTree(views: Views, level: Int = 1): Xml = views.serializer.viewTreeToKTree(this, views.currentVfs, level)
 fun View.viewTreeToKTree(serializer: KTreeSerializerHolder, currentVfs: VfsFile, level: Int = 1): Xml = serializer.serializer.viewTreeToKTree(this, currentVfs, level)
+
+// Views from context versions
+
+suspend fun Xml.ktreeToViewTree(currentVfs: VfsFile? = null, parent: Container? = null): View {
+    val views = views()
+    return ktreeToViewTree(views, currentVfs ?: views.currentVfs, parent)
+}
+suspend fun VfsFile.readKTree(parent: Container? = null): View = readKTree(views(), parent)
+suspend fun View.viewTreeToKTree(level: Int = 1): Xml = viewTreeToKTree(views(), level)
+suspend fun View.viewTreeToKTree(currentVfs: VfsFile, level: Int = 1): Xml = viewTreeToKTree(views(), currentVfs, level)
+
 
 class KTreeRoot(width: Double, height: Double) : FixedSizeContainer(width, height) {
     val grid = OrthographicGrid(20, 20)

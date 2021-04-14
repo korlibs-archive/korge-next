@@ -7,56 +7,58 @@ import com.soywiz.korio.*
 import com.soywiz.korio.file.*
 import com.soywiz.korio.lang.*
 
-suspend fun MountableVfs(closeMounts: Boolean = false, callback: suspend Mountable.() -> Unit): VfsFile {
-	val mount = object : Vfs.Proxy(), Mountable {
-		private val mounts = ArrayList<Pair<String, VfsFile>>()
+suspend fun MountableVfs(closeMounts: Boolean = false, callback: suspend Mountable.() -> Unit): VfsFile =
+    MountableVfsSync(closeMounts) { callback() }
 
-		override suspend fun close() {
-			if (closeMounts) {
-				mounts.fastForEach { mount ->
-					mount.second.vfs.close()
-				}
-			}
-		}
+inline fun MountableVfsSync(closeMounts: Boolean = false, callback: Mountable.() -> Unit): VfsFile =
+    MountableVfs(closeMounts).also { callback(it) }.root
 
-		override fun mount(folder: String, file: VfsFile) = this.apply {
-			unmountInternal(folder)
-			mounts += folder.pathInfo.normalize() to file
-			resort()
-		}
+class MountableVfs(val closeMounts: Boolean) : Vfs.Proxy(), Mountable {
+    private val mounts = ArrayList<Pair<String, VfsFile>>()
 
-		override fun unmount(folder: String): Mountable = this.apply {
-			unmountInternal(folder)
-			resort()
-		}
+    override suspend fun close() {
+        if (closeMounts) {
+            mounts.fastForEach { mount ->
+                mount.second.vfs.close()
+            }
+        }
+    }
 
-		private fun unmountInternal(folder: String) {
-			mounts.removeAll { it.first == folder.pathInfo.normalize() }
-		}
+    override fun mount(folder: String, file: VfsFile) = this.apply {
+        unmountInternal(folder)
+        mounts += folder.pathInfo.normalize() to file
+        resort()
+    }
 
-		private fun resort() {
-			mounts.sortByDescending { it.first.length }
-		}
+    override fun unmount(folder: String): Mountable = this.apply {
+        unmountInternal(folder)
+        resort()
+    }
 
-		override suspend fun access(path: String): VfsFile {
-			val rpath = path.pathInfo.normalize()
-			mounts.fastForEach { (base, file) ->
-				//println("$base/$file")
-				if (rpath.startsWith(base)) return file[rpath.substring(base.length)]
-			}
-			throw FileNotFoundException(path)
-		}
+    private fun unmountInternal(folder: String) {
+        mounts.removeAll { it.first == folder.pathInfo.normalize() }
+    }
 
-		override fun toString(): String = "MountableVfs"
-	}
+    private fun resort() {
+        mounts.sortByDescending { it.first.length }
+    }
 
-	callback(mount)
+    override suspend fun access(path: String): VfsFile {
+        val rpath = path.pathInfo.normalize()
+        mounts.fastForEach { (base, file) ->
+            //println("$base/$file")
+            if (rpath.startsWith(base)) return file[rpath.substring(base.length)]
+        }
+        throw FileNotFoundException(path)
+    }
 
-	return mount.root
+    override fun toString(): String = "MountableVfs"
 }
 
 interface Mountable {
 	fun mount(folder: String, file: VfsFile): Mountable
 	fun unmount(folder: String): Mountable
 }
+
+fun Mountable.mount(folder: String, vfs: Vfs): Mountable = mount(folder, vfs.root)
 

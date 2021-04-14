@@ -1,6 +1,8 @@
 package com.soywiz.korge.bitmapfont
 
 import com.soywiz.korge.html.*
+import com.soywiz.korge.internal.*
+import com.soywiz.korge.internal.max2
 import com.soywiz.korge.render.*
 import com.soywiz.korge.view.*
 import com.soywiz.korim.color.*
@@ -8,7 +10,7 @@ import com.soywiz.korim.font.*
 import com.soywiz.korma.geom.*
 import kotlin.math.*
 
-fun Font.getBounds(text: String, format: Html.Format, out: Rectangle) {
+fun Font.getBounds(text: String, format: Html.Format, out: Rectangle = Rectangle()): Rectangle {
 	//val font = getBitmapFont(format.computedFace, format.computedSize)
 	val font = this
     val textSize = format.computedSize.toDouble()
@@ -23,7 +25,7 @@ fun Font.getBounds(text: String, format: Html.Format, out: Rectangle) {
 		if (c1 == '\n'.toInt()) {
 			dx = 0.0
 			dy += fmetrics.lineHeight
-			height = max(height, dy)
+			height = max2(height, dy)
 			continue
 		}
 		var c2: Int = ' '.toInt()
@@ -31,12 +33,13 @@ fun Font.getBounds(text: String, format: Html.Format, out: Rectangle) {
 		val kerningOffset = font.getKerning(textSize, c1, c2)
 		val glyph = font.getGlyphMetrics(textSize, c1, glyph)
 		dx += glyph.xadvance + kerningOffset
-		width = max(width, dx)
+		width = max2(width, dx)
 	}
 	height += fmetrics.lineHeight
     //val scale = textSize / font.fontSize.toDouble()
 	//out.setTo(0.0, 0.0, width * scale, height * scale)
     out.setTo(0.0, 0.0, width, height)
+    return out
 }
 
 fun BitmapFont.drawText(

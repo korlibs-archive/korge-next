@@ -3,6 +3,8 @@ package com.soywiz.korim.vector
 import com.soywiz.kds.intArrayListOf
 import com.soywiz.korim.bitmap.Bitmap32
 import com.soywiz.korim.color.*
+import com.soywiz.korim.internal.*
+import com.soywiz.korim.internal.max2
 import com.soywiz.korim.paint.*
 import com.soywiz.korim.vector.rasterizer.*
 import com.soywiz.korma.geom.*
@@ -124,10 +126,10 @@ class Bitmap32Context2d(val bmp: Bitmap32, val antialiasing: Boolean) : com.soyw
         }
 
         private fun overlaps(a0: Int, a1: Int, b0: Int, b1: Int): Boolean {
-            val min = min(a0, a0)
-            val max = max(a1, a1)
-            val maxMinor = max(a0, b0)
-            val minMajor = min(a1, b1)
+            val min = min2(a0, a0)
+            val max = max2(a1, a1)
+            val maxMinor = max2(a0, b0)
+            val minMajor = min2(a1, b1)
             return (maxMinor in min..max) || (minMajor in min..max)
         }
 
@@ -137,15 +139,15 @@ class Bitmap32Context2d(val bmp: Bitmap32, val antialiasing: Boolean) : com.soyw
                 val xmin = this.xmin.getAt(n)
                 val xmax = this.xmax.getAt(n)
                 if (overlaps(xmin, xmax, x0, x1)) {
-                    this.xmin[n] = min(x0, xmin)
-                    this.xmax[n] = max(x1, xmax)
+                    this.xmin[n] = min2(x0, xmin)
+                    this.xmax[n] = max2(x1, xmax)
                     return
                 }
             }
             // Only works if done from left to right
             //if (size > 0 && overlaps(xmin[size - 1], xmax[size - 1], x0, x1)) {
-            //    xmin[size - 1] = min(x0, xmin[size - 1])
-            //    xmax[size - 1] = max(x0, xmax[size - 1])
+            //    xmin[size - 1] = min2(x0, xmin[size - 1])
+            //    xmax[size - 1] = max2(x0, xmax[size - 1])
             //} else {
             xmin.add(x0)
             xmax.add(x1)
@@ -159,6 +161,7 @@ class Bitmap32Context2d(val bmp: Bitmap32, val antialiasing: Boolean) : com.soyw
         }
     }
 
+    @Suppress("EXPERIMENTAL_API_USAGE")
     inner class ScanlineWriter {
         var compositeMode: CompositeOperation = CompositeOperation.DEFAULT
         var filler: BaseFiller = NoneFiller
@@ -173,8 +176,10 @@ class Bitmap32Context2d(val bmp: Bitmap32, val antialiasing: Boolean) : com.soyw
         val segments = SegmentHandler()
         var subRowCount = 0
         fun reset() {
-            alpha.fill(0f)
-            hitbits.fill(0)
+            segments.forEachFast { xmin, xmax ->
+                alpha.fill(0f, xmin, xmax + 1)
+                hitbits.fill(0, xmin, xmax + 1)
+            }
             subRowCount = 0
             segments.reset()
         }
@@ -208,12 +213,6 @@ class Bitmap32Context2d(val bmp: Bitmap32, val antialiasing: Boolean) : com.soyw
                 if (i1m != 0) put(i1, i1m.toFloat() / RastScale.RAST_FIXED_SCALE)
                 //alphaCount++
             }
-        }
-
-        private fun computeAlpha(v: Int, p: Float, left: Boolean): Float = when {
-            v.toFloat() == p -> 1f
-            v > p != left -> (v - p).absoluteValue
-            else -> 1f - (v - p).absoluteValue
         }
 
         fun put(x: Int, ratio: Float) {

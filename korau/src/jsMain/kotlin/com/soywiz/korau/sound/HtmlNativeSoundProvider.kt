@@ -1,8 +1,10 @@
 package com.soywiz.korau.sound
 
 import com.soywiz.klock.*
+import com.soywiz.klogger.*
 import com.soywiz.korau.format.*
 import com.soywiz.korau.internal.*
+import com.soywiz.korio.async.*
 import com.soywiz.korio.file.*
 import com.soywiz.korio.file.std.*
 import com.soywiz.korio.lang.*
@@ -49,7 +51,7 @@ class HtmlElementAudio(
     override val length: TimeSpan get() = audio.duration.seconds
 
     override suspend fun decode(): AudioData =
-        AudioBufferSound(AudioBufferOrHTMLMediaElement(HtmlSimpleSound.loadSound(audio.src)), audio.src, coroutineContext).decode()
+        AudioBufferSound(AudioBufferOrHTMLMediaElement(HtmlSimpleSound.loadSound(audio.src)), audio.src, defaultCoroutineContext).decode()
 
     companion object {
         suspend operator fun invoke(url: String): HtmlElementAudio {
@@ -63,11 +65,17 @@ class HtmlElementAudio(
         }
     }
 
-    override fun play(params: PlaybackParameters): SoundChannel {
+    override fun play(coroutineContext: CoroutineContext, params: PlaybackParameters): SoundChannel {
         val audioCopy = audio.clone()
         audioCopy.volume = params.volume
         HtmlSimpleSound.callOnUnlocked {
             audioCopy.play()
+        }
+        audioCopy.oncancel = {
+            params.onCancel?.invoke()
+        }
+        audioCopy.onended = {
+            params.onFinish?.invoke()
         }
         return object : SoundChannel(this@HtmlElementAudio) {
             override var volume: Double
@@ -124,7 +132,7 @@ class AudioBufferSound(
     override suspend fun decode(): AudioData {
         if (this.buffer.isNull) return AudioData.DUMMY
         val buffer = this.buffer.audioBuffer
-            ?: return AudioBufferSound(AudioBufferOrHTMLMediaElement(HtmlSimpleSound.loadSound(url)), url, coroutineContext).decode()
+            ?: return AudioBufferSound(AudioBufferOrHTMLMediaElement(HtmlSimpleSound.loadSound(url)), url, defaultCoroutineContext).decode()
         val nchannels = buffer.numberOfChannels
         val nsamples = buffer.length
         val data = AudioSamples(nchannels, nsamples)
@@ -138,8 +146,7 @@ class AudioBufferSound(
         return AudioData(buffer.sampleRate, data)
     }
 
-	override fun play(params: PlaybackParameters): SoundChannel {
-        //println("AudioBufferNativeSound.play: $params")
+	override fun play(coroutineContext: CoroutineContext, params: PlaybackParameters): SoundChannel {
         val channel = if (buffer.isNotNull) HtmlSimpleSound.playSound(buffer, params, coroutineContext) else null
         HtmlSimpleSound.callOnUnlocked {
             channel?.play()

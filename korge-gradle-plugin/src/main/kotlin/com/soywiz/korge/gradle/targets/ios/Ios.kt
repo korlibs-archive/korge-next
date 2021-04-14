@@ -2,6 +2,7 @@ package com.soywiz.korge.gradle.targets.ios
 
 import com.soywiz.korge.gradle.*
 import com.soywiz.korge.gradle.targets.*
+import com.soywiz.korge.gradle.targets.desktop.*
 import com.soywiz.korge.gradle.targets.js.node_modules
 import com.soywiz.korge.gradle.targets.native.*
 import com.soywiz.korge.gradle.util.*
@@ -19,25 +20,46 @@ fun Project.configureNativeIos() {
 				File(buildDir, "platforms/native-ios/info.kt").delete() // Delete old versions
 				File(buildDir, "platforms/native-ios/bootstrap.kt").apply {
 					parentFile.mkdirs()
+                    val DOLLAR = "\$"
 					writeText("""
-    					import ${korge.realEntryPoint}
-
-						object RootGameMain {
-							fun runMain() = MyIosGameWindow2.gameWindow.entry { ${korge.realEntryPoint}() }
-						}
-
-						object MyIosGameWindow2 {
-							fun setCustomCwd(cwd: String?) = run { com.soywiz.korio.file.std.customCwd = cwd }
-							val gameWindow get() = com.soywiz.korgw.MyIosGameWindow
-						}
+                        import ${korge.realEntryPoint}
+                        import platform.Foundation.*
+                        
+                        object RootGameMain {
+                            fun preRunMain() {
+                                //println("RootGameMain.preRunMain")
+                                val path = NSBundle.mainBundle.resourcePath
+                                //println("RootGameMain.runMain: path=${DOLLAR}path")
+                                if (path != null) {
+                                    val rpath = "${DOLLAR}path/include/app/resources"
+                                    //println("RootGameMain.runMain: rpath=${DOLLAR}rpath")
+                                    NSFileManager.defaultManager.changeCurrentDirectoryPath(rpath)
+                                    MyIosGameWindow2.setCustomCwd(rpath)
+                                }                        
+                            }
+                        
+                            fun runMain() {
+                                MyIosGameWindow2.gameWindow.entry {
+                                    ${korge.realEntryPoint}()
+                                }
+                            }
+                        }
+                        
+                        object MyIosGameWindow2 {
+                            fun setCustomCwd(cwd: String?) = run { com.soywiz.korio.file.std.customCwd = cwd }
+                            val gameWindow get() = com.soywiz.korgw.MyIosGameWindow
+                        }
 					""".trimIndent())
 				}
 			}
 		}
 	}
 
+    val iosTargets = listOf(kotlin.iosX64(), kotlin.iosArm64())
+
 	kotlin.apply {
-		for (target in listOf(iosX64(), iosArm64())) {
+		for (target in iosTargets) {
+            target.configureKotlinNativeTarget(project)
 			//for (target in listOf(iosX64())) {
 			target.also { target ->
 				//target.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.native)
@@ -70,19 +92,30 @@ fun Project.configureNativeIos() {
 		}
 	}
 
-	tasks.create("installXcodeGen") { task ->
-		task.apply {
-			onlyIf { !File("/usr/local/bin/xcodegen").exists() }
-			doLast {
-				val korlibsFolder = File(System.getProperty("user.home") + "/.korlibs").apply { mkdirs() }
-				execLogger {
-					it.commandLine("git", "clone", "https://github.com/yonaskolb/XcodeGen.git")
-					it.workingDir(korlibsFolder)
+    val korlibsFolder = File(System.getProperty("user.home") + "/.korlibs").apply { mkdirs() }
+    val xcodeGenFolder = korlibsFolder["XcodeGen"]
+    val xcodeGenLocalExecutable = File("/usr/local/bin/xcodegen")
+    val xcodeGenExecutable = xcodeGenFolder[".build/release/xcodegen"]
+    val xcodeGenGitTag = "2.18.0"
 
-				}
+    tasks.create("installXcodeGen") { task ->
+		task.apply {
+			onlyIf { !xcodeGenLocalExecutable.exists() && !xcodeGenExecutable.exists() }
+			doLast {
+                if (!xcodeGenFolder[".git"].isDirectory) {
+                    execLogger {
+                        //it.commandLine("git", "clone", "--depth", "1", "--branch", xcodeGenGitTag, "https://github.com/yonaskolb/XcodeGen.git")
+                        it.commandLine("git", "clone", "https://github.com/yonaskolb/XcodeGen.git")
+                        it.workingDir(korlibsFolder)
+                    }
+                }
+                execLogger {
+                    it.commandLine("git", "checkout", xcodeGenGitTag)
+                    it.workingDir(xcodeGenFolder)
+                }
 				execLogger {
-					it.commandLine("make")
-					it.workingDir(korlibsFolder["XcodeGen"])
+					it.commandLine("make", "build")
+					it.workingDir(xcodeGenFolder)
 				}
 			}
 		}
@@ -90,8 +123,10 @@ fun Project.configureNativeIos() {
 
 	val combinedResourcesFolder = File(buildDir, "combinedResources/resources")
 	val copyIosResources = tasks.createTyped<Copy>("copyIosResources") {
-		dependsOn("genResources")
-		from(File(buildDir, "genMainResources"))
+        val targetName = "iosX64" // @TODO: Should be one per target?
+        val compilationName = "main"
+		dependsOn(getKorgeProcessResourcesTaskName(targetName, compilationName))
+		from(getCompilationKorgeProcessedResourcesFolder(targetName, compilationName))
 		from(File(rootDir, "src/commonMain/resources"))
 		into(combinedResourcesFolder)
 		doFirst {
@@ -100,7 +135,7 @@ fun Project.configureNativeIos() {
 	}
 
 	val prepareKotlinNativeIosProject = tasks.create("prepareKotlinNativeIosProject") { task ->
-		task.dependsOn("installXcodeGen", "prepareKotlinNativeBootstrapIos", "prepareKotlinNativeBootstrap", copyIosResources)
+		task.dependsOn("installXcodeGen", "prepareKotlinNativeBootstrapIos", prepareKotlinNativeBootstrap, copyIosResources)
 		task.doLast {
 			// project.yml requires these folders to be available or it will fail
 			//File(rootDir, "src/commonMain/resources").mkdirs()
@@ -356,6 +391,7 @@ fun Project.configureNativeIos() {
 
 					- (void)viewDidLoad {
 						[super viewDidLoad];
+                        //printf("viewDidLoad\n");
 
 						self.initialized = false;
 						self.reshape = true;
@@ -411,6 +447,7 @@ fun Project.configureNativeIos() {
 					-(void)glkView:(GLKView *)view drawInRect:(CGRect)rect {
 						if (!self.initialized) {
 							self.initialized = true;
+                            [self.rootGameMain preRunMain];
 							[self.gameWindow2.gameWindow dispatchInitEvent];
 							[self.rootGameMain runMain];
 							self.reshape = true;
@@ -732,7 +769,7 @@ fun Project.configureNativeIos() {
 
 			execLogger {
 				it.workingDir(folder)
-				it.commandLine("xcodegen")
+				it.commandLine(xcodeGenExecutable.takeIfExists() ?: xcodeGenLocalExecutable.takeIfExists() ?: error("Can't find xcodegen"))
 			}
 		}
 	}
@@ -743,7 +780,7 @@ fun Project.configureNativeIos() {
 		}
 	}
 
-	val iphoneVersion = 8
+    val iphoneVersion = korge.preferredIphoneSimulatorVersion
 
 	val iosCreateIphone = tasks.create("iosCreateIphone", Task::class.java) { task ->
 		task.onlyIf { appleGetDevices().none { it.name == "iPhone $iphoneVersion" } }
@@ -751,7 +788,7 @@ fun Project.configureNativeIos() {
             val result = execOutput("xcrun", "simctl", "list")
             val regex = Regex("com\\.apple\\.CoreSimulator\\.SimRuntime\\.iOS[\\w\\-]+")
             val simRuntime = regex.find(result)?.value ?: error("Can't find SimRuntime. exec: xcrun simctl list")
-            println("simRuntime: $simRuntime")
+            logger.info("simRuntime: $simRuntime")
 			execLogger { it.commandLine("xcrun", "simctl", "create", "iPhone $iphoneVersion", "com.apple.CoreSimulator.SimDeviceType.iPhone-$iphoneVersion", simRuntime) }
 		}
 	}
@@ -760,7 +797,14 @@ fun Project.configureNativeIos() {
 		task.onlyIf { appleGetBootedDevice() == null }
 		task.dependsOn(iosCreateIphone)
 		task.doLast {
-			val udid = appleGetDevices().firstOrNull { it.name == "iPhone $iphoneVersion" }?.udid ?: error("Can't find iPhone $iphoneVersion device")
+            val device = appleGetBootDevice(iphoneVersion)
+            val udid = device.udid
+            logger.info("Booting udid=$udid")
+            if (logger.isInfoEnabled) {
+                for (device in appleGetDevices()) {
+                    logger.info(" - $device")
+                }
+            }
 			execLogger { it.commandLine("xcrun", "simctl", "boot", udid) }
 			execLogger { it.commandLine("sh", "-c", "open `xcode-select -p`/Applications/Simulator.app/ --args -CurrentDeviceUDID $udid") }
 		}
@@ -791,19 +835,19 @@ fun Project.configureNativeIos() {
 			}
 		}
 
-		tasks.create("installIosSimulator$debugSuffix", Task::class.java) { task ->
+		val installIosSimulator = tasks.create("installIosSimulator$debugSuffix", Task::class.java) { task ->
 			val buildTaskName = "iosBuildSimulator$debugSuffix"
 			task.group = GROUP_KORGE_INSTALL
 
 			task.dependsOn(buildTaskName, "iosBootSimulator")
 			task.doLast {
 				val appFolder = tasks.getByName(buildTaskName).outputs.files.first().parentFile
-				val udid = appleGetDevices().firstOrNull { it.name == "iPhone $iphoneVersion" }?.udid ?: error("Can't find iPhone $iphoneVersion device")
-				execLogger { it.commandLine("xcrun", "simctl", "install", udid, appFolder.absolutePath) }
+                val device = appleGetInstallDevice(iphoneVersion)
+				execLogger { it.commandLine("xcrun", "simctl", "install", device.udid, appFolder.absolutePath) }
 			}
 		}
 
-		tasks.create("installIosDevice$debugSuffix", Task::class.java) { task ->
+		val installIosDevice = tasks.create("installIosDevice$debugSuffix", Task::class.java) { task ->
 			task.group = GROUP_KORGE_INSTALL
 			val buildTaskName = "iosBuildDevice$debugSuffix"
 			task.dependsOn("installIosDeploy", buildTaskName)
@@ -822,7 +866,18 @@ fun Project.configureNativeIos() {
 				commandLine(node_modules["ios-deploy/build/Release/ios-deploy"], "--noninteractive", "--bundle", appFolder)
 			}
 		}
-	}
+
+        tasks.createTyped<Exec>("runIosSimulator$debugSuffix") {
+            group = GROUP_KORGE_RUN
+            dependsOn(installIosSimulator)
+            doFirst {
+                val device = appleGetInstallDevice(iphoneVersion)
+                // xcrun simctl launch --console 7F49203A-1F16-4DEE-B9A2-7A1BB153DF70 com.sample.demo.app-X64-Debug
+                //logger.info(params.joinToString(" "))
+                execLogger { it.commandLine("xcrun", "simctl", "launch", "--console", device.udid, "${korge.id}.app-X64-$debugSuffix") }
+            }
+        }
+    }
 
 
 	tasks.create("iosEraseAllSimulators") { task ->
@@ -849,7 +904,7 @@ fun Project.configureNativeIos() {
 	tasks.create("installIosDeploy", Exec::class.java) { task ->
 		task.onlyIf { !node_modules["ios-deploy"].exists() }
 		task.setWorkingDir(korgeCacheDir)
-		task.setCommandLine("npm", "install", "--unsafe-perm=true", "ios-deploy@1.10.0")
+		task.setCommandLine("npm", "install", "--unsafe-perm=true", "ios-deploy@1.11.4")
 		// @TODO: Automatically install ios-deploy
 	}
 }
@@ -860,11 +915,32 @@ fun Project.appleGetDevices(os: String = "iOS"): List<IosDevice> = KDynamic {
 	val res = Json.parse(execOutput("xcrun", "simctl", "list", "-j", "devices"))
 	val devices = res["devices"]
 	val oses = devices.keys.map { it.str }
-	//val iosOs = oses.firstOrNull { it.contains(os) } ?: error("No iOS devices created")
-	val iosOs = oses.firstOrNull { it.contains(os) } ?: listOf<String>()
-	devices[iosOs].list.map {
-		IosDevice(it["state"].str == "Booted", it["isAvailable"].bool, it["name"].str, it["udid"].str)
+	val iosOses = oses.filter { it.contains(os) }
+    iosOses.map { devices[it].list }.flatten().map {
+        //println(it)
+		IosDevice(it["state"].str == "Booted", it["isAvailable"].bool, it["name"].str, it["udid"].str).also {
+		    //println(it)
+        }
 	}
+}
+
+fun Project.appleGetBootDevice(iphoneVersion: Int): IosDevice {
+    val devices = appleGetDevices()
+    return devices.firstOrNull { it.name == "iPhone $iphoneVersion" && it.isAvailable }
+        ?: devices.firstOrNull { it.name.contains("iPhone") && it.isAvailable }
+        ?: run {
+            val errorMessage = "Can't find suitable available iPhone $iphoneVersion device"
+            logger.info(errorMessage)
+            for (device in devices) logger.info("- $device")
+            error(errorMessage)
+        }
+}
+
+fun Project.appleGetInstallDevice(iphoneVersion: Int): IosDevice {
+    val devices = appleGetDevices()
+    return devices.firstOrNull { it.name == "iPhone $iphoneVersion" && it.booted }
+        ?: devices.firstOrNull { it.name.contains("iPhone") && it.booted }
+        ?: error("Can't find suitable booted iPhone $iphoneVersion device")
 }
 
 fun Project.appleGetBootedDevice(os: String = "iOS"): IosDevice? = appleGetDevices(os).firstOrNull { it.booted }

@@ -19,8 +19,8 @@ fun ViewsContainer.registerFilterSerialization() {
             if (filter != null) {
                 val filters = filter.allFilters
                 for (filter in filters) {
-                    contentContainer.uiCollapsableSection(filter::class.simpleName) {
-                        button("Remove Filter") {
+                    contentContainer.uiCollapsibleSection(filter::class.simpleName) {
+                        button("Remove Filter").onClick {
                             view.removeFilter(filter)
                             updateContentContainer()
                         }
@@ -28,7 +28,7 @@ fun ViewsContainer.registerFilterSerialization() {
                     }
                 }
             }
-            contentContainer.button("Add filter") {
+            contentContainer.button("Add filter", onClick = {
                 val button = this
 
                 button.showPopupMenu(listOf(
@@ -45,7 +45,7 @@ fun ViewsContainer.registerFilterSerialization() {
                         updateContentContainer()
                     }
                 })
-            }
+            })
             contentContainer.root?.relayout()
             contentContainer.root?.repaintAll()
         }

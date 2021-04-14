@@ -86,7 +86,7 @@ suspend fun ktreeEditor(fileToEdit: BaseKorgeFileToEdit): Module {
         //root.height = camera.height
 
         root.extraBuildDebugComponent = { views, view, container ->
-            container.uiCollapsableSection("Document") {
+            container.uiCollapsibleSection("Document") {
                 uiEditableValue(listOf(root::width, root::height), min = 0.0, max = 4096.0, clamp = true, name = "Document Size")
                 uiEditableValue(actions.grid::size, min = 1, max = 500, clamp = true, name = "Grid Size")
                 uiEditableValue(listOf(actions.grid::width, actions.grid::height), min = 1, max = 500, clamp = true, name = "Grid Size")
@@ -100,9 +100,9 @@ suspend fun ktreeEditor(fileToEdit: BaseKorgeFileToEdit): Module {
         //val gridSnapping get() = actions.gridSnapping
         //val gridShowing get() = actions.gridShowing
 
-        val grid by com.soywiz.korio.util.redirect(actions::grid)
-        val gridSnapping by com.soywiz.korio.util.redirect(actions::gridSnapping)
-        val gridShowing by com.soywiz.korio.util.redirect(actions::gridShowing)
+        val grid by actions::grid
+        val gridSnapping by actions::gridSnapping
+        val gridShowing by actions::gridShowing
 
         viewsDebuggerComponent.setRootView(root)
 

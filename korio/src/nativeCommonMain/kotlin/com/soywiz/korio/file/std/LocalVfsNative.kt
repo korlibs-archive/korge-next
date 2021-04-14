@@ -10,6 +10,7 @@ import com.soywiz.korio.file.*
 import com.soywiz.korio.file.std.*
 import com.soywiz.korio.file.*
 import com.soywiz.korio.file.std.*
+import com.soywiz.korio.internal.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korio.net.*
 import com.soywiz.korio.net.http.*
@@ -31,18 +32,23 @@ import com.soywiz.korio.process.posixExec
 val tmpdir: String by lazy { Environment["TMPDIR"] ?: Environment["TEMP"] ?: Environment["TMP"] ?: "/tmp" }
 
 var customCwd: String? = null
-val cwd: String by lazy { customCwd ?: com.soywiz.korio.nativeCwd() }
+val nativeCwd by lazy { com.soywiz.korio.nativeCwd() }
+val cwd: String get() = customCwd ?: nativeCwd
 
-actual val resourcesVfs: VfsFile by lazy { applicationDataVfs.jail() }
-actual val rootLocalVfs: VfsFile by lazy { localVfs(cwd) }
-actual val applicationVfs: VfsFile by lazy { localVfs(cwd) }
-actual val applicationDataVfs: VfsFile by lazy { localVfs(cwd) }
+val cwdVfs: VfsFile by lazy { DynamicRootVfs(rootLocalVfsNative) { cwd } }
+actual val resourcesVfs: VfsFile by lazy { cwdVfs.jail() }
 actual val cacheVfs: VfsFile by lazy { MemoryVfs() }
-actual val externalStorageVfs: VfsFile by lazy { localVfs(cwd) }
-actual val userHomeVfs: VfsFile by lazy { localVfs(cwd) }
 actual val tempVfs: VfsFile by lazy { localVfs(tmpdir) }
 
-actual fun localVfs(path: String): VfsFile = LocalVfsNative()[path]
+actual val rootLocalVfs: VfsFile get() = cwdVfs
+actual val applicationVfs: VfsFile get() = cwdVfs
+actual val applicationDataVfs: VfsFile get() = cwdVfs
+actual val externalStorageVfs: VfsFile get() = cwdVfs
+actual val userHomeVfs: VfsFile get() = cwdVfs
+
+val rootLocalVfsNative by lazy { LocalVfsNative() }
+
+actual fun localVfs(path: String): VfsFile = rootLocalVfsNative[path]
 
 private val IOWorker by lazy { Worker.start().also { kotlin.native.Platform.isMemoryLeakCheckerActive = false } }
 
@@ -141,8 +147,8 @@ class LocalVfsNative : LocalVfsV2() {
 				//val length = ftell(fd).toLong() // @TODO: Kotlin native bug?
 				val length: Long = ftell(fd).convert()
 
-				val start = kotlin.math.min(range.start, length)
-				val end = kotlin.math.min(range.endInclusive, length - 1) + 1
+				val start = min2(range.start, length)
+				val end = min2(range.endInclusive, length - 1) + 1
 				val totalRead = (end - start).toInt()
 
 				//println("range=$range")
@@ -280,4 +286,7 @@ class LocalVfsNative : LocalVfsV2() {
 	}
 
 	override fun toString(): String = "LocalVfs"
+}
+
+actual fun cleanUpResourcesVfs() {
 }

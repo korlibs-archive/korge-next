@@ -6,6 +6,7 @@
 
 package com.soywiz.korag.shader
 
+import com.soywiz.kds.*
 import com.soywiz.kmem.*
 import com.soywiz.korio.lang.*
 
@@ -71,7 +72,19 @@ enum class VarType(val kind: VarKind, val elementCount: Int, val isMatrix: Boole
 	SInt4(VarKind.TINT, elementCount = 4),
 	;
 
-	val bytesSize: Int = kind.bytesSize * elementCount
+    fun withElementCount(length: Int): VarType {
+        return when (kind) {
+            VarKind.TBYTE -> BYTE(length)
+            VarKind.TUNSIGNED_BYTE -> UBYTE(length)
+            VarKind.TSHORT -> SHORT(length)
+            VarKind.TUNSIGNED_SHORT -> USHORT(length)
+            VarKind.TINT -> INT(length)
+            VarKind.TFLOAT -> FLOAT(length)
+            else -> TODO()
+        }
+    }
+
+    val bytesSize: Int = kind.bytesSize * elementCount
 
 	companion object {
 		fun BYTE(count: Int) =
@@ -103,10 +116,13 @@ enum class ShaderType {
 }
 
 open class Operand(open val type: VarType) {
+    val elementCount get() = type.elementCount
 }
 
-open class Variable(val name: String, type: VarType, val arrayCount: Int) : Operand(type) {
-    constructor(name: String, type: VarType) : this(name, type, 1)
+enum class Precision { DEFAULT, LOW, MEDIUM, HIGH }
+
+open class Variable(val name: String, type: VarType, val arrayCount: Int, val precision: Precision = Precision.DEFAULT) : Operand(type) {
+    constructor(name: String, type: VarType, precision: Precision = Precision.DEFAULT) : this(name, type, 1, precision)
     val indexNames = Array(arrayCount) { "$name[$it]" }
     var id: Int = 0
 	var data: Any? = null
@@ -121,9 +137,10 @@ open class Attribute(
 	type: VarType,
 	val normalized: Boolean,
 	val offset: Int? = null,
-	val active: Boolean = true
-) : Variable(name, type) {
-	constructor(name: String, type: VarType, normalized: Boolean) : this(name, type, normalized, null, true)
+	val active: Boolean = true,
+    precision: Precision = Precision.DEFAULT
+) : Variable(name, type, precision) {
+	constructor(name: String, type: VarType, normalized: Boolean, precision: Precision = Precision.DEFAULT) : this(name, type, normalized, null, true, precision)
 
 	fun inactived() = Attribute(name, type, normalized, offset = null, active = false)
 	override fun toString(): String = "Attribute($name)"
@@ -137,22 +154,22 @@ open class Attribute(
     }
 }
 
-open class Varying(name: String, type: VarType, arrayCount: Int) : Variable(name, type, arrayCount) {
-    constructor(name: String, type: VarType) : this(name, type, 1)
+open class Varying(name: String, type: VarType, arrayCount: Int, precision: Precision = Precision.DEFAULT) : Variable(name, type, arrayCount, precision) {
+    constructor(name: String, type: VarType, precision: Precision = Precision.DEFAULT) : this(name, type, 1, precision)
 	override fun toString(): String = "Varying($name)"
     override fun equals(other: Any?): Boolean = mequals<Varying>(other)
     override fun hashCode(): Int = mhashcode()
 }
 
-open class Uniform(name: String, type: VarType, arrayCount: Int) : Variable(name, type, arrayCount) {
-    constructor(name: String, type: VarType) : this(name, type, 1)
+open class Uniform(name: String, type: VarType, arrayCount: Int, precision: Precision = Precision.DEFAULT) : Variable(name, type, arrayCount, precision) {
+    constructor(name: String, type: VarType, precision: Precision = Precision.DEFAULT) : this(name, type, 1, precision)
 	override fun toString(): String = "Uniform($name)"
     override fun equals(other: Any?): Boolean = mequals<Uniform>(other)
     override fun hashCode(): Int = mhashcode()
 }
 
-open class Temp(id: Int, type: VarType, arrayCount: Int) : Variable("temp$id", type, arrayCount) {
-    constructor(id: Int, type: VarType) : this(id, type, 1)
+open class Temp(id: Int, type: VarType, arrayCount: Int, precision: Precision = Precision.DEFAULT) : Variable("temp$id", type, arrayCount, precision) {
+    constructor(id: Int, type: VarType, precision: Precision = Precision.DEFAULT) : this(id, type, 1, precision)
 	override fun toString(): String = "Temp($name)"
     override fun equals(other: Any?): Boolean = mequals<Temp>(other)
     override fun hashCode(): Int = mhashcode()
@@ -176,7 +193,8 @@ data class ProgramConfig(
 class Program(val vertex: VertexShader, val fragment: FragmentShader, val name: String = "program") : Closeable {
 	val uniforms = vertex.uniforms + fragment.uniforms
 	val attributes = vertex.attributes + fragment.attributes
-    override fun hashCode(): Int = (vertex.hashCode() * 11) + (fragment.hashCode() * 7) + name.hashCode()
+    val cachedHashCode = (vertex.hashCode() * 11) + (fragment.hashCode() * 7) + name.hashCode()
+    override fun hashCode(): Int = cachedHashCode
     override fun equals(other: Any?): Boolean = (other is Program) && (this.vertex == other.vertex)
         && (this.fragment == other.fragment) && (this.name == other.name)
 
@@ -245,6 +263,9 @@ class Program(val vertex: VertexShader, val fragment: FragmentShader, val name: 
 			return stmIf
 		}
 
+        fun PUT(shader: Shader) {
+            outputStms.add(shader.stm)
+        }
 		fun SET(target: Operand, expr: Operand) = run { outputStms += Stm.Set(target, expr) }
 		fun DISCARD() = run { outputStms += Stm.Discard() }
 
@@ -455,6 +476,7 @@ class Program(val vertex: VertexShader, val fragment: FragmentShader, val name: 
 
 open class Shader(val type: ShaderType, val stm: Program.Stm) {
     private val stmHashCode = stm.hashCode()
+    private val cachedHashCode = (type.hashCode() * 17) + stmHashCode
 
 	val uniforms = LinkedHashSet<Uniform>().also { out ->
         object : Program.Visitor<Unit>(Unit) {
@@ -469,7 +491,7 @@ open class Shader(val type: ShaderType, val stm: Program.Stm) {
     }.toSet()
 
     override fun equals(other: Any?): Boolean = other is Shader && (this.type == other.type) && (this.stmHashCode == other.stmHashCode) && (this.stm == other.stm)
-    override fun hashCode(): Int = (type.hashCode() * 17) + stmHashCode
+    override fun hashCode(): Int = cachedHashCode
 }
 
 open class VertexShader(stm: Program.Stm) : Shader(ShaderType.VERTEX, stm)
@@ -502,8 +524,8 @@ class VertexLayout(attr: List<Attribute>, private val layoutSize: Int?) {
 	private val myattr = attr
 	val attributes = attr
 	constructor(attributes: List<Attribute>) : this(attributes, null)
-	constructor(vararg attributes: Attribute) : this(attributes.toList(), null)
-	constructor(vararg attributes: Attribute, layoutSize: Int? = null) : this(attributes.toList(), layoutSize)
+	constructor(vararg attributes: Attribute) : this(attributes.toFastList(), null)
+	constructor(vararg attributes: Attribute, layoutSize: Int? = null) : this(attributes.toFastList(), layoutSize)
 
 	private var _lastPos: Int = 0
 
@@ -512,7 +534,7 @@ class VertexLayout(attr: List<Attribute>, private val layoutSize: Int?) {
 		if (a <= 1) 1 else a
 	}
 
-	val attributePositions = myattr.map {
+	val attributePositions = myattr.mapInt {
 		if (it.offset != null) {
 			_lastPos = it.offset
 		} else {
@@ -523,11 +545,9 @@ class VertexLayout(attr: List<Attribute>, private val layoutSize: Int?) {
 		out
 	}
 
-    val attributePositionsLong = attributePositions.map { it.toLong() }
-
-	val maxAlignment = alignments.max() ?: 1
+	val maxAlignment = alignments.maxOrNull() ?: 1
     /** Size in bytes for each vertex */
 	val totalSize: Int = run { layoutSize ?: _lastPos.nextAlignedTo(maxAlignment) }
 
-	override fun toString(): String = "VertexLayout[${myattr.map { it.name }.joinToString(", ")}]"
+	override fun toString(): String = "VertexLayout[${myattr.joinToString(", ") { it.name }}]"
 }

@@ -21,7 +21,15 @@ open class PlatformAudioOutput(
 	open fun start() = Unit
     //open fun pause() = unsupported()
 	open fun stop() = Unit
-    override fun dispose() = stop()
+    // @TODO: We should week stop or dispose, but maybe not both
+
+    open suspend fun wait() {
+        while (availableSamples > 0) {
+            delay(10.milliseconds)
+        }
+    }
+
+    final override fun dispose() = stop()
 }
 
 open class DequeBasedPlatformAudioOutput(
@@ -57,5 +65,4 @@ open class DequeBasedPlatformAudioOutput(
     final override suspend fun add(samples: AudioSamples, offset: Int, size: Int) {
         deque.write(samples, offset, size)
     }
-    final override fun dispose() = stop()
 }

@@ -26,10 +26,9 @@ class Bitmap32(
 
     val intData get() = data.ints
 
-	private val temp = RgbaArray(max(width, height))
+	private val temp = RgbaArray(max2(width, height))
     val bounds: IRectangleInt = RectangleInt(0, 0, width, height)
 
-    @JvmOverloads
 	constructor(width: Int, height: Int, value: RGBA, premultiplied: Boolean = false) : this(width, height, premultiplied = premultiplied) { data.fill(value) }
 	constructor(width: Int, height: Int, premultiplied: Boolean = false, generator: (x: Int, y: Int) -> RGBA) : this(width, height, premultiplied = premultiplied) { setEach(callback = generator) }
 
@@ -111,8 +110,8 @@ class Bitmap32(
         }
         val availableWidth = width - dx
         val availableHeight = height - dy
-        val awidth = min(availableWidth, sright - sleft)
-        val aheight = min(availableHeight, sbottom - stop)
+        val awidth = min2(availableWidth, sright - sleft)
+        val aheight = min2(availableHeight, sbottom - stop)
         _drawUnchecked(src, dx, dy, sleft, stop, sleft + awidth, stop + aheight, mix)
 	}
 
@@ -153,10 +152,10 @@ class Bitmap32(
 	fun draw(src: BitmapSlice<Bitmap32>, dx: Int = 0, dy: Int = 0) = _draw(src, dx, dy, mix = true)
 
 	fun drawUnoptimized(src: BitmapSlice<Bitmap>, dx: Int = 0, dy: Int = 0, mix: Boolean = true) {
-		if (src.bmp is Bitmap32) {
+		if (src.bmpBase is Bitmap32) {
 			_draw(src as BitmapSlice<Bitmap32>, dx, dy, mix = mix)
 		} else {
-			drawUnoptimized(src.bmp, dx, dy, src.left, src.top, src.right, src.bottom, mix = mix)
+			drawUnoptimized(src.bmpBase, dx, dy, src.left, src.top, src.right, src.bottom, mix = mix)
 		}
 	}
 

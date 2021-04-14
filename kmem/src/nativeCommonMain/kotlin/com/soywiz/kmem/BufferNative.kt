@@ -3,6 +3,8 @@
 @file:Suppress("NOTHING_TO_INLINE", "EXTENSION_SHADOWED_BY_MEMBER", "RedundantUnitReturnType", "FunctionName", "USELESS_CAST")
 package com.soywiz.kmem
 
+import kotlinx.cinterop.*
+import platform.posix.*
 import com.soywiz.kmem.internal.*
 
 actual class MemBuffer(val data: ByteArray)
@@ -107,14 +109,60 @@ actual val Float64Buffer.size: Int get() = MEM_SIZE
 actual operator fun Float64Buffer.get(index: Int): Double = mbuffer.getDouble(getByteIndex(index))
 actual operator fun Float64Buffer.set(index: Int, value: Double): Unit = mbuffer.setDouble(getByteIndex(index), value)
 
-actual fun arraycopy(src: MemBuffer, srcPos: Int, dst: MemBuffer, dstPos: Int, size: Int): Unit = arraycopy(src.data, srcPos, dst.data, dstPos, size)
-actual fun arraycopy(src: ByteArray, srcPos: Int, dst: MemBuffer, dstPos: Int, size: Int): Unit = arraycopy(src, srcPos, dst.data, dstPos, size)
-actual fun arraycopy(src: MemBuffer, srcPos: Int, dst: ByteArray, dstPos: Int, size: Int): Unit = arraycopy(src.data, srcPos, dst, dstPos, size)
-actual fun arraycopy(src: ShortArray, srcPos: Int, dst: MemBuffer, dstPos: Int, size: Int): Unit = arraycopyBase(src, srcPos, dst, dstPos, size) { s, d -> dst.setShort(d * 2, src[s]) }
-actual fun arraycopy(src: IntArray, srcPos: Int, dst: MemBuffer, dstPos: Int, size: Int): Unit = arraycopyBase(src, srcPos, dst, dstPos, size) { s, d -> dst.setInt(d * 4, src[s]) }
-actual fun arraycopy(src: FloatArray, srcPos: Int, dst: MemBuffer, dstPos: Int, size: Int): Unit = arraycopyBase(src, srcPos, dst, dstPos, size) { s, d -> dst.setFloat(d * 4, src[s]) }
-actual fun arraycopy(src: DoubleArray, srcPos: Int, dst: MemBuffer, dstPos: Int, size: Int): Unit = arraycopyBase(src, srcPos, dst, dstPos, size) { s, d -> dst.setDouble(d * 8, src[s]) }
-actual fun arraycopy(src: MemBuffer, srcPos: Int, dst: ShortArray, dstPos: Int, size: Int): Unit = arraycopyBase(src, srcPos, dst, dstPos, size) { s, d -> dst[d] = src.getShort(s * 2) }
-actual fun arraycopy(src: MemBuffer, srcPos: Int, dst: IntArray, dstPos: Int, size: Int): Unit = arraycopyBase(src, srcPos, dst, dstPos, size) { s, d -> dst[d] = src.getInt(s * 4) }
-actual fun arraycopy(src: MemBuffer, srcPos: Int, dst: FloatArray, dstPos: Int, size: Int): Unit = arraycopyBase(src, srcPos, dst, dstPos, size) { s, d -> dst[d] = src.getFloat(s * 4) }
-actual fun arraycopy(src: MemBuffer, srcPos: Int, dst: DoubleArray, dstPos: Int, size: Int): Unit = arraycopyBase(src, srcPos, dst, dstPos, size) { s, d -> dst[d] = src.getDouble(s * 8) }
+// @TODO: Can we do this without pins that are data classes? Since GC is not going to be executed inside memmove?
+inline fun <T : Any, R : Any> anyArrayCopy(input: T, inputAddress: (Pinned<T>) -> CPointer<*>?, output: R, outputAddress: (Pinned<R>) -> CPointer<*>?, sizeBytes: Int) {
+    if (sizeBytes == 0) return
+    output.usePinned { out ->
+        input.usePinned { inp ->
+            val outp = outputAddress(out)
+            val inpp = inputAddress(inp)
+            memmove(outp, inpp, sizeBytes.convert())
+        }
+    }
+}
+
+actual fun arraycopy(src: MemBuffer, srcPos: Int, dst: MemBuffer, dstPos: Int, size: Int): Unit {
+    anyArrayCopy(src.data, { it.addressOf(srcPos) }, dst.data, { it.addressOf(dstPos) }, size * Byte.SIZE_BYTES)
+}
+actual fun arraycopy(src: ByteArray, srcPos: Int, dst: MemBuffer, dstPos: Int, size: Int): Unit {
+    anyArrayCopy(src, { it.addressOf(srcPos) }, dst.data, { it.addressOf(dstPos) }, size * Byte.SIZE_BYTES)
+}
+actual fun arraycopy(src: MemBuffer, srcPos: Int, dst: ByteArray, dstPos: Int, size: Int): Unit {
+    anyArrayCopy(src.data, { it.addressOf(srcPos) }, dst, { it.addressOf(dstPos * Byte.SIZE_BYTES) }, size * Byte.SIZE_BYTES)
+}
+actual fun arraycopy(src: ShortArray, srcPos: Int, dst: MemBuffer, dstPos: Int, size: Int): Unit {
+    anyArrayCopy(src, { it.addressOf(srcPos) }, dst.data, { it.addressOf(dstPos * Short.SIZE_BYTES) }, size * Short.SIZE_BYTES)
+}
+actual fun arraycopy(src: IntArray, srcPos: Int, dst: MemBuffer, dstPos: Int, size: Int): Unit {
+    anyArrayCopy(src, { it.addressOf(srcPos) }, dst.data, { it.addressOf(dstPos * Int.SIZE_BYTES) }, size * Int.SIZE_BYTES)
+}
+actual fun arraycopy(src: FloatArray, srcPos: Int, dst: MemBuffer, dstPos: Int, size: Int): Unit {
+    anyArrayCopy(src, { it.addressOf(srcPos) }, dst.data, { it.addressOf(dstPos * Float.SIZE_BYTES) }, size * Float.SIZE_BYTES)
+}
+actual fun arraycopy(src: DoubleArray, srcPos: Int, dst: MemBuffer, dstPos: Int, size: Int): Unit {
+    anyArrayCopy(src, { it.addressOf(srcPos) }, dst.data, { it.addressOf(dstPos * Double.SIZE_BYTES) }, size * Double.SIZE_BYTES)
+}
+actual fun arraycopy(src: MemBuffer, srcPos: Int, dst: ShortArray, dstPos: Int, size: Int): Unit {
+    anyArrayCopy(src.data, { it.addressOf(srcPos * Short.SIZE_BYTES) }, dst, { it.addressOf(dstPos) }, size * Short.SIZE_BYTES)
+}
+actual fun arraycopy(src: MemBuffer, srcPos: Int, dst: IntArray, dstPos: Int, size: Int): Unit {
+    anyArrayCopy(src.data, { it.addressOf(srcPos * Int.SIZE_BYTES) }, dst, { it.addressOf(dstPos) }, size * Int.SIZE_BYTES)
+}
+actual fun arraycopy(src: MemBuffer, srcPos: Int, dst: FloatArray, dstPos: Int, size: Int): Unit {
+    anyArrayCopy(src.data, { it.addressOf(srcPos * Float.SIZE_BYTES) }, dst, { it.addressOf(dstPos) }, size * Float.SIZE_BYTES)
+}
+actual fun arraycopy(src: MemBuffer, srcPos: Int, dst: DoubleArray, dstPos: Int, size: Int): Unit {
+    anyArrayCopy(src.data, { it.addressOf(srcPos * Double.SIZE_BYTES) }, dst, { it.addressOf(dstPos) }, size * Double.SIZE_BYTES)
+}
+
+actual abstract class Fast32Buffer(val bb: ByteArray)
+//actual /*inline*/ class Fast32Buffer(val bb: ByteArray)
+class Fast32BufferF(bb: ByteArray) : Fast32Buffer(bb)
+
+actual fun NewFast32Buffer(mem: MemBuffer): Fast32Buffer = Fast32BufferF(mem.data)
+
+actual val Fast32Buffer.length: Int get() = this.bb.size * 4
+actual inline fun Fast32Buffer.getF(index: Int): Float = this.bb.getFloatAt(index * 4)
+actual inline fun Fast32Buffer.setF(index: Int, value: Float) { this.bb.setFloatAt(index * 4, value) }
+actual inline fun Fast32Buffer.getI(index: Int): Int = this.bb.getIntAt(index * 4)
+actual inline fun Fast32Buffer.setI(index: Int, value: Int) { this.bb.setIntAt(index * 4, value) }

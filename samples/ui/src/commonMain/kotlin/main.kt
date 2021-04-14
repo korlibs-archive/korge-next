@@ -1,7 +1,6 @@
 import com.soywiz.klock.*
 import com.soywiz.korge.*
 import com.soywiz.korge.debug.*
-import com.soywiz.korge.font.*
 import com.soywiz.korge.html.*
 import com.soywiz.korge.input.*
 import com.soywiz.korge.service.process.*
@@ -11,12 +10,13 @@ import com.soywiz.korge.view.*
 import com.soywiz.korgw.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
+import com.soywiz.korim.font.*
 import com.soywiz.korim.format.*
 import com.soywiz.korio.file.std.*
 import com.soywiz.korio.util.*
 import com.soywiz.korma.interpolation.*
 
-suspend fun main() = Korge(quality = GameWindow.Quality.PERFORMANCE, title = "UI", bgcolor = Colors["#1c1e0e"]) {
+suspend fun main3() = Korge(quality = GameWindow.Quality.PERFORMANCE, title = "UI", bgcolor = Colors["#1c1e0e"]) {
     val container = fixedSizeContainer(width, height, clip = true) { }
     container.korui {
         addChild(UiEditProperties(app, container, views))
@@ -46,11 +46,11 @@ suspend fun main() = Korge(quality = GameWindow.Quality.PERFORMANCE, title = "UI
     }
 }
 
-suspend fun main2() = Korge(quality = GameWindow.Quality.PERFORMANCE, title = "UI") {
+suspend fun main() = Korge(quality = GameWindow.Quality.PERFORMANCE, title = "UI") {
 	val nativeProcess = NativeProcess(views)
 
 	defaultUISkin = OtherUISkin()
-	defaultUIFont = resourcesVfs["uifont.fnt"].readBitmapFontWithMipmaps()
+	defaultUIFont = resourcesVfs["uifont.fnt"].readBitmapFont()
 
 	uiTextButton(256.0, 32.0) {
 		text = "Disabled Button"
@@ -105,8 +105,8 @@ suspend fun main2() = Korge(quality = GameWindow.Quality.PERFORMANCE, title = "U
 	}
 
 	while (true) {
-		tween(progress::current[1.0], time = 1.seconds, easing = Easing.EASE_IN_OUT)
-		tween(progress::current[1.0, 0.0], time = 1.seconds, easing = Easing.EASE_IN_OUT)
+		tween(progress::ratio[1.0], time = 1.seconds, easing = Easing.EASE_IN_OUT)
+		tween(progress::ratio[1.0, 0.0], time = 1.seconds, easing = Easing.EASE_IN_OUT)
 	}
 }
 

@@ -28,24 +28,28 @@ open class UITextButton(
     textSize: Double = 16.0
 ) : UIButton(width, height, skin), ViewLeaf {
 
-	var text by uiObservable(text) { updateText(); updateShadow() }
-	var textSize by uiObservable(textSize) { updateText() }
+	var text by uiObservable(text) { updateTextAndShadow() }
+	var textSize by uiObservable(textSize) { updateTextAndShadow() }
 	var textColor by uiObservable(Colors.WHITE) { updateText() }
 	var textAlignment by uiObservable(TextAlignment.MIDDLE_CENTER) { updateText() }
-	var textFont by uiObservable(textFont) { updateText(); updateShadow() }
+	var textFont by uiObservable(textFont) { updateTextAndShadow() }
 	var shadowX by uiObservable(1) { updateShadow() }
 	var shadowY by uiObservable(1) { updateShadow() }
 	//var shadowSize by uiObservable(16) { updateShadow() }
-	var shadowColor by uiObservable(Colors.BLACK.withA(64)) { updateShadow() }
+	var shadowColor by uiObservable(Colors.BLACK.withAd(0.3)) { updateShadow() }
 	var shadowVisible by uiObservable(true) { updateShadow() }
 
+    private val textShadow = text(text, textSize)
 	private val textView = text(text, textSize)
-	private val textShadow = text(text, textSize)
 
 	init {
-		updateText()
-		updateShadow()
+        updateTextAndShadow()
 	}
+
+    private fun updateTextAndShadow() {
+        updateText()
+        updateShadow()
+    }
 
 	private fun updateText() {
         textView.font = textFont
@@ -74,7 +78,7 @@ open class UITextButton(
 	}
 
     override fun buildDebugComponent(views: Views, container: UiContainer) {
-        container.uiCollapsableSection(UITextButton::class.simpleName!!) {
+        container.uiCollapsibleSection(UITextButton::class.simpleName!!) {
             uiEditableValue(::text)
             uiEditableValue(::textSize, min = 1.0, max = 300.0)
             /*

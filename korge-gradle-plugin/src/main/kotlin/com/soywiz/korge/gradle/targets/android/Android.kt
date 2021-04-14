@@ -4,40 +4,18 @@ import com.soywiz.korge.gradle.util.*
 import com.soywiz.korge.gradle.*
 import com.soywiz.korge.gradle.targets.*
 import com.soywiz.korge.gradle.targets.jvm.KorgeJavaExec
-import com.soywiz.korge.gradle.util.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.GradleBuild
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import java.io.File
-import java.net.URLClassLoader
 import java.util.*
 import kotlin.collections.LinkedHashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 
-//Linux: ~/Android/Sdk
-//Mac: ~/Library/Android/sdk
-//Windows: %LOCALAPPDATA%\Android\sdk
-val Project.androidSdkPath: String get() {
-    val localPropertiesFile = projectDir["local.properties"]
-    if (localPropertiesFile.exists()) {
-        val props = Properties().apply { load(localPropertiesFile.readText().reader()) }
-        if (props.getProperty("sdk.dir") != null) {
-            return props.getProperty("sdk.dir")!!
-        }
-    }
-    val userHome = System.getProperty("user.home")
-    return listOfNotNull(
-        System.getenv("ANDROID_HOME"),
-        "$userHome/AppData/Local/Android/sdk",
-        "$userHome/Library/Android/sdk",
-        "$userHome/Android/Sdk"
-    ).firstOrNull { File(it).exists() } ?: error("Can't find android sdk (ANDROID_HOME environment not set and Android SDK not found in standard locations)")
-}
-
-fun Project.configureNativeAndroid() {
+fun Project.configureAndroidIndirect() {
 	val resolvedKorgeArtifacts = LinkedHashMap<String, String>()
 	val resolvedOtherArtifacts = LinkedHashMap<String, String>()
 	val resolvedModules = LinkedHashMap<String, String>()
@@ -58,18 +36,19 @@ fun Project.configureNativeAndroid() {
 				//println("RESOLVE ARTIFACT: ${it.requested}")
 				//if (cleanFullName.startsWith("org.jetbrains.intellij.deps:trove4j")) return@eachDependency
 				//if (cleanFullName.startsWith("org.jetbrains:annotations")) return@eachDependency
-				if (cleanFullName.startsWith("org.jetbrains")) return@eachDependency
-				if (cleanFullName.startsWith("junit:junit")) return@eachDependency
-				if (cleanFullName.startsWith("org.hamcrest:hamcrest-core")) return@eachDependency
-				if (cleanFullName.startsWith("org.jogamp")) return@eachDependency
-				if (cleanFullName.contains("-metadata")) return@eachDependency
-				if (dep.requested.group == parentProjectName && allModules.contains(dep.requested.name))
-					resolvedModules[dep.requested.name] = ":${parentProjectName}:${dep.requested.name}"
-				else if (cleanFullName.startsWith("com.soywiz.korlibs."))
-					resolvedKorgeArtifacts[cleanFullName.removeSuffix("-jvm")] = dep.requested.version.toString()
-				else if (topLevelDependencies.contains(cleanFullName)) {
-					resolvedOtherArtifacts[cleanFullName] = dep.requested.version.toString()
-				}
+                if (isKorlibsDependency(cleanFullName) && !cleanFullName.contains("-metadata")) {
+                    when {
+                        dep.requested.group == parentProjectName && allModules.contains(dep.requested.name) -> {
+                            resolvedModules[dep.requested.name] = ":${parentProjectName}:${dep.requested.name}"
+                        }
+                        cleanFullName.startsWith("com.soywiz.korlibs.") -> {
+                            resolvedKorgeArtifacts[cleanFullName.removeSuffix("-jvm")] = dep.requested.version.toString()
+                        }
+                        topLevelDependencies.contains(cleanFullName) -> {
+                            resolvedOtherArtifacts[cleanFullName] = dep.requested.version.toString()
+                        }
+                    }
+                }
 			}
 		}
 	}
@@ -106,20 +85,20 @@ fun Project.configureNativeAndroid() {
 				//		task clean(type: Delete) { delete rootProject.buildDir }
 				//""".trimIndent())
 				//}
-				File(outputFolder, "local.properties").conditionally(ifNotExists) {
-					ensureParents().writeTextIfChanged("sdk.dir=${androidSdkPath.escape()}")
-				}
+                ensureAndroidLocalPropertiesWithSdkDir(outputFolder)
 				//File(outputFolder, "settings.gradle").conditionally(ifNotExists) {
                 File(outputFolder, "settings.gradle").always {
 					ensureParents().writeTextIfChanged(Indenter {
 						line("enableFeaturePreview(\"GRADLE_METADATA\")")
                         line("rootProject.name = ${project.name.quoted}")
-						if (parentProjectName != null && resolvedModules.isNotEmpty()) this@configureNativeAndroid.parent?.projectDir?.let {
+						if (parentProjectName != null && resolvedModules.isNotEmpty()) this@configureAndroidIndirect.parent?.projectDir?.let { projectFile ->
+                            val projectPath = projectFile.absolutePath
 							line("include(\":$parentProjectName\")")
-							line("project(\":$parentProjectName\").projectDir = file(\'$it\')")
+							line("project(\":$parentProjectName\").projectDir = file(${projectPath.quoted})")
 							resolvedModules.forEach { (name, path) ->
+                                val subProjectPath = projectFile[name].absolutePath
 								line("include(\"$path\")")
-								line("project(\"$path\").projectDir = file(\'$it/$name\')")
+								line("project(\"$path\").projectDir = file(${subProjectPath.quoted})")
 							}
 						}
 					})
@@ -146,16 +125,23 @@ fun Project.configureNativeAndroid() {
 					ensureParents().writeTextIfChanged(Indenter {
                         line("// File autogenerated do not modify!")
 						line("buildscript") {
-							line("repositories { google(); jcenter(); maven { url = uri(\"https://dl.bintray.com/kotlin/kotlin-eap\") }; maven { url = uri(\"https://dl.bintray.com/kotlin/kotlin-dev\") } }")
+							line("repositories { google(); jcenter(); }")
+                            if (isKotlinDevOrEap) {
+                                line("repositories { maven { url = uri(\"https://dl.bintray.com/kotlin/kotlin-eap\") }; maven { url = uri(\"https://dl.bintray.com/kotlin/kotlin-dev\") } }")
+                            }
 							line("dependencies { classpath 'com.android.tools.build:gradle:$androidBuildGradleVersion'; classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion' }")
 						}
 						line("repositories") {
 							line("mavenLocal()")
-							line("maven { url = 'https://dl.bintray.com/korlibs/korlibs' }")
+                            line("jcenter()")
 							line("google()")
-							line("jcenter()")
-                            line("maven { url = uri(\"https://dl.bintray.com/kotlin/kotlin-eap\") }")
-							line("maven { url = uri(\"https://dl.bintray.com/kotlin/kotlin-dev\") }")
+                            if (isKotlinDevOrEap) {
+                                line("maven { url = uri(\"https://dl.bintray.com/kotlin/kotlin-eap\") }")
+                                line("maven { url = uri(\"https://dl.bintray.com/kotlin/kotlin-dev\") }")
+                            }
+                            if (checkBintrayArtifacts) {
+                                line("maven { url = 'https://dl.bintray.com/korlibs/korlibs' }")
+                            }
 						}
 
 						if (korge.androidLibrary) {
@@ -176,18 +162,9 @@ fun Project.configureNativeAndroid() {
                                 line("freeCompilerArgs += \"-Xmulti-platform\"")
                             }
                             line("packagingOptions") {
-                                line("exclude 'META-INF/DEPENDENCIES'")
-                                line("exclude 'META-INF/LICENSE'")
-                                line("exclude 'META-INF/LICENSE.txt'")
-                                line("exclude 'META-INF/license.txt'")
-                                line("exclude 'META-INF/NOTICE'")
-                                line("exclude 'META-INF/NOTICE.txt'")
-                                line("exclude 'META-INF/notice.txt'")
-                                line("exclude 'META-INF/*.kotlin_module'")
-                                line("exclude 'META-INF/LGPL*'")
-                                line("exclude 'META-INF/AL2.0'")
-								line("exclude '**/*.kotlin_metadata'")
-								line("exclude '**/*.kotlin_builtins'")
+                                for (pattern in androidExcludePatterns()) {
+                                    line("exclude '$pattern'")
+                                }
                             }
 							line("compileSdkVersion ${korge.androidCompileSdk}")
 							line("defaultConfig") {
@@ -209,10 +186,10 @@ fun Project.configureNativeAndroid() {
 							}
 							line("signingConfigs") {
 								line("release") {
-									line("storeFile file(findProperty('RELEASE_STORE_FILE') ?: 'korge.keystore')")
-									line("storePassword findProperty('RELEASE_STORE_PASSWORD') ?: 'password'")
-									line("keyAlias findProperty('RELEASE_KEY_ALIAS') ?: 'korge'")
-									line("keyPassword findProperty('RELEASE_KEY_PASSWORD') ?: 'password'")
+									line("storeFile file(findProperty('RELEASE_STORE_FILE') ?: ${korge.androidReleaseSignStoreFile.quoted})")
+									line("storePassword findProperty('RELEASE_STORE_PASSWORD') ?: ${korge.androidReleaseSignStorePassword.quoted}")
+									line("keyAlias findProperty('RELEASE_KEY_ALIAS') ?: ${korge.androidReleaseSignKeyAlias.quoted}")
+									line("keyPassword findProperty('RELEASE_KEY_PASSWORD') ?: ${korge.androidReleaseSignKeyPassword.quoted}")
 								}
 							}
 							line("buildTypes") {
@@ -231,16 +208,6 @@ fun Project.configureNativeAndroid() {
 								line("main") {
 									// @TODO: Use proper source sets of the app
 
-                                    val targets = listOf(kotlin.metadata())
-                                    val mainSourceSets = targets.flatMap { it.compilations["main"].allKotlinSourceSets }
-
-                                    val resourcesSrcDirsBase = mainSourceSets.flatMap { it.resources.srcDirs }
-                                    val resourcesSrcDirsBundle = project.korge.bundles.getPaths("android", resources = true, test = false)
-                                    val resourcesSrcDirs = resourcesSrcDirsBase + resourcesSrcDirsBundle
-
-                                    val kotlinSrcDirsBase = mainSourceSets.flatMap { it.kotlin.srcDirs }
-                                    val kotlinSrcDirsBundle = project.korge.bundles.getPaths("android", resources = false, test = false)
-                                    val kotlinSrcDirs = kotlinSrcDirsBase + kotlinSrcDirsBundle
 
                                     //println("mainSourceSets: $mainSourceSets")
                                     //println("resourcesSrcDirsBase: $resourcesSrcDirsBase")
@@ -248,6 +215,7 @@ fun Project.configureNativeAndroid() {
                                     //println("kotlinSrcDirsBase: $kotlinSrcDirsBase")
                                     //println("kotlinSrcDirsBundle: $kotlinSrcDirsBundle")
 
+                                    val (resourcesSrcDirs, kotlinSrcDirs) = androidGetResourcesFolders()
                                     line("assets.srcDirs += [${resourcesSrcDirs.joinToString(", ") { it.absolutePath.quoted }}]")
                                     line("java.srcDirs += [${kotlinSrcDirs.joinToString(", ") { it.absolutePath.quoted }}]")
 								}
@@ -272,7 +240,7 @@ fun Project.configureNativeAndroid() {
 //								if (name.startsWith("org.jetbrains.kotlin")) continue
 //								if (name.contains("-metadata")) continue
                                 //if (name.startsWith("com.soywiz.korlibs.krypto:krypto")) continue
-                                //if (name.startsWith("com.soywiz.korlibs.korge:korge")) {
+                                //if (name.startsWith("com.soywiz.korlibs.korge2:korge")) {
 								val rversion = getModuleVersion(name, version)
 								line("implementation '$name-android:$rversion'")
 							}
@@ -337,47 +305,7 @@ fun Project.configureNativeAndroid() {
 		task.dependsOn(bundleAndroid)
 	}
 
-	// adb shell am start -n com.package.name/com.package.name.ActivityName
-	for (debug in listOf(false, true)) {
-		val suffixDebug = if (debug) "Debug" else "Release"
-		val installAndroidTask = tasks.create("installAndroid$suffixDebug", GradleBuild::class.java) { task ->
-			task.apply {
-				group = GROUP_KORGE_INSTALL
-				dependsOn(prepareAndroidBootstrap)
-                dependsOn("korgeProcessedResourcesJvmMain")
-				buildFile = File(buildDir, "platforms/android/build.gradle")
-				version = "4.10.1"
-				tasks = listOf("install$suffixDebug")
-			}
-		}
-
-		for (emulator in listOf(null, false, true)) {
-			val suffixDevice = when (emulator) {
-				null -> ""
-				false -> "Device"
-				true -> "Emulator"
-			}
-
-			val extra = when (emulator) {
-				null -> arrayOf()
-				false -> arrayOf("-d")
-				true -> arrayOf("-e")
-			}
-
-			tasks.createTyped<DefaultTask>("runAndroid$suffixDevice$suffixDebug") {
-				group = GROUP_KORGE_RUN
-				dependsOn(installAndroidTask)
-				doFirst {
-					execLogger {
-						it.commandLine(
-							"$androidSdkPath/platform-tools/adb", *extra, "shell", "am", "start", "-n",
-							"${korge.id}/${korge.id}.MainActivity"
-						)
-					}
-				}
-			}
-		}
-	}
+    installAndroidRun(listOf(prepareAndroidBootstrap.name), direct = false)
 }
 
 fun writeAndroidManifest(outputFolder: File, korge: KorgeExtension, info: AndroidInfo) {
@@ -426,7 +354,7 @@ fun writeAndroidManifest(outputFolder: File, korge: KorgeExtension, info: Androi
 
 					line("<activity android:name=\".MainActivity\"")
 					indent {
-                        line("android:banner=\"@drawable/app_icon\"")
+                        line("android:banner=\"@drawable/app_banner\"")
                         line("android:icon=\"@drawable/app_icon\"")
                         line("android:label=\"$androidAppName\"")
                         line("android:logo=\"@drawable/app_icon\"")
@@ -465,6 +393,9 @@ fun writeAndroidManifest(outputFolder: File, korge: KorgeExtension, info: Androi
 		ensureParents().writeBytesIfChanged(korge.getIconBytes())
 	}
     File(outputFolder, "src/main/res/drawable/app_icon.png").conditionally(ifNotExists) {
+        ensureParents().writeBytesIfChanged(korge.getIconBytes())
+    }
+    File(outputFolder, "src/main/res/drawable/app_banner.png").conditionally(ifNotExists) {
         ensureParents().writeBytesIfChanged(korge.getBannerBytes(432, 243))
     }
 	File(outputFolder, "src/main/java/MainActivity.kt").conditionally(ifNotExists) {

@@ -1,5 +1,6 @@
 package com.soywiz.korge.view
 
+import com.soywiz.kds.*
 import com.soywiz.kds.iterators.*
 import com.soywiz.kmem.*
 import com.soywiz.korge.internal.*
@@ -16,8 +17,9 @@ inline fun Container.container(callback: @ViewDslMarker Container.() -> Unit = {
 /**
  * A simple container of [View]s.
  *
- * All the [children] in this container has an associated index that determines its rendering order.
- * The first child is rendered first, and the last, last. So when the childs are overlapping, the last child will overlap the previous ones.
+ * All the [children] in this container have an associated index that determines their rendering order.
+ * The first child is rendered first, and the last one is rendered last. So when children are overlapping with each other,
+ * the last child will overlap the previous ones.
  *
  * You can access the children by [numChildren], [getChildAt] or [size] and [get].
  *
@@ -27,15 +29,15 @@ inline fun Container.container(callback: @ViewDslMarker Container.() -> Unit = {
 open class Container : View(true) {
     @KorgeInternal
     @PublishedApi
-	internal val childrenInternal: ArrayList<View> get() {
-        if (_children == null) _children = arrayListOf()
-        return _children as ArrayList<View>
+	internal val childrenInternal: FastArrayList<View> get() {
+        if (_children == null) _children = FastArrayList()
+        return _children!!
     }
 
 	/**
 	 * Retrieves all the child [View]s.
      * Shouldn't be used if possible. You can use [numChildren] and [getChildAt] to get the children.
-     * You can also use [forEachChildren], [forEachChildrenWithIndex] and [forEachChildrenReversed] to iterate children
+     * You can also use [forEachChild], [forEachChildWithIndex] and [forEachChildReversed] to iterate children
 	 */
     @KorgeInternal
     val children: List<View> get() = childrenInternal
@@ -48,7 +50,7 @@ open class Container : View(true) {
     /** Sorts all the children by using the specified [comparator]. */
     fun sortChildrenBy(comparator: Comparator<View>) {
         _children?.sortWith(comparator)
-        forEachChildrenWithIndex { index, child ->
+        forEachChildWithIndex { index: Int, child: View ->
             child.index = index
         }
     }
@@ -202,13 +204,13 @@ open class Container : View(true) {
 	private val tempMatrix = Matrix()
 	override fun renderInternal(ctx: RenderContext) {
 		if (!visible) return
-		forEachChildren { child ->
+		forEachChild { child: View ->
 			child.render(ctx)
 		}
-	}
+    }
 
     override fun renderDebug(ctx: RenderContext) {
-        forEachChildren { child ->
+        forEachChild { child: View ->
             child.renderDebug(ctx)
         }
         super.renderDebug(ctx)
@@ -219,11 +221,11 @@ open class Container : View(true) {
 
 	override fun getLocalBoundsInternal(out: Rectangle) {
 		bb.reset()
-		forEachChildren { child ->
+		forEachChild { child: View ->
 			child.getBounds(this, tempRect)
 			bb.add(tempRect)
 		}
-		bb.getBounds(out)
+        bb.getBounds(out)
 	}
 
 	/**

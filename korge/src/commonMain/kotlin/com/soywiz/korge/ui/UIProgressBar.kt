@@ -36,7 +36,7 @@ open class UIProgressBar(
 
 	private val background = solidRect(width, height, skin.backColor)
 	protected open val progressView: View =
-		ninePatch(skin.normal, width * (current / maximum).clamp01(), height, 1.0 / 4.0, 1.0 / 4.0, 3.0 / 4.0, 3.0 / 4.0)
+		ninePatch(skin.normal, width * (current / maximum).clamp01(), height, .25, .25, .75, .75)
 
 	override fun onSizeChanged() {
 		background.size(width, height)
@@ -53,7 +53,7 @@ open class UIProgressBar(
 	}
 
     override fun buildDebugComponent(views: Views, container: UiContainer) {
-        container.uiCollapsableSection(this@UIProgressBar::class.simpleName!!) {
+        container.uiCollapsibleSection(this@UIProgressBar::class.simpleName!!) {
             uiEditableValue(::current, min = 0.0, max = 100.0, clamp = false)
             uiEditableValue(::maximum, min = 1.0, max = 100.0, clamp = false)
         }

@@ -1,5 +1,7 @@
 package com.soywiz.korge.view.internal
 
+import com.soywiz.korge.internal.*
+import com.soywiz.korge.internal.max2
 import com.soywiz.korma.geom.*
 
 internal class InternalViewAutoscaling {
@@ -16,18 +18,24 @@ internal class InternalViewAutoscaling {
 
             val sx = kotlin.math.abs(matrixTransform.scaleX)
             val sy = kotlin.math.abs(matrixTransform.scaleY)
-            val sxy = kotlin.math.max(sx, sy)
+            val sxy = max2(sx, sy)
 
             val diffX = kotlin.math.abs((sx / renderedAtScaleX) - 1.0)
             val diffY = kotlin.math.abs((sy / renderedAtScaleY) - 1.0)
 
             if (diffX >= 0.1 || diffY >= 0.1) {
+                //println("diffX=$diffX, diffY=$diffY")
+
                 renderedAtScaleX = sx
                 renderedAtScaleY = sy
                 renderedAtScaleXY = sxy
                 //println("renderedAtScale: $renderedAtScaleX, $renderedAtScaleY")
                 return true
             }
+        } else {
+            renderedAtScaleX = 1.0
+            renderedAtScaleY = 1.0
+            renderedAtScaleXY = 1.0
         }
         return false
     }

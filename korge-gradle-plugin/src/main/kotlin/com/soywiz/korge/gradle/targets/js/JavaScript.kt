@@ -19,6 +19,8 @@ val Project.node_modules get() = korgeCacheDir["node_modules"]
 private object JavaScriptClass
 
 fun Project.configureJavaScript() {
+    if (gkotlin.targets.findByName("js") != null) return
+
     gkotlin.apply {
 		js(KotlinJsCompilerType.IR) {
             browser {
@@ -42,6 +44,12 @@ fun Project.configureJavaScript() {
 				}
 			}
 		}
+
+        sourceSets.maybeCreate("jsTest").apply {
+            dependencies {
+                implementation("org.jetbrains.kotlin:kotlin-test-js")
+            }
+        }
 	}
 
     val runJs = project.addTask<Task>(name = "runJs") { task ->

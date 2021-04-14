@@ -39,7 +39,8 @@ open class BaseImage(
     var bitmap: BmpSlice
         get() = baseBitmap
         set(value) {
-            bitmapSrc = value
+            setBitmapSource = true
+            baseBitmap = value
         }
 
     var bitmapSrc: Resourceable<out BmpSlice> = bitmap
@@ -51,9 +52,10 @@ open class BaseImage(
 
     fun trySetSource() {
         if (setBitmapSource) return
-        bitmapSrc.getOrNull()?.let {
+        val source = bitmapSrc.getOrNull()
+        if (source != null) {
             setBitmapSource = true
-            this.baseBitmap = it
+            this.baseBitmap = source
         }
     }
 
@@ -68,6 +70,8 @@ open class BaseImage(
 
     override val bwidth: Double get() = baseBitmap.width.toDouble()
     override val bheight: Double get() = baseBitmap.height.toDouble()
+    override val anchorDispX get() = (anchorX * baseBitmap.frameWidth.toDouble() - baseBitmap.frameOffsetX.toDouble())
+    override val anchorDispY get() = (anchorY * baseBitmap.frameHeight.toDouble() - baseBitmap.frameOffsetY.toDouble())
 
     override fun createInstance(): View = BaseImage(bitmap, anchorX, anchorY, hitShape, smoothing)
 
@@ -92,6 +96,11 @@ class Image(
 
     override fun createInstance(): View = Image(bitmap, anchorX, anchorY, hitShape, smoothing)
 
+    override fun renderInternal(ctx: RenderContext) {
+        lazyLoadRenderInternal(ctx, this)
+        super.renderInternal(ctx)
+    }
+
     override suspend fun forceLoadSourceFile(views: Views, currentVfs: VfsFile, sourceFile: String?) {
         baseForceLoadSourceFile(views, currentVfs, sourceFile)
         //println("### Trying to load sourceImage=$sourceImage")
@@ -104,13 +113,8 @@ class Image(
         }
     }
 
-    override fun renderInternal(ctx: RenderContext) {
-        lazyLoadRenderInternal(ctx, this)
-        super.renderInternal(ctx)
-    }
-
     override fun buildDebugComponent(views: Views, container: UiContainer) {
-        container.uiCollapsableSection("Image") {
+        container.uiCollapsibleSection("Image") {
             uiEditableValue(this@Image::sourceFile, kind = UiTextEditableValue.Kind.FILE(views.currentVfs) {
                 it.extensionLC == "png" || it.extensionLC == "jpg"
             })

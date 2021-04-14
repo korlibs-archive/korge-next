@@ -5,6 +5,8 @@ package com.soywiz.korio.file
 import com.soywiz.klock.*
 import com.soywiz.korio.async.*
 import com.soywiz.korio.file.std.*
+import com.soywiz.korio.internal.*
+import com.soywiz.korio.internal.min2
 import com.soywiz.korio.lang.*
 import com.soywiz.korio.stream.*
 import kotlinx.coroutines.channels.*
@@ -58,7 +60,7 @@ abstract class Vfs : AsyncCloseable {
 		handler: VfsProcessHandler = VfsProcessHandler()
 	): Int = unsupported()
 
-	open suspend fun open(path: String, mode: VfsOpenMode): AsyncStream = throw UnsupportedOperationException()
+	open suspend fun open(path: String, mode: VfsOpenMode): AsyncStream = unsupported()
 
 	open suspend fun openInputStream(path: String): AsyncInputStream = open(
 		path,
@@ -69,7 +71,7 @@ abstract class Vfs : AsyncCloseable {
 		val s = open(path, VfsOpenMode.READ)
 		try {
 			s.position = range.start
-			val readCount = min(Int.MAX_VALUE.toLong() - 1, (range.endInclusive - range.start)).toInt() + 1
+			val readCount = min2(Int.MAX_VALUE.toLong() - 1, (range.endInclusive - range.start)).toInt() + 1
 			return s.readBytesUpTo(readCount)
 		} finally {
 			s.close()

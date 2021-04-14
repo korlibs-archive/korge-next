@@ -2,6 +2,7 @@ package com.soywiz.korag
 
 import com.soywiz.kds.*
 import com.soywiz.kgl.KmlGl
+import com.soywiz.klogger.*
 import com.soywiz.kmem.*
 import com.soywiz.korag.shader.*
 import com.soywiz.korim.bitmap.*
@@ -40,16 +41,21 @@ abstract class AG : Extra by Extra.Mixin() {
 	var contextVersion = 0
 	abstract val nativeComponent: Any
 
-    fun contextLost() {
-        println("AG.contextLost() : $this")
+    open fun contextLost() {
+        Console.info("AG.contextLost()", this)
         contextVersion++
     }
 
 	open val maxTextureSize = Size(2048, 2048)
 
 	open val devicePixelRatio: Double = 1.0
+    open val pixelsPerInch: Double get() = 96.0
+
+    open fun beforeDoRender() {
+    }
 
     inline fun doRender(block: () -> Unit) {
+        beforeDoRender()
         mainRenderBuffer.init()
         setRenderBufferTemporally(mainRenderBuffer) {
             block()
@@ -258,36 +264,35 @@ abstract class AG : Extra by Extra.Mixin() {
 
 		fun bindEnsuring() {
 			bind()
-            if (!isFbo) {
-                val source = this.source
-                if (!uploaded) {
-                    if (!generating) {
-                        generating = true
-                        when (source) {
-                            is SyncBitmapSource -> {
-                                tempBitmap = source.gen()
-                                generated = true
-                            }
-                            is AsyncBitmapSource -> {
-                                asyncImmediately(source.coroutineContext) {
-                                    tempBitmap = source.gen()
-                                    generated = true
-                                }
-                            }
-                        }
-                    }
+            if (isFbo) return
+            val source = this.source
+            if (uploaded) return
 
-                    if (generated) {
-                        uploaded = true
-                        generating = false
-                        generated = false
-                        actualSyncUpload(source, tempBitmap, requestMipmaps)
-                        tempBitmap = null
-                        ready = true
+            if (!generating) {
+                generating = true
+                when (source) {
+                    is SyncBitmapSource -> {
+                        tempBitmap = source.gen()
+                        generated = true
+                    }
+                    is AsyncBitmapSource -> {
+                        launchImmediately(source.coroutineContext) {
+                            tempBitmap = source.gen()
+                            generated = true
+                        }
                     }
                 }
             }
-		}
+
+            if (generated) {
+                uploaded = true
+                generating = false
+                generated = false
+                actualSyncUpload(source, tempBitmap, requestMipmaps)
+                tempBitmap = null
+                ready = true
+            }
+        }
 
 		open fun actualSyncUpload(source: BitmapSourceBase, bmp: Bitmap?, requestMipmaps: Boolean) {
 		}
@@ -659,6 +664,9 @@ abstract class AG : Extra by Extra.Mixin() {
 
 	protected open fun flipInternal() = Unit
 
+    open fun startFrame() {
+    }
+
 	open fun clear(
 		color: RGBA = Colors.TRANSPARENT_BLACK,
 		depth: Float = 1f,
@@ -806,8 +814,8 @@ abstract class AG : Extra by Extra.Mixin() {
 			internal val EMPTY = UniformValues()
 		}
 
-		private val _uniforms = arrayListOf<Uniform>()
-		private val _values = arrayListOf<Any>()
+		private val _uniforms = FastArrayList<Uniform>()
+		private val _values = FastArrayList<Any>()
 		val uniforms = _uniforms as List<Uniform>
 
 		val keys get() = uniforms

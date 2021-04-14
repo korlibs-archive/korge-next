@@ -33,7 +33,7 @@ import com.soywiz.krypto.encoding.*
  * [View] itself can't contain children, but the [Container] class and subclasses allow to have children.
  * Typical non-container views are: [Image], [SolidRect] or [Text].
  *
- * Most views doesn't have the concept of size. They act just as points (x,y) or rather affine transforms (since they also include scale, rotation and skew)
+ * Most views don't have the concept of size. They act just as points (x,y) or rather affine transforms (since they also include scale, rotation and skew)
  *
  * ## Properties
  *
@@ -52,7 +52,7 @@ import com.soywiz.krypto.encoding.*
  */
 @OptIn(KorgeInternal::class)
 abstract class View internal constructor(
-    /** Indicates if this class is a container or not. This is only overrided by Container. This check is performed like this, to avoid type checks. That might be an expensive operation in some targets. */
+    /** Indicates if this class is a container or not. This is only overridden by Container. This check is performed like this, to avoid type checks. That might be an expensive operation in some targets. */
     val isContainer: Boolean
 ) : BaseView(), Renderable
     , Extra
@@ -88,27 +88,53 @@ abstract class View internal constructor(
 
     @KorgeInternal
     @PublishedApi
-    internal var _children: ArrayList<View>? = null
+    internal var _children: FastArrayList<View>? = null
 
     /** Iterates all the children of this container in normal order of rendering. */
+    inline fun forEachChild(callback: (child: View) -> Unit) = _children?.fastForEach(callback)
+
+    /** Iterates all the children of this container in normal order of rendering. */
+    @Deprecated(
+        message = "An older name of `forEachChild`",
+        replaceWith = ReplaceWith("forEachChild(callback)"),
+        level = DeprecationLevel.WARNING
+    )
     inline fun forEachChildren(callback: (child: View) -> Unit) = _children?.fastForEach(callback)
 
     /** Iterates all the children of this container in normal order of rendering. Providing an index in addition to the child to the callback. */
+    inline fun forEachChildWithIndex(callback: (index: Int, child: View) -> Unit) =
+        _children?.fastForEachWithIndex(callback)
+
+    /** Iterates all the children of this container in normal order of rendering. Providing an index in addition to the child to the callback. */
+    @Deprecated(
+        message = "An older name of `forEachChildWithIndex`",
+        replaceWith = ReplaceWith("forEachChildWithIndex(callback)"),
+        level = DeprecationLevel.WARNING
+    )
     inline fun forEachChildrenWithIndex(callback: (index: Int, child: View) -> Unit) =
         _children?.fastForEachWithIndex(callback)
 
     /** Iterates all the children of this container in reverse order of rendering. */
+    inline fun forEachChildReversed(callback: (child: View) -> Unit) = _children?.fastForEachReverse(callback)
+
+    /** Iterates all the children of this container in reverse order of rendering. */
+    @Deprecated(
+        message = "An older name of `forEachChildReversed`",
+        replaceWith = ReplaceWith("forEachChildReversed(callback)"),
+        level = DeprecationLevel.WARNING
+    )
     inline fun forEachChildrenReversed(callback: (child: View) -> Unit) = _children?.fastForEachReverse(callback)
 
     /** Indicates if this view is going to propagate the events that reach this node to its children */
     var propagateEvents = true
 
     /**
-     * Views marked with this, break batching by acting as reference point for computing vertices.
-     * Specially useful for containers whose most of their child are less likely to change but the container
-     * itself is going to change like cameras, viewports and the Stage.
+     * Views marked with this, break batching by acting as a reference point to compute vertices.
+     * Specially useful for containers most children of which are less likely to change while the containers
+     * themselves are going to change (like cameras, viewports and the [Stage]).
      */
     interface Reference // View that breaks batching Viewport
+    interface ColorReference // View that breaks batching Viewport
 
     open var hitShape: VectorPath? = null
     open var hitShapes: List<VectorPath>? = null
@@ -178,9 +204,8 @@ abstract class View internal constructor(
     private var _skewY: Angle = 0.0.radians
     private var _rotation: Angle = 0.0.radians
 
-    /** Position of the view. **@NOTE**: If plan to change its values manually. You should call [View.invalidateMatrix] later to keep the matrix in sync */
+    /** Position of the view. **@NOTE**: If [pos] coordinates are manually changed, you should call [View.invalidateMatrix] later to keep the matrix in sync */
     var pos = Point()
-        get() = field
         set(value) {
             field.copyFrom(value)
             invalidateMatrix()
@@ -204,67 +229,61 @@ abstract class View internal constructor(
             }
         }
 
+    /*
+    var xf: Float get() = x.toFloat() ; set(v) { x = v.toDouble() }
+
+    var yf: Float get() = y.toFloat() ; set(v) { y = v.toDouble() }
+
+    var scaleXf: Float
+        get() = ensureTransform()._scaleXf
+        set(v) { ensureTransform(); if (_scaleXf != v) { _scaleXf = v; invalidateMatrix() } }
+
+    var scaleYf: Float
+        get() = ensureTransform()._scaleYf
+        set(v) { ensureTransform(); if (_scaleYf != v) { _scaleYf = v; invalidateMatrix() } }
+
+    var scalef: Float get() = scale.toFloat() ; set(v) { scale = v.toDouble() }
+    */
+
     /** Local scaling in the X axis of this view */
     var scaleX: Double
         get() = ensureTransform()._scaleX
-        set(v) {
-            ensureTransform(); if (_scaleX != v) {
-                _scaleX = v; invalidateMatrix()
-            }
-        }
+        set(v) { ensureTransform(); if (_scaleX != v) { _scaleX = v; invalidateMatrix() } }
 
     /** Local scaling in the Y axis of this view */
     var scaleY: Double
         get() = ensureTransform()._scaleY
-        set(v) {
-            ensureTransform(); if (_scaleY != v) {
-                _scaleY = v; invalidateMatrix()
-            }
-        }
+        set(v) { ensureTransform(); if (_scaleY != v) { _scaleY = v; invalidateMatrix() } }
 
     /** Allows to change [scaleX] and [scaleY] at once. Returns the mean value of x and y scales. */
     var scale: Double
-        get() = (scaleX + scaleY) / 2.0
-        set(v) {
-            scaleX = v; scaleY = v
-        }
+        get() = (scaleX + scaleY) / 2f
+        set(v) { scaleX = v; scaleY = v }
 
     /** Local skewing in the X axis of this view */
     var skewX: Angle
         get() = ensureTransform()._skewX
-        set(v) { ensureTransform(); if (_skewX != v) {
-            _skewX = v; invalidateMatrix()
-        } }
+        set(v) { ensureTransform(); if (_skewX != v) { _skewX = v; invalidateMatrix() } }
 
     /** Local skewing in the Y axis of this view */
     var skewY: Angle
         get() = ensureTransform()._skewY
-        set(v) { ensureTransform(); if (_skewY != v) {
-            _skewY = v; invalidateMatrix()
-        } }
+        set(v) { ensureTransform(); if (_skewY != v) { _skewY = v; invalidateMatrix() } }
 
     /** Local rotation of this view */
     var rotation: Angle
         get() = ensureTransform()._rotation
-        set(v) {
-            ensureTransform(); if (_rotation != v) {
-                _rotation = v; invalidateMatrix()
-            }
-        }
+        set(v) { ensureTransform(); if (_rotation != v) { _rotation = v; invalidateMatrix() } }
 
     /** The global x position of this view */
     var globalX: Double
         get() = parent?.localToGlobalX(x, y) ?: x;
-        set(value) {
-            x = parent?.globalToLocalX(value, globalY) ?: value
-        }
+        set(value) { x = parent?.globalToLocalX(value, globalY) ?: value }
 
     /** The global y position of this view */
     var globalY: Double
         get() = parent?.localToGlobalY(x, y) ?: y;
-        set(value) {
-            y = parent?.globalToLocalY(globalX, value) ?: value
-        }
+        set(value) { y = parent?.globalToLocalY(globalX, value) ?: value }
 
     /**
      * Changes the [width] and [height] to match the parameters.
@@ -287,6 +306,7 @@ abstract class View internal constructor(
      */
     open var width: Double
         get() = getLocalBounds().width
+        @Deprecated("Shouldn't set width but scaleWidth instead")
         set(value) {
             scaleX = (if (scaleX == 0.0) 1.0 else scaleX) * (value / width)
         }
@@ -299,6 +319,7 @@ abstract class View internal constructor(
      */
     open var height: Double
         get() = getLocalBounds().height
+        @Deprecated("Shouldn't set height but scaleHeight instead")
         set(value) {
             scaleY = (if (scaleY == 0.0) 1.0 else scaleY) * (value / getLocalBounds().height)
         }
@@ -334,8 +355,10 @@ abstract class View internal constructor(
     var colorMul: RGBA
         get() = _colorTransform.colorMul
         set(v) {
-            _colorTransform.colorMul = v
-            invalidateColorTransform()
+            if (v != _colorTransform.colorMul) {
+                _colorTransform.colorMul = v
+                invalidateColorTransform()
+            }
         }
 
     /**
@@ -347,8 +370,10 @@ abstract class View internal constructor(
     var colorAdd: ColorAdd
         get() = _colorTransform.colorAdd;
         set(v) {
-            _colorTransform.colorAdd = v
-            invalidateColorTransform()
+            if (v != _colorTransform.colorAdd) {
+                _colorTransform.colorAdd = v
+                invalidateColorTransform()
+            }
         }
 
     /**
@@ -358,8 +383,10 @@ abstract class View internal constructor(
     var alpha: Double
         get() = _colorTransform.mA;
         set(v) {
-            _colorTransform.mA = v
-            invalidateColorTransform()
+            if (v != _colorTransform.mA) {
+                _colorTransform.mA = v
+                invalidateColorTransform()
+            }
         }
 
     /** Alias for [colorMul] to make this familiar to people coming from other engines. */
@@ -376,8 +403,8 @@ abstract class View internal constructor(
         if (!validLocalProps) {
             validLocalProps = true
             val t = tempTransform.setMatrix(this._localMatrix)
-            this.pos.x = t.x
-            this.pos.y = t.y
+            this.pos.xf = t.xf
+            this.pos.yf = t.yf
             this._scaleX = t.scaleX
             this._scaleY = t.scaleY
             this._skewX = t.skewX
@@ -390,7 +417,7 @@ abstract class View internal constructor(
     /** The ancestor view without parents. When attached (visible or invisible), this is the [Stage]. When no parents, it is [this] */
     val root: View get() = parent?.root ?: this
 
-    /** When included in the three, this returns the stage. When not attached yet, this will return null. */
+    /** When included in the tree, this returns the stage. When not attached yet, this will return null. */
     open val stage: Stage? get() = root as? Stage?
 
     /** Determines if mouse events will be handled for this view and its children */
@@ -444,7 +471,7 @@ abstract class View internal constructor(
     @KorgeInternal
     fun _setTransform(t: Matrix.Transform) {
         //transform.toMatrix(_localMatrix)
-        pos.x = t.x; pos.y = t.y
+        pos.xf = t.xf; pos.yf = t.yf
         _scaleX = t.scaleX; _scaleY = t.scaleY
         _skewX = t.skewY; _skewY = t.skewY
         _rotation = t.rotation
@@ -532,7 +559,10 @@ abstract class View internal constructor(
     var colorTransform: ColorTransform
         get() = _colorTransform
         set(v) {
-            _colorTransform.copyFrom(v); invalidate()
+            if (v != _colorTransform) {
+                _colorTransform.copyFrom(v)
+                invalidate()
+            }
         }
 
     private var _renderColorTransform = ColorTransform(1.0, 1.0, 1.0, 1.0, 0, 0, 0, 0)
@@ -548,7 +578,7 @@ abstract class View internal constructor(
                 _requireInvalidateColor = true
                 when {
                     parent != null && parent?.filter != null -> _renderColorTransform.copyFrom(_colorTransform)
-                    parent != null && this !is View.Reference -> _renderColorTransform.setToConcat(
+                    parent != null && this !is View.ColorReference -> _renderColorTransform.setToConcat(
                         _colorTransform,
                         parent!!.renderColorTransform
                     )
@@ -637,7 +667,7 @@ abstract class View internal constructor(
 
     /**
      * An optional [Filter] attached to this view.
-     * Filters allow to render this view to a texture, and to controls how to render that texture (using shaders, repeating the texture, etc.).
+     * Filters allow to render this view to a texture, and to control how to render that texture (using shaders, repeating the texture, etc.).
      * You add multiple filters by creating a composite filter [ComposedFilter].
      */
     var filter: Filter? = null
@@ -686,9 +716,9 @@ abstract class View internal constructor(
     protected open fun renderDebugAnnotationsInternal(ctx: RenderContext) {
         //println("DEBUG ANNOTATE VIEW!")
         //ctx.flush()
-        val local = getLocalBounds()
+        val local = getLocalBounds(doAnchoring = true)
         ctx.debugLineRenderContext.drawVector(Colors.RED) {
-            rect(globalBounds)
+            rect(windowBounds)
         }
         ctx.debugLineRenderContext.drawVector(Colors.WHITE) {
             moveTo(localToGlobal(Point(local.left, local.top)))
@@ -1025,34 +1055,62 @@ abstract class View internal constructor(
     //	return out
     //}
 
+    //fun getConcatMatrix(target: View, out: Matrix = Matrix()): Matrix = getConcatMatrix(target, false, out)
+
     /**
      * Gets the concatenated [Matrix] of this [View] up to the [target] view.
+     * If [inclusive] is true, the concatenated matrix will include the [target] view too.
      * Allows to define an [out] matrix that will hold the result to prevent allocations.
      */
-    fun getConcatMatrix(target: View, out: Matrix = Matrix()): Matrix {
-        return getConcatMatrix(target, false, out)
-    }
-
-    fun getConcatMatrix(target: View, inclusive: Boolean, out: Matrix = Matrix()): Matrix {
+    fun getConcatMatrix(target: View, out: Matrix = Matrix(), inclusive: Boolean = false): Matrix {
         when {
             target === parent -> out.copyFrom(this.localMatrix)
             target === this -> out.identity()
-            // @TODO: Verify
-            View.commonAncestor(this, target) != null -> out.multiply(this.globalMatrix, target.globalMatrixInv)
-            //View.commonAncestor(this, target) != null -> out.multiply(target.globalMatrixInv, this.globalMatrix)
-            else -> out.identity()
+            else -> {
+                val commonAncestor = View.commonAncestor(this, target)
+                when {
+                    commonAncestor !== null -> {
+                        if (target.parent == null && inclusive) {
+                            return out.copyFrom(globalMatrix)
+                        }
+                        out.multiply(globalMatrix, target.globalMatrixInv)
+                    }
+                    else -> {
+                        out.identity()
+                    }
+                }
+            }
         }
         if (inclusive) {
-            out.premultiply(target.localMatrix)
+            out.multiply(out, target.localMatrix)
+        }
+        return out
+    }
+
+    fun getConcatMatrixAccurateSlow(target: View, out: Matrix = Matrix(), inclusive: Boolean = false): Matrix {
+        out.identity()
+        if (target !== this) {
+            var current: View? = this
+            val stopAt = if (inclusive) target.parent else target
+            while (current !== null && current !== stopAt) {
+                out.multiply(out, current.localMatrix) // Verified
+                current = current.parent
+            }
         }
         return out
     }
 
     /** Returns the global bounds of this object. Note this incurs in allocations. Use [getGlobalBounds] (out) to avoid it */
+    val windowBounds: Rectangle get() = getWindowBounds()
+
+    /** Returns the global bounds of this object. Allows to specify an [out] [Rectangle] to prevent allocations. */
+    fun getWindowBounds(out: Rectangle = Rectangle()): Rectangle = getBounds(root, out, inclusive = true)
+
+    /** Returns the global bounds of this object. Note this incurs in allocations. Use [getGlobalBounds] (out) to avoid it */
     val globalBounds: Rectangle get() = getGlobalBounds()
 
     /** Returns the global bounds of this object. Allows to specify an [out] [Rectangle] to prevent allocations. */
-    fun getGlobalBounds(out: Rectangle = Rectangle()): Rectangle = getBounds(this.root, out)
+    fun getGlobalBounds(out: Rectangle = Rectangle()): Rectangle = getBounds(root, out, inclusive = false)
 
     // @TODO: Would not include strokes
     //fun getRect(target: View? = this, out: Rectangle = Rectangle()): Rectangle = TODO()
@@ -1061,62 +1119,62 @@ abstract class View internal constructor(
     private val boundsTemp = Matrix()
     private val bb = BoundsBuilder()
 
-    fun getBounds(target: View? = this, out: Rectangle = Rectangle()): Rectangle {
-        return getBounds(target, true, out)
+    fun getBoundsNoAnchoring(target: View? = this, out: Rectangle = Rectangle(), inclusive: Boolean = false): Rectangle {
+        return getBounds(target, out, false, inclusive)
     }
 
-    fun getBoundsNoAnchoring(target: View? = this, out: Rectangle = Rectangle()): Rectangle {
-        return getBounds(target, false, out)
-    }
+    protected fun _getBounds(concat: Matrix?, out: Rectangle = Rectangle(), doAnchoring: Boolean = true): Rectangle {
+        getLocalBounds(out, doAnchoring)
 
-    fun getBounds(target: View? = this, doAnchoring: Boolean, out: Rectangle = Rectangle()): Rectangle {
-        getLocalBounds(doAnchoring, out)
+        if (concat != null && !concat.isIdentity()) {
+            val p1x = out.left
+            val p1y = out.top
 
-        if (target === parent && localMatrix.isIdentity()) return out
+            val p2x = out.right
+            val p2y = out.top
 
-        val p1x = out.left
-        val p1y = out.top
+            val p3x = out.right
+            val p3y = out.bottom
 
-        val p2x = out.right
-        val p2y = out.top
+            val p4x = out.left
+            val p4y = out.bottom
 
-        val p3x = out.right
-        val p3y = out.bottom
+            bb.reset()
+            bb.add(concat.transformX(p1x, p1y), concat.transformY(p1x, p1y))
+            bb.add(concat.transformX(p2x, p2y), concat.transformY(p2x, p2y))
+            bb.add(concat.transformX(p3x, p3y), concat.transformY(p3x, p3y))
+            bb.add(concat.transformX(p4x, p4y), concat.transformY(p4x, p4y))
 
-        val p4x = out.left
-        val p4y = out.bottom
-
-        //val concat = (parent ?: this).getConcatMatrix(target ?: this)
-        val concat = this.getConcatMatrix(target ?: this, boundsTemp)
-
-        bb.reset()
-        bb.add(concat.transformX(p1x, p1y), concat.transformY(p1x, p1y))
-        bb.add(concat.transformX(p2x, p2y), concat.transformY(p2x, p2y))
-        bb.add(concat.transformX(p3x, p3y), concat.transformY(p3x, p3y))
-        bb.add(concat.transformX(p4x, p4y), concat.transformY(p4x, p4y))
-
-        bb.getBounds(out)
+            bb.getBounds(out)
+        }
         return out
     }
 
+    fun getBounds(target: View? = this, out: Rectangle = Rectangle(), doAnchoring: Boolean = true, inclusive: Boolean = false): Rectangle {
+        return _getBounds(this.getConcatMatrix(target ?: this, boundsTemp, inclusive), out, doAnchoring)
+    }
+
     /**
-     * Get local bounds of the view. Allows to specify [out] [Rectangle] if you want to reuse an object.
      * **NOTE:** that if [out] is not provided, the [Rectangle] returned shouldn't stored and modified since it is owned by this class.
      */
-    fun getLocalBounds(out: Rectangle = Rectangle()) = out.apply { getLocalBoundsInternal(out) }
+    fun getLocalBoundsOptimized(): Rectangle = getLocalBounds(_localBounds)
 
-    fun getLocalBoundsOptimized(out: Rectangle = _localBounds) = out.apply { getLocalBoundsInternal(out) }
-
-    fun getLocalBounds(doAnchoring: Boolean, out: Rectangle = _localBounds) = getLocalBounds(out).also {
+    /**
+     * Get local bounds of the view. Allows to specify [out] [Rectangle] if you want to reuse an object.
+     */
+    fun getLocalBounds(out: Rectangle = Rectangle(), doAnchoring: Boolean = true): Rectangle {
+        getLocalBoundsInternal(out)
+        val it = out
         if (!doAnchoring) {
             it.x += anchorDispX
             it.y += anchorDispY
         }
+        return it
     }
 
     private val _localBounds: Rectangle = Rectangle()
     open fun getLocalBoundsInternal(out: Rectangle = _localBounds): Unit {
-        out.setTo(0, 0, 0, 0)
+        out.clear()
     }
 
     protected open fun createInstance(): View =
@@ -1145,7 +1203,7 @@ abstract class View internal constructor(
         if (this.name == name) return this
         if (this.isContainer) {
             //(this as Container).children.fastForEach { child ->
-            (this as Container).forEachChildren { child ->
+            (this as Container).forEachChild { child: View ->
                 val named = child.findViewByName(name)
                 if (named != null) return named
             }
@@ -1156,7 +1214,7 @@ abstract class View internal constructor(
     /**
      * Allows to clone this view.
      * This method is inadvisable in normal circumstances.
-     * This might not work property if the [View] doesn't override the [createInstance] method.
+     * This might not work properly if the [View] doesn't override the [createInstance] method.
      */
     open fun clone(): View = createInstance().apply {
         this@apply.copyPropsFrom(this@View)
@@ -1179,12 +1237,12 @@ abstract class View internal constructor(
         extraBuildDebugComponent?.invoke(views, view, container)
 
         if (filter != null) {
-            container.uiCollapsableSection("Filter") {
+            container.uiCollapsibleSection("Filter") {
                 filter!!.buildDebugComponent(views, this)
             }
         }
 
-        container.uiCollapsableSection("View") {
+        container.uiCollapsibleSection("View") {
             addChild(UiRowEditableValue(app, "type", UiLabel(app).also { it.text = view::class.simpleName ?: "Unknown" }))
             uiEditableValue(view::name)
             uiEditableValue(view::colorMul)
@@ -1210,7 +1268,7 @@ abstract class View internal constructor(
 val View.width: Double get() = unscaledWidth
 val View.height: Double get() = unscaledHeight
 
-// Doesn't seems to work
+// Doesn't seem to work
 //operator fun <T : View, R> T.invoke(callback: T.() -> R): R = this.apply(callback)
 
 
@@ -1289,20 +1347,20 @@ class ViewTransform(var view: View) {
 */
 
 /**
- * Determines if the local coords [x], [y], hits this view or any of this descendants.
- * Returns the view hitting or null
+ * Determines if the given coords [x] and [y] hit this view or any of its descendants.
+ * Returns the view that was hit or null
  */
 fun View.hitTest(x: Int, y: Int): View? = hitTest(x.toDouble(), y.toDouble())
 
 /**
- * Determines if the local coords [pos], hits this view or any of this descendants.
- * Returns the view hitting or null
+ * Determines if the given coords [pos] hit this view or any of its descendants.
+ * Returns the view that was hit or null
  */
 fun View.hitTest(pos: IPoint): View? = hitTest(pos.x, pos.y)
 //fun View.hitTest(pos: Point): View? = hitTest(pos.x, pos.y)
 
 /**
- * Checks if this view has an [ancestor].
+ * Checks if this view has the specified [ancestor].
  */
 fun View.hasAncestor(ancestor: View): Boolean {
     return if (this == ancestor) true else this.parent?.hasAncestor(ancestor) ?: false
@@ -1315,7 +1373,7 @@ fun View?.commonAncestor(ancestor: View?): View? {
 /**
  * Replaces this view in its parent with [view].
  * Returns true if the replacement was successful.
- * If this view doesn't have a parent or [view] is the same as [this], returns null.
+ * If this view doesn't have a parent or [view] is the same as [this], returns false.
  */
 @OptIn(KorgeInternal::class)
 fun View.replaceWith(view: View): Boolean {
@@ -1343,6 +1401,16 @@ fun <T : View> T.addUpdater(updatable: T.(dt: TimeSpan) -> Unit): Cancellable {
     return Cancellable { component.detach() }
 }
 
+fun <T : View> T.addUpdaterWithViews(updatable: T.(views: Views, dt: TimeSpan) -> Unit): Cancellable {
+    val component = object : UpdateComponentWithViews {
+        override val view: View get() = this@addUpdaterWithViews
+        override fun update(views: Views, dt: TimeSpan) {
+            updatable(this@addUpdaterWithViews, views, dt)
+        }
+    }.attach()
+    return Cancellable { component.detach() }
+}
+
 fun <T : View> T.addOptFixedUpdater(time: TimeSpan = TimeSpan.NIL, updatable: T.(dt: TimeSpan) -> Unit): Cancellable = when (time) {
     TimeSpan.NIL -> addUpdater(updatable)
     else -> addFixedUpdater(time) { updatable(time) }
@@ -1358,7 +1426,7 @@ fun <T : View> T.addFixedUpdater(
 /**
  * Adds an [updatable] block that will be executed every [time] time, the calls will be discretized on each frame and will handle accumulations.
  * The [initial] properly allows to adjust if the [updatable] will be called immediately after calling this function.
- * To avoid executing too much blocks, when there is a long pause, [limitCallsPerFrame] limits the number of times the block can be executed in a single frame.
+ * To avoid executing too many blocks, when there is a long pause, [limitCallsPerFrame] limits the number of times the block can be executed in a single frame.
  */
 fun <T : View> T.addFixedUpdater(
     time: TimeSpan,
@@ -1366,7 +1434,6 @@ fun <T : View> T.addFixedUpdater(
     limitCallsPerFrame: Int = 16,
     updatable: T.() -> Unit
 ): Cancellable {
-    val tickTime = time
     var accum = 0.0.milliseconds
     val component = object : UpdateComponent {
         override val view: View get() = this@addFixedUpdater
@@ -1374,8 +1441,8 @@ fun <T : View> T.addFixedUpdater(
             accum += dt
             //println("UPDATE: accum=$accum, tickTime=$tickTime")
             var calls = 0
-            while (accum >= tickTime * 0.75) {
-                accum -= tickTime
+            while (accum >= time * 0.75) {
+                accum -= time
                 updatable(this@addFixedUpdater)
                 calls++
                 if (calls >= limitCallsPerFrame) {
@@ -1386,7 +1453,7 @@ fun <T : View> T.addFixedUpdater(
             }
             if (calls > 0) {
                 // Do not accumulate for small fractions since this would cause hiccups!
-                if (accum < tickTime * 0.25) {
+                if (accum < time * 0.25) {
                     accum = 0.0.milliseconds
                 }
             }
@@ -1415,12 +1482,10 @@ fun <T : View> T.onNextFrame(updatable: T.(views: Views) -> Unit) {
 // @TODO: This should be computed and invalidated when a view is attached to a container
 val View?.ancestorCount: Int get() {
     var count = 0
-    var node = this
-    while (node != null) {
-        node = node.parent
-        if (node != null) {
-            count++
-        }
+    var parent = this?.parent
+    while (parent != null) {
+        count++
+        parent = parent.parent
     }
     return count
     /*
@@ -1455,7 +1520,7 @@ val View?.ancestors: List<View> get() = ancestorsUpTo(null)
 fun View?.dump(indent: String = "", emit: (String) -> Unit = ::println) {
     emit("$indent$this")
     if (this != null && this.isContainer) {
-        this.forEachChildren { child ->
+        this.forEachChild { child: View ->
             child.dump("$indent ", emit)
         }
     }
@@ -1472,14 +1537,14 @@ fun View?.dumpToString(): String {
 }
 
 /**
- * Iterates all the descendants [View]s including this calling the [handler].
+ * Iterates all the descendant [View]s including this calling the [handler].
  * Iteration happens in [Pre-order (NLR)](https://en.wikipedia.org/wiki/Tree_traversal#Pre-order_(NLR)).
  */
 fun View?.foreachDescendant(handler: (View) -> Unit) {
     if (this != null) {
         handler(this)
         if (this.isContainer) {
-            this.forEachChildren { child ->
+            this.forEachChild { child: View ->
                 child.foreachDescendant(handler)
             }
         }
@@ -1548,7 +1613,7 @@ fun View?.firstDescendantWith(check: (View) -> Boolean): View? {
     if (this == null) return null
     if (check(this)) return this
     if (this.isContainer) {
-        this.forEachChildren { child ->
+        this.forEachChild { child: View ->
             val res = child.firstDescendantWith(check)
             if (res != null) return res
         }
@@ -1561,7 +1626,7 @@ fun View?.descendantsWith(out: ArrayList<View> = arrayListOf(), check: (View) ->
     if (this != null) {
         if (check(this)) out += this
         if (this.isContainer) {
-            this.forEachChildren { child ->
+            this.forEachChild { child: View ->
                 child.descendantsWith(out, check)
             }
         }
@@ -1598,12 +1663,12 @@ fun <T : View> T.positionY(y: Float): T = positionY(y.toDouble())
 fun <T : View> T.positionY(y: Int): T = positionY(y.toDouble())
 
 fun View.getPositionRelativeTo(view: View, out: Point = Point()): Point {
-    val mat = this.parent!!.getConcatMatrix(view, false)
+    val mat = this.parent!!.getConcatMatrix(view, inclusive = false)
     return mat.transform(pos, out)
 }
 
 fun View.setPositionRelativeTo(view: View, pos: Point) {
-    val mat = this.parent!!.getConcatMatrix(view, false)
+    val mat = this.parent!!.getConcatMatrix(view, inclusive = false)
     val matInv = mat.inverted()
     val out = matInv.transform(pos)
     this.x = out.x
@@ -1611,12 +1676,12 @@ fun View.setPositionRelativeTo(view: View, pos: Point) {
 }
 
 fun View.getPointRelativeTo(pos: Point, view: View, out: Point = Point()): Point {
-    val mat = this.getConcatMatrix(view, false)
+    val mat = this.getConcatMatrix(view, inclusive = false)
     return mat.transform(pos, out)
 }
 
 fun View.getPointRelativeToInv(pos: Point, view: View, out: Point = Point()): Point {
-    val mat = this.getConcatMatrix(view, false)
+    val mat = this.getConcatMatrix(view, inclusive = false)
     val matInv = mat.inverted()
     matInv.transform(pos, out)
     return out
@@ -1672,15 +1737,17 @@ fun <T : View> T.alignXY(other: View, ratio: Double, inside: Boolean, doX: Boole
     //val parent = this.parent
     //val bounds = other.getBoundsNoAnchoring(this)
     val bounds = other.getBoundsNoAnchoring(parent)
+    val localBounds = this.getLocalBoundsOptimized()
+
     //bounds.setTo(other.x, other.y, other.unscaledWidth, other.unscaledHeight)
     val ratioM1_1 = (ratio * 2 - 1)
     val rratioM1_1 = if (inside) ratioM1_1 else -ratioM1_1
     val iratio = if (inside) ratio else 1.0 - ratio
     //println("this: $this, other: $other, bounds=$bounds, scaledWidth=$scaledWidth, scaledHeight=$scaledHeight, width=$width, height=$height, scale=$scale, $scaleX, $scaleY")
     if (doX) {
-        x = (bounds.x + (bounds.width * ratio)) - (this.scaledWidth * iratio) - (padding * rratioM1_1)
+        x = (bounds.x + (bounds.width * ratio) - localBounds.left) - (this.scaledWidth * iratio) - (padding * rratioM1_1)
     } else {
-        y = (bounds.y + (bounds.height * ratio)) - (this.scaledHeight * iratio) - (padding * rratioM1_1)
+        y = (bounds.y + (bounds.height * ratio) - localBounds.top) - (this.scaledHeight * iratio) - (padding * rratioM1_1)
     }
     return this
 }

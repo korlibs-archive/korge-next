@@ -1,7 +1,9 @@
 package com.soywiz.kds.internal
 
+@PublishedApi
 internal infix fun Int.divCeil(that: Int): Int = if (this % that != 0) (this / that) + 1 else (this / that)
 
+@PublishedApi
 internal infix fun Int.umod(other: Int): Int {
     val remainder = this % other
     return when {
@@ -10,7 +12,9 @@ internal infix fun Int.umod(other: Int): Int {
     }
 }
 
+@PublishedApi
 internal fun ilog2(v: Int): Int = kotlin.math.log2(v.toDouble()).toInt()
+@PublishedApi
 internal fun ilog2Ceil(v: Int): Int = kotlin.math.ceil(kotlin.math.log2(v.toDouble())).toInt()
 
 //private val ilog2_tab32 = intArrayOf(
@@ -80,3 +84,12 @@ internal inline fun equaler(count: Int, gen: (index: Int) -> Boolean): Boolean {
     for (n in 0 until count) if (!gen(n)) return false
     return true
 }
+
+@PublishedApi internal fun min2(a: Int, b: Int) = if (a < b) a else b
+@PublishedApi internal fun max2(a: Int, b: Int) = if (a > b) a else b
+
+@PublishedApi internal fun min2(a: Float, b: Float) = if (a < b) a else b
+@PublishedApi internal fun max2(a: Float, b: Float) = if (a > b) a else b
+
+@PublishedApi internal fun min2(a: Double, b: Double) = if (a < b) a else b
+@PublishedApi internal fun max2(a: Double, b: Double) = if (a > b) a else b

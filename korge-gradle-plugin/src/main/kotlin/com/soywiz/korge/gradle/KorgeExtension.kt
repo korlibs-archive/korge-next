@@ -1,9 +1,13 @@
 package com.soywiz.korge.gradle
 
 import com.soywiz.korge.gradle.bundle.KorgeBundles
-import com.soywiz.korge.gradle.targets.desktop.DESKTOP_NATIVE_TARGETS
+import com.soywiz.korge.gradle.targets.android.*
+import com.soywiz.korge.gradle.targets.desktop.*
+import com.soywiz.korge.gradle.targets.ios.*
+import com.soywiz.korge.gradle.targets.isMacos
+import com.soywiz.korge.gradle.targets.js.*
+import com.soywiz.korge.gradle.targets.jvm.*
 import com.soywiz.korge.gradle.util.*
-import com.sun.net.httpserver.*
 import org.gradle.api.*
 import java.io.*
 import groovy.text.*
@@ -13,7 +17,6 @@ import java.net.*
 import java.time.*
 import java.util.*
 import kotlin.collections.LinkedHashMap
-import kotlin.reflect.*
 
 enum class Orientation(val lc: String) { DEFAULT("default"), LANDSCAPE("landscape"), PORTRAIT("portrait") }
 
@@ -83,9 +86,127 @@ data class MavenLocation(val group: String, val name: String, val version: Strin
 
 @Suppress("unused")
 class KorgeExtension(val project: Project) {
-	internal fun init() {
-		// Do nothing, but serves to be referenced to be installed
+    private var includeIndirectAndroid: Boolean = false
+	internal fun init(includeIndirectAndroid: Boolean) {
+	    this.includeIndirectAndroid = includeIndirectAndroid
 	}
+
+    internal var targets = LinkedHashSet<String>()
+
+    private fun target(name: String, block: () -> Unit) {
+        if (!targets.contains(name)) {
+            targets.add(name)
+            block()
+        }
+    }
+
+    /**
+     * Configures JVM target
+     */
+    fun targetJvm() {
+        target("jvm") {
+            project.configureJvm()
+        }
+    }
+
+    /**
+     * Configures JavaScript target
+     */
+    fun targetJs() {
+        target("js") {
+            project.configureJavaScript()
+        }
+    }
+
+    /**
+     * Configures Desktop targets depending on the host:
+     *
+     * - mingwX64
+     * - linuxX64
+     * - macosX64
+     */
+    fun targetDesktop() {
+        target("desktop") {
+            project.configureNativeDesktop()
+        }
+    }
+
+    /**
+     * Configures Android indirect. Alias for [targetAndroidIndirect]
+     */
+    fun targetAndroid() {
+        targetAndroidIndirect()
+    }
+
+    /**
+     * Configures android in this project tightly integrated, and creates src/main default stuff
+     *
+     * Android SDK IS required even if android tasks are not executed.
+     */
+    fun targetAndroidDirect() {
+        target("android") {
+            project.configureAndroidDirect()
+        }
+    }
+
+    /**
+     * Configures android as a separate project in: build/platforms/android
+     *
+     * Android SDK not required if tasks are not executed.
+     * The project can be opened on Android Studio.
+     */
+    fun targetAndroidIndirect() {
+        target("android") {
+            project.configureAndroidIndirect()
+        }
+    }
+
+    /**
+     * Configures Kotlin/Native iOS target (only on macOS)
+     */
+    fun targetIos() {
+        target("ios") {
+            if (isMacos) {
+                project.configureNativeIos()
+            }
+        }
+    }
+
+    /**
+     * Uses gradle.properties and system environment variables to determine which targets to enable. JVM is always enabled.
+     *
+     * gradle.properties:
+     * - korge.enable.desktop=true
+     * - korge.enable.android.indirect=true
+     * - korge.enable.android.direct=true
+     * - korge.enable.ios=true
+     * - korge.enable.js=true
+     *
+     * Environment Variables:
+     * - KORGE_ENABLE_DESKTOP
+     * - KORGE_ENABLE_ANDROID_INDIRECT
+     * - KORGE_ENABLE_ANDROID_DIRECT
+     * - KORGE_ENABLE_ANDROID_IOS
+     * - KORGE_ENABLE_ANDROID_JS
+     */
+    fun targetDefault() {
+        if (newDesktopEnabled) targetDesktop()
+        if (newAndroidIndirectEnabled) targetAndroidIndirect()
+        if (newAndroidDirectEnabled) targetAndroidDirect()
+        if (newIosEnabled) targetIos()
+        if (newJsEnabled) targetJs()
+    }
+
+    /**
+     * Configure all the available targets unconditionally.
+     */
+    fun targetAll() {
+        targetJvm()
+        targetJs()
+        targetDesktop()
+        targetAndroid()
+        targetIos()
+    }
 
     val bundles = KorgeBundles(project)
 
@@ -95,10 +216,12 @@ class KorgeExtension(val project: Project) {
     val DEFAULT_JVM_TARGET = "1.8"
     //val DEFAULT_JVM_TARGET = "1.6"
 	var jvmTarget: String = project.findProject("jvm.target")?.toString() ?: DEFAULT_JVM_TARGET
+    var useMimalloc = true
 	var androidLibrary: Boolean = project.findProperty("android.library") == "true"
     var overwriteAndroidFiles: Boolean = project.findProperty("overwrite.android.files") == "false"
     var id: String = "com.unknown.unknownapp"
 	var version: String = "0.0.1"
+    var preferredIphoneSimulatorVersion: Int = 8
 
 	var exeBaseName: String = "app"
 
@@ -124,7 +247,13 @@ class KorgeExtension(val project: Project) {
 
 	val nativeEnabled = (project.findProperty("disable.kotlin.native") != "true") && (System.getenv("DISABLE_KOTLIN_NATIVE") != "true")
 
-	var icon: File? = project.projectDir["icon.png"]
+    val newDesktopEnabled get() = project.findProperty("korge.enable.desktop") == "true" || System.getenv("KORGE_ENABLE_DESKTOP") == "true"
+    val newAndroidIndirectEnabled get() = project.findProperty("korge.enable.android.indirect") == "true" || System.getenv("KORGE_ENABLE_ANDROID_INDIRECT") == "true"
+    val newAndroidDirectEnabled get() = project.findProperty("korge.enable.android.direct") == "true" || System.getenv("KORGE_ENABLE_ANDROID_DIRECT") == "true"
+    val newIosEnabled get() = project.findProperty("korge.enable.ios") == "true" || System.getenv("KORGE_ENABLE_IOS") == "true"
+    val newJsEnabled get() = project.findProperty("korge.enable.js") == "true" || System.getenv("KORGE_ENABLE_JS") == "true"
+
+    var icon: File? = project.projectDir["icon.png"]
     var banner: File? = project.projectDir["banner.png"]
 
 	var gameCategory: GameCategory? = null
@@ -196,6 +325,11 @@ class KorgeExtension(val project: Project) {
 
 	internal val defaultPluginsClassLoader by lazy { plugins.classLoader }
 
+    var androidReleaseSignStoreFile: String = "korge.keystore"
+    var androidReleaseSignStorePassword: String = "password"
+    var androidReleaseSignKeyAlias: String = "korge"
+    var androidReleaseSignKeyPassword: String = "password"
+
 	// Already included in core
 	fun supportExperimental3d() = Unit
 	fun support3d() = Unit
@@ -218,7 +352,7 @@ class KorgeExtension(val project: Project) {
 	}
 
 	fun supportSwf() {
-		dependencyMulti("com.soywiz.korlibs.korge:korge-swf:${BuildVersions.KORGE}", registerPlugin = false)
+		dependencyMulti("com.soywiz.korlibs.korge2:korge-swf:${BuildVersions.KORGE}", registerPlugin = false)
 	}
 
     fun supportShape() {
@@ -229,11 +363,11 @@ class KorgeExtension(val project: Project) {
 	fun supportTriangulation() = supportShape()
 
 	fun supportDragonbones() {
-		dependencyMulti("com.soywiz.korlibs.korge:korge-dragonbones:${BuildVersions.KORGE}", registerPlugin = false)
+		dependencyMulti("com.soywiz.korlibs.korge2:korge-dragonbones:${BuildVersions.KORGE}", registerPlugin = false)
 	}
 
     fun supportSpine() {
-        dependencyMulti("com.soywiz.korlibs.korge:korge-spine:${BuildVersions.KORGE}", registerPlugin = false)
+        dependencyMulti("com.soywiz.korlibs.korge2:korge-spine:${BuildVersions.KORGE}", registerPlugin = false)
     }
 
     fun supportBox2d() {

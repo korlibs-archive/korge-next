@@ -3,21 +3,17 @@ import org.jetbrains.kotlin.gradle.plugin.*
 import java.io.File
 
 buildscript {
+    val androidBuildGradleVersion: String by project
+    val gradlePublishPluginVersion: String by project
     repositories {
         mavenLocal()
         mavenCentral()
-        jcenter()
         google()
         maven { url = uri("https://plugins.gradle.org/m2/") }
-        maven { url = uri("https://dl.bintray.com/kotlin/kotlin-dev") }
-        maven { url = uri("https://dl.bintray.com/kotlin/kotlin-eap") }
     }
     dependencies {
-        classpath("com.gradle.publish:plugin-publish-plugin:0.12.0")
-        //classpath("com.android.tools.build:gradle:3.4.1")
-        classpath("com.android.tools.build:gradle:4.0.1")
-        //classpath("com.android.tools.build:gradle:4.1.0-rc03")
-        //classpath("com.android.tools.build:gradle:4.2.0-alpha12")
+        classpath("com.gradle.publish:plugin-publish-plugin:$gradlePublishPluginVersion")
+        classpath("com.android.tools.build:gradle:$androidBuildGradleVersion")
     }
 }
 
@@ -26,14 +22,12 @@ plugins {
 
 	java
     kotlin("multiplatform") version kotlinVersion
-    id("org.jetbrains.intellij") version "0.6.1" apply false
-    id("org.jetbrains.dokka") version "1.4.10.2" apply false
-
-    //`maven-publish`
-    //id("com.gradle.plugin-publish") version "0.12.0" apply false
 }
 
 val kotlinVersion: String by project
+val coroutinesVersion: String by project
+val jnaVersion: String by project
+val androidBuildGradleVersion: String by project
 
 //println(KotlinVersion.CURRENT)
 
@@ -47,11 +41,8 @@ allprojects {
 	repositories {
         mavenLocal()
 		mavenCentral()
-		jcenter()
         google()
 		maven { url = uri("https://plugins.gradle.org/m2/") }
-        maven { url = uri("https://dl.bintray.com/kotlin/kotlin-eap") }
-        maven { url = uri("https://dl.bintray.com/kotlin/kotlin-dev") }
 	}
 }
 
@@ -132,15 +123,16 @@ allprojects {
         apply(from = "${rootProject.rootDir}/build.idea.gradle")
     }
     val projectName = project.name
+    val firstComponent = projectName.substringBefore('-')
     group = when {
         projectName == "korge-gradle-plugin" -> "com.soywiz.korlibs.korge.plugins"
-        else -> "com.soywiz.korlibs.${projectName.substringBefore('-')}"
+        firstComponent == "korge" -> "com.soywiz.korlibs.korge2"
+        else -> "com.soywiz.korlibs.$firstComponent"
     }
 }
 
 subprojects {
     val doConfigure =
-        project.name != "korge-intellij-plugin" &&
             project.name != "korge-gradle-plugin" &&
             project.hasBuildGradle()
 
@@ -205,12 +197,20 @@ subprojects {
                 compilations.all {
                     kotlinOptions.jvmTarget = "1.8"
                     kotlinOptions.suppressWarnings = true
+                    kotlinOptions.freeCompilerArgs = listOf("-Xno-param-assertions")
+                    //kotlinOptions.
+
+                    // @TODO:
+                    // Tested on Kotlin 1.4.30:
+                    // Class org.luaj.vm2.WeakTableTest.WeakKeyTableTest
+                    // java.lang.AssertionError: expected:<null> but was:<mydata-111>
+                    //kotlinOptions.useIR = true
                 }
             }
             js(org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType.IR) {
                 browser {
                     compilations.all {
-                        kotlinOptions.sourceMap = true
+                        //kotlinOptions.sourceMap = true
                         kotlinOptions.suppressWarnings = true
                     }
                     testTask {
@@ -226,7 +226,7 @@ subprojects {
             if (doEnableKotlinNative) {
                 for (target in nativeTargets()) {
                     target.compilations.all {
-                        //kotlinOptions.freeCompilerArgs = listOf("-Xallocator=mimalloc")
+                        kotlinOptions.freeCompilerArgs = listOf("-Xallocator=mimalloc")
                         kotlinOptions.suppressWarnings = true
                     }
                 }
@@ -235,7 +235,7 @@ subprojects {
             if (doEnableKotlinMobile) {
                 for (target in mobileTargets()) {
                     target.compilations.all {
-                        //kotlinOptions.freeCompilerArgs = listOf("-Xallocator=mimalloc")
+                        kotlinOptions.freeCompilerArgs = listOf("-Xallocator=mimalloc")
                         kotlinOptions.suppressWarnings = true
                     }
                 }
@@ -261,6 +261,7 @@ subprojects {
                 }
 
                 fun createPairSourceSet(name: String, vararg dependencies: PairSourceSet, block: org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet.(test: Boolean) -> Unit = { }): PairSourceSet {
+                    //println("${project.name}: CREATED SOURCE SET: \"${name}Main\"")
                     val main = maybeCreate("${name}Main").apply { block(false) }
                     val test = maybeCreate("${name}Test").apply { block(true) }
                     return PairSourceSet(main, test).also {
@@ -398,17 +399,6 @@ open class KorgeJavaExec : JavaExec() {
 
     init {
         systemProperties = (System.getProperties().toMutableMap() as MutableMap<String, Any>) - "java.awt.headless"
-        val useZgc = (System.getenv("JVM_USE_ZGC") == "true") || (javaVersion.majorVersion.toIntOrNull() ?: 8) >= 14
-
-        doFirst {
-            if (useZgc) {
-                println("Using ZGC")
-            }
-        }
-
-        if (useZgc) {
-            //jvmArgs("-XX:+UnlockExperimentalVMOptions", "-XX:+UseZGC")
-        }
         project.afterEvaluate {
             //if (firstThread == true && OS.isMac) task.jvmArgs("-XstartOnFirstThread")
             classpath = korgeClassPath
@@ -435,20 +425,7 @@ fun Project.nonSamples(block: Project.() -> Unit) {
 fun getKorgeProcessResourcesTaskName(target: org.jetbrains.kotlin.gradle.plugin.KotlinTarget, compilation: org.jetbrains.kotlin.gradle.plugin.KotlinCompilation<*>): String =
     "korgeProcessedResources${target.name.capitalize()}${compilation.name.capitalize()}"
 
-val BINTRAY_USER = rootProject.findProperty("BINTRAY_USER")?.toString()
-        ?: project.findProperty("bintrayUser")?.toString()
-        ?: System.getenv("BINTRAY_USER")
-
-
-val BINTRAY_KEY = rootProject.findProperty("BINTRAY_KEY")?.toString()
-        ?: project.findProperty("bintrayApiKey")?.toString()
-        ?: System.getenv("BINTRAY_API_KEY")
-        ?: System.getenv("BINTRAY_KEY")
-
-
 nonSamples {
-    if (BINTRAY_USER.isNullOrEmpty() || BINTRAY_KEY.isNullOrEmpty()) return@nonSamples
-
     plugins.apply("maven-publish")
 
     val javadocJar = tasks.maybeCreate<Jar>("javadocJar").apply { archiveClassifier.set("javadoc") }
@@ -457,13 +434,13 @@ nonSamples {
 
     extensions.getByType(PublishingExtension::class.java).apply {
         repositories {
-            maven {
-                credentials {
-                    username = BINTRAY_USER
-                    password = BINTRAY_KEY
-                }
-                url = uri("https://api.bintray.com/maven/${project.property("project.bintray.org")}/${project.property("project.bintray.repository")}/${project.property("project.bintray.package")}/")
-            }
+            //maven {
+            //    credentials {
+            //        username = BINTRAY_USER
+            //        password = BINTRAY_KEY
+            //    }
+            //    url = uri("https://api.bintray.com/maven/${project.property("project.bintray.org")}/${project.property("project.bintray.repository")}/${project.property("project.bintray.package")}/")
+            //}
         }
         afterEvaluate {
             //println(gkotlin.sourceSets.names)
@@ -588,6 +565,21 @@ samples {
         val runJs by creating {
             group = "run"
             dependsOn("jsBrowserDevelopmentRun")
+        }
+        fun Task.dependsOnNativeTask(kind: String) {
+            when {
+                isWindows -> dependsOn("runDebugExecutableMingwX64")
+                isMacos -> dependsOn("runDebugExecutableMacosX64")
+                else -> dependsOn("runDebugExecutableLinuxX64")
+            }
+        }
+        val runNativeDebug by creating {
+            group = "run"
+            dependsOnNativeTask("Debug")
+        }
+        val runNativeRelease by creating {
+            group = "run"
+            dependsOnNativeTask("Release")
         }
 
         //val jsRun by creating { dependsOn("jsBrowserDevelopmentRun") } // Already available
@@ -784,11 +776,34 @@ samples {
     }
 }
 
+val gitVersion = try {
+    Runtime.getRuntime().exec("git describe --abbrev=8 --tags --dirty".split(" ").toTypedArray(), arrayOf(), rootDir).inputStream.reader()
+        .readText().lines().first().trim()
+} catch (e: Throwable) {
+    e.printStackTrace()
+    "unknown"
+}
+
+
 val buildVersionsFile = file("korge-gradle-plugin/src/main/kotlin/com/soywiz/korge/gradle/BuildVersions.kt")
 val oldBuildVersionsText = buildVersionsFile.readText()
 val newBuildVersionsText = oldBuildVersionsText
     .replace(Regex("const val KORLIBS_VERSION = \"(.*?)\""), "const val KORLIBS_VERSION = \"${project.version}\"")
+    .replace(Regex("const val KLOCK = \"(.*?)\""), "const val KLOCK = \"${project.version}\"")
+    .replace(Regex("const val KDS = \"(.*?)\""), "const val KDS = \"${project.version}\"")
+    .replace(Regex("const val KRYPTO = \"(.*?)\""), "const val KRYPTO = \"${project.version}\"")
+    .replace(Regex("const val KMEM = \"(.*?)\""), "const val KMEM = \"${project.version}\"")
+    .replace(Regex("const val KORMA = \"(.*?)\""), "const val KORMA = \"${project.version}\"")
+    .replace(Regex("const val KORIO = \"(.*?)\""), "const val KORIO = \"${project.version}\"")
+    .replace(Regex("const val KORIM = \"(.*?)\""), "const val KORIM = \"${project.version}\"")
+    .replace(Regex("const val KORAU = \"(.*?)\""), "const val KORAU = \"${project.version}\"")
+    .replace(Regex("const val KORGW = \"(.*?)\""), "const val KORGW = \"${project.version}\"")
+    .replace(Regex("const val KORGE = \"(.*?)\""), "const val KORGE = \"${project.version}\"")
     .replace(Regex("const val KOTLIN = \"(.*?)\""), "const val KOTLIN = \"${kotlinVersion}\"")
+    .replace(Regex("const val GIT = \"(.*?)\""), "const val GIT = \"${gitVersion}\"")
+    .replace(Regex("const val JNA = \"(.*?)\""), "const val JNA = \"${jnaVersion}\"")
+    .replace(Regex("const val ANDROID_BUILD = \"(.*?)\""), "const val ANDROID_BUILD = \"${androidBuildGradleVersion}\"")
+    .replace(Regex("const val COROUTINES = \"(.*?)\""), "const val COROUTINES = \"${coroutinesVersion}\"")
 if (oldBuildVersionsText != newBuildVersionsText) {
     buildVersionsFile.writeText(newBuildVersionsText)
 }

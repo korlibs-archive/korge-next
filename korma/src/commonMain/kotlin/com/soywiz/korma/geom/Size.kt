@@ -9,8 +9,8 @@ interface ISize {
 
     val area: Double get() = width * height
     val perimeter: Double get() = width * 2 + height * 2
-    val min: Double get() = kotlin.math.min(width, height)
-    val max: Double get() = kotlin.math.max(width, height)
+    val min: Double get() = min2(width, height)
+    val max: Double get() = max2(width, height)
 
     companion object {
         operator fun invoke(width: Double, height: Double): ISize = Size(Point(width, height))
@@ -66,12 +66,17 @@ inline class Size(val p: Point) : MutableInterpolable<Size>, Interpolable<Size>,
 interface ISizeInt {
     val width: Int
     val height: Int
+
+    companion object {
+        operator fun invoke(width: Int, height: Int): ISizeInt = SizeInt(width, height)
+    }
 }
 
 inline class SizeInt(val size: Size) : ISizeInt {
     companion object {
         operator fun invoke(): SizeInt = SizeInt(Size(0, 0))
         operator fun invoke(x: Int, y: Int): SizeInt = SizeInt(Size(x, y))
+        operator fun invoke(that: ISizeInt): SizeInt = SizeInt(Size(that.width, that.height))
     }
 
     fun clone() = SizeInt(size.clone())
@@ -87,12 +92,14 @@ inline class SizeInt(val size: Size) : ISizeInt {
     override fun toString(): String = "SizeInt(width=$width, height=$height)"
 }
 
-fun SizeInt.setTo(width: Int, height: Int) = this.apply {
+fun SizeInt.setTo(width: Int, height: Int) : SizeInt {
     this.width = width
     this.height = height
+
+    return this
 }
 
-fun SizeInt.setTo(that: SizeInt) = setTo(that.width, that.height)
+fun SizeInt.setTo(that: ISizeInt) = setTo(that.width, that.height)
 
 fun SizeInt.setToScaled(sx: Double, sy: Double) = setTo((this.width * sx).toInt(), (this.height * sy).toInt())
 fun SizeInt.setToScaled(sx: Int, sy: Int) = setToScaled(sx.toDouble(), sy.toDouble())

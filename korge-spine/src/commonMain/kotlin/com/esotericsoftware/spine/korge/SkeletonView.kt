@@ -336,7 +336,7 @@ class SkeletonView(val skeleton: Skeleton, val animationState: AnimationState?) 
     val currentMainAnimation get() = animationState?.tracks?.first()?.animation
 
     override fun buildDebugComponent(views: Views, container: UiContainer) {
-        container.uiCollapsableSection("Animation") {
+        container.uiCollapsibleSection("Animation") {
             addChild(UiRowEditableValue(app, "animation", UiListEditableValue(app, { skeleton.data.animations.map { it.name } }, ObservableProperty(
                 name = "animation",
                 internalSet = {  animationName ->
@@ -349,8 +349,8 @@ class SkeletonView(val skeleton: Skeleton, val animationState: AnimationState?) 
                 },
                 internalGet = { currentMainAnimation?.name ?: "default" }
             ))))
-            button("play") { play() }
-            button("stop") { stop() }
+            button("play").onClick { play() }
+            button("stop").onClick { stop() }
         }
         super.buildDebugComponent(views, container)
     }

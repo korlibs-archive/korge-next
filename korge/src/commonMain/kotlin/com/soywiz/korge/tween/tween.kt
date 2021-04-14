@@ -26,7 +26,7 @@ class TweenComponent(
     val c: CancellableContinuation<Unit>
 ) : UpdateComponent {
 	var elapsed = 0.0.milliseconds
-	val hrtime = if (time != TimeSpan.NIL) time else (vs.map { it.endTime.nanoseconds }.max() ?: 0.0).nanoseconds
+	val hrtime = if (time != TimeSpan.NIL) time else (vs.map { it.endTime.nanoseconds }.maxOrNull() ?: 0.0).nanoseconds
 	var cancelled = false
 	var done = false
 
@@ -120,7 +120,7 @@ suspend fun QView.tween(
         delay(time)
     } else {
         fastForEach {
-            tween(*vs, time = time, easing = easing, callback = callback)
+            it.tween(*vs, time = time, easing = easing, callback = callback)
         }
     }
 }

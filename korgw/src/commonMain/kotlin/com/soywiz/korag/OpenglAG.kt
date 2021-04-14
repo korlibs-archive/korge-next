@@ -4,6 +4,10 @@ import com.soywiz.kds.Extra
 import com.soywiz.kds.FastStringMap
 import com.soywiz.kds.getOrPut
 import com.soywiz.kgl.*
+import com.soywiz.kgl.internal.*
+import com.soywiz.kgl.internal.min2
+import com.soywiz.klock.*
+import com.soywiz.klogger.*
 import com.soywiz.kmem.*
 import com.soywiz.korag.internal.setFloats
 import com.soywiz.korag.shader.Program
@@ -19,9 +23,7 @@ import com.soywiz.korim.bitmap.Bitmap8
 import com.soywiz.korim.bitmap.NativeImage
 import com.soywiz.korim.color.RGBA
 import com.soywiz.korim.vector.BitmapVector
-import com.soywiz.korio.lang.Closeable
-import com.soywiz.korio.lang.invalidOp
-import com.soywiz.korio.lang.unsupported
+import com.soywiz.korio.lang.*
 import com.soywiz.korma.geom.*
 import kotlin.jvm.JvmOverloads
 import kotlin.math.min
@@ -40,6 +42,11 @@ abstract class AGOpengl : AG() {
     open val webgl: Boolean = false
 
     override var devicePixelRatio: Double = 1.0
+
+    override fun contextLost() {
+        Console.info("AG.contextLost()", this, gl, gl.root)
+        contextVersion++
+    }
 
     //val queue = Deque<(gl: GL) -> Unit>()
 
@@ -206,7 +213,7 @@ abstract class AGOpengl : AG() {
         val currentRenderBuffer = this.currentRenderBuffer ?: return
         if (currentRenderBuffer === mainRenderBuffer) {
             var realScissors: Rectangle? = finalScissorBL
-            realScissors?.setTo(0, 0, realBackWidth, realBackHeight)
+            realScissors?.setTo(0.0, 0.0, realBackWidth.toDouble(), realBackHeight.toDouble())
             if (scissor != null) {
                 tempRect.setTo(currentRenderBuffer.x + scissor.x, ((currentRenderBuffer.y + currentRenderBuffer.height) - (scissor.y + scissor.height)), (scissor.width), scissor.height)
                 realScissors = realScissors?.intersection(tempRect, realScissors)
@@ -252,7 +259,7 @@ abstract class AGOpengl : AG() {
         val scissor = batch.scissor
 
         val vattrs = vertexLayout.attributes
-        val vattrspos = vertexLayout.attributePositionsLong
+        val vattrspos = vertexLayout.attributePositions
 
         //finalScissor.setTo(0, 0, backWidth, backHeight)
         applyScissorState(scissor)
@@ -292,7 +299,7 @@ abstract class AGOpengl : AG() {
                 val elementCount = att.type.elementCount
                 if (loc >= 0) {
                     gl.enableVertexAttribArray(loc)
-                    gl.vertexAttribPointer(loc, elementCount, glElementType, att.normalized, totalSize, off)
+                    gl.vertexAttribPointer(loc, elementCount, glElementType, att.normalized, totalSize, off.toLong())
                 }
             }
         }
@@ -334,7 +341,7 @@ abstract class AGOpengl : AG() {
                         is Matrix3D -> mat3dArray.also { it[0].copyFrom(value) }
                         else -> error("Not an array or a matrix3d")
                     } as Array<Matrix3D>
-                    val arrayCount = min(declArrayCount, matArray.size)
+                    val arrayCount = min2(declArrayCount, matArray.size)
 
                     val matSize = when (uniformType) {
                         VarType.Mat2 -> 2; VarType.Mat3 -> 3; VarType.Mat4 -> 4; else -> -1
@@ -381,11 +388,11 @@ abstract class AGOpengl : AG() {
                         is Number -> tempBuffer.setAlignedFloat32(0, value.toFloat())
                         is Vector3D -> tempBuffer.setFloats(0, value.data, 0, stride)
                         is FloatArray -> {
-                            arrayCount = min(declArrayCount, value.size / stride)
+                            arrayCount = min2(declArrayCount, value.size / stride)
                             tempBuffer.setFloats(0, value, 0, stride * arrayCount)
                         }
                         is Array<*> -> {
-                            arrayCount = min(declArrayCount, value.size)
+                            arrayCount = min2(declArrayCount, value.size)
                             for (n in 0 until value.size) {
                                 val vector = value[n] as Vector3D
                                 tempBuffer.setFloats(n * stride, vector.data, 0, stride)
@@ -560,38 +567,43 @@ abstract class AGOpengl : AG() {
 
         private fun ensure() {
             if (cachedVersion != contextVersion) {
-                val oldCachedVersion = cachedVersion
-                cachedVersion = contextVersion
-                id = gl.createProgram()
+                val time = measureTime {
+                    val oldCachedVersion = cachedVersion
+                    cachedVersion = contextVersion
+                    id = gl.createProgram()
 
+                    if (GlslGenerator.DEBUG_GLSL) {
+                        Console.warn("OpenglAG: Creating program ${program.name} with id $id because contextVersion: $oldCachedVersion != $contextVersion")
+                    }
+
+                    //println("GL_SHADING_LANGUAGE_VERSION: $glslVersionInt : $glslVersionString")
+
+                    val guessedGlSlVersion = glSlVersion ?: gl.versionInt
+                    val usedGlSlVersion = GlslGenerator.FORCE_GLSL_VERSION?.toIntOrNull() ?: when (guessedGlSlVersion) {
+                        460 -> 460
+                        in 300..450 -> 100
+                        else -> guessedGlSlVersion
+                    }
+
+                    if (GlslGenerator.DEBUG_GLSL) {
+                        Console.trace("GLSL version: requested=$glSlVersion, guessed=$guessedGlSlVersion, forced=${GlslGenerator.FORCE_GLSL_VERSION}. used=$usedGlSlVersion")
+                    }
+
+                    fragmentShaderId = createShaderCompat(gl.FRAGMENT_SHADER) { compatibility ->
+                        program.fragment.toNewGlslStringResult(GlslConfig(gles = gles, version = usedGlSlVersion, compatibility = compatibility, android = android, programConfig = programConfig)).result
+                    }
+                    vertexShaderId = createShaderCompat(gl.VERTEX_SHADER) { compatibility ->
+                        program.vertex.toNewGlslStringResult(GlslConfig(gles = gles, version = usedGlSlVersion, compatibility = compatibility, android = android, programConfig = programConfig)).result
+                    }
+                    gl.attachShader(id, fragmentShaderId)
+                    gl.attachShader(id, vertexShaderId)
+                    gl.linkProgram(id)
+                    tempBuffer1.setInt(0, 0)
+                    gl.getProgramiv(id, gl.LINK_STATUS, tempBuffer1)
+                }
                 if (GlslGenerator.DEBUG_GLSL) {
-                    println("OpenglAG: Created program ${program.name} with id $id because contextVersion: $oldCachedVersion != $contextVersion")
+                    Console.info("OpenglAG: Created program ${program.name} with id $id in time=$time")
                 }
-
-                //println("GL_SHADING_LANGUAGE_VERSION: $glslVersionInt : $glslVersionString")
-
-                val guessedGlSlVersion = glSlVersion ?: gl.versionInt
-                val usedGlSlVersion = GlslGenerator.FORCE_GLSL_VERSION?.toIntOrNull() ?: when (guessedGlSlVersion) {
-                    460 -> 460
-                    in 300..450 -> 100
-                    else -> guessedGlSlVersion
-                }
-
-                if (GlslGenerator.DEBUG_GLSL) {
-                    println("GLSL version: requested=$glSlVersion, guessed=$guessedGlSlVersion, forced=${GlslGenerator.FORCE_GLSL_VERSION}. used=$usedGlSlVersion")
-                }
-
-                fragmentShaderId = createShaderCompat(gl.FRAGMENT_SHADER) { compatibility ->
-                    program.fragment.toNewGlslStringResult(GlslConfig(gles = gles, version = usedGlSlVersion, compatibility = compatibility, android = android, programConfig = programConfig)).result
-                }
-                vertexShaderId = createShaderCompat(gl.VERTEX_SHADER) { compatibility ->
-                    program.vertex.toNewGlslStringResult(GlslConfig(gles = gles, version = usedGlSlVersion, compatibility = compatibility, android = android, programConfig = programConfig)).result
-                }
-                gl.attachShader(id, fragmentShaderId)
-                gl.attachShader(id, vertexShaderId)
-                gl.linkProgram(id)
-                tempBuffer1.setInt(0, 0)
-                gl.getProgramiv(id, gl.LINK_STATUS, tempBuffer1)
             }
         }
 
@@ -897,7 +909,13 @@ abstract class AGOpengl : AG() {
             super.close()
             if (!closed) {
                 closed = true
-                gl.deleteTextures(1, texIds)
+                if (cachedVersion == contextVersion) {
+                    gl.deleteTextures(1, texIds)
+                    //println("DELETE texture: ${texIds[0]}")
+                    texIds[0] = -1
+                } else {
+                    //println("YAY! NO DELETE texture because in new context and would remove the wrong texture: ${texIds[0]}")
+                }
             }
         }
 

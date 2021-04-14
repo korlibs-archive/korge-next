@@ -21,7 +21,11 @@ import kotlin.coroutines.*
 
 actual fun CreateDefaultGameWindow(): GameWindow = TODO()
 
-class AndroidGameWindow(val activity: KorgwActivity) : GameWindow() {
+open class BaseAndroidGameWindow() : GameWindow() {
+    var coroutineContext: CoroutineContext? = null
+}
+
+class AndroidGameWindow(val activity: KorgwActivity) : BaseAndroidGameWindow() {
     val androidContext get() = activity
 
     override val ag: AG get() = activity.ag
@@ -109,10 +113,35 @@ class AndroidGameWindow(val activity: KorgwActivity) : GameWindow() {
         return listOf(File(uri.toString()).toVfs())
     }
 
-    lateinit var coroutineContext: CoroutineContext
     override suspend fun loop(entry: suspend GameWindow.() -> Unit) {
         this.coroutineContext = kotlin.coroutines.coroutineContext
         //println("CONTEXT: ${kotlin.coroutines.coroutineContext[AndroidCoroutineContext.Key]?.context}")
+        entry(this)
+    }
+}
+
+class AndroidGameWindowNoActivity(override val width: Int, override val height: Int, override val ag: AG) : BaseAndroidGameWindow() {
+
+    override var title: String = "Senaptec"
+
+    override var icon: Bitmap?
+        get() = super.icon
+        set(value) {}
+
+    override var fullscreen: Boolean
+        get() = true
+        set(value) {}
+
+    override var visible: Boolean
+        get() = super.visible
+        set(value) {}
+
+    override var quality: Quality
+        get() = super.quality
+        set(value) {}
+
+    override suspend fun loop(entry: suspend GameWindow.() -> Unit) {
+        this.coroutineContext = kotlin.coroutines.coroutineContext
         entry(this)
     }
 }

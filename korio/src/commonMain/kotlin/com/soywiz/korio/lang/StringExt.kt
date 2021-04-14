@@ -1,6 +1,8 @@
 package com.soywiz.korio.lang
 
 import com.soywiz.kmem.*
+import com.soywiz.korio.internal.*
+import com.soywiz.korio.internal.min2
 import com.soywiz.korio.util.*
 
 operator fun String.Companion.invoke(arrays: IntArray, offset: Int = 0, size: Int = arrays.size - offset): String {
@@ -12,7 +14,7 @@ operator fun String.Companion.invoke(arrays: IntArray, offset: Int = 0, size: In
 }
 
 fun String_fromIntArray(arrays: IntArray, offset: Int = 0, size: Int = arrays.size - offset): String = String(arrays, offset, size)
-fun String_fromCharArray(arrays: CharArray, offset: Int = 0, size: Int = arrays.size - offset): String = String(arrays, offset, size)
+fun String_fromCharArray(arrays: CharArray, offset: Int = 0, size: Int = arrays.size - offset): String = arrays.concatToString(offset, offset + size)
 
 ////////////////////////////////////
 ////////////////////////////////////
@@ -95,7 +97,7 @@ fun String.splitInChunks(size: Int): List<String> {
 	val out = arrayListOf<String>()
 	var pos = 0
 	while (pos < this.length) {
-		out += this.substring(pos, kotlin.math.min(this.length, pos + size))
+		out += this.substring(pos, min2(this.length, pos + size))
 		pos += size
 	}
 	return out

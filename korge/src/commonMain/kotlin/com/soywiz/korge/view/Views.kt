@@ -13,7 +13,6 @@ import com.soywiz.korge.debug.ObservableProperty
 import com.soywiz.korge.input.*
 import com.soywiz.korge.internal.*
 import com.soywiz.korge.render.*
-import com.soywiz.korge.resources.*
 import com.soywiz.korge.stat.*
 import com.soywiz.korge.view.ktree.*
 import com.soywiz.korgw.*
@@ -50,7 +49,8 @@ class Views constructor(
     val stats: Stats,
     val gameWindow: GameWindow,
     val gameId: String = "korgegame",
-    val settingsFolder: String? = null
+    val settingsFolder: String? = null,
+    val batchMaxQuads: Int = BatchBuilder2D.DEFAULT_BATCH_QUADS
 ) :
     Extra by Extra.Mixin(),
     EventDispatcher by EventDispatcher.Mixin(),
@@ -83,7 +83,7 @@ class Views constructor(
     var name: String? = null
     var currentVfs: VfsFile = resourcesVfs
     var imageFormats = RegisteredImageFormats
-	val renderContext = RenderContext(ag, this, stats, coroutineContext)
+	val renderContext = RenderContext(ag, this, stats, coroutineContext, batchMaxQuads)
 	val agBitmapTextureManager = renderContext.agBitmapTextureManager
 	var clearEachFrame = true
 	var clearColor: RGBA = Colors.BLACK
@@ -189,7 +189,7 @@ class Views constructor(
 
     var supportTogglingDebug = true
 	var debugViews = false
-	val debugHandlers = arrayListOf<Views.(RenderContext) -> Unit>()
+	val debugHandlers = FastArrayList<Views.(RenderContext) -> Unit>()
 
     fun addDebugRenderer(block: Views.(RenderContext) -> Unit) {
         debugHandlers.add(block)
@@ -197,7 +197,7 @@ class Views constructor(
 
 	var lastTime = timeProvider.now()
 
-    private val tempViews: ArrayList<View> = arrayListOf()
+    private val tempViews: FastArrayList<View> = FastArrayList()
 	private val virtualSize = SizeInt()
 	private val actualSize = SizeInt()
 	private val targetSize = SizeInt()
@@ -277,7 +277,8 @@ class Views constructor(
 	}
 
 	fun render() {
-		if (clearEachFrame) ag.clear(clearColor, stencil = 0, clearColor = true, clearStencil = true)
+        ag.startFrame()
+		if (clearEachFrame) ag.clear(clearColor, stencil = 0, depth = 1f, clearColor = true, clearStencil = true, clearDepth = true)
         onBeforeRender(renderContext)
 		stage.render(renderContext)
         renderContext.flush()
@@ -376,6 +377,7 @@ class Views constructor(
 	fun dispose() {
 	}
 
+    /*
     @KorgeInternal
     fun getWindowBounds(view: View, out: Rectangle = Rectangle()): Rectangle {
         val bounds = view.getGlobalBounds(out)
@@ -388,9 +390,12 @@ class Views constructor(
     }
 
     /** Transform global coordinates [x] and [y] into coordinates in the window space X */
-    fun globalToWindowX(x: Double, y: Double): Double = stage.localMatrix.transformX(x, y)
+    //internal fun globalToWindowX(x: Double, y: Double): Double = stage.localMatrix.transformX(x, y)
+    internal fun globalToWindowX(x: Double, y: Double): Double = x
     /** Transform global coordinates [x] and [y] into coordinates in the window space Y */
-    fun globalToWindowY(x: Double, y: Double): Double = stage.localMatrix.transformY(x, y)
+    //internal fun globalToWindowY(x: Double, y: Double): Double = stage.localMatrix.transformY(x, y)
+    internal fun globalToWindowY(x: Double, y: Double): Double = y
+    */
 
     val debugHighlighters = Signal<View?>()
 
@@ -484,31 +489,31 @@ data class KorgeFileLoader<T>(val name: String, val loader: suspend VfsFile.(Fas
 /////////////////////////
 
 @OptIn(KorgeInternal::class)
-fun getAllDescendantViews(view: View, out: ArrayList<View> = ArrayList(), reversed: Boolean = true): ArrayList<View> {
+fun getAllDescendantViews(view: View, out: FastArrayList<View> = FastArrayList(), reversed: Boolean = true): FastArrayList<View> {
     out.clear()
     val pos = getAllDescendantViewsBase(view, out, reversed, 0)
     while (out.size > pos) out.removeAt(out.size - 1)
     return out
 }
 
-private fun <T> ArrayList<T>.replaceOrAdd(pos: Int, value: T) {
+private fun <T> FastArrayList<T>.replaceOrAdd(pos: Int, value: T) {
     if (pos >= this.size) add(value) else this[pos] = value
 }
 
-private fun getAllDescendantViewsBase(view: View, out: ArrayList<View>, reversed: Boolean, cursor: Int): Int {
+private fun getAllDescendantViewsBase(view: View, out: FastArrayList<View>, reversed: Boolean, cursor: Int): Int {
     var pos = cursor
     if (reversed) {
-        view.forEachChildrenReversed { pos = getAllDescendantViewsBase(it, out, reversed, pos) }
+        view.forEachChildReversed { pos = getAllDescendantViewsBase(it, out, reversed, pos) }
         out.replaceOrAdd(pos++, view)
     } else {
         out.replaceOrAdd(pos++, view)
-        view.forEachChildren { pos = getAllDescendantViewsBase(it, out, reversed, pos) }
+        view.forEachChild { pos = getAllDescendantViewsBase(it, out, reversed, pos) }
     }
     return pos
 }
 
 @OptIn(KorgeInternal::class)
-fun View.updateSingleView(delta: TimeSpan, tempViews: ArrayList<View> = arrayListOf()) {
+fun View.updateSingleView(delta: TimeSpan, tempViews: FastArrayList<View> = FastArrayList()) {
     getAllDescendantViews(this, tempViews).fastForEach { view ->
         view._components?.update?.fastForEach { comp ->
             comp.update(delta * view.globalSpeed)
@@ -529,7 +534,7 @@ fun View.updateSingleView(delta: TimeSpan, tempViews: ArrayList<View> = arrayLis
 fun View.updateSingleViewWithViewsAll(
     views: Views,
     delta: TimeSpan,
-    tempViews: ArrayList<View> = arrayListOf()
+    tempViews: FastArrayList<View> = FastArrayList()
 ) {
     getAllDescendantViews(this, tempViews).fastForEach { view ->
         view._components?.updateWV?.fastForEach { comp -> comp.update(views, delta * view.globalSpeed) }
