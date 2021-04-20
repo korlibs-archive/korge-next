@@ -45,7 +45,7 @@ open class HttpPortable(
 				val firstLine = client.readLine()
 				val responseInfo = Regex("HTTP/1.\\d+ (\\d+) (.*)").find(firstLine) ?: error("Invalid HTTP response $firstLine")
 
-				//println("FIRST LINE: $firstLine")
+				//println("FIRST LINE: ${firstLine.trim()}")
 
 				val responseCode = responseInfo.groupValues[1].toInt()
 				val responseMessage = responseInfo.groupValues[2]
@@ -60,7 +60,7 @@ open class HttpPortable(
 
 				val responseHeaders = Http.Headers(headers.map {
 					val parts = it.split(':', limit = 2)
-					parts.getOrElse(0) { "" } to parts.getOrElse(1) { "" }
+					parts.getOrElse(0) { "" } to parts.getOrElse(1) { "" }.trimStart()
 				})
 
 				return Response(responseCode, responseMessage, responseHeaders, client)
