@@ -11,6 +11,7 @@ buildscript {
         google()
         maven { url = uri("https://plugins.gradle.org/m2/") }
         maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
+        maven { url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap") }
     }
     dependencies {
         classpath("com.gradle.publish:plugin-publish-plugin:$gradlePublishPluginVersion")
@@ -47,6 +48,7 @@ allprojects {
         google()
 		maven { url = uri("https://plugins.gradle.org/m2/") }
         maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
+        maven { url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap") }
 	}
 }
 
