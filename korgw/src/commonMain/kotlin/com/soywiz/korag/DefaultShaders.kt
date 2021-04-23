@@ -21,6 +21,8 @@ object DefaultShaders {
 
 	val t_Temp0 = Temp(0, VarType.Float4)
 	val t_Temp1 = Temp(1, VarType.Float4)
+    val t_TempMat2 = Temp(2, VarType.Mat2)
+    val t_TempMat3x2 = Temp(3, VarType.Mat3x2)
 
 	val textureUnit = AG.TextureUnit()
 

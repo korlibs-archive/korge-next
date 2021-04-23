@@ -432,6 +432,8 @@ abstract class AG : Extra by Extra.Mixin() {
 	fun createIndexBuffer() = createBuffer(Buffer.Kind.INDEX)
 	fun createVertexBuffer() = createBuffer(Buffer.Kind.VERTEX)
 
+    fun createVertexData(vararg attributes: Attribute) = AG.VertexData(createVertexBuffer(), VertexLayout(*attributes))
+
 	fun createIndexBuffer(data: ShortArray, offset: Int = 0, length: Int = data.size - offset) =
 		createIndexBuffer().apply {
 			upload(data, offset, length)

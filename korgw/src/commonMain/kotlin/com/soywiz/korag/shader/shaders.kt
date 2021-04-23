@@ -22,7 +22,9 @@ enum class VarType(val kind: VarKind, val elementCount: Int, val isMatrix: Boole
 	Mat3(VarKind.TFLOAT, elementCount = 9, isMatrix = true),
 	Mat4(VarKind.TFLOAT, elementCount = 16, isMatrix = true),
 
-	TextureUnit(VarKind.TINT, elementCount = 1),
+    Mat3x2(VarKind.TFLOAT, elementCount = 6, isMatrix = true),
+
+    TextureUnit(VarKind.TINT, elementCount = 1),
 
     //TODO: need to have a way of indicating Float/Int/UInt variations + more types of sampler to add
     Sampler1D(VarKind.TFLOAT, elementCount = 1),
@@ -192,11 +194,11 @@ object Output : Variable("out", VarType.Float4) {
     override fun hashCode(): Int = mhashcode()
 }
 
-object InstanceID : Variable("InstanceID", VarType.Int1) {
-    override fun toString(): String = "InstanceID"
-    override fun equals(other: Any?): Boolean = mequals<Output>(other)
-    override fun hashCode(): Int = mhashcode()
-}
+//object InstanceID : Variable("InstanceID", VarType.Int1) {
+//    override fun toString(): String = "InstanceID"
+//    override fun equals(other: Any?): Boolean = mequals<Output>(other)
+//    override fun hashCode(): Int = mhashcode()
+//}
 
 data class ProgramConfig(
     val externalTextureSampler: Boolean = false
@@ -301,8 +303,7 @@ class Program(val vertex: VertexShader, val fragment: FragmentShader, val name: 
 		val out: Output = Output
 		//fun out(to: Operand) = Stm.Set(if (type == ShaderType.VERTEX) out_Position else out_FragColor, to)
 
-        //val instanceID = Identifier("gl_InstanceID", VarType.Int1)
-        val instanceID = InstanceID
+        //val instanceID = InstanceID
 
         fun sin(arg: Operand) = Func("sin", arg)
 		fun cos(arg: Operand) = Func("cos", arg)
@@ -361,16 +362,17 @@ class Program(val vertex: VertexShader, val fragment: FragmentShader, val name: 
 		val Float.lit: FloatLiteral get() = FloatLiteral(this)
 		val Boolean.lit: BoolLiteral get() = BoolLiteral(this)
         //val Number.lit: Operand get() = this // @TODO: With Kotlin.JS you cannot differentiate Int, Float, Double with 'is'. Since it generates typeof $receiver === 'number' for all of them
-		fun lit(type: VarType, vararg ops: Operand): Operand =
-            Vector(type, ops as Array<Operand>)
-		fun vec1(vararg ops: Operand): Operand =
-            Vector(VarType.Float1, ops as Array<Operand>)
-		fun vec2(vararg ops: Operand): Operand =
-            Vector(VarType.Float2, ops as Array<Operand>)
-		fun vec3(vararg ops: Operand): Operand =
-            Vector(VarType.Float3, ops as Array<Operand>)
-		fun vec4(vararg ops: Operand): Operand =
-            Vector(VarType.Float4, ops as Array<Operand>)
+		fun lit(type: VarType, vararg ops: Operand): Operand = Vector(type, ops as Array<Operand>)
+		fun vec1(vararg ops: Operand): Operand = Vector(VarType.Float1, ops as Array<Operand>)
+		fun vec2(vararg ops: Operand): Operand = Vector(VarType.Float2, ops as Array<Operand>)
+		fun vec3(vararg ops: Operand): Operand = Vector(VarType.Float3, ops as Array<Operand>)
+		fun vec4(vararg ops: Operand): Operand = Vector(VarType.Float4, ops as Array<Operand>)
+
+        fun mat2(vararg ops: Operand): Operand = Vector(VarType.Mat2, ops as Array<Operand>)
+        fun mat3(vararg ops: Operand): Operand = Vector(VarType.Mat3, ops as Array<Operand>)
+        fun mat4(vararg ops: Operand): Operand = Vector(VarType.Mat4, ops as Array<Operand>)
+
+        fun mat3x2(vararg ops: Operand): Operand = Vector(VarType.Mat3x2, ops as Array<Operand>)
 		//fun Operand.swizzle(swizzle: String): Operand = Swizzle(this, swizzle)
 		operator fun Operand.get(index: Int): Operand {
 			return when {
@@ -459,7 +461,7 @@ class Program(val vertex: VertexShader, val fragment: FragmentShader, val name: 
 			is Varying -> visit(operand)
 			is Uniform -> visit(operand)
 			is Output -> visit(operand)
-            is InstanceID -> visit(operand)
+            //is InstanceID -> visit(operand)
 			is Temp -> visit(operand)
 			else -> invalidOp("Don't know how to visit basename $operand")
 		}
@@ -469,7 +471,7 @@ class Program(val vertex: VertexShader, val fragment: FragmentShader, val name: 
 		open fun visit(varying: Varying): E = default
 		open fun visit(uniform: Uniform): E = default
 		open fun visit(output: Output): E = default
-        open fun visit(output: InstanceID): E = default
+        //open fun visit(output: InstanceID): E = default
 		open fun visit(operand: Binop): E {
 			visit(operand.left)
 			visit(operand.right)

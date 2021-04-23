@@ -69,6 +69,7 @@ class GlslGenerator constructor(
 		VarType.Byte4 -> "vec4"
 		VarType.Mat2 -> "mat2"
 		VarType.Mat3 -> "mat3"
+        VarType.Mat3x2 -> "mat3x2"
 		VarType.Mat4 -> "mat4"
 		VarType.TextureUnit -> if (config.programConfig.externalTextureSampler) "samplerExternalOES" else "sampler2D"
         VarType.Sampler1D -> "sampler1d"
@@ -247,7 +248,7 @@ class GlslGenerator constructor(
 	override fun visit(operand: Variable): String {
 		super.visit(operand)
 		return when (operand) {
-            is InstanceID -> "gl_InstanceID"
+            //is InstanceID -> "gl_InstanceID"
 			is Output -> when (kind) {
 				ShaderType.VERTEX -> "gl_Position"
 				ShaderType.FRAGMENT -> gl_FragColor
@@ -280,10 +281,10 @@ class GlslGenerator constructor(
 		return super.visit(output)
 	}
 
-    override fun visit(output: InstanceID): String {
-        hasInstanceID = true
-        return super.visit(output)
-    }
+    //override fun visit(output: InstanceID): String {
+    //    hasInstanceID = true
+    //    return super.visit(output)
+    //}
 
     override fun visit(operand: Program.IntLiteral): String = "${operand.value}"
 
