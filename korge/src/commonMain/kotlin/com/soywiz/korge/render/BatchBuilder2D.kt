@@ -123,7 +123,8 @@ class BatchBuilder2D constructor(
 
 	init { logger.trace { "BatchBuilder2D[9]" } }
 
-	private val textureUnit = AG.TextureUnit(null, linear = false)
+    @KorgeInternal
+	val textureUnit = AG.TextureUnit(null, linear = false)
 
 	init { logger.trace { "BatchBuilder2D[10]" } }
 
