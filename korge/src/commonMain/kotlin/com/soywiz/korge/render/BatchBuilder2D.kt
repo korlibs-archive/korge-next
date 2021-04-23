@@ -674,6 +674,8 @@ class BatchBuilder2D constructor(
         indexBuffer.upload(indices, 0, indexPos * 2)
     }
 
+    private val vertexData = listOf(AG.VertexData(vertexBuffer, LAYOUT))
+
     /** When there are vertices pending, this performs a [AG.draw] call flushing all the buffered geometry pending to draw */
 	fun flush(uploadVertices: Boolean = true, uploadIndices: Boolean = true) {
 		if (vertexCount > 0) {
@@ -699,13 +701,12 @@ class BatchBuilder2D constructor(
 
 			//println("RENDER: $realFactors")
 
-			ag.draw(
-				vertices = vertexBuffer,
+			ag.drawV2(
+				vertexData = vertexData,
 				indices = indexBuffer,
 				program = currentProgram ?: (if (currentTex?.premultiplied == true) PROGRAM_PRE else PROGRAM_NOPRE),
 				//program = PROGRAM_PRE,
 				type = AG.DrawType.TRIANGLES,
-				vertexLayout = LAYOUT,
 				vertexCount = indexPos,
 				blending = realFactors,
 				uniforms = uniforms,

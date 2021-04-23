@@ -2,6 +2,7 @@ package com.soywiz.kgl
 
 import com.soywiz.kmem.*
 import com.soywiz.korim.bitmap.*
+import com.soywiz.korio.lang.*
 
 interface IKmlGl {
 	fun startFrame() = Unit
@@ -149,6 +150,13 @@ interface IKmlGl {
 	fun vertexAttrib4fv(index: Int, v: FBuffer): Unit
 	fun vertexAttribPointer(index: Int, size: Int, type: Int, normalized: Boolean, stride: Int, pointer: Long): Unit
 	fun viewport(x: Int, y: Int, width: Int, height: Int): Unit
+
+	// https://www.khronos.org/registry/webgl/extensions/ANGLE_instanced_arrays/
+	val isInstancedSupported: Boolean get() = false
+    fun drawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int): Unit = unsupported()
+    fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int): Unit = unsupported()
+    fun vertexAttribDivisor(index: Int, divisor: Int): Unit = unsupported()
+
     fun enableDisable(cap: Int, enable: Boolean) {
         if (enable) enable(cap) else disable(cap)
     }

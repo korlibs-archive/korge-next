@@ -138,11 +138,22 @@ open class Attribute(
 	val normalized: Boolean,
 	val offset: Int? = null,
 	val active: Boolean = true,
-    precision: Precision = Precision.DEFAULT
+    precision: Precision = Precision.DEFAULT,
+    val divisor: Int = 0
 ) : Variable(name, type, precision) {
 	constructor(name: String, type: VarType, normalized: Boolean, precision: Precision = Precision.DEFAULT) : this(name, type, normalized, null, true, precision)
 
-	fun inactived() = Attribute(name, type, normalized, offset = null, active = false)
+    fun copy(
+        name: String = this.name,
+        type: VarType = this.type,
+        normalized: Boolean = this.normalized,
+        offset: Int? = this.offset,
+        active: Boolean = this.active,
+        precision: Precision = this.precision,
+        divisor: Int = this.divisor
+    ) = Attribute(name, type, normalized, offset, active, precision, divisor)
+	fun inactived() = copy(active = false)
+    fun withDivisor(divisor: Int) = copy(divisor = divisor)
 	override fun toString(): String = "Attribute($name)"
     override fun equals(other: Any?): Boolean = mequals<Attribute>(other) && this.normalized == (other as Attribute).normalized && this.offset == other.offset && this.active == other.active
     override fun hashCode(): Int {

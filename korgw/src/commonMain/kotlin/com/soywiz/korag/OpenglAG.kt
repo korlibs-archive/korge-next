@@ -3,6 +3,7 @@ package com.soywiz.korag
 import com.soywiz.kds.Extra
 import com.soywiz.kds.FastStringMap
 import com.soywiz.kds.getOrPut
+import com.soywiz.kds.iterators.*
 import com.soywiz.kgl.*
 import com.soywiz.kgl.internal.*
 import com.soywiz.kgl.internal.min2
@@ -243,10 +244,11 @@ abstract class AGOpengl : AG() {
     }
 
     override fun draw(batch: Batch) {
-        val vertices = batch.vertices
+        if (batch.instances != 1) unsupported("Instanced drawing not supported yet")
+        //val vertices = batch.vertices
+        //val vertexLayout = batch.vertexLayout
         val program = batch.program
         val type = batch.type
-        val vertexLayout = batch.vertexLayout
         val vertexCount = batch.vertexCount
         val indices = batch.indices
         val indexType = batch.indexType
@@ -257,9 +259,6 @@ abstract class AGOpengl : AG() {
         val colorMask = batch.colorMask
         val renderState = batch.renderState
         val scissor = batch.scissor
-
-        val vattrs = vertexLayout.attributes
-        val vattrspos = vertexLayout.attributePositions
 
         //finalScissor.setTo(0, 0, backWidth, backHeight)
         applyScissorState(scissor)
@@ -282,17 +281,27 @@ abstract class AGOpengl : AG() {
             }
         }
 
-        checkBuffers(vertices, indices)
+        if (indices != null && indices.kind != Buffer.Kind.INDEX) invalidOp("Not a IndexBuffer")
+
         val programConfig = if (useExternalSampler) ProgramConfig.EXTERNAL_TEXTURE_SAMPLER else ProgramConfig.DEFAULT
         val glProgram = getProgram(program, programConfig)
-        (vertices as GlBuffer).bind(gl)
         (indices as? GlBuffer?)?.bind(gl)
         glProgram.use()
 
-        val totalSize = vertexLayout.totalSize
-        for (n in 0 until vattrspos.size) {
-            val att = vattrs[n]
-            if (att.active) {
+        batch.vertexData.fastForEach { entry ->
+            val vertices = entry.buffer as GlBuffer
+            val vertexLayout = entry.layout
+
+            val vattrs = vertexLayout.attributes
+            val vattrspos = vertexLayout.attributePositions
+
+            if (vertices.kind != AG.Buffer.Kind.VERTEX) invalidOp("Not a VertexBuffer")
+
+            vertices.bind(gl)
+            val totalSize = vertexLayout.totalSize
+            for (n in 0 until vattrspos.size) {
+                val att = vattrs[n]
+                if (!att.active) continue
                 val off = vattrspos[n]
                 val loc = glProgram.getAttribLocation(att.name)
                 val glElementType = att.type.glElementType
@@ -303,6 +312,8 @@ abstract class AGOpengl : AG() {
                 }
             }
         }
+
+
         var textureUnit = 0
         //for ((uniform, value) in uniforms) {
         for (n in 0 until uniforms.uniforms.size) {
@@ -488,12 +499,14 @@ abstract class AGOpengl : AG() {
 
         //glSetActiveTexture(gl.TEXTURE0)
 
-        for (n in 0 until vattrs.size) {
-            val att = vattrs[n]
-            if (att.active) {
-                val loc = glProgram.getAttribLocation(att.name).toInt()
-                if (loc >= 0) {
-                    gl.disableVertexAttribArray(loc)
+        batch.vertexData.fastForEach { entry ->
+            val vattrs = entry.layout.attributes
+            vattrs.fastForEach { att ->
+                if (att.active) {
+                    val loc = glProgram.getAttribLocation(att.name).toInt()
+                    if (loc >= 0) {
+                        gl.disableVertexAttribArray(loc)
+                    }
                 }
             }
         }

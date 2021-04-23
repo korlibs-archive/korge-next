@@ -1013,6 +1013,30 @@ open class KmlGlProxy(parent: KmlGl) : KmlGlFastProxy(parent) {
 		after("viewport", sparams, "$res")
 		return res
 	}
+
+    override val isInstancedSupported: Boolean get() = parent.isInstancedSupported
+
+    override fun drawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int) {
+        val sparams = "$mode, $first, $count, $instancecount)"
+        before("drawArraysInstanced", sparams)
+        val res = parent.drawArraysInstanced(mode, first, count, instancecount)
+        after("drawArraysInstanced", sparams, "$res")
+        return res
+    }
+    override fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int) {
+        val sparams = "$mode, $count, $type, $indices, $instancecount"
+        before("drawElementsInstanced", sparams)
+        val res = parent.drawElementsInstanced(mode, count, type, indices, instancecount)
+        after("drawElementsInstanced", sparams, "$res")
+        return res
+    }
+    override fun vertexAttribDivisor(index: Int, divisor: Int) {
+        val sparams = "$index, $divisor"
+        before("vertexAttribDivisor", sparams)
+        val res = parent.vertexAttribDivisor(index, divisor)
+        after("vertexAttribDivisor", sparams, "$res")
+        return res
+    }
 }
 open class KmlGlFastProxy(var parent: KmlGl) : KmlGl() {
     override val root: KmlGl get() = parent.root
@@ -1456,6 +1480,13 @@ open class KmlGlFastProxy(var parent: KmlGl) : KmlGl() {
 	override fun viewport(x: Int, y: Int, width: Int, height: Int): Unit {
 		return parent.viewport(x, y, width, height)
 	}
+
+    // Instanced
+    override val isInstancedSupported: Boolean get() = parent.isInstancedSupported
+
+    override fun drawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int) = parent.drawArraysInstanced(mode, first, count, instancecount)
+    override fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int) = parent.drawElementsInstanced(mode, count, type, indices, instancecount)
+    override fun vertexAttribDivisor(index: Int, divisor: Int) = parent.vertexAttribDivisor(index, divisor)
 }
 class LogKmlGlProxy(parent: KmlGl, var logBefore: Boolean = false, var logAfter: Boolean = true) : KmlGlProxy(parent) {
 	override fun before(name: String, params: String): Unit {
