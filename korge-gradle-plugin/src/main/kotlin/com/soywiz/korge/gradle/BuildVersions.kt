@@ -2,7 +2,7 @@
 package com.soywiz.korge.gradle
 
 object BuildVersions {
-    const val GIT = "v2.0.7.0-108-g6c602ffc-dirty"
+    const val GIT = "v2.0.7.0-121-g945c4d13-dirty"
     const val KRYPTO = "2.0.0.999"
 	const val KLOCK = "2.0.0.999"
 	const val KDS = "2.0.0.999"
@@ -14,7 +14,7 @@ object BuildVersions {
 	const val KORGW = "2.0.0.999"
 	const val KORGE = "2.0.0.999"
 	const val KOTLIN = "1.4.32"
-    const val JNA = "5.7.0"
+    const val JNA = "5.8.0"
 	const val COROUTINES = "1.4.3"
 	const val ANDROID_BUILD = "4.2.0-rc01"
 
