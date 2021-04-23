@@ -192,6 +192,12 @@ object Output : Variable("out", VarType.Float4) {
     override fun hashCode(): Int = mhashcode()
 }
 
+object InstanceID : Variable("InstanceID", VarType.Int1) {
+    override fun toString(): String = "InstanceID"
+    override fun equals(other: Any?): Boolean = mequals<Output>(other)
+    override fun hashCode(): Int = mhashcode()
+}
+
 data class ProgramConfig(
     val externalTextureSampler: Boolean = false
 ) {
@@ -230,7 +236,9 @@ class Program(val vertex: VertexShader, val fragment: FragmentShader, val name: 
 		constructor(name: String, vararg ops: Operand) : this(name, ops.toList())
 	}
 
-	sealed class Stm {
+    //data class Identifier(val name: String, override val type: VarType) : Operand(type)
+
+    sealed class Stm {
 		data class Stms(val stms: List<Stm>) : Stm()
         data class Set(val to: Operand, val from: Operand) : Stm()
         class Discard : Stm() {
@@ -293,7 +301,10 @@ class Program(val vertex: VertexShader, val fragment: FragmentShader, val name: 
 		val out: Output = Output
 		//fun out(to: Operand) = Stm.Set(if (type == ShaderType.VERTEX) out_Position else out_FragColor, to)
 
-		fun sin(arg: Operand) = Func("sin", arg)
+        //val instanceID = Identifier("gl_InstanceID", VarType.Int1)
+        val instanceID = InstanceID
+
+        fun sin(arg: Operand) = Func("sin", arg)
 		fun cos(arg: Operand) = Func("cos", arg)
 		fun tan(arg: Operand) = Func("tan", arg)
 
@@ -448,6 +459,7 @@ class Program(val vertex: VertexShader, val fragment: FragmentShader, val name: 
 			is Varying -> visit(operand)
 			is Uniform -> visit(operand)
 			is Output -> visit(operand)
+            is InstanceID -> visit(operand)
 			is Temp -> visit(operand)
 			else -> invalidOp("Don't know how to visit basename $operand")
 		}
@@ -457,6 +469,7 @@ class Program(val vertex: VertexShader, val fragment: FragmentShader, val name: 
 		open fun visit(varying: Varying): E = default
 		open fun visit(uniform: Uniform): E = default
 		open fun visit(output: Output): E = default
+        open fun visit(output: InstanceID): E = default
 		open fun visit(operand: Binop): E {
 			visit(operand.left)
 			visit(operand.right)

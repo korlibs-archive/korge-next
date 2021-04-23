@@ -41,6 +41,10 @@ abstract class AG : Extra by Extra.Mixin() {
 	var contextVersion = 0
 	abstract val nativeComponent: Any
 
+    open val isInstancedSupported get() = false
+    open val isInstanceIDSupported get() = false
+    open val isFloatTextureSupported get() = false
+
     open fun contextLost() {
         Console.info("AG.contextLost()", this)
         contextVersion++

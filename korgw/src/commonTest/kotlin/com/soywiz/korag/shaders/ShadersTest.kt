@@ -59,12 +59,12 @@ class ShadersTest {
         }
     }
 
-    fun assertEqualsShader(shader: Shader, version: Int = GlslGenerator.DEFAULT_VERSION, gles: Boolean = false, block: Indenter.() -> Unit) {
+    fun assertEqualsShader(shader: Shader, version: Int = GlslGenerator.DEFAULT_GLSL_VERSION, kind: GlKind = GlKind.CORE, block: Indenter.() -> Unit) {
         assertEquals(
             Indenter {
                 block()
             }.toString(),
-            shader.toNewGlslStringResult(gles = gles, version = version).result
+            shader.toNewGlslStringResult(GlslConfig(glKind = kind, glslVersion = version)).result
         )
     }
 

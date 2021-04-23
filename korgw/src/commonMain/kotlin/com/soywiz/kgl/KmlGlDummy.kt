@@ -158,4 +158,6 @@ open class KmlGlDummyBase : KmlGl() {
     override fun drawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int): Unit = Unit
     override fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int): Unit = Unit
     override fun vertexAttribDivisor(index: Int, divisor: Int): Unit = Unit
+
+    override val isFloatTextureSupported: Boolean get() = false
 }

@@ -2,13 +2,14 @@ package com.soywiz.korgw.awt
 
 import com.soywiz.kgl.*
 import com.soywiz.korag.*
+import com.soywiz.korag.shader.gl.*
 import com.soywiz.korgw.osx.*
 import com.soywiz.korgw.win32.*
 import com.soywiz.korgw.x11.*
 import com.soywiz.korio.util.*
 
 class AwtAg(override val nativeComponent: Any, private val checkGl: Boolean, logGl: Boolean, val cacheGl: Boolean = false) : AGOpengl() {
-    override val gles: Boolean = true
+    override val glKind: GlKind = GlKind.CORE
     override val linux: Boolean = OS.isLinux
     private var baseLazyGl: KmlGl? = null
     private var baseLazyGlWithLog: LogKmlGlProxy? = null

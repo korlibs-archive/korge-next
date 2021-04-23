@@ -153,9 +153,13 @@ interface IKmlGl {
 
 	// https://www.khronos.org/registry/webgl/extensions/ANGLE_instanced_arrays/
 	val isInstancedSupported: Boolean get() = false
-    fun drawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int): Unit = unsupported()
-    fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int): Unit = unsupported()
+    val isInstanceIDSupported: Boolean get() = isInstancedSupported
+    fun drawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int): Unit = unsupported("Not supported instanced drawing")
+    fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int): Unit = unsupported("Not supported instanced drawing")
     fun vertexAttribDivisor(index: Int, divisor: Int): Unit = unsupported()
+
+    // https://www.khronos.org/registry/OpenGL/extensions/OES/OES_texture_float.txt
+    val isFloatTextureSupported: Boolean get() = false
 
     fun enableDisable(cap: Int, enable: Boolean) {
         if (enable) enable(cap) else disable(cap)

@@ -10,6 +10,7 @@ import com.soywiz.kgl.KmlGl
 import com.soywiz.kgl.KmlGlAndroid
 import com.soywiz.klock.*
 import com.soywiz.korag.AGOpengl
+import com.soywiz.korag.shader.gl.*
 import com.soywiz.korev.InitEvent
 import com.soywiz.korev.RenderEvent
 import com.soywiz.korev.TouchEvent
@@ -43,7 +44,7 @@ class KorgeAndroidView(context: Context) : RelativeLayout(context, null) {
 
         override val gl: KmlGl = KmlGlAndroid()
         override val nativeComponent: Any get() = this@KorgeAndroidView
-        override val gles: Boolean = true
+        override val glKind: GlKind = GlKind.ES
 
         // @TODO: Cache somehow?
         override val pixelsPerInch: Double get() = getResources().getDisplayMetrics().densityDpi.toDouble()

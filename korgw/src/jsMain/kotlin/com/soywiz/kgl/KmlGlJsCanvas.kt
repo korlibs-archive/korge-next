@@ -20,7 +20,10 @@ import kotlinx.browser.document
 // https://webglstats.com/
 // https://caniuse.com/#feat=webgl
 class KmlGlJsCanvas(val canvas: HTMLCanvasElement, val glOpts: dynamic) : KmlGl() {
-    val gl = (canvas.getContext("webgl", glOpts) ?: canvas.getContext("experimental-webgl", glOpts)).unsafeCast<WebGLRenderingContext?>()
+    var webglVersion = 1
+    val gl = (canvas.getContext("webgl2", glOpts)?.also { webglVersion = 2 }
+        ?: canvas.getContext("webgl", glOpts)
+        ?: canvas.getContext("experimental-webgl", glOpts)).unsafeCast<WebGLRenderingContext?>()
         ?: run {
             try {
                 document.body?.prepend((document.createElement("div") as HTMLElement).apply {
@@ -163,7 +166,13 @@ class KmlGlJsCanvas(val canvas: HTMLCanvasElement, val glOpts: dynamic) : KmlGl(
     override fun stencilMaskSeparate(face: Int, mask: Int): Unit = gl.stencilMaskSeparate(face, mask)
     override fun stencilOp(fail: Int, zfail: Int, zpass: Int): Unit = gl.stencilOp(fail, zfail, zpass)
     override fun stencilOpSeparate(face: Int, sfail: Int, dpfail: Int, dppass: Int): Unit = gl.stencilOpSeparate(face, sfail, dpfail, dppass)
-    override fun texImage2D(target: Int, level: Int, internalformat: Int, width: Int, height: Int, border: Int, format: Int, type: Int, pixels: FBuffer?): Unit = gl.texImage2D(target, level, internalformat, width, height, border, format, type, pixels?.arrayUByte)
+    override fun texImage2D(target: Int, level: Int, internalformat: Int, width: Int, height: Int, border: Int, format: Int, type: Int, pixels: FBuffer?): Unit {
+        val vpixels = when (type) {
+            FLOAT -> pixels?.f32
+            else -> pixels?.arrayUByte
+        }
+        gl.texImage2D(target, level, internalformat, width, height, border, format, type, vpixels)
+    }
     override fun texImage2D(target: Int, level: Int, internalformat: Int, format: Int, type: Int, data: NativeImage): Unit = gl.texImage2D(target, level, internalformat, format, type, (data as HtmlNativeImage).texSource)
     override fun texParameterf(target: Int, pname: Int, param: Float): Unit = gl.texParameterf(target, pname, param)
     override fun texParameterfv(target: Int, pname: Int, params: FBuffer): Unit = gl.texParameterf(target, pname, params.arrayFloat[0])
@@ -201,6 +210,51 @@ class KmlGlJsCanvas(val canvas: HTMLCanvasElement, val glOpts: dynamic) : KmlGl(
     override fun vertexAttrib4fv(index: Int, v: FBuffer): Unit = gl.vertexAttrib4fv(index, v)
     override fun vertexAttribPointer(index: Int, size: Int, type: Int, normalized: Boolean, stride: Int, pointer: Long): Unit = gl.vertexAttribPointer(index, size, type, normalized, stride, pointer.toInt())
     override fun viewport(x: Int, y: Int, width: Int, height: Int): Unit = gl.viewport(x, y, width, height)
+
+    var _instancedArraysSet: Boolean = false
+    var _instancedArrays: dynamic = null
+    val instancedArrays: dynamic
+        get() {
+            if (!_instancedArraysSet) {
+                _instancedArraysSet = true
+                _instancedArrays = gl.getExtension("ANGLE_instanced_arrays")
+            }
+            return _instancedArrays
+        }
+
+    override val isInstancedSupported: Boolean get() = (webglVersion >= 2) || (instancedArrays != null)
+    override val isInstanceIDSupported: Boolean get() = (webglVersion >= 2)
+
+    override fun drawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int) {
+        if (webglVersion >= 2) {
+            gl.asDynamic().drawArraysInstanced(mode, first, count, instancecount)
+        } else {
+            instancedArrays.drawArraysInstancedANGLE(mode, first, count, instancecount)
+        }
+    }
+
+    override fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int) {
+        if (webglVersion >= 2) {
+            gl.asDynamic().drawElementsInstanced(mode, count, type, indices, instancecount)
+        } else {
+            instancedArrays.drawElementsInstancedANGLE(mode, count, type, indices, instancecount)
+        }
+    }
+
+    override fun vertexAttribDivisor(index: Int, divisor: Int) {
+        if (webglVersion >= 2) {
+            gl.asDynamic().vertexAttribDivisor(index, divisor)
+        } else {
+            instancedArrays.vertexAttribDivisorANGLE(index, divisor)
+        }
+    }
+
+    val extensions = (gl.getSupportedExtensions() ?: arrayOf()).toSet()
+
+    override val isFloatTextureSupported: Boolean by lazy {
+        //println("extensions: $extensions")
+        webglVersion >= 2 || gl.getExtension("OES_texture_float") != null
+    }
 
     private fun Float32Buffer.sliceIfRequired(count: Int): Float32Buffer = if (size == count) this else Float32Array(this.buffer, 0, count)
 }

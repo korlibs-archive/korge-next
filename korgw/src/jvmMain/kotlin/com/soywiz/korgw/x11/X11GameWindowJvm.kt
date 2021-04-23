@@ -5,6 +5,7 @@ import com.soywiz.kgl.checkedIf
 import com.soywiz.kmem.toInt
 import com.soywiz.kmem.write32LE
 import com.soywiz.korag.AGOpengl
+import com.soywiz.korag.shader.gl.*
 import com.soywiz.korev.Key
 import com.soywiz.korev.MouseButton
 import com.soywiz.korev.MouseEvent
@@ -17,7 +18,7 @@ import com.sun.jna.platform.unix.X11.*
 
 //class X11Ag(val window: X11GameWindow, override val gl: KmlGl = LogKmlGlProxy(X11KmlGl())) : AGOpengl() {
 class X11Ag(val window: X11GameWindow, val checkGl: Boolean, override val gl: KmlGl = X11KmlGl().checkedIf(checkGl)) : AGOpengl() {
-    override val gles: Boolean = true
+    override val glKind: GlKind = GlKind.CORE
     override val linux: Boolean = true
     override val nativeComponent: Any = window
 }

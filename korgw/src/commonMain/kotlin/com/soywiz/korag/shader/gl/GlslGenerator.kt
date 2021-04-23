@@ -4,28 +4,29 @@ import com.soywiz.klogger.*
 import com.soywiz.korag.shader.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korio.util.*
+import com.soywiz.korui.layout.MathEx.max
 
 data class GlslConfig(
-    val gles: Boolean = true,
-    val version: Int = GlslGenerator.DEFAULT_VERSION,
+    val glKind: GlKind = GlKind.CORE,
+    val glVersion: Int = 2_0,
+    val glslVersion: Int = GlslGenerator.DEFAULT_GLSL_VERSION,
     val compatibility: Boolean = true,
     val android: Boolean = false,
     val programConfig: ProgramConfig = ProgramConfig.DEFAULT
 )
 
+enum class GlKind {
+    WEBGL, ES, CORE;
+
+    val isWebgl get() = this == WEBGL
+}
+
 class GlslGenerator constructor(
     val kind: ShaderType,
     val config: GlslConfig = GlslConfig()
 ) : Program.Visitor<String>("") {
-    constructor(
-        kind: ShaderType,
-        gles: Boolean = true,
-        version: Int = DEFAULT_VERSION,
-        compatibility: Boolean = true
-    ) : this(kind, GlslConfig(gles, version, compatibility))
-
-    val gles: Boolean get() = config.gles
-    val version: Int get() = config.version
+    val gles: Boolean get() = config.glKind != GlKind.CORE
+    val version: Int get() = config.glslVersion
     val compatibility: Boolean get() = config.compatibility
     val android: Boolean get() = config.android
 
@@ -33,7 +34,7 @@ class GlslGenerator constructor(
     val newGlSlVersion: Boolean = false
 
     companion object {
-        val DEFAULT_VERSION = 100
+        val DEFAULT_GLSL_VERSION = 100
         val FRAGCOLOR = "fragColor"
         val GL_FRAGCOLOR = "gl_FragColor"
         val FORCE_GLSL_VERSION get() = Environment["FORCE_GLSL_VERSION"]
@@ -49,6 +50,7 @@ class GlslGenerator constructor(
 	private val attributes = LinkedHashSet<Attribute>()
 	private val varyings = LinkedHashSet<Varying>()
 	private val uniforms = LinkedHashSet<Uniform>()
+    private var hasInstanceID = false
 	private var programIndenter = Indenter()
 
 	private fun errorType(type: VarType): Nothing = invalidOp("Don't know how to serialize type $type")
@@ -126,40 +128,54 @@ class GlslGenerator constructor(
         //}
 
         val result = Indenter {
-            if (gles) {
-                if (!android) {
-                    if (compatibility) {
-                        line("#version $version compatibility")
-                    } else {
-                        line("#version $version")
-                    }
-                }
-                if (config.programConfig.externalTextureSampler) {
-                    line("#extension GL_OES_EGL_image_external : require")
-                }
-                line("#ifdef GL_ES")
-                indent {
-                    line("precision highp float;")
-                    line("precision highp int;")
-                    line("precision lowp sampler2D;")
-                    line("precision lowp samplerCube;")
-                }
-                line("#else")
-                indent {
-                    line("  #define highp ")
-                    line("  #define mediump ")
-                    line("  #define lowp ")
-                }
-                //indent {
-                //    line("precision highp float;")
-                //    line("precision highp int;")
-                //}
-                line("#endif")
-                //line("precision highp float;")
-                //line("precision highp int;")
-                //line("precision lowp sampler2D;")
-                //line("precision lowp samplerCube;")
+            var rversion = version
+            var rprofile = ""
+
+            if (gles && !android && compatibility) {
+                rprofile = "compatibility"
             }
+
+            if (config.glKind.isWebgl && config.glVersion >= 2_0) {
+                rversion = max(rversion, 300)
+                rprofile = "ES"
+            }
+
+            if (gles && !android) {
+                line("#version $rversion $rprofile".trim())
+            }
+
+            //println("config.glKind.isWebgl=${config.glKind.isWebgl}")
+
+            if (!android) {
+                if (hasInstanceID && !config.glKind.isWebgl) {
+                    line("#extension GL_EXT_draw_instanced : enable")
+                }
+            }
+            if (config.programConfig.externalTextureSampler) {
+                line("#extension GL_OES_EGL_image_external : require")
+            }
+            line("#ifdef GL_ES")
+            indent {
+                line("precision highp float;")
+                line("precision highp int;")
+                line("precision lowp sampler2D;")
+                line("precision lowp samplerCube;")
+            }
+            line("#else")
+            indent {
+                line("  #define highp ")
+                line("  #define mediump ")
+                line("  #define lowp ")
+            }
+            //indent {
+            //    line("precision highp float;")
+            //    line("precision highp int;")
+            //}
+            line("#endif")
+            //line("precision highp float;")
+            //line("precision highp int;")
+            //line("precision lowp sampler2D;")
+            //line("precision lowp samplerCube;")
 
             for (it in attributes) line("$IN ${precToString(it.precision)}${typeToString(it.type)} ${it.name}${it.arrayDecl};")
             for (it in uniforms) line("$UNIFORM ${precToString(it.precision)}${typeToString(it.type)} ${it.name}${it.arrayDecl};")
@@ -231,6 +247,7 @@ class GlslGenerator constructor(
 	override fun visit(operand: Variable): String {
 		super.visit(operand)
 		return when (operand) {
+            is InstanceID -> "gl_InstanceID"
 			is Output -> when (kind) {
 				ShaderType.VERTEX -> "gl_Position"
 				ShaderType.FRAGMENT -> gl_FragColor
@@ -263,7 +280,12 @@ class GlslGenerator constructor(
 		return super.visit(output)
 	}
 
-	override fun visit(operand: Program.IntLiteral): String = "${operand.value}"
+    override fun visit(output: InstanceID): String {
+        hasInstanceID = true
+        return super.visit(output)
+    }
+
+    override fun visit(operand: Program.IntLiteral): String = "${operand.value}"
 
 	override fun visit(operand: Program.FloatLiteral): String {
 		val str = "${operand.value}"

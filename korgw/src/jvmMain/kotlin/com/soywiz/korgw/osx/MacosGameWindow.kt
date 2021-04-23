@@ -5,6 +5,7 @@ import com.soywiz.kgl.checkedIf
 import com.soywiz.kgl.logIf
 import com.soywiz.klock.PerformanceCounter
 import com.soywiz.korag.AGOpengl
+import com.soywiz.korag.shader.gl.*
 import com.soywiz.korev.Key
 import com.soywiz.korev.KeyEvent
 import com.soywiz.korev.MouseButton
@@ -27,7 +28,7 @@ import java.nio.ByteBuffer
 import kotlin.coroutines.*
 
 class MacAG(val window: Long, val checkGl: Boolean, val logGl:Boolean) : AGOpengl() {
-    override val gles: Boolean = true
+    override val glKind: GlKind = GlKind.CORE
     //override val glSlVersion = 140
     //override val glSlVersion = 100
     override val gl: KmlGl = MacKmlGL().checkedIf(checkGl).logIf(logGl)
