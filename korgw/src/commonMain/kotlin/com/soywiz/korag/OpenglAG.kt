@@ -517,6 +517,9 @@ abstract class AGOpengl : AG() {
                 if (att.active) {
                     val loc = glProgram.getAttribLocation(att.name).toInt()
                     if (loc >= 0) {
+                        if (att.divisor != 0) {
+                            gl.vertexAttribDivisor(loc, 0)
+                        }
                         gl.disableVertexAttribArray(loc)
                     }
                 }
