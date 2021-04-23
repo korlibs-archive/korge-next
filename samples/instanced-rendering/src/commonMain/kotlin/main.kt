@@ -1,5 +1,6 @@
 import com.soywiz.kds.*
 import com.soywiz.klock.*
+import com.soywiz.kmem.*
 import com.soywiz.korag.*
 import com.soywiz.korag.shader.*
 import com.soywiz.korge.*
@@ -8,9 +9,9 @@ import com.soywiz.korge.render.*
 import com.soywiz.korge.resources.*
 import com.soywiz.korge.tween.*
 import com.soywiz.korge.view.*
-import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
 import com.soywiz.korio.resources.*
+import com.soywiz.korio.util.*
 import com.soywiz.korma.geom.*
 import com.soywiz.korma.interpolation.*
 import kotlin.random.*
@@ -46,101 +47,175 @@ suspend fun main() {
     }
 }
 
-class MyView : View() {
-    var indexBuffer: AG.Buffer? = null
-    private val textureUnit = AG.TextureUnit(null, linear = false)
 
+class MyView : View() {
+    private val sprites = FSpriteContainer(800_000)
+    private val random = Random(0)
+
+    init {
+        val anchorRaw = FSprite.packAnchor(.2f, .2f)
+        println(anchorRaw.toStringUnsigned(16))
+        sprites.apply {
+            for (n in 0 until sprites.maxSize) {
+            //for (n in 0 until 1_000) {
+            //for (n in 0 until 200_000) {
+                val sprite = alloc()
+                //println(sprite.offset)
+                sprite.x = 0f
+                sprite.y = 0f
+                sprite.width = 1f
+                sprite.height = 1f
+                sprite.angle = 0.radians
+                sprite.anchorRaw = anchorRaw
+                sprite.uv0Raw = 0
+                sprite.uv1Raw = 0
+            }
+        }
+
+        addUpdater {
+            sprites.fastForEach {
+                it.x = random.nextInt(512).toFloat()
+                it.y = random.nextInt(512).toFloat()
+            }
+        }
+    }
+
+    override fun renderInternal(ctx: RenderContext) {
+        FSprite.run {
+            ctx.xyBuffer.buffer.upload(
+                floatArrayOf(
+                    0f, 0f,
+                    1f, 0f,
+                    1f, 1f,
+                    0f, 1f,
+                )
+            )
+        }
+        sprites.uploadVertices(ctx)
+        ctx.flush()
+        ctx.ag.drawV2(
+            vertexData = FSprite.run { ctx.buffers },
+            program = FSprite.vprogram,
+            type = AG.DrawType.TRIANGLE_FAN,
+            vertexCount = 4,
+            instances = sprites.size,
+            uniforms = ctx.batch.uniforms
+        )
+        ctx.batch.onInstanceCount(sprites.size)
+    }
+}
+
+open class FSpriteContainer(val maxSize: Int) {
+    var size = 0
+    val data = FBuffer(maxSize * FSprite.STRIDE * 4)
+    private val i32 = data.i32
+    private val f32 = data.f32
+    fun uploadVertices(ctx: RenderContext) {
+        FSprite.apply {
+            ctx.fastSpriteBuffer.buffer.upload(data, 0, size * STRIDE * 4)
+        }
+    }
+
+    fun alloc() = FSprite(size++ * FSprite.STRIDE)
+
+    var FSprite.x: Float get() = f32[offset + 0] ; set(value) { f32[offset + 0] = value }
+    var FSprite.y: Float get() = f32[offset + 1] ; set(value) { f32[offset + 1] = value }
+    var FSprite.width: Float get() = f32[offset + 2] ; set(value) { f32[offset + 2] = value }
+    var FSprite.height: Float get() = f32[offset + 3] ; set(value) { f32[offset + 3] = value }
+    var FSprite.radiansf: Float get() = f32[offset + 4] ; set(value) { f32[offset + 4] = value }
+    var FSprite.anchorRaw: Int get() = i32[offset + 5] ; set(value) { i32[offset + 5] = value }
+    var FSprite.uv0Raw: Int get() = i32[offset + 6] ; set(value) { i32[offset + 6] = value }
+    var FSprite.uv1Raw: Int get() = i32[offset + 7] ; set(value) { i32[offset + 7] = value }
+
+    var FSprite.angle: Angle get() = radiansf.radians ; set(value) { radiansf = value.radians.toFloat() }
+
+    fun FSprite.setAnchor(x: Float, y: Float) {
+        anchorRaw = FSprite.packAnchor(x, y)
+    }
+
+    inline fun fastForEach(callback: FSpriteContainer.(sprite: FSprite) -> Unit) {
+        var m = 0
+        for (n in 0 until size) {
+            callback(FSprite(m))
+            m += FSprite.STRIDE
+        }
+    }
+}
+
+inline class FSprite(val offset: Int) {
     companion object {
+        const val STRIDE = 8
+
         val v_color = Varying("v_color", VarType.Float4)
         val a_x = Attribute("a_x", VarType.Float1, false)
         val a_y = Attribute("a_y", VarType.Float1, false)
 
-        val a_rx = Attribute("a_rx", VarType.Float1, false).withDivisor(1)
-        val a_ry = Attribute("a_ry", VarType.Float1, false).withDivisor(1)
-        val a_ax = Attribute("a_ax", VarType.Float1, false).withDivisor(1)
-        val a_ay = Attribute("a_ay", VarType.Float1, false).withDivisor(1)
-        val a_w = Attribute("a_w", VarType.Float1, false).withDivisor(1)
-        val a_h = Attribute("a_h", VarType.Float1, false).withDivisor(1)
-        val a_rangle = Attribute("a_rangle", VarType.Float1, false).withDivisor(1)
+        val a_pos = Attribute("a_rxy", VarType.Float2, false).withDivisor(1)
+        val a_anchor = Attribute("a_axy", VarType.SShort2, true).withDivisor(1)
+        val a_size = Attribute("a_size", VarType.Float2, true).withDivisor(1)
+        val a_angle = Attribute("a_rangle", VarType.Float1, false).withDivisor(1)
+        val a_uv0 = Attribute("a_uv0", VarType.UShort2, true).withDivisor(1)
+        val a_uv1 = Attribute("a_uv1", VarType.UShort2, true).withDivisor(1)
 
-        private val RenderContext.xyBuffer by Extra.PropertyThis<RenderContext, AG.VertexData> { ag.createVertexData(a_x, a_y) }
-        private val RenderContext.fastSpriteBuffer by Extra.PropertyThis<RenderContext, AG.VertexData> { ag.createVertexData(a_rx, a_ry, a_ax, a_ay, a_w, a_h, a_rangle) }
+        val RenderContext.xyBuffer by Extra.PropertyThis<RenderContext, AG.VertexData> {
+            ag.createVertexData(a_x, a_y)
+        }
+        val RenderContext.fastSpriteBuffer by Extra.PropertyThis<RenderContext, AG.VertexData> {
+            ag.createVertexData(a_pos, a_size, a_angle, a_anchor, a_uv0, a_uv1)
+        }
+        val RenderContext.buffers by Extra.PropertyThis<RenderContext, List<AG.VertexData>> {
+            listOf(xyBuffer, fastSpriteBuffer)
+        }
 
         val vprogram = Program(VertexShader {
             DefaultShaders.apply {
-                //SET(out, (u_ProjMat * u_ViewMat) * vec4(vec2(a_x, a_y), 0f.lit, 1f.lit))
-                //SET(v_color, texture2D(u_Tex, vec2(vec1(id) / 4f.lit, 0f.lit)))
-                SET(v_color, vec4(1f.lit, 0f.lit, 0f.lit, 1f.lit))
-                val cos = t_Temp0["y"]
-                val sin = t_Temp0["z"]
-                SET(cos, cos(a_rangle))
-                SET(sin, sin(a_rangle))
-                SET(t_TempMat2, mat2(
-                    cos, -sin,
-                    sin, cos,
-                ))
-                SET(t_Temp0["xy"], t_TempMat2 * vec2(((a_x - a_ax) * a_w), ((a_y - a_ay) * a_h)))
-                SET(out, (u_ProjMat * u_ViewMat) * vec4(t_Temp0["xy"] + vec2(a_rx, a_ry), 0f.lit, 1f.lit))
+                FSprite.apply {
+                    //SET(out, (u_ProjMat * u_ViewMat) * vec4(vec2(a_x, a_y), 0f.lit, 1f.lit))
+                    //SET(v_color, texture2D(u_Tex, vec2(vec1(id) / 4f.lit, 0f.lit)))
+                    SET(v_color, vec4(1f.lit, 0f.lit, 0f.lit, 1f.lit))
+                    val cos = t_Temp0["y"]
+                    val sin = t_Temp0["z"]
+                    SET(cos, cos(a_angle))
+                    SET(sin, sin(a_angle))
+                    SET(t_TempMat2, mat2(
+                        cos, -sin,
+                        sin, cos,
+                    ))
+                    SET(t_Temp0["xy"], t_TempMat2 * vec2(((a_x - a_anchor.x) * a_size.x), ((a_y - a_anchor.y) * a_size.y)))
+                    SET(out, (u_ProjMat * u_ViewMat) * vec4(t_Temp0["xy"] + vec2(a_pos.x, a_pos.y), 0f.lit, 1f.lit))
+                }
             }
         }, FragmentShader {
-            //SET(out, texture2D(DefaultShaders.u_Tex, DefaultShaders.v_Tex["xy"]))
-            SET(out, v_color)
-            //SET(out, vec4(1f.lit, 0f.lit, 1f.lit, 1f.lit))
+            DefaultShaders.apply {
+                FSprite.apply {
+                    //SET(out, texture2D(DefaultShaders.u_Tex, DefaultShaders.v_Tex["xy"]))
+                    SET(out, v_color)
+                    //SET(out, vec4(1f.lit, 0f.lit, 1f.lit, 1f.lit))
+                }
+            }
         })
-    }
 
-    private val numInstances = 500_000
-    private val STRIDE = 7
-    private val data = FloatArray(numInstances * STRIDE)
-    private val random = Random
-
-    override fun renderInternal(ctx: RenderContext) {
-        if (indexBuffer == null) {
-            indexBuffer = ctx.ag.createIndexBuffer()
-            indexBuffer!!.upload(shortArrayOf(0, 1, 1, 2, 2, 3, 3, 0))
-            //tex!!.upload(Bitmap32(1, 1) { x, y -> Colors.FUCHSIA })
-        }
-        ctx.xyBuffer.buffer.upload(floatArrayOf(
-            0f, 0f,
-            1f, 0f,
-            1f, 1f,
-            0f, 1f,
-        ))
-        for (n in 0 until numInstances) {
-            data[n * STRIDE + 0] = random.nextInt(512).toFloat()
-            data[n * STRIDE + 1] = random.nextInt(512).toFloat()
-            data[n * STRIDE + 2] = .5f
-            data[n * STRIDE + 3] = .5f
-            data[n * STRIDE + 4] = .5f
-            data[n * STRIDE + 5] = .5f
-            data[n * STRIDE + 6] = 0f
-            //data[n * STRIDE + 6] = 0.degrees.radians.toFloat()
+        private fun packAnchorComponent(v: Float): Int {
+            return (((v + 1f) * .5f) * 0xFFFF).toInt() and 0xFFFF
         }
 
-        ctx.fastSpriteBuffer.buffer.upload(data)
-        ctx.flush()
-        ctx.ag.drawV2(
-            vertexData = listOf(ctx.xyBuffer, ctx.fastSpriteBuffer),
-            program = vprogram,
-            type = AG.DrawType.LINES,
-            vertexCount = 8,
-            indices = indexBuffer,
-            instances = numInstances,
-            uniforms = ctx.batch.uniforms
-        )
-        ctx.batch.onInstanceCount(numInstances)
+        fun packAnchor(x: Float, y: Float): Int {
+            return (packAnchorComponent(x) and 0xFFFF) or (packAnchorComponent(y) shl 16)
+        }
     }
+    val index get() = offset / STRIDE
+    //val offset get() = index * STRIDE
 }
 
+/*
 class FSprite {
     var x: Float = 0f
     var y: Float = 0f
-    var rotation: Angle = 0.degrees
-    val scaleX: Float = 0f
-    val scaleY: Float = 0f
-
-    val tx0: Float = 0f
-    val ty0: Float = 0f
-    val tx1: Float = 1f
-    val ty1: Float = 1f
+    var width: Float = .5f
+    var height: Float = .5f
+    var radiansf: Float = 0f
+    var anchor: Int = 0x7fff7fff
+    var uv0: Int = 0
+    var uv1: Int = 0
 }
+*/
