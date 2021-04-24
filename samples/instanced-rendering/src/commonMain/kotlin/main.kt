@@ -23,8 +23,8 @@ val ResourcesContainer.korge_png by resourceBitmap("korge.png")
 
 class BunnyContainer(maxSize: Int) : FSprites(maxSize) {
     val speeds = FBuffer(maxSize * Float.SIZE_BYTES * 2).f32
-    var Sprite.speedXf: Float get() = speeds[index * 2 + 0] ; set(value) { speeds[index * 2 + 0] = value }
-    var Sprite.speedYf: Float get() = speeds[index * 2 + 1] ; set(value) { speeds[index * 2 + 1] = value }
+    var FSprite.speedXf: Float get() = speeds[index * 2 + 0] ; set(value) { speeds[index * 2 + 0] = value }
+    var FSprite.speedYf: Float get() = speeds[index * 2 + 1] ; set(value) { speeds[index * 2 + 1] = value }
     //var FSprite.tex: BmpSlice
 }
 
@@ -172,29 +172,33 @@ open class FSprites(val maxSize: Int) {
         ctx.fastSpriteBuffer.buffer.upload(data, 0, size * STRIDE * 4)
     }
 
-    fun alloc() = Sprite(size++ * STRIDE)
+    fun unloadVertices(ctx: RenderContext) {
+        ctx.fastSpriteBuffer.buffer.upload(data, 0, 0)
+    }
 
-    var Sprite.x: Float get() = f32[offset + 0] ; set(value) { f32[offset + 0] = value }
-    var Sprite.y: Float get() = f32[offset + 1] ; set(value) { f32[offset + 1] = value }
-    var Sprite.scaleX: Float get() = f32[offset + 2] ; set(value) { f32[offset + 2] = value }
-    var Sprite.scaleY: Float get() = f32[offset + 3] ; set(value) { f32[offset + 3] = value }
-    var Sprite.radiansf: Float get() = f32[offset + 4] ; set(value) { f32[offset + 4] = value }
-    var Sprite.anchorRaw: Int get() = i32[offset + 5] ; set(value) { i32[offset + 5] = value }
-    var Sprite.tex0Raw: Int get() = i32[offset + 6] ; set(value) { i32[offset + 6] = value }
-    var Sprite.tex1Raw: Int get() = i32[offset + 7] ; set(value) { i32[offset + 7] = value }
+    fun alloc() = FSprite(size++ * STRIDE)
 
-    var Sprite.angle: Angle get() = radiansf.radians ; set(value) { radiansf = value.radians.toFloat() }
+    var FSprite.x: Float get() = f32[offset + 0] ; set(value) { f32[offset + 0] = value }
+    var FSprite.y: Float get() = f32[offset + 1] ; set(value) { f32[offset + 1] = value }
+    var FSprite.scaleX: Float get() = f32[offset + 2] ; set(value) { f32[offset + 2] = value }
+    var FSprite.scaleY: Float get() = f32[offset + 3] ; set(value) { f32[offset + 3] = value }
+    var FSprite.radiansf: Float get() = f32[offset + 4] ; set(value) { f32[offset + 4] = value }
+    var FSprite.anchorRaw: Int get() = i32[offset + 5] ; set(value) { i32[offset + 5] = value }
+    var FSprite.tex0Raw: Int get() = i32[offset + 6] ; set(value) { i32[offset + 6] = value }
+    var FSprite.tex1Raw: Int get() = i32[offset + 7] ; set(value) { i32[offset + 7] = value }
 
-    fun Sprite.setAnchor(x: Float, y: Float) {
+    var FSprite.angle: Angle get() = radiansf.radians ; set(value) { radiansf = value.radians.toFloat() }
+
+    fun FSprite.setAnchor(x: Float, y: Float) {
         anchorRaw = packAnchor(x, y)
     }
 
-    fun Sprite.scale(sx: Float, sy: Float = sx) {
+    fun FSprite.scale(sx: Float, sy: Float = sx) {
         this.scaleX = sx
         this.scaleY = sy
     }
 
-    fun Sprite.setTex(tex: BmpSlice) {
+    fun FSprite.setTex(tex: BmpSlice) {
         tex0Raw = tex.left or (tex.top shl 16)
         tex1Raw = tex.right or (tex.bottom shl 16)
     }
@@ -219,25 +223,20 @@ open class FSprites(val maxSize: Int) {
                     sprites.uploadVertices(ctx)
                     ctx.xyBuffer.buffer.upload(xyData)
                     ctx.ag.drawV2(
-                        vertexData = FSprites.run { ctx.buffers },
-                        program = FSprites.vprogram,
+                        vertexData = ctx.buffers,
+                        program = vprogram,
                         type = AG.DrawType.TRIANGLE_FAN,
                         vertexCount = 4,
                         instances = sprites.size,
                         uniforms = ctx.batch.uniforms
                     )
+                    sprites.unloadVertices(ctx)
+
                 }
             }
             ctx.batch.onInstanceCount(sprites.size)
         }
     }
-
-    inline class Sprite(val id: Int) {
-        val offset get() = id
-        val index get() = offset / STRIDE
-        //val offset get() = index * STRIDE
-    }
-
 
     companion object {
         const val STRIDE = 8
@@ -309,10 +308,16 @@ open class FSprites(val maxSize: Int) {
     }
 }
 
-inline fun <T : FSprites> T.fastForEach(callback: T.(sprite: FSprites.Sprite) -> Unit) {
+inline class FSprite(val id: Int) {
+    val offset get() = id
+    val index get() = offset / FSprites.STRIDE
+    //val offset get() = index * STRIDE
+}
+
+inline fun <T : FSprites> T.fastForEach(callback: T.(sprite: FSprite) -> Unit) {
     var m = 0
     for (n in 0 until size) {
-        callback(FSprites.Sprite(m))
+        callback(FSprite(m))
         m += FSprites.STRIDE
     }
 }
