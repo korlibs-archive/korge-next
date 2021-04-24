@@ -217,17 +217,19 @@ open class FSprites(val maxSize: Int) {
             ctx.flush()
             val ttex = ctx.agBitmapTextureManager.getTextureBase(tex)
             ctx.batch.setTemporalUniform(u_i_texSize, floatArrayOf(1f / ttex.width.toFloat(), 1f / ttex.height.toFloat())) {
-
-                ctx.batch.textureUnit.texture = ttex.base
-                ctx.batch.textureUnit.linear = smoothing
-                ctx.ag.drawV2(
-                    vertexData = FSprites.run { ctx.buffers },
-                    program = FSprites.vprogram,
-                    type = AG.DrawType.TRIANGLE_FAN,
-                    vertexCount = 4,
-                    instances = sprites.size,
-                    uniforms = ctx.batch.uniforms
-                )
+                ctx.batch.updateStandardUniforms()
+                ctx.batch.setViewMatrixTemp(globalMatrix) {
+                    ctx.batch.textureUnit.texture = ttex.base
+                    ctx.batch.textureUnit.linear = smoothing
+                    ctx.ag.drawV2(
+                        vertexData = FSprites.run { ctx.buffers },
+                        program = FSprites.vprogram,
+                        type = AG.DrawType.TRIANGLE_FAN,
+                        vertexCount = 4,
+                        instances = sprites.size,
+                        uniforms = ctx.batch.uniforms
+                    )
+                }
             }
             ctx.batch.onInstanceCount(sprites.size)
         }
@@ -294,6 +296,8 @@ open class FSprites(val maxSize: Int) {
             DefaultShaders.apply {
                 SET(out, texture2D(u_Tex, v_Tex["xy"]))
                 //SET(out, vec4(1f.lit, 0f.lit, 1f.lit, .5f.lit))
+                IF(out["a"] le 0f.lit) { DISCARD() }
+                SET(out["rgb"], out["rgb"] / out["a"])
             }
         })
 

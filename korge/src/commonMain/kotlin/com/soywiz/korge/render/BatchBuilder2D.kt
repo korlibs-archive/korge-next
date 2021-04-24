@@ -679,14 +679,22 @@ class BatchBuilder2D constructor(
 
     private val vertexData = listOf(AG.VertexData(vertexBuffer, LAYOUT))
 
+    fun updateStandardUniforms() {
+        if (flipRenderTexture && ag.renderingToTexture) {
+            projMat.setToOrtho(tempRect.setBounds(0, ag.currentHeight, ag.currentWidth, 0), -1f, 1f)
+        } else {
+            projMat.setToOrtho(tempRect.setBounds(0, 0, ag.currentWidth, ag.currentHeight), -1f, 1f)
+        }
+
+        textureUnit.texture = currentTex
+        textureUnit.linear = currentSmoothing
+    }
+
     /** When there are vertices pending, this performs a [AG.draw] call flushing all the buffered geometry pending to draw */
 	fun flush(uploadVertices: Boolean = true, uploadIndices: Boolean = true) {
 		if (vertexCount > 0) {
-			if (flipRenderTexture && ag.renderingToTexture) {
-				projMat.setToOrtho(tempRect.setBounds(0, ag.currentHeight, ag.currentWidth, 0), -1f, 1f)
-			} else {
-				projMat.setToOrtho(tempRect.setBounds(0, 0, ag.currentWidth, ag.currentHeight), -1f, 1f)
-			}
+            updateStandardUniforms()
+
 
 			//println("ORTHO: ${ag.backHeight.toFloat()}, ${ag.backWidth.toFloat()}")
 
@@ -694,9 +702,6 @@ class BatchBuilder2D constructor(
 
 			if (uploadVertices) uploadVertices()
             if (uploadIndices) uploadIndices()
-
-			textureUnit.texture = currentTex
-			textureUnit.linear = currentSmoothing
 
 			//println("MyUniforms: $uniforms")
 
