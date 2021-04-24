@@ -603,21 +603,26 @@ abstract class AG : Extra by Extra.Mixin() {
         var renderState: RenderState = RenderState(),
         var scissor: Scissor? = null
     ) {
-        private val singleVertexData = arrayListOf(VertexData())
+        private val singleVertexData = arrayListOf<VertexData>()
+
+        private fun ensureSingleVertexData() {
+            if (singleVertexData.isEmpty()) singleVertexData.add(VertexData())
+            vertexData = singleVertexData
+        }
 
         @Deprecated("Use vertexData instead")
         var vertices: Buffer
-            get() = singleVertexData[0].buffer
+            get() = (singleVertexData.firstOrNull() ?: vertexData.first()).buffer
             set(value) {
+                ensureSingleVertexData()
                 singleVertexData[0].buffer = value
-                vertexData = singleVertexData
             }
         @Deprecated("Use vertexData instead")
         var vertexLayout: VertexLayout
-            get() = singleVertexData[0].layout
+            get() = (singleVertexData.firstOrNull() ?: vertexData.first()).layout
             set(value) {
+                ensureSingleVertexData()
                 singleVertexData[0].layout = value
-                vertexData = singleVertexData
             }
     }
 
