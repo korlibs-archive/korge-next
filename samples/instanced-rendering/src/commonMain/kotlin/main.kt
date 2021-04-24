@@ -203,24 +203,21 @@ open class FSprites(val maxSize: Int) {
 
     class FView(val sprites: FSprites, var tex: Bitmap) : View() {
         var smoothing: Boolean = true
+        private val xyData = floatArrayOf(0f, 0f, /**/ 1f, 0f, /**/ 1f, 1f, /**/ 0f, 1f)
+        private val u_i_texSizeData = FloatArray(2)
 
         override fun renderInternal(ctx: RenderContext) {
-            ctx.xyBuffer.buffer.upload(
-                floatArrayOf(
-                    0f, 0f,
-                    1f, 0f,
-                    1f, 1f,
-                    0f, 1f,
-                )
-            )
-            sprites.uploadVertices(ctx)
             ctx.flush()
             val ttex = ctx.agBitmapTextureManager.getTextureBase(tex)
-            ctx.batch.setTemporalUniform(u_i_texSize, floatArrayOf(1f / ttex.width.toFloat(), 1f / ttex.height.toFloat())) {
+            u_i_texSizeData[0] = 1f / ttex.width.toFloat()
+            u_i_texSizeData[1] = 1f / ttex.height.toFloat()
+            ctx.batch.setTemporalUniform(u_i_texSize, u_i_texSizeData) {
                 ctx.batch.updateStandardUniforms()
                 ctx.batch.setViewMatrixTemp(globalMatrix) {
                     ctx.batch.textureUnit.texture = ttex.base
                     ctx.batch.textureUnit.linear = smoothing
+                    sprites.uploadVertices(ctx)
+                    ctx.xyBuffer.buffer.upload(xyData)
                     ctx.ag.drawV2(
                         vertexData = FSprites.run { ctx.buffers },
                         program = FSprites.vprogram,
@@ -235,7 +232,8 @@ open class FSprites(val maxSize: Int) {
         }
     }
 
-    inline class Sprite(val offset: Int) {
+    inline class Sprite(val id: Int) {
+        val offset get() = id
         val index get() = offset / STRIDE
         //val offset get() = index * STRIDE
     }
