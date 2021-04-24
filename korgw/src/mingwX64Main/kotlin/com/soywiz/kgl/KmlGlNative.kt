@@ -166,7 +166,12 @@ actual class KmlGlNative actual constructor() : KmlGl() {
     override fun vertexAttribPointer(index: Int, size: Int, type: Int, normalized: Boolean, stride: Int, pointer: Long): Unit = tempBufferAddress { glVertexAttribPointer(index.convert(), size.convert(), type.convert(), normalized.toInt().convert(), stride.convert(), pointer.toCPointer<IntVar>()) }
     override fun viewport(x: Int, y: Int, width: Int, height: Int): Unit = tempBufferAddress { glViewport(x.convert(), y.convert(), width.convert(), height.convert()) }
 
-	companion object {
+    override val isInstancedSupported: Boolean get() = true
+    override fun drawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int): Unit = glDrawArraysInstanced(mode, first, count, instancecount)
+    override fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int): Unit = glDrawElementsInstanced(mode, count, type, indices, instancecount)
+    override fun vertexAttribDivisor(index: Int, divisor: Int): Unit = glVertexAttribDivisor(index, divisor)
+
+    companion object {
         private fun <T : CPointer<*>> CPointer<*>?.reinterpret2(): T = this.toLong().toCPointer<IntVar>() as T
 
         val glActiveTexture: PFNGLACTIVETEXTUREPROC by lazy { wglGetProcAddressAny("glActiveTexture").reinterpret2<PFNGLACTIVETEXTUREPROC>() }
@@ -264,6 +269,10 @@ actual class KmlGlNative actual constructor() : KmlGl() {
 		val glVertexAttrib4f: PFNGLVERTEXATTRIB4FPROC by lazy { wglGetProcAddressAny("glVertexAttrib4f").reinterpret2<PFNGLVERTEXATTRIB4FPROC>() }
 		val glVertexAttrib4fv: PFNGLVERTEXATTRIB4FVPROC by lazy { wglGetProcAddressAny("glVertexAttrib4fv").reinterpret2<PFNGLVERTEXATTRIB4FVPROC>() }
         val glVertexAttribPointer: PFNGLVERTEXATTRIBPOINTERPROCFixed by lazy { wglGetProcAddressAny("glVertexAttribPointer").reinterpret2<PFNGLVERTEXATTRIBPOINTERPROCFixed>() }
+
+        val glDrawArraysInstanced: CPointer<CFunction<(mode: GLint, first: GLint, count: GLint, instancecount: GLint) -> Unit>> by lazy { wglGetProcAddressAny("glDrawArraysInstanced").reinterpret2() }
+        val glDrawElementsInstanced: CPointer<CFunction<(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int) -> Unit>> by lazy { wglGetProcAddressAny("glDrawElementsInstanced").reinterpret2() }
+        val glVertexAttribDivisor: CPointer<CFunction<(index: Int, divisor: Int) -> Unit>> by lazy { wglGetProcAddressAny("glVertexAttribDivisor").reinterpret2() }
 	}
 }
 

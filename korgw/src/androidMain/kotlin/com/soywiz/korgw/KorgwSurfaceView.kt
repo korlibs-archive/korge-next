@@ -17,7 +17,11 @@ class KorgwSurfaceView(val viewOrActivity: Any?, context: Context, val gameWindo
     init {
         println("KorgwActivity: Created GLSurfaceView $this for ${viewOrActivity}")
 
-        setEGLContextClientVersion(2)
+        try {
+            setEGLContextClientVersion(3)
+        } catch (e: Throwable) {
+            setEGLContextClientVersion(2)
+        }
         setRenderer(object : GLSurfaceView.Renderer {
             override fun onSurfaceCreated(unused: GL10, config: EGLConfig) {
                 //GLES20.glClearColor(0.0f, 0.4f, 0.7f, 1.0f)

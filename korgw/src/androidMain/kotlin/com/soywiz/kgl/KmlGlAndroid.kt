@@ -5,6 +5,7 @@
 package com.soywiz.kgl
 
 import android.opengl.GLES20.*
+import android.opengl.GLES30.*
 import com.soywiz.kmem.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.format.AndroidNativeImage

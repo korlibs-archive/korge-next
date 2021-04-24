@@ -22,6 +22,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import androidx.core.app.ActivityCompat.startActivityForResult
 import com.soywiz.klock.*
+import com.soywiz.korag.shader.gl.*
 
 abstract class KorgwActivity : Activity() {
     var gameWindow: AndroidGameWindow = AndroidGameWindow(this)

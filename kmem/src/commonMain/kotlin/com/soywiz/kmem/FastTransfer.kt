@@ -23,3 +23,23 @@ expect class FastFloatTransfer() {
     inline operator fun set(index: Int, value: Float)
     inline fun use(array: FloatArray, block: (FastFloatTransfer) -> Unit)
 }
+
+expect class FastFBufferTransfer() {
+    inline fun getAlignedInt32(index: Int): Int
+    inline fun setAlignedInt32(index: Int, value: Int)
+
+    inline fun getAlignedFloat32(index: Int): Float
+    inline fun setAlignedFloat32(index: Int, value: Float)
+
+    inline fun use(array: FBuffer)
+    inline fun unuse()
+}
+
+inline fun FastFBufferTransfer.use(array: FBuffer, block: (FastFBufferTransfer) -> Unit) {
+    use(array)
+    try {
+        block(this)
+    } finally {
+        unuse()
+    }
+}

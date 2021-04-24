@@ -74,3 +74,29 @@ actual class FastFloatTransfer actual constructor() {
         }
     }
 }
+
+actual class FastFBufferTransfer actual constructor() {
+    @PublishedApi internal var pin: Pinned<ByteArray>? = null
+    @PublishedApi internal var f32: CPointer<FloatVar> = EmptyFloatPtr
+    @PublishedApi internal var i32: CPointer<IntVar> = EmptyIntPtr
+
+    actual inline fun getAlignedInt32(index: Int): Int = i32[index]
+    actual inline fun setAlignedInt32(index: Int, value: Int) { i32[index] = value }
+
+    actual inline fun getAlignedFloat32(index: Int): Float = f32[index]
+    actual inline fun setAlignedFloat32(index: Int, value: Float) { f32[index] = value }
+
+    actual inline fun use(array: FBuffer) {
+        val pin = array.mem.data.pin()
+        this.pin = pin
+        f32 = pin.startAddressOf.reinterpret<FloatVar>()
+        i32 = pin.startAddressOf.reinterpret<IntVar>()
+    }
+
+    actual inline fun unuse() {
+        pin?.unpin()
+        pin = null
+        f32 = EmptyFloatPtr
+        i32 = EmptyIntPtr
+    }
+}
