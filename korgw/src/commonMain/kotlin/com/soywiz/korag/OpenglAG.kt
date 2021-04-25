@@ -805,31 +805,14 @@ abstract class AGOpengl : AG() {
                 return texIds.getInt(0)
             }
 
-        fun createBufferForBitmap(bmp: Bitmap?): FBuffer? {
-            return when (bmp) {
-                null -> null
-                is NativeImage -> unsupported("Should not call createBufferForBitmap with a NativeImage")
-                is Bitmap8 -> {
-                    val mem = FBuffer(bmp.area)
-                    arraycopy(bmp.data, 0, mem.arrayByte, 0, bmp.area)
-                    @Suppress("USELESS_CAST")
-                    return mem
-                }
-                is FloatBitmap32 -> {
-                    FBuffer(bmp.area * 4 * 4).also { mem ->
-                        arraycopy(bmp.data, 0, mem.arrayFloat, 0, bmp.area * 4)
-                    }
-                }
-                else -> {
-                    val abmp: Bitmap32 =
-                        if (premultiplied) bmp.toBMP32IfRequired().premultipliedIfRequired() else bmp.toBMP32IfRequired().depremultipliedIfRequired()
-                    //println("BMP: Bitmap32")
-                    //val abmp: Bitmap32 = bmp
-                    val mem = FBuffer(abmp.area * 4)
-                    arraycopy(abmp.data.ints, 0, mem.arrayInt, 0, abmp.area)
-                    @Suppress("USELESS_CAST")
-                    return mem
-                }
+        fun createBufferForBitmap(bmp: Bitmap?): FBuffer? = when (bmp) {
+            null -> null
+            is NativeImage -> unsupported("Should not call createBufferForBitmap with a NativeImage")
+            is Bitmap8 -> FBuffer(bmp.area).also { mem -> arraycopy(bmp.data, 0, mem.arrayByte, 0, bmp.area) }
+            is FloatBitmap32 -> FBuffer(bmp.area * 4 * 4).also { mem -> arraycopy(bmp.data, 0, mem.arrayFloat, 0, bmp.area * 4) }
+            else -> FBuffer(bmp.area * 4).also { mem ->
+                val abmp: Bitmap32 = if (premultiplied) bmp.toBMP32IfRequired().premultipliedIfRequired() else bmp.toBMP32IfRequired().depremultipliedIfRequired()
+                arraycopy(abmp.data.ints, 0, mem.arrayInt, 0, abmp.area)
             }
         }
 
