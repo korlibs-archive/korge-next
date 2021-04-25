@@ -185,6 +185,9 @@ abstract class NativeBaseKmlGl : KmlGl() {
 
     companion object {
         const val GL_NUM_EXTENSIONS = 0x821D
+        const val GL_COLOR_BUFFER_BIT = 0x00004000
+        const val GL_VENDOR = 0x1F00
+        const val GL_VERSION = 0x1F02
 
         val glTexSubImage2DExt by GLFunc<(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, GLvoidPtr) -> GLvoid>()
         val glTexImage2DExt by GLFunc<(GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, GLvoidPtr) -> GLvoid>()
