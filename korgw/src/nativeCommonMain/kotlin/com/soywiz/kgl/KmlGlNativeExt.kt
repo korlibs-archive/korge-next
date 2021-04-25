@@ -170,8 +170,8 @@ abstract class NativeBaseKmlGl : KmlGlWithExtensions() {
     override fun vertexAttribPointer(index: Int, size: Int, type: Int, normalized: Boolean, stride: Int, pointer: Long): Unit = tempBufferAddress { glVertexAttribPointerExt(index.convert(), size.convert(), type.convert(), normalized.toInt().convert(), stride.convert(), pointer.toCPointer<IntVar>()?.reinterpret()) }
 
     override val isInstancedSupported: Boolean get() = true
-    override fun drawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int): Unit = glDrawArraysInstancedExt(mode, first, count, instancecount)
-    override fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int): Unit = glDrawElementsInstancedExt(mode, count, type, indices, instancecount)
+    override fun drawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int): Unit = glDrawArraysInstancedExt(mode.convert(), first.convert(), count.convert(), instancecount.convert())
+    override fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int): Unit = glDrawElementsInstancedExt(mode.convert(), count.convert(), type.convert(), indices.toLong().toCPointer<IntVar>()?.reinterpret(), instancecount.convert())
     override fun vertexAttribDivisor(index: Int, divisor: Int): Unit = glVertexAttribDivisorExt(index, divisor)
 
     companion object {

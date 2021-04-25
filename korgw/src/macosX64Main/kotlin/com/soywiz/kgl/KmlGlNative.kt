@@ -172,6 +172,6 @@ actual class KmlGlNative actual constructor() : NativeBaseKmlGl() {
 
     override val isInstancedSupported: Boolean get() = true
     override fun drawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int) = glDrawArraysInstancedARB(mode.convert(), first, count, instancecount)
-    override fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int) = glDrawElementsInstancedARB(mode.convert(), count, type.convert(), indices.convert(), instancecount)
+    override fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int) = glDrawElementsInstancedARB(mode.convert(), count, type.convert(), indices.toLong().toCPointer<IntVar>(), instancecount)
     override fun vertexAttribDivisor(index: Int, divisor: Int) = glVertexAttribDivisorARB(index.convert(), divisor.convert())
 }
