@@ -881,7 +881,7 @@ abstract class AGOpengl : AG() {
                             isFloat -> gl.FLOAT
                             else -> gl.UNSIGNED_BYTE
                         }
-                        println("actualSyncUpload: webgl=$webgl, internalFormat=${internalFormat.hex}, format=${format.hex}, textype=${texType.hex}")
+                        //println("actualSyncUpload: webgl=$webgl, internalFormat=${internalFormat.hex}, format=${format.hex}, textype=${texType.hex}")
                         gl.texImage2D(forcedTexTarget, 0, internalFormat, source.width, source.height, 0, format, texType, buffer)
                     }
                     //println(buffer)

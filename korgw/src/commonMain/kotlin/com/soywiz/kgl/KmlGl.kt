@@ -334,3 +334,26 @@ abstract class KmlGl : Extra by Extra.Mixin(), IKmlGl, AGFeatures {
     // https://www.khronos.org/registry/OpenGL/extensions/OES/OES_texture_float.txt
     override val isFloatTextureSupported: Boolean get() = false
 }
+
+abstract class KmlGlWithExtensions : KmlGl() {
+    open fun getStringi(name: Int, index: Int): String? = TODO()
+
+    open val extensions by lazy {
+        try {
+            val numExtensions = getIntegerv(GL_NUM_EXTENSIONS)
+            if (numExtensions <= 0) TODO()
+            (0 until numExtensions).mapNotNull { getStringi(EXTENSIONS, it) }.toSet()
+        } catch (e: Throwable) {
+            getString(EXTENSIONS).split(" ").toSet()
+        }
+    }
+
+    // https://www.khronos.org/registry/OpenGL/extensions/OES/OES_texture_float.txt
+    override val isFloatTextureSupported: Boolean by lazy {
+        "OES_texture_float" in extensions || "GL_ARB_texture_float" in extensions
+    }
+
+    companion object {
+        const val GL_NUM_EXTENSIONS = 0x821D
+    }
+}

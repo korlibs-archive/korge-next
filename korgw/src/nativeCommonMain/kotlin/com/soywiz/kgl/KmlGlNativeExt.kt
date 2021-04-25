@@ -7,7 +7,7 @@ import com.soywiz.korio.concurrent.atomic.*
 import kotlinx.cinterop.*
 import kotlin.reflect.*
 
-abstract class NativeBaseKmlGl : KmlGl() {
+abstract class NativeBaseKmlGl : KmlGlWithExtensions() {
     val tempBufferAddress = TempBufferAddress()
 
     override fun activeTexture(texture: Int): Unit = tempBufferAddress { glActiveTextureExt(texture.convert()) }
@@ -83,7 +83,7 @@ abstract class NativeBaseKmlGl : KmlGl() {
     override fun getShaderPrecisionFormat(shadertype: Int, precisiontype: Int, range: FBuffer, precision: FBuffer): Unit = tempBufferAddress { Unit }
     override fun getShaderSource(shader: Int, bufSize: Int, length: FBuffer, source: FBuffer): Unit = tempBufferAddress { glGetShaderSourceExt(shader.convert(), bufSize.convert(), length.unsafeAddress().reinterpret(), source.unsafeAddress().reinterpret()) }
     override fun getString(name: Int): String = tempBufferAddress { glGetStringExt(name.convert())?.toKString() ?: "" }
-    open fun getStringi(name: Int, index: Int): String? = tempBufferAddress { glGetStringiExt(name.convert(), index.convert())?.toKString() }
+    override fun getStringi(name: Int, index: Int): String? = tempBufferAddress { glGetStringiExt(name.convert(), index.convert())?.toKString() }
     override fun getTexParameterfv(target: Int, pname: Int, params: FBuffer): Unit = tempBufferAddress { glGetTexParameterfvExt(target.convert(), pname.convert(), params.unsafeAddress().reinterpret()) }
     override fun getTexParameteriv(target: Int, pname: Int, params: FBuffer): Unit = tempBufferAddress { glGetTexParameterivExt(target.convert(), pname.convert(), params.unsafeAddress().reinterpret()) }
     override fun getUniformfv(program: Int, location: Int, params: FBuffer): Unit = tempBufferAddress { glGetUniformfvExt(program.convert(), location.convert(), params.unsafeAddress().reinterpret()) }
@@ -168,20 +168,6 @@ abstract class NativeBaseKmlGl : KmlGl() {
     override fun vertexAttrib4fv(index: Int, v: FBuffer): Unit = tempBufferAddress { glVertexAttrib4fvExt(index.convert(), v.unsafeAddress().reinterpret()) }
     override fun viewport(x: Int, y: Int, width: Int, height: Int): Unit = tempBufferAddress { glViewportExt(x.convert(), y.convert(), width.convert(), height.convert()) }
     override fun vertexAttribPointer(index: Int, size: Int, type: Int, normalized: Boolean, stride: Int, pointer: Long): Unit = tempBufferAddress { glVertexAttribPointerExt(index.convert(), size.convert(), type.convert(), normalized.toInt().convert(), stride.convert(), pointer.toCPointer<IntVar>()?.reinterpret()) }
-
-    val extensions by lazy {
-        try {
-            (0 until getIntegerv(GL_NUM_EXTENSIONS)).mapNotNull { getStringi(EXTENSIONS, it) }.toSet()
-        } catch (e: Throwable) {
-            getString(EXTENSIONS).split(" ").toSet()
-        }
-    }
-
-    // https://www.khronos.org/registry/OpenGL/extensions/OES/OES_texture_float.txt
-    override val isFloatTextureSupported: Boolean by lazy {
-        //println("extensions: $extensions")
-        "GL_ARB_texture_float" in extensions
-    }
 
     companion object {
         const val GL_NUM_EXTENSIONS = 0x821D

@@ -5,7 +5,7 @@ import com.soywiz.kmem.*
 import com.soywiz.korim.awt.AwtNativeImage
 import com.soywiz.korim.bitmap.NativeImage
 
-open class NativeKgl(val gl: INativeGL) : KmlGl() {
+open class NativeKgl(val gl: INativeGL) : KmlGlWithExtensions() {
     override fun activeTexture(texture: Int): Unit = gl.glActiveTexture(texture)
     override fun attachShader(program: Int, shader: Int): Unit = gl.glAttachShader(program, shader)
     override fun bindAttribLocation(program: Int, index: Int, name: String): Unit = gl.glBindAttribLocation(program, index, name)
@@ -149,19 +149,6 @@ open class NativeKgl(val gl: INativeGL) : KmlGl() {
     override fun vertexAttrib4fv(index: Int, v: FBuffer): Unit = gl.glVertexAttrib4fv(index, v.nioFloatBuffer)
     override fun vertexAttribPointer(index: Int, size: Int, type: Int, normalized: Boolean, stride: Int, pointer: Long): Unit = gl.glVertexAttribPointer(index, size, type, normalized.toInt(), stride, pointer)
     override fun viewport(x: Int, y: Int, width: Int, height: Int): Unit = gl.glViewport(x, y, width, height)
-
-    fun glGetStringi(name: Int, i: Int): String? = gl.glGetStringi(name, i)
-
-    val extensions by lazy {
-        (0 until getIntegerv(GL_NUM_EXTENSIONS)).map {
-            glGetStringi(EXTENSIONS, it) ?: ""
-        }.toSet()
-    }
-
-    override val isFloatTextureSupported: Boolean by lazy {
-        //println("extensions=$extensions")
-        extensions.contains("OES_texture_float") || extensions.contains("GL_ARB_texture_float")
-    }
 }
 
 private const val GL_NUM_EXTENSIONS = 0x821D

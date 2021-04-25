@@ -10,7 +10,7 @@ import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.format.AndroidNativeImage
 import java.nio.ByteBuffer
 
-class KmlGlAndroid : KmlGl() {
+class KmlGlAndroid : KmlGlWithExtensions() {
     override fun activeTexture(texture: Int): Unit = glActiveTexture(texture)
     override fun attachShader(program: Int, shader: Int): Unit = glAttachShader(program, shader)
     override fun bindAttribLocation(program: Int, index: Int, name: String): Unit = glBindAttribLocation(program, index, name)

@@ -19,7 +19,7 @@ import kotlinx.browser.document
 // https://github.com/shrekshao/MoveWebGL1EngineToWebGL2/blob/master/Move-a-WebGL-1-Engine-To-WebGL-2-Blog-1.md
 // https://webglstats.com/
 // https://caniuse.com/#feat=webgl
-class KmlGlJsCanvas(val canvas: HTMLCanvasElement, val glOpts: dynamic) : KmlGl() {
+class KmlGlJsCanvas(val canvas: HTMLCanvasElement, val glOpts: dynamic) : KmlGlWithExtensions() {
     var webglVersion = 1
     val gl = (null
             ?: canvas.getContext("webgl2", glOpts)?.also { webglVersion = 2 }
@@ -215,7 +215,7 @@ class KmlGlJsCanvas(val canvas: HTMLCanvasElement, val glOpts: dynamic) : KmlGl(
 
     private fun Float32Buffer.sliceIfRequired(count: Int): Float32Buffer = if (size == count) this else Float32Array(this.buffer, 0, count)
 
-    val extensions by lazy { (gl.getSupportedExtensions() ?: arrayOf()).toSet() }
+    override val extensions by lazy { (gl.getSupportedExtensions() ?: arrayOf()).toSet() }
 
     override val isFloatTextureSupported: Boolean by lazy {
         //println("extensions: $extensions")
