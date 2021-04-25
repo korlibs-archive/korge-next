@@ -6,6 +6,7 @@ import android.opengl.*
 import android.os.*
 import android.util.*
 import android.view.*
+import android.opengl.EGL14.*
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 import com.soywiz.klock.*
@@ -16,6 +17,7 @@ class KorgwSurfaceView(val viewOrActivity: Any?, context: Context, val gameWindo
     val view = this
 
     val onDraw = Signal<Unit>()
+    var clientVersion = -1
 
     init {
         println("KorgwActivity: Created GLSurfaceView $this for ${viewOrActivity}")
@@ -29,6 +31,9 @@ class KorgwSurfaceView(val viewOrActivity: Any?, context: Context, val gameWindo
             override fun onSurfaceCreated(unused: GL10, config: EGLConfig) {
                 //GLES20.glClearColor(0.0f, 0.4f, 0.7f, 1.0f)
                 gameWindow.handleContextLost()
+                val out = IntArray(1)
+                eglQueryContext(eglGetCurrentDisplay(), eglGetCurrentContext(), EGL_CONTEXT_CLIENT_VERSION, out, 0)
+                clientVersion = out[0]
             }
 
             override fun onDrawFrame(unused: GL10) {
