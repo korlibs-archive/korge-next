@@ -4,13 +4,8 @@
 
 package com.soywiz.kgl
 
-import com.soywiz.kmem.*
 import kotlinx.cinterop.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.format.*
-import platform.opengl32.*
 import platform.windows.*
-import platform.posix.*
 
 private val OPENGL32_DLL_MODULE: HMODULE? by lazy { LoadLibraryA("opengl32.dll") }
 

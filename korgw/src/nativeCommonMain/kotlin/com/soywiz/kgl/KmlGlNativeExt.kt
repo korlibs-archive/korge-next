@@ -3,6 +3,7 @@ package com.soywiz.kgl
 import com.soywiz.kmem.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.format.*
+import com.soywiz.korio.concurrent.atomic.*
 import kotlinx.cinterop.*
 import kotlin.reflect.*
 
@@ -362,12 +363,12 @@ typealias GLvoid = Unit
 internal fun Int.toSizeiPtr() = this.toLong().toCPointer<IntVar>()
 
 class GLFunc<T : Function<*>>(val name: String? = null) {
-    private var _value: CPointer<CFunction<T>>? = null
+    private var _value = korAtomic<CPointer<CFunction<T>>?>(null)
     operator fun getValue(companion: Any, property: KProperty<*>): CPointer<CFunction<T>> {
-        if (_value == null) {
-            _value = glGetProcAddressT(name ?: property.name.removeSuffix("Ext"))
+        if (_value.value == null) {
+            _value.value = glGetProcAddressT(name ?: property.name.removeSuffix("Ext"))
         }
-        return _value!!
+        return _value.value!!
     }
 }
 
