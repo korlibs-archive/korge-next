@@ -266,17 +266,19 @@ class ColladaParser {
 			geometryDefs[geom.id] = Library3D.GeometryDef(
 				Mesh3D(
 					//combinedData.toFloatArray().toFBuffer(),
-					combinedVertexData.toFBuffer(),
+                    listOf(BufferWithVertexLayout(
+                        buffer = combinedVertexData.toFBuffer(),
+                        layout = VertexLayout(buildList {
+                            add(Shaders3D.a_pos)
+                            if (hasNormals) add(Shaders3D.a_norm)
+                            if (hasTexture) add(Shaders3D.a_tex)
+                            for (n in 0 until 4) if (maxWeights > n * 4) add(Shaders3D.a_boneIndex[n])
+                            for (n in 0 until 4) if (maxWeights > n * 4) add(Shaders3D.a_weight[n])
+                        }),
+                    )),
                     combinedIndexData.toFBuffer(),
                     AG.IndexType.USHORT,
                     combinedIndexData.size,
-					VertexLayout(buildList {
-						add(Shaders3D.a_pos)
-						if (hasNormals) add(Shaders3D.a_norm)
-						if (hasTexture) add(Shaders3D.a_tex)
-						for (n in 0 until 4) if (maxWeights > n * 4) add(Shaders3D.a_boneIndex[n])
-						for (n in 0 until 4) if (maxWeights > n * 4) add(Shaders3D.a_weight[n])
-					}),
 					null,
 					AG.DrawType.TRIANGLES,
 					hasTexture = hasTexture,

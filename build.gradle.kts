@@ -105,16 +105,20 @@ kotlin {
     jvm { }
 }
 
+fun org.jetbrains.kotlin.gradle.dsl.KotlinTargetContainerWithPresetFunctions.allNativeTargets(): List<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
+    return listOf(linuxX64(), mingwX64(), macosX64())
+}
+
 fun org.jetbrains.kotlin.gradle.dsl.KotlinTargetContainerWithPresetFunctions.nativeTargets(): List<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
     return when {
         isWindows -> listOf(mingwX64())
         isMacos -> listOf(macosX64())
-        else -> listOf(linuxX64(), mingwX64(), macosX64())
+        else -> allNativeTargets()
     }
 }
 
 fun org.jetbrains.kotlin.gradle.dsl.KotlinTargetContainerWithPresetFunctions.mobileTargets(): List<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
-    return listOf(iosArm64(), iosX64())
+    return listOf(iosArm32(), iosArm64(), iosX64(), tvosArm64(), tvosX64(), watchosArm32(), watchosArm64(), watchosX86(), watchosX64())
 }
 
 //apply(from = "${rootProject.rootDir}/build.idea.gradle")
@@ -228,7 +232,7 @@ subprojects {
                 apply(from = "${rootProject.rootDir}/build.android.srcset.gradle")
             }
             if (doEnableKotlinNative) {
-                for (target in nativeTargets()) {
+                for (target in allNativeTargets()) {
                     target.compilations.all {
                         kotlinOptions.freeCompilerArgs = listOf("-Xallocator=mimalloc")
                         kotlinOptions.suppressWarnings = true
@@ -342,7 +346,7 @@ subprojects {
                     val macosIosWatchosCommon by lazy { createPairSourceSet("macosIosWatchosCommon", nativePosixApple) }
                     val iosCommon by lazy { createPairSourceSet("iosCommon", iosWatchosTvosCommon) }
 
-                    for (target in nativeTargets()) {
+                    for (target in allNativeTargets()) {
                         val native = createPairSourceSet(target.name, common, nativeCommon, nonJvm, nonJs)
                         if (target.isDesktop) {
                             native.dependsOn(nativeDesktop)
@@ -659,7 +663,7 @@ samples {
         }
 
         if (doEnableKotlinNative) {
-            for (target in nativeTargets()) {
+            for (target in allNativeTargets()) {
                 target.apply {
                     binaries {
                         executable {
@@ -696,7 +700,7 @@ samples {
                 }
             }
 
-            val nativeDesktopTargets = nativeTargets()
+            val nativeDesktopTargets = allNativeTargets()
             val allNativeTargets = nativeDesktopTargets
 
             //for (target in nativeDesktopTargets) {

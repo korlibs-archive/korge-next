@@ -24,4 +24,4 @@ suspend fun main() = Korge {
 
 }
 
-private val KeyEvent.speed: Double get() = if (shift) 5.0 else 1.0
+private val KeyEvent.speed: Double get() = (if (shift) 6.0 else 2.0) * (deltaTime.milliseconds / 16.0)

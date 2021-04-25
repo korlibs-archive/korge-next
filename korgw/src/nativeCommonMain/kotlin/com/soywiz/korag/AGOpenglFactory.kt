@@ -14,7 +14,7 @@ object AGFactoryNative : AGFactory {
 	override fun createFastWindow(title: String, width: Int, height: Int): AGWindow = TODO()
 }
 
-open class AGNative(override val glKind: GlKind = GlKind.CORE) : AGOpengl() {
+open class AGNative(override val glKind: GlslGenerator.Config.Kind = GlslGenerator.Config.Kind.CORE) : AGOpengl() {
 	override val nativeComponent = Any()
 	override val gl: KmlGl = com.soywiz.kgl.KmlGlNative()
 }

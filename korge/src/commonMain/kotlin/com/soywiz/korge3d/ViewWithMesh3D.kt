@@ -55,9 +55,7 @@ open class ViewWithMesh3D(
         // @TODO: We should have a managed object for index and vertex buffers like Bitmap -> Texture
         // @TODO:   that handles this automatically. So they are released and allocated automatically on the GPU
         ctx.dynamicIndexBufferPool.alloc { indexBuffer ->
-            ctx.dynamicVertexBufferPool.alloc { vertexBuffer ->
-                //vertexBuffer.upload(mesh.data)
-                vertexBuffer.upload(mesh.vertexBuffer)
+            ctx.useDynamicVertexData(mesh.vertexBuffers) { vertexData ->
                 indexBuffer.upload(mesh.indexBuffer)
                 //tempMat2.invert()
                 //tempMat3.multiply(ctx.cameraMatInv, this.localTransform.matrix)
@@ -66,8 +64,8 @@ open class ViewWithMesh3D(
 
                 Shaders3D.apply {
                     val meshMaterial = mesh.material
-                    ag.draw(
-                        vertices = vertexBuffer,
+                    ag.drawV2(
+                        vertexData = vertexData,
                         indices = indexBuffer,
                         indexType = mesh.indexType,
                         type = mesh.drawType,
@@ -77,7 +75,6 @@ open class ViewWithMesh3D(
                             meshMaterial,
                             mesh.hasTexture
                         ),
-                        vertexLayout = mesh.layout,
                         vertexCount = mesh.vertexCount,
                         blending = AG.Blending.NONE,
                         //vertexCount = 6 * 6,

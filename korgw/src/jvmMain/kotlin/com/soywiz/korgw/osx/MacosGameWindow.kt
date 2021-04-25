@@ -28,7 +28,7 @@ import java.nio.ByteBuffer
 import kotlin.coroutines.*
 
 class MacAG(val window: Long, val checkGl: Boolean, val logGl:Boolean) : AGOpengl() {
-    override val glKind: GlKind = GlKind.CORE
+    override val glKind: GlslGenerator.Config.Kind = GlslGenerator.Config.Kind.CORE
     //override val glSlVersion = 140
     //override val glSlVersion = 100
     override val gl: KmlGl = MacKmlGL().checkedIf(checkGl).logIf(logGl)

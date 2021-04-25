@@ -20,7 +20,22 @@ class RenderContext3D() {
 	val cameraMat: Matrix3D = Matrix3D()
 	val cameraMatInv: Matrix3D = Matrix3D()
 	val dynamicVertexBufferPool = Pool { ag.createVertexBuffer() }
+    val dynamicVertexDataPool = Pool { ag.createVertexData() }
     val dynamicIndexBufferPool = Pool { ag.createIndexBuffer() }
 	val ambientColor: Vector3D = Vector3D()
+
+    val tempAgVertexData = arrayListOf<AG.VertexData>()
+
+    inline fun useDynamicVertexData(vertexBuffers: List<BufferWithVertexLayout>, block: (List<AG.VertexData>) -> Unit) {
+        dynamicVertexDataPool.allocMultiple(vertexBuffers.size, tempAgVertexData) { vertexData ->
+            for (n in 0 until vertexBuffers.size) {
+                val bufferWithVertexLayout = vertexBuffers[n]
+                vertexData[n].buffer.upload(bufferWithVertexLayout.buffer)
+                vertexData[n].layout = bufferWithVertexLayout.layout
+            }
+            block(vertexData)
+        }
+    }
+
 
 }

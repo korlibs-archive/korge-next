@@ -4,13 +4,20 @@ import com.soywiz.kmem.*
 import com.soywiz.korag.*
 import com.soywiz.korag.shader.*
 
+data class BufferWithVertexLayout(
+    val buffer: FBuffer,
+    val layout: VertexLayout
+) {
+    val vertexSizeInBytes = layout.totalSize
+    val vertexSizeInFloats = vertexSizeInBytes / 4
+}
+
 @Korge3DExperimental
 data class Mesh3D constructor(
-    val vertexBuffer: FBuffer,
+    val vertexBuffers: List<BufferWithVertexLayout>,
     val indexBuffer:FBuffer,
     val indexType: AG.IndexType,
     val vertexCount:Int,
-    val layout: VertexLayout,
     val program: Program?,
     val drawType: AG.DrawType,
     val hasTexture: Boolean = false,
@@ -18,10 +25,7 @@ data class Mesh3D constructor(
     var skin: Skin3D? = null,
     var material: Material3D? = null
 ) {
-
 	//val modelMat = Matrix3D()
-	val vertexSizeInBytes = layout.totalSize
-	val vertexSizeInFloats = vertexSizeInBytes / 4
 	//val vertexCount = vertexBuffer.size / 4 / vertexSizeInFloats
 
 	/*

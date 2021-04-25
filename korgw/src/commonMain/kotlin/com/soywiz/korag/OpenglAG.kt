@@ -29,12 +29,19 @@ abstract class AGOpengl : AG() {
     open var isGlAvailable = true
     abstract val gl: KmlGl
 
-    open val glKind: GlKind = GlKind.CORE
+    open val glKind: GlslGenerator.Config.Kind = GlslGenerator.Config.Kind.CORE
     open val glVersion: Int = 20
     open val glSlVersion: Int? = null
+    val guessedGlSlVersion by lazy { glSlVersion ?: gl.versionInt }
+    val usedGlSlVersion by lazy { GlslGenerator.FORCE_GLSL_VERSION?.toIntOrNull() ?: when (guessedGlSlVersion) {
+        460 -> 460
+        in 300..450 -> 100
+        else -> guessedGlSlVersion
+    } }
     open val linux: Boolean = false
     open val android: Boolean = false
     open val webgl: Boolean = false
+    open val glSlConfig by lazy { GlslGenerator.Config(glKind = glKind, glVersion = glVersion, glslVersion = usedGlSlVersion, android = android) }
 
     override val isInstancedSupported get() = gl.isInstancedSupported
     override val isInstanceIDSupported get() = gl.isInstanceIDSupported
@@ -606,22 +613,15 @@ abstract class AGOpengl : AG() {
 
                     //println("GL_SHADING_LANGUAGE_VERSION: $glslVersionInt : $glslVersionString")
 
-                    val guessedGlSlVersion = glSlVersion ?: gl.versionInt
-                    val usedGlSlVersion = GlslGenerator.FORCE_GLSL_VERSION?.toIntOrNull() ?: when (guessedGlSlVersion) {
-                        460 -> 460
-                        in 300..450 -> 100
-                        else -> guessedGlSlVersion
-                    }
-
                     if (GlslGenerator.DEBUG_GLSL) {
                         Console.trace("GLSL version: requested=$glSlVersion, guessed=$guessedGlSlVersion, forced=${GlslGenerator.FORCE_GLSL_VERSION}. used=$usedGlSlVersion")
                     }
 
                     fragmentShaderId = createShaderCompat(gl.FRAGMENT_SHADER) { compatibility ->
-                        program.fragment.toNewGlslStringResult(GlslConfig(glKind = glKind, glVersion = glVersion, glslVersion = usedGlSlVersion, compatibility = compatibility, android = android, programConfig = programConfig)).result
+                        program.fragment.toNewGlslStringResult(glSlConfig.copy(compatibility = compatibility, programConfig = programConfig)).result
                     }
                     vertexShaderId = createShaderCompat(gl.VERTEX_SHADER) { compatibility ->
-                        program.vertex.toNewGlslStringResult(GlslConfig(glKind = glKind, glVersion = glVersion, glslVersion = usedGlSlVersion, compatibility = compatibility, android = android, programConfig = programConfig)).result
+                        program.vertex.toNewGlslStringResult(glSlConfig.copy(compatibility = compatibility, programConfig = programConfig)).result
                     }
                     gl.attachShader(id, fragmentShaderId)
                     gl.attachShader(id, vertexShaderId)
@@ -899,7 +899,7 @@ abstract class AGOpengl : AG() {
                             forcedTexTarget,
                             0,
                             when {
-                                isFloat && !glKind.isWebgl -> GL_RGBA32F
+                                isFloat && !glSlConfig.webgl -> GL_RGBA32F
                                 else -> type
                             },
                             source.width, source.height,

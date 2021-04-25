@@ -6,26 +6,29 @@ import com.soywiz.korio.lang.*
 import com.soywiz.korio.util.*
 import com.soywiz.korui.layout.MathEx.max
 
-data class GlslConfig(
-    val glKind: GlKind = GlKind.CORE,
-    val glVersion: Int = 2_0,
-    val glslVersion: Int = GlslGenerator.DEFAULT_GLSL_VERSION,
-    val compatibility: Boolean = true,
-    val android: Boolean = false,
-    val programConfig: ProgramConfig = ProgramConfig.DEFAULT
-)
-
-enum class GlKind {
-    WEBGL, ES, CORE;
-
-    val isWebgl get() = this == WEBGL
-}
-
 class GlslGenerator constructor(
     val kind: ShaderType,
-    val config: GlslConfig = GlslConfig()
+    val config: Config = Config()
 ) : Program.Visitor<String>("") {
-    val gles: Boolean get() = config.glKind != GlKind.CORE
+    data class Config(
+        val glKind: Kind = Kind.CORE,
+        val glVersion: Int = 2_0,
+        val glslVersion: Int = GlslGenerator.DEFAULT_GLSL_VERSION,
+        val compatibility: Boolean = true,
+        val android: Boolean = false,
+        val linux: Boolean = false,
+        val programConfig: ProgramConfig = ProgramConfig.DEFAULT
+    ) {
+        val webgl: Boolean get() = glKind.isWebgl
+
+        enum class Kind {
+            WEBGL, ES, CORE;
+
+            val isWebgl get() = this == WEBGL
+        }
+    }
+
+    val gles: Boolean get() = config.glKind != Config.Kind.CORE
     val version: Int get() = config.glslVersion
     val compatibility: Boolean get() = config.compatibility
     val android: Boolean get() = config.android

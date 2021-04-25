@@ -44,7 +44,7 @@ class KorgeAndroidView(context: Context) : RelativeLayout(context, null) {
 
         override val gl: KmlGl = KmlGlAndroid()
         override val nativeComponent: Any get() = this@KorgeAndroidView
-        override val glKind: GlKind = GlKind.ES
+        override val glKind: GlslGenerator.Config.Kind = GlslGenerator.Config.Kind.ES
 
         // @TODO: Cache somehow?
         override val pixelsPerInch: Double get() = getResources().getDisplayMetrics().densityDpi.toDouble()
