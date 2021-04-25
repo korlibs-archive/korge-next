@@ -362,14 +362,25 @@ typealias GLvoid = Unit
 
 internal fun Int.toSizeiPtr() = this.toLong().toCPointer<IntVar>()
 
-class GLFunc<T : Function<*>>(val name: String? = null) {
+open class GLFuncBase<T : Function<*>>(val name: String? = null) {
+    private var _set = korAtomic(false)
     private var _value = korAtomic<CPointer<CFunction<T>>?>(null)
-    operator fun getValue(companion: Any, property: KProperty<*>): CPointer<CFunction<T>> {
-        if (_value.value == null) {
+
+    protected fun _getValue(property: KProperty<*>): CPointer<CFunction<T>>? {
+        if (!_set.value) {
+            _set.value = true
             _value.value = glGetProcAddressT(name ?: property.name.removeSuffix("Ext"))
         }
-        return _value.value!!
+        return _value.value
     }
+}
+
+class GLFunc<T : Function<*>>(name: String? = null) : GLFuncBase<T>(name) {
+    operator fun getValue(obj: Any?, property: KProperty<*>): CPointer<CFunction<T>> = _getValue(property)!!
+}
+
+class GLFuncNull<T : Function<*>>(name: String? = null) : GLFuncBase<T>(name) {
+    operator fun getValue(obj: Any?, property: KProperty<*>): CPointer<CFunction<T>>? = _getValue(property)
 }
 
 class ImportFunctionNotFoundException(val name: String) : RuntimeException("Can't find function: '$name'")

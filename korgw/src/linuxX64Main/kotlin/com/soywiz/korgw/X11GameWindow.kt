@@ -18,10 +18,7 @@ import kotlinx.cinterop.*
 import platform.posix.*
 
 // https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_swap_control.txt
-@ThreadLocal
-private var setSwapInterval = false
-@ThreadLocal
-private var swapIntervalEXT: CPointer<CFunction<(CPointer<Display>?, GLXDrawable, Int) -> Unit>>? = null
+private val swapIntervalEXT by GLFuncNull<(CPointer<Display>?, GLXDrawable, Int) -> Unit>("swapIntervalEXT")
 
 //class X11Ag(val window: X11GameWindow, override val gl: KmlGl = LogKmlGlProxy(X11KmlGl())) : AGOpengl() {
 class X11Ag(val window: X11GameWindow, override val gl: KmlGl = com.soywiz.kgl.KmlGlNative()) : AGOpengl() {
@@ -364,11 +361,6 @@ class X11GameWindow : EventLoopGameWindow(), DialogInterface by NativeZenityDial
         glClear(GL_COLOR_BUFFER_BIT)
 
         // https://github.com/spurious/SDL-mirror/blob/4c1c6d03ddaa3095b3c63c38ddd0a6cfad58b752/src/video/windows/SDL_windowsopengl.c#L439-L447
-        if (!setSwapInterval) {
-            setSwapInterval = true
-            swapIntervalEXT = com.soywiz.kgl.wglGetProcAddressAny("glXSwapIntervalEXT")?.reinterpret()
-            println("swapIntervalEXT: $swapIntervalEXT")
-        }
         val dpy = glXGetCurrentDisplay()
         val drawable = glXGetCurrentDrawable()
         swapIntervalEXT?.invoke(dpy, drawable, vsync.toInt())
