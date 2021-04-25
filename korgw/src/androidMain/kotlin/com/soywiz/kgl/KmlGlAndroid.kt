@@ -83,7 +83,7 @@ class KmlGlAndroid : KmlGlWithExtensions() {
     override fun getShaderInfoLog(shader: Int, bufSize: Int, length: FBuffer, infoLog: FBuffer): Unit = run { infoLog.putAsciiString(glGetShaderInfoLog(shader)) }
     override fun getShaderPrecisionFormat(shadertype: Int, precisiontype: Int, range: FBuffer, precision: FBuffer): Unit = glGetShaderPrecisionFormat(shadertype, precisiontype, range.nioIntBuffer, precision.nioIntBuffer)
     override fun getShaderSource(shader: Int, bufSize: Int, length: FBuffer, source: FBuffer): Unit = run { val len = IntArray(1); glGetShaderiv(shader, GL_SHADER_SOURCE_LENGTH, len, 0); val src = ByteArray(len[0]); glGetShaderSource(shader, bufSize, len, 0, src, 0); source.putAsciiString(src.toString(Charsets.US_ASCII)) }
-    override fun getString(name: Int): String = glGetString(name)
+    override fun getString(name: Int): String = glGetString(name) ?: ""
     override fun getTexParameterfv(target: Int, pname: Int, params: FBuffer): Unit = glGetTexParameterfv(target, pname, params.nioFloatBuffer)
     override fun getTexParameteriv(target: Int, pname: Int, params: FBuffer): Unit = glGetTexParameteriv(target, pname, params.nioIntBuffer)
     override fun getUniformfv(program: Int, location: Int, params: FBuffer): Unit = glGetUniformfv(program, location, params.nioFloatBuffer)

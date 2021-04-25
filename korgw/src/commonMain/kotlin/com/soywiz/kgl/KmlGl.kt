@@ -326,6 +326,7 @@ abstract class KmlGl : Extra by Extra.Mixin(), IKmlGl, AGFeatures {
     val MAX_RENDERBUFFER_SIZE: Int = 0x84E8
     val INVALID_FRAMEBUFFER_OPERATION: Int = 0x0506 // 1286
 
+    open fun init() = Unit
     open fun handleContextLost() = Unit
     override fun startFrame(): Unit = Unit
     override fun endFrame(): Unit = Unit
@@ -338,19 +339,28 @@ abstract class KmlGl : Extra by Extra.Mixin(), IKmlGl, AGFeatures {
 abstract class KmlGlWithExtensions : KmlGl() {
     open fun getStringi(name: Int, index: Int): String? = TODO()
 
-    open val extensions by lazy {
-        try {
-            val numExtensions = getIntegerv(GL_NUM_EXTENSIONS)
-            if (numExtensions <= 0) TODO()
-            (0 until numExtensions).mapNotNull { getStringi(EXTENSIONS, it) }.toSet()
-        } catch (e: Throwable) {
-            getString(EXTENSIONS).split(" ").toSet()
+    private var _extensions: Set<String>? = null
+
+    open val extensions: Set<String> get() {
+        if (_extensions == null) {
+            _extensions = run {
+                try {
+                    val numExtensions = getIntegerv(GL_NUM_EXTENSIONS)
+                    if (numExtensions <= 0) TODO()
+                    (0 until numExtensions).mapNotNull { getStringi(EXTENSIONS, it) }.toSet()
+                } catch (e: Throwable) {
+                    getString(EXTENSIONS).split(" ").toSet()
+                }
+            }
         }
+        //println("GL_EXTENSIONS=$_extensions")
+        return _extensions!!
     }
 
     // https://www.khronos.org/registry/OpenGL/extensions/OES/OES_texture_float.txt
     override val isFloatTextureSupported: Boolean by lazy {
-        "OES_texture_float" in extensions || "GL_ARB_texture_float" in extensions
+        //println("extensions: $extensions")
+        "GL_OES_texture_float" in extensions || "GL_ARB_texture_float" in extensions
     }
 
     companion object {

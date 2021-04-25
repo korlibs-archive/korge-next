@@ -45,7 +45,7 @@ class FloatBitmap32(
     }
 }
 
-fun Bitmap.toFloatBMP32(out: FloatBitmap32 = FloatBitmap32(width, height)): FloatBitmap32 {
+fun Bitmap.toFloatBMP32(out: FloatBitmap32 = FloatBitmap32(width, height, premultiplied = premultiplied)): FloatBitmap32 {
     for (y in 0 until height) {
         for (x in 0 until width) {
             val col = this.getRgba(x ,y)
