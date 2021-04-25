@@ -31,6 +31,7 @@ abstract class AGOpengl : AG() {
     abstract val gl: KmlGl
 
     override val isFloatTextureSupported: Boolean get() = gl.isFloatTextureSupported
+    override val graphicExtensions: Set<String> get() = gl.graphicExtensions
 
     open val glSlVersion: Int? = null
     open val gles: Boolean = false

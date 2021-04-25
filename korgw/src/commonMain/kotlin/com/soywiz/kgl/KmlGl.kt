@@ -357,6 +357,8 @@ abstract class KmlGlWithExtensions : KmlGl() {
         return _extensions!!
     }
 
+    override val graphicExtensions: Set<String> get() = extensions
+
     // https://www.khronos.org/registry/OpenGL/extensions/OES/OES_texture_float.txt
     override val isFloatTextureSupported: Boolean by lazy {
         //println("extensions: $extensions")

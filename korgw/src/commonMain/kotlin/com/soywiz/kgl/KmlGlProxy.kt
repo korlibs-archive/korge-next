@@ -1019,6 +1019,7 @@ open class KmlGlFastProxy(var parent: KmlGl) : KmlGl() {
     override val root: KmlGl get() = parent.root
 
     override val isFloatTextureSupported: Boolean get() = parent.isFloatTextureSupported
+    override val graphicExtensions: Set<String> get() = parent.graphicExtensions
 
     override var info: ContextInfo
         get() = parent.info

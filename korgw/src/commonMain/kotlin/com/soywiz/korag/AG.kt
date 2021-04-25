@@ -38,6 +38,7 @@ interface AGWindow : AGContainer {
 }
 
 interface AGFeatures {
+    val graphicExtensions: Set<String> get() = emptySet()
     val isFloatTextureSupported: Boolean get() = false
 }
 
