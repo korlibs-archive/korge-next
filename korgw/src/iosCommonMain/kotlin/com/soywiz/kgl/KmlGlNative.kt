@@ -175,7 +175,7 @@ actual class KmlGlNative actual constructor() : NativeBaseKmlGl() {
     }
 
     override fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int) {
-        glDrawElementsInstancedEXT(mode.convert(), count.convert(), type.convert(), indices.convert(), instancecount.convert())
+        glDrawElementsInstancedEXT(mode.convert(), count.convert(), type.convert(), indices.toLong().toCPointer<IntVar>(), instancecount.convert())
     }
 
     override fun vertexAttribDivisor(index: Int, divisor: Int) {
