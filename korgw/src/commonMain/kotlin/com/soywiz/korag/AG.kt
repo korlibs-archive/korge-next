@@ -37,7 +37,11 @@ interface AGContainer {
 interface AGWindow : AGContainer {
 }
 
-abstract class AG : Extra by Extra.Mixin() {
+interface AGFeatures {
+    val isFloatTextureSupported: Boolean get() = false
+}
+
+abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     var contextVersion = 0
     abstract val nativeComponent: Any
 

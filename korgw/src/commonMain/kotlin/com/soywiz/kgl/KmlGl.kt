@@ -5,8 +5,9 @@
 package com.soywiz.kgl
 
 import com.soywiz.kds.*
+import com.soywiz.korag.*
 
-abstract class KmlGl : Extra by Extra.Mixin(), IKmlGl {
+abstract class KmlGl : Extra by Extra.Mixin(), IKmlGl, AGFeatures {
     open val root: KmlGl get() = this
     open var info: ContextInfo = ContextInfo()
 
@@ -329,4 +330,7 @@ abstract class KmlGl : Extra by Extra.Mixin(), IKmlGl {
     override fun startFrame(): Unit = Unit
     override fun endFrame(): Unit = Unit
     open fun beforeDoRender(contextVersion: Int): Unit = Unit
+
+    // https://www.khronos.org/registry/OpenGL/extensions/OES/OES_texture_float.txt
+    override val isFloatTextureSupported: Boolean get() = false
 }

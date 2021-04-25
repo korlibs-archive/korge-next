@@ -11,7 +11,7 @@ import com.soywiz.korim.format.*
 import GL.*
 import platform.posix.*
 
-actual class KmlGlNative actual constructor() : KmlGl() {
+actual class KmlGlNative actual constructor() : NativeBaseKmlGl() {
     val tempBufferAddress = TempBufferAddress()
     override fun activeTexture(texture: Int): Unit = tempBufferAddress { glActiveTexture(texture.convert()) }
     override fun attachShader(program: Int, shader: Int): Unit = tempBufferAddress { glAttachShader(program.convert(), shader.convert()) }

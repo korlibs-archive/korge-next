@@ -153,4 +153,5 @@ open class KmlGlDummyBase : KmlGl() {
     override fun vertexAttrib4fv(index: Int, v: FBuffer): Unit = Unit
     override fun vertexAttribPointer(index: Int, size: Int, type: Int, normalized: Boolean, stride: Int, pointer: Long): Unit = Unit
     override fun viewport(x: Int, y: Int, width: Int, height: Int): Unit = Unit
+    override val isFloatTextureSupported: Boolean get() = false
 }

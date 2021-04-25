@@ -10,4 +10,4 @@ internal fun wglGetProcAddressAny(name: String): CPointer<*> = memScoped {
 
 internal fun <T : CPointer<*>> wglGetProcAddressT(name: String): T = memScoped {
     (glXGetProcAddress(name.cstr.ptr.reinterpret()) ?: throw RuntimeException("Can't find GL function: '$name'"))
-} as T
+}.reinterpret2<T>() // as T

@@ -1,11 +1,7 @@
 package com.soywiz.korgw.platform
 
-import com.soywiz.kgl.KmlGl
-import com.soywiz.kgl.nioBuffer
-import com.soywiz.kgl.nioFloatBuffer
-import com.soywiz.kgl.nioIntBuffer
+import com.soywiz.kgl.*
 import com.soywiz.kmem.*
-import com.soywiz.korgw.osx.MacGL
 import com.soywiz.korim.awt.AwtNativeImage
 import com.soywiz.korim.bitmap.NativeImage
 
@@ -153,4 +149,19 @@ open class NativeKgl(val gl: INativeGL) : KmlGl() {
     override fun vertexAttrib4fv(index: Int, v: FBuffer): Unit = gl.glVertexAttrib4fv(index, v.nioFloatBuffer)
     override fun vertexAttribPointer(index: Int, size: Int, type: Int, normalized: Boolean, stride: Int, pointer: Long): Unit = gl.glVertexAttribPointer(index, size, type, normalized.toInt(), stride, pointer)
     override fun viewport(x: Int, y: Int, width: Int, height: Int): Unit = gl.glViewport(x, y, width, height)
+
+    fun glGetStringi(name: Int, i: Int): String? = gl.glGetStringi(name, i)
+
+    val extensions by lazy {
+        (0 until getIntegerv(GL_NUM_EXTENSIONS)).map {
+            glGetStringi(EXTENSIONS, it) ?: ""
+        }.toSet()
+    }
+
+    override val isFloatTextureSupported: Boolean by lazy {
+        //println("extensions=$extensions")
+        extensions.contains("OES_texture_float") || extensions.contains("GL_ARB_texture_float")
+    }
 }
+
+private const val GL_NUM_EXTENSIONS = 0x821D
