@@ -11,8 +11,13 @@ import kotlinx.cinterop.*
 import platform.OpenGL.*
 import platform.posix.*
 
-actual class KmlGlNative actual constructor() : KmlGl() {
-    val tempBufferAddress = TempBufferAddress()
+val GL_MODULE by lazy { dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY); }
+
+internal actual fun glGetProcAddressAnyOrNull(name: String): COpaquePointer? {
+    return dlsym(GL_MODULE, "_$name") ?: dlsym(GL_MODULE, name)
+}
+
+actual class KmlGlNative actual constructor() : NativeBaseKmlGl() {
     override fun activeTexture(texture: Int): Unit = tempBufferAddress { glActiveTexture(texture.convert()) }
     override fun attachShader(program: Int, shader: Int): Unit = tempBufferAddress { glAttachShader(program.convert(), shader.convert()) }
     override fun bindAttribLocation(program: Int, index: Int, name: String): Unit = memScoped { tempBufferAddress { glBindAttribLocation(program.convert(), index.convert(), name) } }
@@ -164,4 +169,9 @@ actual class KmlGlNative actual constructor() : KmlGl() {
     override fun vertexAttrib4fv(index: Int, v: FBuffer): Unit = tempBufferAddress { glVertexAttrib4fv(index.convert(), v.unsafeAddress().reinterpret()) }
     override fun vertexAttribPointer(index: Int, size: Int, type: Int, normalized: Boolean, stride: Int, pointer: Long): Unit = tempBufferAddress { glVertexAttribPointer(index.convert(), size.convert(), type.convert(), normalized.toInt().convert(), stride.convert(), pointer.toCPointer<IntVar>()) }
     override fun viewport(x: Int, y: Int, width: Int, height: Int): Unit = tempBufferAddress { glViewport(x.convert(), y.convert(), width.convert(), height.convert()) }
+
+    override val isInstancedSupported: Boolean get() = true
+    override fun drawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int) = glDrawArraysInstancedARB(mode.convert(), first, count, instancecount)
+    override fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int) = glDrawElementsInstancedARB(mode.convert(), count, type.convert(), indices.toLong().toCPointer<IntVar>(), instancecount)
+    override fun vertexAttribDivisor(index: Int, divisor: Int) = glVertexAttribDivisorARB(index.convert(), divisor.convert())
 }

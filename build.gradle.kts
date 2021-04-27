@@ -10,6 +10,7 @@ buildscript {
         mavenCentral()
         google()
         maven { url = uri("https://plugins.gradle.org/m2/") }
+        maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
     }
     dependencies {
         classpath("com.gradle.publish:plugin-publish-plugin:$gradlePublishPluginVersion")
@@ -19,12 +20,14 @@ buildscript {
 
 plugins {
     val kotlinVersion: String by project
+    val realKotlinVersion = (System.getenv("FORCED_KOTLIN_VERSION") ?: kotlinVersion)
 
 	java
-    kotlin("multiplatform") version kotlinVersion
+    kotlin("multiplatform") version realKotlinVersion
 }
 
 val kotlinVersion: String by project
+val realKotlinVersion = (System.getenv("FORCED_KOTLIN_VERSION") ?: kotlinVersion)
 val coroutinesVersion: String by project
 val jnaVersion: String by project
 val androidBuildGradleVersion: String by project
@@ -43,6 +46,7 @@ allprojects {
 		mavenCentral()
         google()
 		maven { url = uri("https://plugins.gradle.org/m2/") }
+        maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
 	}
 }
 
@@ -425,6 +429,14 @@ fun Project.nonSamples(block: Project.() -> Unit) {
 fun getKorgeProcessResourcesTaskName(target: org.jetbrains.kotlin.gradle.plugin.KotlinTarget, compilation: org.jetbrains.kotlin.gradle.plugin.KotlinCompilation<*>): String =
     "korgeProcessedResources${target.name.capitalize()}${compilation.name.capitalize()}"
 
+allprojects {
+    tasks.withType(Copy::class.java).all {
+        //this.duplicatesStrategy = org.gradle.api.file.DuplicatesStrategy.WARN
+        this.duplicatesStrategy = org.gradle.api.file.DuplicatesStrategy.EXCLUDE
+        //println("Task $this")
+    }
+}
+
 nonSamples {
     plugins.apply("maven-publish")
 
@@ -448,7 +460,7 @@ nonSamples {
             fun configure(publication: MavenPublication) {
                 //println("Publication: $publication : ${publication.name} : ${publication.artifactId}")
                 if (publication.name == "kotlinMultiplatform") {
-                    publication.artifact(sourcesJar) {}
+                    //publication.artifact(sourcesJar) {}
                     //publication.artifact(emptyJar) {}
                 }
 
@@ -568,9 +580,9 @@ samples {
         }
         fun Task.dependsOnNativeTask(kind: String) {
             when {
-                isWindows -> dependsOn("runDebugExecutableMingwX64")
-                isMacos -> dependsOn("runDebugExecutableMacosX64")
-                else -> dependsOn("runDebugExecutableLinuxX64")
+                isWindows -> dependsOn("run${kind}ExecutableMingwX64")
+                isMacos -> dependsOn("run${kind}ExecutableMacosX64")
+                else -> dependsOn("run${kind}ExecutableLinuxX64")
             }
         }
         val runNativeDebug by creating {
@@ -608,7 +620,9 @@ samples {
             doLast {
                 val targetDir = this.outputs.files.first()
                 val jsMainCompilation = kotlin.js().compilations["main"]!!
-                val jsFile = File(jsMainCompilation.kotlinOptions.outputFile ?: "dummy.js").name
+
+                // @TODO: How to get the actual .js file generated/served?
+                val jsFile = File("${project.name}.js").name
                 val resourcesFolders = jsMainCompilation.allKotlinSourceSets
                     .flatMap { it.resources.srcDirs } + listOf(File(rootProject.rootDir, "_template"))
                 //println("jsFile: $jsFile")
@@ -785,27 +799,37 @@ val gitVersion = try {
 }
 
 
-val buildVersionsFile = file("korge-gradle-plugin/src/main/kotlin/com/soywiz/korge/gradle/BuildVersions.kt")
-val oldBuildVersionsText = buildVersionsFile.readText()
-val newBuildVersionsText = oldBuildVersionsText
-    .replace(Regex("const val KORLIBS_VERSION = \"(.*?)\""), "const val KORLIBS_VERSION = \"${project.version}\"")
-    .replace(Regex("const val KLOCK = \"(.*?)\""), "const val KLOCK = \"${project.version}\"")
-    .replace(Regex("const val KDS = \"(.*?)\""), "const val KDS = \"${project.version}\"")
-    .replace(Regex("const val KRYPTO = \"(.*?)\""), "const val KRYPTO = \"${project.version}\"")
-    .replace(Regex("const val KMEM = \"(.*?)\""), "const val KMEM = \"${project.version}\"")
-    .replace(Regex("const val KORMA = \"(.*?)\""), "const val KORMA = \"${project.version}\"")
-    .replace(Regex("const val KORIO = \"(.*?)\""), "const val KORIO = \"${project.version}\"")
-    .replace(Regex("const val KORIM = \"(.*?)\""), "const val KORIM = \"${project.version}\"")
-    .replace(Regex("const val KORAU = \"(.*?)\""), "const val KORAU = \"${project.version}\"")
-    .replace(Regex("const val KORGW = \"(.*?)\""), "const val KORGW = \"${project.version}\"")
-    .replace(Regex("const val KORGE = \"(.*?)\""), "const val KORGE = \"${project.version}\"")
-    .replace(Regex("const val KOTLIN = \"(.*?)\""), "const val KOTLIN = \"${kotlinVersion}\"")
-    .replace(Regex("const val GIT = \"(.*?)\""), "const val GIT = \"${gitVersion}\"")
-    .replace(Regex("const val JNA = \"(.*?)\""), "const val JNA = \"${jnaVersion}\"")
-    .replace(Regex("const val ANDROID_BUILD = \"(.*?)\""), "const val ANDROID_BUILD = \"${androidBuildGradleVersion}\"")
-    .replace(Regex("const val COROUTINES = \"(.*?)\""), "const val COROUTINES = \"${coroutinesVersion}\"")
+val buildVersionsFile = file("korge-gradle-plugin/build/srcgen/com/soywiz/korge/gradle/BuildVersions.kt")
+val oldBuildVersionsText = buildVersionsFile.takeIf { it.exists() }?.readText()
+val projectVersion = project.version
+val newBuildVersionsText = """
+package com.soywiz.korge.gradle
+
+object BuildVersions {
+    const val GIT = "$gitVersion"
+    const val KOTLIN = "$realKotlinVersion"
+    const val JNA = "$jnaVersion"
+    const val COROUTINES = "$coroutinesVersion"
+    const val ANDROID_BUILD = "$androidBuildGradleVersion"
+
+    const val KRYPTO = "$projectVersion"
+    const val KLOCK = "$projectVersion"
+    const val KDS = "$projectVersion"
+    const val KMEM = "$projectVersion"
+    const val KORMA = "$projectVersion"
+    const val KORIO = "$projectVersion"
+    const val KORIM = "$projectVersion"
+    const val KORAU = "$projectVersion"
+    const val KORGW = "$projectVersion"
+    const val KORGE = "$projectVersion"
+
+    val ALL_PROPERTIES by lazy { listOf(::GIT, ::KRYPTO, ::KLOCK, ::KDS, ::KMEM, ::KORMA, ::KORIO, ::KORIM, ::KORAU, ::KORGW, ::KORGE, ::KOTLIN, ::JNA, ::COROUTINES, ::ANDROID_BUILD) }
+    val ALL by lazy { ALL_PROPERTIES.associate { it.name to it.get() } }
+}
+""".trimIndent()
+
 if (oldBuildVersionsText != newBuildVersionsText) {
-    buildVersionsFile.writeText(newBuildVersionsText)
+    buildVersionsFile.also { it.parentFile.mkdirs() }.writeText(newBuildVersionsText)
 }
 
 if (
@@ -834,6 +858,13 @@ subprojects {
                 } else if (findByName("publishToMavenLocal") != null) {
                     dependsOn("publishToMavenLocal")
                 }
+            }
+        }
+        tasks.withType(Test::class.java).all {
+            testLogging {
+                //setEvents(setOf("passed", "skipped", "failed", "standardOut", "standardError"))
+                setEvents(setOf("skipped", "failed", "standardError"))
+                exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
             }
         }
     }

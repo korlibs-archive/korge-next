@@ -37,13 +37,24 @@ gradlePlugin {
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).all {
     kotlinOptions {
         jvmTarget = "1.8"
+        sourceCompatibility = "1.8"
+        apiVersion = "1.4"
+        languageVersion = "1.4"
 		//jvmTarget = "1.6"
     }
+}
+
+kotlin.sourceSets.main.configure {
+    kotlin.srcDir(File(buildDir, "srcgen"))
 }
 
 tasks {
     val publishJvmPublicationToMavenLocal by creating(Task::class) {
         dependsOn("publishToMavenLocal")
+    }
+
+    val jvmTest by creating(Task::class) {
+        dependsOn("test")
     }
 }
 
