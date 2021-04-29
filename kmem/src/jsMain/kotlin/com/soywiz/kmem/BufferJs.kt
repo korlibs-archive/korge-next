@@ -29,58 +29,58 @@ actual inline fun MemBuffer._sliceFloat64Buffer(offset: Int, size: Int): Float64
 
 actual typealias DataBuffer = DataView
 
-actual inline fun MemBuffer.getData(): DataBuffer = DataView(this)
 actual inline val DataBuffer.mem: MemBuffer get() = this.buffer
-actual inline fun DataBuffer.getByte(index: Int): Byte = this.getInt8(index)
-actual inline fun DataBuffer.setByte(index: Int, value: Byte): Unit = this.setInt8(index, value)
-actual inline fun DataBuffer.getShort(index: Int): Short = this.getInt16(index, true)
-actual inline fun DataBuffer.setShort(index: Int, value: Short): Unit = this.setInt16(index, value, true)
-actual inline fun DataBuffer.getInt(index: Int): Int = this.getInt32(index, true)
-actual inline fun DataBuffer.setInt(index: Int, value: Int): Unit = this.setInt32(index, value, true)
-actual inline fun DataBuffer.getFloat(index: Int): Float = this.getFloat32(index, true)
-actual inline fun DataBuffer.setFloat(index: Int, value: Float): Unit = this.setFloat32(index, value, true)
-actual inline fun DataBuffer.getDouble(index: Int): Double = this.getFloat64(index, true)
-actual inline fun DataBuffer.setDouble(index: Int, value: Double): Unit = this.setFloat64(index, value, true)
+actual fun MemBuffer.getData(): DataBuffer = DataView(this)
+actual fun DataBuffer.getByte(index: Int): Byte = this.getInt8(index)
+actual fun DataBuffer.setByte(index: Int, value: Byte): Unit = this.setInt8(index, value)
+actual fun DataBuffer.getShort(index: Int): Short = this.getInt16(index, true)
+actual fun DataBuffer.setShort(index: Int, value: Short): Unit = this.setInt16(index, value, true)
+actual fun DataBuffer.getInt(index: Int): Int = this.getInt32(index, true)
+actual fun DataBuffer.setInt(index: Int, value: Int): Unit = this.setInt32(index, value, true)
+actual fun DataBuffer.getFloat(index: Int): Float = this.getFloat32(index, true)
+actual fun DataBuffer.setFloat(index: Int, value: Float): Unit = this.setFloat32(index, value, true)
+actual fun DataBuffer.getDouble(index: Int): Double = this.getFloat64(index, true)
+actual fun DataBuffer.setDouble(index: Int, value: Double): Unit = this.setFloat64(index, value, true)
 
 actual typealias Int8Buffer = Int8Array
 
 actual inline val Int8Buffer.mem: MemBuffer get() = this.buffer
 actual inline val Int8Buffer.offset: Int get() = this.byteOffset / 1
 actual inline val Int8Buffer.size: Int get() = this.asDynamic().length
-actual inline operator fun Int8Buffer.get(index: Int): Byte = this.asDynamic()[index]
-actual inline operator fun Int8Buffer.set(index: Int, value: Byte): Unit = run { this.asDynamic()[index] = value }
+actual operator fun Int8Buffer.get(index: Int): Byte = this.asDynamic()[index]
+actual operator fun Int8Buffer.set(index: Int, value: Byte): Unit = run { this.asDynamic()[index] = value }
 
 actual typealias Int16Buffer = Int16Array
 
 actual inline val Int16Buffer.mem: MemBuffer get() = this.buffer
 actual inline val Int16Buffer.offset: Int get() = this.byteOffset / 2
 actual inline val Int16Buffer.size: Int get() = this.asDynamic().length
-actual inline operator fun Int16Buffer.get(index: Int): Short = this.asDynamic()[index]
-actual inline operator fun Int16Buffer.set(index: Int, value: Short): Unit = run { this.asDynamic()[index] = value }
+actual operator fun Int16Buffer.get(index: Int): Short = this.asDynamic()[index]
+actual operator fun Int16Buffer.set(index: Int, value: Short): Unit = run { this.asDynamic()[index] = value }
 
 actual typealias Int32Buffer = Int32Array
 
 actual inline val Int32Buffer.mem: MemBuffer get() = this.buffer
 actual inline val Int32Buffer.offset: Int get() = this.byteOffset / 4
 actual inline val Int32Buffer.size: Int get() = this.asDynamic().length
-actual inline operator fun Int32Buffer.get(index: Int): Int = this.asDynamic()[index]
-actual inline operator fun Int32Buffer.set(index: Int, value: Int): Unit = run { this.asDynamic()[index] = value }
+actual operator fun Int32Buffer.get(index: Int): Int = this.asDynamic()[index]
+actual operator fun Int32Buffer.set(index: Int, value: Int): Unit = run { this.asDynamic()[index] = value }
 
 actual typealias Float32Buffer = Float32Array
 
 actual inline val Float32Buffer.mem: MemBuffer get() = this.buffer
 actual inline val Float32Buffer.offset: Int get() = this.byteOffset / 4
 actual inline val Float32Buffer.size: Int get() = this.asDynamic().length
-actual inline operator fun Float32Buffer.get(index: Int): Float = this.asDynamic()[index]
-actual inline operator fun Float32Buffer.set(index: Int, value: Float): Unit = run { this.asDynamic()[index] = value }
+actual operator fun Float32Buffer.get(index: Int): Float = this.asDynamic()[index]
+actual operator fun Float32Buffer.set(index: Int, value: Float): Unit = run { this.asDynamic()[index] = value }
 
 actual typealias Float64Buffer = Float64Array
 
 actual inline val Float64Buffer.mem: MemBuffer get() = this.buffer
 actual inline val Float64Buffer.offset: Int get() = this.byteOffset / 8
 actual inline val Float64Buffer.size: Int get() = this.asDynamic().length
-actual inline operator fun Float64Buffer.get(index: Int): Double = this.asDynamic()[index]
-actual inline operator fun Float64Buffer.set(index: Int, value: Double): Unit = run { this.asDynamic()[index] = value }
+actual operator fun Float64Buffer.get(index: Int): Double = this.asDynamic()[index]
+actual operator fun Float64Buffer.set(index: Int, value: Double): Unit = run { this.asDynamic()[index] = value }
 
 inline fun ByteArray.asInt8Array(): Int8Array = this.unsafeCast<Int8Array>()
 inline fun ByteArray.asTyped(): Int8Array = this.unsafeCast<Int8Array>()
