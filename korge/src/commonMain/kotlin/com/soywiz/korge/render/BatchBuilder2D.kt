@@ -163,7 +163,9 @@ class BatchBuilder2D constructor(
         vertexCount++
     }
 
-    fun _addVertex(vd: Fast32Buffer, vp: Int, x: Float, y: Float, u: Float, v: Float, colorMul: Int, colorAdd: Int): Int {
+    // @TODO: inline is used because on Kotlin/Native there is a performance problem with EnterFrame/LeaveFrame, so each non-inline function or property call is costly
+    // @TODO: https://kotlinlang.slack.com/archives/C3SGXARS6/p1619349974244300
+    inline fun _addVertex(vd: Fast32Buffer, vp: Int, x: Float, y: Float, u: Float, v: Float, colorMul: Int, colorAdd: Int): Int {
         vd.setF(vp + 0, x)
         vd.setF(vp + 1, y)
         vd.setF(vp + 2, u)
@@ -296,7 +298,9 @@ class BatchBuilder2D constructor(
         vertexCount += 4
     }
 
-    fun _addQuadVerticesFastNormal(
+    // @TODO: inline is used because on Kotlin/Native there is a performance problem with EnterFrame/LeaveFrame, so each non-inline function or property call is costly
+    // @TODO: https://kotlinlang.slack.com/archives/C3SGXARS6/p1619349974244300
+    inline fun _addQuadVerticesFastNormal(
         vp: Int,
         vd: Fast32Buffer,
         x0: Float, y0: Float,
@@ -316,7 +320,7 @@ class BatchBuilder2D constructor(
         return vp
     }
 
-    fun _addQuadVerticesFastNormalNonRotated(
+    inline fun _addQuadVerticesFastNormalNonRotated(
         vp: Int,
         vd: Fast32Buffer,
         x0: Float, y0: Float,

@@ -106,6 +106,8 @@ class FastSpriteContainer(val useRotation: Boolean = false, var smoothing: Boole
                 continue
             }
 
+            sprite.calcVerticesIfRequired()
+
             if (useRotation) {
                 vp = bb._addQuadVerticesFastNormal(
                     vp, vd,

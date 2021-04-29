@@ -26,6 +26,8 @@ val ResourcesContainer.korge_png by resourceBitmap("korge.png")
 
 class BunnyContainer(maxSize: Int) : FSprites(maxSize) {
     val speeds = FBuffer(maxSize * Float.SIZE_BYTES * 2).f32
+    // @TODO: inline is used because on Kotlin/Native there is a performance problem with EnterFrame/LeaveFrame, so each non-inline function or property call is costly
+    // @TODO: https://kotlinlang.slack.com/archives/C3SGXARS6/p1619349974244300
     inline var FSprite.speedXf: Float get() = speeds[index * 2 + 0] ; set(value) { speeds[index * 2 + 0] = value }
     inline var FSprite.speedYf: Float get() = speeds[index * 2 + 1] ; set(value) { speeds[index * 2 + 1] = value }
     //var FSprite.tex: BmpSlice

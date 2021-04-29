@@ -5,6 +5,8 @@ import com.soywiz.korim.color.Colors
 import kotlin.math.cos
 import kotlin.math.sin
 
+// @TODO: inline is used because on Kotlin/Native there is a performance problem with EnterFrame/LeaveFrame, so each non-inline function or property call is costly
+// @TODO: https://kotlinlang.slack.com/archives/C3SGXARS6/p1619349974244300
 open class FastSprite(tex: BmpSlice) {
     var x0: Float = 0f
     var y0: Float = 0f
@@ -27,12 +29,41 @@ open class FastSprite(tex: BmpSlice) {
     var container: FastSpriteContainer? = null
         internal set
 
-    internal var useRotation = false
+    @PublishedApi internal var dirtyX = true
+    @PublishedApi internal var dirtyY = true
+
+    inline fun calcVerticesIfRequired() {
+        if (!dirtyX && !dirtyY) return
+        if (useRotation) {
+            updateXY0123()
+        } else {
+            if (dirtyX) {
+                updateX01()
+            }
+            if (dirtyY) {
+                updateY01()
+            }
+        }
+        dirtyX = false
+        dirtyY = false
+    }
+
+    @PublishedApi internal var _useRotation: Boolean = false
+
+    inline var useRotation: Boolean
+        get() = _useRotation
+        set(value) {
+            if (_useRotation != value) {
+                _useRotation = value
+                forceUpdate()
+            }
+        }
 
     /**
      * Allows FastSpriteContainer to recalculate a FastSprite if added to a FastSpriteContainer using rotation
      */
-    internal fun forceUpdate() {
+    @PublishedApi
+    internal inline fun forceUpdate() {
         if (useRotation) {
             cr = cos(rotationRadiansf)
             sr = sin(rotationRadiansf)
@@ -43,7 +74,8 @@ open class FastSprite(tex: BmpSlice) {
     /**
      * Updates based on rotation
      */
-    private fun updateXY0123() {
+    @PublishedApi
+    internal inline fun updateXY0123() {
         // top left
         var px = -ax * scaleXf
         var py = -ay * scaleYf
@@ -73,127 +105,129 @@ open class FastSprite(tex: BmpSlice) {
     /**
      * Updates x without rotation
      */
-    private fun updateX01() {
+    @PublishedApi
+    internal inline fun updateX01() {
         x0 = xf - ax * scaleXf
         x1 = x0 + width * scaleXf
-    }
-
-    private fun updateX() {
-        if (useRotation) {
-            updateXY0123()
-        } else {
-            updateX01()
-        }
     }
 
     /**
      * Updates y without rotation
      */
-    private fun updateY01() {
+    @PublishedApi internal inline fun updateY01() {
         y0 = yf - ay * scaleYf
         y1 = y0 + height * scaleYf
     }
 
-    private fun updateY() {
-        if (useRotation) {
-            updateXY0123()
-        } else {
-            updateY01()
-        }
-    }
-
-    private fun updateXSize() {
+    @PublishedApi internal inline fun updateXSize() {
         ax = width * anchorXf
-        updateX()
+        dirtyX = true
     }
 
-    private fun updateYSize() {
+    @PublishedApi internal inline fun updateYSize() {
         ay = height * anchorYf
-        updateY()
+        dirtyY = true
     }
 
 
-    private fun updateSize() {
+    @PublishedApi internal inline fun updateSize() {
         updateXSize()
         updateYSize()
     }
 
-    var xf: Float = 0f
+    @PublishedApi internal var _xf: Float = 0f
+    @PublishedApi internal var _yf: Float = 0f
+    @PublishedApi internal var _anchorXf: Float = .5f
+    @PublishedApi internal var _anchorYf: Float = .5f
+    @PublishedApi internal var _scaleXf: Float = 1f
+    @PublishedApi internal var _scaleYf: Float = 1f
+    @PublishedApi internal var _rotationRadiansf: Float = 0f
+
+    inline var xf: Float
+        get() = _xf
         set(value) {
-            field = value
-            updateX()
+            if (_xf != value) {
+                _xf = value
+                dirtyX = true
+            }
         }
-    var yf: Float = 0f
+    inline var yf: Float
+        get() = _yf
         set(value) {
-            field = value
-            updateY()
+            if (_yf != value) {
+                _yf = value
+                dirtyY = true
+            }
         }
-    var anchorXf: Float = .5f
+    inline var anchorXf: Float
+        get() = _anchorXf
         set(value) {
-            if (field != value) {
-                field = value
+            if (_anchorXf != value) {
+                _anchorXf = value
                 updateXSize()
             }
         }
-    var anchorYf: Float = .5f
+    inline var anchorYf: Float
+        get() = _anchorYf
         set(value) {
-            if (field != value) {
-                field = value
+            if (_anchorYf != value) {
+                _anchorYf = value
                 updateYSize()
             }
         }
-    var scaleXf: Float = 1f
+    inline var scaleXf: Float
+        get() = _scaleXf
         set(value) {
-            if (field != value) {
-                field = value
+            if (_scaleXf != value) {
+                _scaleXf = value
                 updateXSize()
             }
         }
-    var scaleYf: Float = 1f
+    inline var scaleYf: Float
+        get() = _scaleYf
         set(value) {
-            if (field != value) {
-                field = value
+            if (_scaleYf != value) {
+                _scaleYf = value
                 updateYSize()
             }
         }
-    var rotationRadiansf: Float = 0f
+    inline var rotationRadiansf: Float
+        get() = _rotationRadiansf
         set(value) {
-            if (field != value) {
-                field = value
-                if (useRotation) {
-                    cr = cos(field)
-                    sr = sin(field)
-                    updateXY0123()
-                }
+            if (_rotationRadiansf != value) {
+                _rotationRadiansf = value
+                forceUpdate()
             }
         }
 
     var color = Colors.WHITE
     var visible: Boolean = true
 
-    val tx0: Float get() = tex.tl_x
-    val ty0: Float get() = tex.tl_y
-    val tx1: Float get() = tex.br_x
-    val ty1: Float get() = tex.br_y
-    val width: Float get() = tex.width.toFloat()
-    val height: Float get() = tex.height.toFloat()
+    inline val tx0: Float get() = tex.tl_x
+    inline val ty0: Float get() = tex.tl_y
+    inline val tx1: Float get() = tex.br_x
+    inline val ty1: Float get() = tex.br_y
+    inline val width: Float get() = tex.width.toFloat()
+    inline val height: Float get() = tex.height.toFloat()
 
-    var tex: BmpSlice = tex
+    @PublishedApi internal var _tex: BmpSlice = tex
+
+    inline var tex: BmpSlice
+        get() = _tex
         set(value) {
-            if (field !== value) {
-                field = value
+            if (_tex !== value) {
+                _tex = value
                 updateSize()
             }
         }
 
-    fun scale(value: Float) {
+    inline fun scale(value: Float) {
         scaleXf = value
         scaleYf = value
     }
 
     init {
         updateSize()
-        updateXY0123()
     }
 
     override fun toString(): String {
@@ -202,52 +236,52 @@ open class FastSprite(tex: BmpSlice) {
 
 }
 
-var FastSprite.x: Double
+inline var FastSprite.x: Double
     get() = xf.toDouble()
     set(value) {
         xf = value.toFloat()
     }
 
-var FastSprite.y: Double
+inline var FastSprite.y: Double
     get() = yf.toDouble()
     set(value) {
         yf = value.toFloat()
     }
 
-var FastSprite.anchorX: Double
+inline var FastSprite.anchorX: Double
     get() = anchorXf.toDouble()
     set(value) {
         anchorXf = value.toFloat()
     }
 
-var FastSprite.anchorY: Double
+inline var FastSprite.anchorY: Double
     get() = anchorYf.toDouble()
     set(value) {
         anchorYf = value.toFloat()
     }
 
-var FastSprite.scaleX: Double
+inline var FastSprite.scaleX: Double
     get() = scaleXf.toDouble()
     set(value) {
         scaleXf = value.toFloat()
     }
-var FastSprite.scaleY: Double
+inline var FastSprite.scaleY: Double
     get() = scaleYf.toDouble()
     set(value) {
         scaleYf = value.toFloat()
     }
 
-fun FastSprite.scale(value: Double) {
+inline fun FastSprite.scale(value: Double) {
     scale(value.toFloat())
 }
 
-var FastSprite.rotation: Double
+inline var FastSprite.rotation: Double
     get() = rotationRadiansf.toDouble()
     set(value) {
         rotationRadiansf = value.toFloat()
     }
 
-var FastSprite.alpha
+inline var FastSprite.alpha
     get() = color.af
     set(value) {
         color = color.withAf(value)
