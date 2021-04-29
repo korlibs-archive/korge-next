@@ -51,7 +51,7 @@ fun animations(spriteMap: Bitmap) = arrayOf(
 	SpriteAnimation(spriteMap, 16, 32, 64, 1, 4, 1), // up
 	SpriteAnimation(spriteMap, 16, 32, 0, 1, 4, 1)) // down
 
-fun Sprite.walkDirection(indexOfAnimation: Int, scale: Double = 1.0) {
+inline fun Sprite.walkDirection(indexOfAnimation: Int, scale: Double = 1.0) {
 	val delta = 2 * scale
 	when (indexOfAnimation) {
 		0 -> x -= delta

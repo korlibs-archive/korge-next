@@ -23,14 +23,14 @@ class MaskedView : Container() {
                 ctx.flush()
                 ctx.stencilIndex++
                 setMaskState(ctx, MaskStates.STATE_SHAPE)
-                mask?.render(ctx)
+                mask?.renderFast(ctx)
                 ctx.flush()
                 setMaskState(ctx, MaskStates.STATE_CONTENT)
             }
 
             forEachChild { child: View ->
                 if (child != mask) {
-                    child.render(ctx)
+                    child.renderFast(ctx)
                 }
             }
         } finally {

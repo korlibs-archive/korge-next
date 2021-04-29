@@ -6,12 +6,9 @@ import com.soywiz.kds.iterators.*
 import com.soywiz.kmem.*
 import com.soywiz.korge.internal.*
 import com.soywiz.korge.render.*
-import com.soywiz.korge.util.*
 import com.soywiz.korge.view.*
 import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.*
 import com.soywiz.korma.geom.*
-import kotlin.math.*
 
 inline fun Container.tileMap(map: IntArray2, tileset: TileSet, repeatX: TileMap.Repeat = TileMap.Repeat.NONE, repeatY: TileMap.Repeat = repeatX, smoothing: Boolean = true, callback: @ViewDslMarker TileMap.() -> Unit = {}) =
 	TileMap(map, tileset, smoothing).repeat(repeatX, repeatY).addTo(this, callback)
@@ -30,13 +27,17 @@ open class TileMap(val intMap: IntArray2, val tileset: TileSet, var smoothing: B
 	val tileWidth = tileset.width.toDouble()
 	val tileHeight = tileset.height.toDouble()
 
-	enum class Repeat(val get: (v: Int, max: Int) -> Int) {
-		NONE({ v, max -> v }),
-		REPEAT({ v, max -> v umod max }),
-		MIRROR({ v, max ->
-			val r = v umod max
-			if ((v / max) % 2 == 0) r else max - 1 - r
-		})
+	enum class Repeat {
+		NONE, REPEAT, MIRROR;
+
+        inline fun get(v: Int, max: Int): Int = when (this) {
+            NONE -> v
+            REPEAT -> v umodFast max
+            MIRROR -> {
+                val r = v umodFast max
+                if ((v / max) % 2 == 0) r else max - 1 - r
+            }
+        }
 	}
 
 	var repeatX = Repeat.NONE
@@ -118,11 +119,11 @@ open class TileMap(val intMap: IntArray2, val tileset: TileSet, var smoothing: B
 
                 if (rx < 0 || rx >= intMap.width) continue
                 if (ry < 0 || ry >= intMap.height) continue
-                val cell = intMap[rx, ry]
-                val cellData = cell.extract(0, 28)
-                val flipX = cell.extract(31)
-                val flipY = cell.extract(30)
-                val rotate = cell.extract(29)
+                val cell = intMap.getFast(rx, ry)
+                val cellData = cell.extractFast(0, 28)
+                val flipX = cell.extractFastBool(31)
+                val flipY = cell.extractFastBool(30)
+                val rotate = cell.extractFastBool(29)
 
                 count++
 
@@ -145,7 +146,7 @@ open class TileMap(val intMap: IntArray2, val tileset: TileSet, var smoothing: B
                     }
                 }
 
-                run {
+                //{
                     val p0X = posX + (dUX * x) + (dVX * y)
                     val p0Y = posY + (dUY * x) + (dVY * y)
 
@@ -174,7 +175,7 @@ open class TileMap(val intMap: IntArray2, val tileset: TileSet, var smoothing: B
                     info.vertices.quadV(info.vcount++, p1X, p1Y, tempX[indices[1]], tempY[indices[1]], colMul, colAdd)
                     info.vertices.quadV(info.vcount++, p2X, p2Y, tempX[indices[2]], tempY[indices[2]], colMul, colAdd)
                     info.vertices.quadV(info.vcount++, p3X, p3Y, tempX[indices[3]], tempY[indices[3]], colMul, colAdd)
-                }
+                //}
 
                 info.icount += 6
             }
@@ -198,7 +199,7 @@ open class TileMap(val intMap: IntArray2, val tileset: TileSet, var smoothing: B
     companion object {
         private val dummyTexturedVertexArray = TexturedVertexArray(0, IntArray(0))
 
-        fun computeIndices(flipX: Boolean, flipY: Boolean, rotate: Boolean, indices: IntArray = IntArray(4)): IntArray {
+        inline fun computeIndices(flipX: Boolean, flipY: Boolean, rotate: Boolean, indices: IntArray = IntArray(4)): IntArray {
             indices[0] = 0 // TL
             indices[1] = 1 // TR
             indices[2] = 2 // BR
@@ -218,16 +219,18 @@ open class TileMap(val intMap: IntArray2, val tileset: TileSet, var smoothing: B
             return indices
         }
 
-        private fun IntArray.swap(a: Int, b: Int): IntArray = this.apply {
+        @PublishedApi
+        internal inline fun IntArray.swap(a: Int, b: Int): IntArray {
             val t = this[a]
             this[a] = this[b]
             this[b] = t
+            return this
         }
 
-        private const val TL = 0
-        private const val TR = 1
-        private const val BR = 2
-        private const val BL = 3
+        @PublishedApi internal const val TL = 0
+        @PublishedApi internal const val TR = 1
+        @PublishedApi internal const val BR = 2
+        @PublishedApi internal const val BL = 3
     }
     private val infosPool = Pool { Info(Bitmaps.transparent.bmpBase, dummyTexturedVertexArray) }
 

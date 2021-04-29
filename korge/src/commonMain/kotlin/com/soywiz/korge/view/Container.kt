@@ -205,7 +205,7 @@ open class Container : View(true) {
 	override fun renderInternal(ctx: RenderContext) {
 		if (!visible) return
 		forEachChild { child: View ->
-			child.render(ctx)
+			child.renderFast(ctx)
 		}
     }
 

@@ -26,7 +26,7 @@ class TileSet(
     //    println("textures: ${textures.size}")
     //}
 
-	operator fun get(index: Int): BmpSlice? = textures.getOrNull(index)
+	inline operator fun get(index: Int): BmpSlice? = textures.getOrNull(index)
 
     fun clone(): TileSet = TileSet(this.texturesMap.clone(), this.width, this.height)
 

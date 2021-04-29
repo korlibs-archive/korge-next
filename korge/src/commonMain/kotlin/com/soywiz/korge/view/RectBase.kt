@@ -29,13 +29,21 @@ open class RectBase(
 
     protected var anchorVersion = 0
 
-	protected var baseBitmap: BmpSlice = Bitmaps.white
+    @PublishedApi
+    internal var _baseBitmap: BmpSlice = Bitmaps.white
+
+    @PublishedApi internal inline var baseBitmapInternal: BmpSlice
+        get() = _baseBitmap
         set(v) {
-            if (field !== v) {
-                field = v
+            if (_baseBitmap !== v) {
+                _baseBitmap = v
                 dirtyVertices = true
             }
         }
+
+    protected inline var baseBitmap: BmpSlice
+        get() = _baseBitmap
+        set(v) { baseBitmapInternal = v }
 
 	override var anchorX: Double = anchorX; set(v) { field = v; dirtyVertices = true; anchorVersion++ }
     override var anchorY: Double = anchorY; set(v) { field = v; dirtyVertices = true; anchorVersion++ }
@@ -56,7 +64,7 @@ open class RectBase(
 
     private val vertices = TexturedVertexArray(4, TexturedVertexArray.QUAD_INDICES)
 
-	private fun computeVertexIfRequired() {
+	private inline fun computeVertexIfRequired() {
 		if (!dirtyVertices) return
 		dirtyVertices = false
 		vertices.quad(0, sLeft, sTop, bwidth, bheight, globalMatrix, baseBitmap, renderColorMul, renderColorAdd)

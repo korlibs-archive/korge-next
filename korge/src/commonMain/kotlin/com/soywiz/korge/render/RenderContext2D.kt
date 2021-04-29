@@ -133,7 +133,7 @@ class RenderContext2D(
 
     /** Renders a [texture] with the [blendFactors] at [x], [y] scaling it by [scale].
      * The texture colors will be multiplied by [multiplyColor]. Since it is multiplicative, white won't cause any effect. */
-	fun imageScale(texture: Texture, x: Double, y: Double, scale: Double = 1.0) {
+	inline fun imageScale(texture: Texture, x: Double, y: Double, scale: Double = 1.0) {
 		//println(m)
 		batch.drawQuad(
 			texture,

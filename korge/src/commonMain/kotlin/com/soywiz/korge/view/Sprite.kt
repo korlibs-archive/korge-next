@@ -1,7 +1,7 @@
 package com.soywiz.korge.view
 
 import com.soywiz.klock.*
-import com.soywiz.kmem.umod
+import com.soywiz.kmem.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korio.async.Signal
 import com.soywiz.korma.geom.vector.VectorPath
@@ -64,7 +64,11 @@ open class Sprite(
 
     private var animationRequested = false
     var totalFramesPlayed = 0
-    private var animationNumberOfFramesRequested = 0
+
+    @PublishedApi internal var _animationNumberOfFramesRequested = 0
+
+    @PublishedApi internal inline var animationNumberOfFramesRequested: Int
+        get() = _animationNumberOfFramesRequested
         set(value) {
             if (value == 0) {
                 stopAnimation()
@@ -73,34 +77,34 @@ open class Sprite(
                     else -> triggerEvent(onAnimationStopped)
                 }
             }
-            field = value
+            _animationNumberOfFramesRequested = value
         }
-    private var animationType = AnimationType.STANDARD
+    @PublishedApi internal var animationType = AnimationType.STANDARD
 
-    private var _onAnimationCompleted: Signal<SpriteAnimation>? = null
-    private var _onAnimationStopped: Signal<SpriteAnimation>? = null
-    private var _onAnimationStarted: Signal<SpriteAnimation>? = null
-    private var _onFrameChanged: Signal<SpriteAnimation>? = null
+    @PublishedApi internal var _onAnimationCompleted: Signal<SpriteAnimation>? = null
+    @PublishedApi internal var _onAnimationStopped: Signal<SpriteAnimation>? = null
+    @PublishedApi internal var _onAnimationStarted: Signal<SpriteAnimation>? = null
+    @PublishedApi internal var _onFrameChanged: Signal<SpriteAnimation>? = null
 
-    val onAnimationCompleted : Signal<SpriteAnimation>
-        get(){
+    inline val onAnimationCompleted : Signal<SpriteAnimation>
+        get() {
             if (_onAnimationCompleted == null) _onAnimationCompleted = Signal()
             return _onAnimationCompleted!!
         }
 
-    val onAnimationStopped : Signal<SpriteAnimation>
+    inline val onAnimationStopped : Signal<SpriteAnimation>
         get() {
             if (_onAnimationStopped == null) _onAnimationStopped = Signal()
             return _onAnimationStopped!!
         }
 
-    val onAnimationStarted : Signal<SpriteAnimation>
+    inline val onAnimationStarted : Signal<SpriteAnimation>
         get() {
             if (_onAnimationStarted == null) _onAnimationStarted = Signal()
             return _onAnimationStarted!!
         }
 
-    val onFrameChanged : Signal<SpriteAnimation>
+    inline val onFrameChanged : Signal<SpriteAnimation>
         get() {
             if (_onFrameChanged == null) _onFrameChanged = Signal()
             return _onFrameChanged!!
@@ -109,22 +113,30 @@ open class Sprite(
     var spriteDisplayTime: TimeSpan = 50.milliseconds
     private var animationLooped = false
     private var lastAnimationFrameTime: TimeSpan = 0.milliseconds
-    private var animationRemainingDuration: TimeSpan = 0.milliseconds
+    private var _animationRemainingDuration: TimeSpan = 0.milliseconds
+    private inline var animationRemainingDuration: TimeSpan
+        get() = _animationRemainingDuration
         set(value) {
             if (value <= 0.milliseconds && animationType == AnimationType.DURATION) {
                 stopAnimation()
                 triggerEvent(_onAnimationCompleted)
             }
-            field = value
+            _animationRemainingDuration = value
         }
 
-    private var currentAnimation: SpriteAnimation? = null
+    @PublishedApi internal var currentAnimation: SpriteAnimation? = null
 
-    var currentSpriteIndex = 0
-        private set(value) {
-            field = value umod totalFrames
-            bitmap = currentAnimation?.getSprite(value) ?: bitmap
+    @PublishedApi internal var _currentSpriteIndex = 0
+
+    @PublishedApi internal inline var currentSpriteIndexSet: Int
+        get() = _currentSpriteIndex
+        set(value) {
+            _currentSpriteIndex = value umodFast totalFrames
+            bitmap = currentAnimation?.getSpriteFast(value) ?: bitmap
         }
+
+    // @TODO: This is inline for Kotlin/Native performance
+    inline val currentSpriteIndex: Int get() = _currentSpriteIndex
 
     private var reversed = false
 
@@ -137,7 +149,7 @@ open class Sprite(
         }
     }
 
-    private fun getDefaultTime(spriteAnimation: SpriteAnimation?): TimeSpan = when {
+    @PublishedApi internal inline fun getDefaultTime(spriteAnimation: SpriteAnimation?): TimeSpan = when {
         spriteAnimation != null && spriteAnimation.defaultTimePerFrame != TimeSpan.NIL -> spriteAnimation.defaultTimePerFrame
         else -> spriteDisplayTime
     }
@@ -209,7 +221,7 @@ open class Sprite(
         triggerEvent(_onAnimationStopped)
     }
 
-    private fun nextSprite(frameTime: TimeSpan) {
+    private inline fun nextSprite(frameTime: TimeSpan) {
         lastAnimationFrameTime += frameTime
         if (lastAnimationFrameTime + frameTime >= this.spriteDisplayTime) {
             when (animationType) {
@@ -225,7 +237,7 @@ open class Sprite(
 
                 }
             }
-            if (reversed) --currentSpriteIndex else ++currentSpriteIndex
+            if (reversed) --currentSpriteIndexSet else ++currentSpriteIndexSet
             totalFramesPlayed++
             triggerEvent(_onFrameChanged)
             lastAnimationFrameTime = 0.milliseconds
@@ -253,15 +265,15 @@ open class Sprite(
         currentAnimation = spriteAnimation
         animationLooped = looped
         animationRemainingDuration = duration
-        currentSpriteIndex = startFrame
+        currentSpriteIndexSet = startFrame
         this.reversed = reversed
         animationType = type
         animationRequested = true
-        val endFrame = endFrame umod totalFrames
+        val endFrame = endFrame umodFast totalFrames
         currentAnimation?.let {
             val count = when {
                 startFrame > endFrame -> (if (reversed) startFrame - endFrame else it.spriteStackSize-(startFrame - endFrame))
-                endFrame > startFrame -> (if (reversed) (startFrame - endFrame) umod it.spriteStackSize else endFrame-startFrame)
+                endFrame > startFrame -> (if (reversed) (startFrame - endFrame) umodFast it.spriteStackSize else endFrame-startFrame)
                 else -> 0
             }
             val requestedFrames = count + (animationCyclesRequested * it.spriteStackSize)
@@ -269,12 +281,14 @@ open class Sprite(
         }
     }
 
-    fun setFrame(index: Int) {
-        currentSpriteIndex = index
+    inline fun setFrame(index: Int) {
+        currentSpriteIndexSet = index
     }
 
-    private fun triggerEvent(signal: Signal<SpriteAnimation>?) {
-        if (signal != null) currentAnimation?.let { signal.invoke(it) }
+    @PublishedApi internal inline fun triggerEvent(signal: Signal<SpriteAnimation>?) {
+        if (signal == null) return
+        val currentAnimation = this.currentAnimation ?: return
+        signal.invoke(currentAnimation)
     }
 }
 

@@ -41,8 +41,8 @@ class TransitionView() : Container() {
 
 	override fun renderInternal(ctx: RenderContext) {
 		when {
-			ratio <= 0.0 -> prev.render(ctx)
-			ratio >= 1.0 -> next.render(ctx)
+			ratio <= 0.0 -> prev.renderFast(ctx)
+			ratio >= 1.0 -> next.renderFast(ctx)
 			else -> transition.render(ctx, prev, next, ratio)
 		}
 	}
@@ -63,8 +63,8 @@ val AlphaTransition = Transition { ctx, prev, next, ratio ->
 	try {
 		prev.alpha = 1.0 - ratio
 		next.alpha = ratio
-		prev.render(ctx)
-		next.render(ctx)
+		prev.renderFast(ctx)
+		next.renderFast(ctx)
 	} finally {
 		prev.alpha = prevAlpha
 		next.alpha = nextAlpha

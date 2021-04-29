@@ -280,7 +280,7 @@ class Views constructor(
         ag.startFrame()
 		if (clearEachFrame) ag.clear(clearColor, stencil = 0, depth = 1f, clearColor = true, clearStencil = true, clearDepth = true)
         onBeforeRender(renderContext)
-		stage.render(renderContext)
+		stage.renderFast(renderContext)
         renderContext.flush()
         stage.renderDebug(renderContext)
 

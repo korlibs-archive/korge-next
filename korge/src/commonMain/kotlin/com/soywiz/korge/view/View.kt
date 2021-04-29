@@ -204,10 +204,13 @@ abstract class View internal constructor(
     private var _skewY: Angle = 0.0.radians
     private var _rotation: Angle = 0.0.radians
 
+    @PublishedApi internal var _pos = Point()
+
     /** Position of the view. **@NOTE**: If [pos] coordinates are manually changed, you should call [View.invalidateMatrix] later to keep the matrix in sync */
-    var pos = Point()
+    inline var pos: Point
+        get() = _pos
         set(value) {
-            field.copyFrom(value)
+            _pos.copyFrom(value)
             invalidateMatrix()
         }
 
@@ -399,17 +402,22 @@ abstract class View internal constructor(
     private val tempTransform = Matrix.Transform()
     //private val tempMatrix = Matrix2d()
 
-    private fun ensureTransform(): View {
+    @PublishedApi internal fun ensureTransformUpdate(): View {
+        val t = tempTransform.setMatrix(this._localMatrix)
+        this.pos.xf = t.xf
+        this.pos.yf = t.yf
+        this._scaleX = t.scaleX
+        this._scaleY = t.scaleY
+        this._skewX = t.skewX
+        this._skewY = t.skewY
+        this._rotation = t.rotation
+        return this
+    }
+
+    private inline fun ensureTransform(): View {
         if (!validLocalProps) {
             validLocalProps = true
-            val t = tempTransform.setMatrix(this._localMatrix)
-            this.pos.xf = t.xf
-            this.pos.yf = t.yf
-            this._scaleX = t.scaleX
-            this._scaleY = t.scaleY
-            this._skewX = t.skewX
-            this._skewY = t.skewY
-            this._rotation = t.rotation
+            ensureTransformUpdate()
         }
         return this
     }
@@ -481,8 +489,8 @@ abstract class View internal constructor(
     //	setTransform(tempTransform.setTo(x, y, sx, sy, skewX, skewY, angle))
 
 
-    internal var validLocalProps = true
-    internal var validLocalMatrix = true
+    @PublishedApi internal var validLocalProps = true
+    @PublishedApi internal var validLocalMatrix = true
 
     private var _localMatrix = Matrix()
 
@@ -627,12 +635,12 @@ abstract class View internal constructor(
     /**
      * Invalidates the [localMatrix] [Matrix], so it gets updated from the decomposed properties: [x], [y], [scaleX], [scaleY], [rotation], [skewX] and [skewY].
      */
-    fun invalidateMatrix() {
+    inline fun invalidateMatrix() {
         validLocalMatrix = false
         invalidate()
     }
 
-    protected var dirtyVertices = true
+    @PublishedApi internal var dirtyVertices = true
 
     private var _version = 0
     private var _versionColor = 0
@@ -699,6 +707,10 @@ abstract class View internal constructor(
      * decides how to render that texture containing the View representation.
      */
     final override fun render(ctx: RenderContext) {
+        renderFast(ctx)
+    }
+
+    inline fun renderFast(ctx: RenderContext) {
         if (!visible) return
         if (filter != null) {
             renderFiltered(ctx, filter!!)
@@ -747,7 +759,7 @@ abstract class View internal constructor(
         //ctx.flush()
     }
 
-    private fun renderFiltered(ctx: RenderContext, filter: Filter) {
+    @PublishedApi internal fun renderFiltered(ctx: RenderContext, filter: Filter) {
         val bounds = getLocalBounds()
 
         val borderEffect = filter.border
@@ -804,7 +816,7 @@ abstract class View internal constructor(
     }
 
     /** Method that all views must override in order to control how the view is going to be rendered */
-    protected abstract fun renderInternal(ctx: RenderContext)
+    abstract fun renderInternal(ctx: RenderContext)
 
     @Suppress("RemoveCurlyBracesFromTemplate")
     override fun toString(): String {

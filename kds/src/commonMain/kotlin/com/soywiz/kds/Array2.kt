@@ -259,13 +259,23 @@ data class IntArray2(val width: Int, val height: Int, val data: IntArray) : Iter
 
     override fun hashCode(): Int = width + height + data.contentHashCode()
 
-    private fun index(x: Int, y: Int): Int {
-        if ((x !in 0 until width) || (y !in 0 until height)) throw IndexOutOfBoundsException()
+    @PublishedApi
+    internal inline fun indexFast(x: Int, y: Int): Int {
         return y * width + x
     }
 
+    @PublishedApi
+    internal fun index(x: Int, y: Int): Int {
+        if ((x !in 0 until width) || (y !in 0 until height)) throw IndexOutOfBoundsException()
+        return indexFast(x, y)
+    }
+
     operator fun get(x: Int, y: Int): Int = data[index(x, y)]
-    operator fun set(x: Int, y: Int, value: Int): Unit = run { data[index(x, y)] = value }
+    operator fun set(x: Int, y: Int, value: Int): Unit { data[index(x, y)] = value }
+
+    inline fun getFast(x: Int, y: Int): Int = data[indexFast(x, y)]
+    inline fun setFast(x: Int, y: Int, value: Int): Unit { data[indexFast(x, y)] = value }
+
     fun tryGet(x: Int, y: Int): Int? = if (inside(x, y)) data[index(x, y)] else null
     fun trySet(x: Int, y: Int, value: Int): Unit = run { if (inside(x, y)) data[index(x, y)] = value }
 

@@ -34,13 +34,14 @@ open class BaseImage(
         smoothing: Boolean = true
     ) : this(bitmap.slice(), anchorX, anchorY, hitShape, smoothing)
 
-    private var setBitmapSource: Boolean = false
+    @PublishedApi
+    internal var setBitmapSource: Boolean = false
 
-    var bitmap: BmpSlice
-        get() = baseBitmap
+    inline var bitmap: BmpSlice
+        get() = baseBitmapInternal
         set(value) {
             setBitmapSource = true
-            baseBitmap = value
+            baseBitmapInternal = value
         }
 
     var bitmapSrc: Resourceable<out BmpSlice> = bitmap

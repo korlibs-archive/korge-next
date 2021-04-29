@@ -85,12 +85,16 @@ fun Int.signExtend(bits: Int): Int = (this shl (32 - bits)) shr (32 - bits) // I
 fun Long.signExtend(bits: Int): Long = (this shl (64 - bits)) shr (64 - bits) // Long.SIZE_BITS
 
 /** Creates an [Int] with [this] bits set to 1 */
-fun Int.mask(): Int = (1 shl this) - 1
+inline fun Int.mask(): Int = (1 shl this) - 1
 /** Creates a [Long] with [this] bits set to 1 */
-fun Long.mask(): Long = (1L shl this.toInt()) - 1L
+inline fun Long.mask(): Long = (1L shl this.toInt()) - 1L
 
 //fun Int.getBit(offset: Int): Boolean = ((this ushr offset) and 1) != 0
 //fun Int.getBits(offset: Int, count: Int): Int = (this ushr offset) and count.mask()
+
+/** Extracts [count] bits at [offset] from [this] [Int] */
+inline fun Int.extractFast(offset: Int, count: Int): Int = (this ushr offset) and ((1 shl count) - 1)
+inline fun Int.extractFastBool(offset: Int): Boolean = extractFast(offset, 1) != 0
 
 /** Extracts [count] bits at [offset] from [this] [Int] */
 fun Int.extract(offset: Int, count: Int): Int = (this ushr offset) and count.mask()

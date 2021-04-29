@@ -90,7 +90,8 @@ fun Double.isNanOrInfinite() = this.isNaN() || this.isInfinite()
 ////////////////////
 
 /** Performs the unsigned modulo between [this] and [other] (negative values would wrap) */
-infix fun Int.umod(other: Int): Int {
+// @TODO: This is inline for Kotlin/Native performance
+inline infix fun Int.umodFast(other: Int): Int {
     val rm = this % other
     val remainder = if (rm == -0) 0 else rm
     return when {
@@ -98,6 +99,8 @@ infix fun Int.umod(other: Int): Int {
         else -> remainder
     }
 }
+
+infix fun Int.umod(other: Int): Int = this umodFast other
 
 /** Performs the unsigned modulo between [this] and [other] (negative values would wrap) */
 infix fun Double.umod(other: Double): Double {

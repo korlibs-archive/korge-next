@@ -18,7 +18,7 @@ suspend fun View.renderToBitmap(views: Views): Bitmap32 {
 			val ctx = RenderContext(views.ag, coroutineContext = views.coroutineContext)
 			views.ag.renderToBitmap(bmp) {
 				ctx.batch.setViewMatrixTemp(view.globalMatrixInv) {
-					view.render(ctx)
+					view.renderFast(ctx)
 				}
 			}
 		})
