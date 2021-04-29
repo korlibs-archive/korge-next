@@ -26,8 +26,8 @@ val ResourcesContainer.korge_png by resourceBitmap("korge.png")
 
 class BunnyContainer(maxSize: Int) : FSprites(maxSize) {
     val speeds = FBuffer(maxSize * Float.SIZE_BYTES * 2).f32
-    var FSprite.speedXf: Float get() = speeds[index * 2 + 0] ; set(value) { speeds[index * 2 + 0] = value }
-    var FSprite.speedYf: Float get() = speeds[index * 2 + 1] ; set(value) { speeds[index * 2 + 1] = value }
+    inline var FSprite.speedXf: Float get() = speeds[index * 2 + 0] ; set(value) { speeds[index * 2 + 0] = value }
+    inline var FSprite.speedYf: Float get() = speeds[index * 2 + 1] ; set(value) { speeds[index * 2 + 1] = value }
     //var FSprite.tex: BmpSlice
 }
 
@@ -170,8 +170,10 @@ suspend fun main() {
 open class FSprites(val maxSize: Int) {
     var size = 0
     val data = FBuffer(maxSize * FSprites.STRIDE * 4)
-    private val i32 = data.i32
-    private val f32 = data.f32
+    @PublishedApi
+    internal val i32 = data.i32
+    @PublishedApi
+    internal val f32 = data.f32
     fun uploadVertices(ctx: RenderContext) {
         ctx.fastSpriteBuffer.buffer.upload(data, 0, size * STRIDE * 4)
     }
@@ -182,14 +184,14 @@ open class FSprites(val maxSize: Int) {
 
     fun alloc() = FSprite(size++ * STRIDE)
 
-    var FSprite.x: Float get() = f32[offset + 0] ; set(value) { f32[offset + 0] = value }
-    var FSprite.y: Float get() = f32[offset + 1] ; set(value) { f32[offset + 1] = value }
-    var FSprite.scaleX: Float get() = f32[offset + 2] ; set(value) { f32[offset + 2] = value }
-    var FSprite.scaleY: Float get() = f32[offset + 3] ; set(value) { f32[offset + 3] = value }
-    var FSprite.radiansf: Float get() = f32[offset + 4] ; set(value) { f32[offset + 4] = value }
-    var FSprite.anchorRaw: Int get() = i32[offset + 5] ; set(value) { i32[offset + 5] = value }
-    var FSprite.tex0Raw: Int get() = i32[offset + 6] ; set(value) { i32[offset + 6] = value }
-    var FSprite.tex1Raw: Int get() = i32[offset + 7] ; set(value) { i32[offset + 7] = value }
+    inline var FSprite.x: Float get() = f32[offset + 0] ; set(value) { f32[offset + 0] = value }
+    inline var FSprite.y: Float get() = f32[offset + 1] ; set(value) { f32[offset + 1] = value }
+    inline var FSprite.scaleX: Float get() = f32[offset + 2] ; set(value) { f32[offset + 2] = value }
+    inline var FSprite.scaleY: Float get() = f32[offset + 3] ; set(value) { f32[offset + 3] = value }
+    inline var FSprite.radiansf: Float get() = f32[offset + 4] ; set(value) { f32[offset + 4] = value }
+    inline var FSprite.anchorRaw: Int get() = i32[offset + 5] ; set(value) { i32[offset + 5] = value }
+    inline var FSprite.tex0Raw: Int get() = i32[offset + 6] ; set(value) { i32[offset + 6] = value }
+    inline var FSprite.tex1Raw: Int get() = i32[offset + 7] ; set(value) { i32[offset + 7] = value }
 
     var FSprite.angle: Angle get() = radiansf.radians ; set(value) { radiansf = value.radians.toFloat() }
 
@@ -232,7 +234,9 @@ open class FSprites(val maxSize: Int) {
                         type = AG.DrawType.TRIANGLE_FAN,
                         vertexCount = 4,
                         instances = sprites.size,
-                        uniforms = ctx.batch.uniforms
+                        uniforms = ctx.batch.uniforms,
+                        //renderState = AG.RenderState(depthFunc = AG.CompareMode.LESS),
+                        //blending = AG.Blending.NONE
                     )
                     sprites.unloadVertices(ctx)
 
@@ -313,8 +317,8 @@ open class FSprites(val maxSize: Int) {
 }
 
 inline class FSprite(val id: Int) {
-    val offset get() = id
-    val index get() = offset / FSprites.STRIDE
+    inline val offset get() = id
+    inline val index get() = offset / FSprites.STRIDE
     //val offset get() = index * STRIDE
 }
 

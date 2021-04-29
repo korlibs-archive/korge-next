@@ -29,18 +29,18 @@ actual inline fun MemBuffer._sliceFloat64Buffer(offset: Int, size: Int): Float64
 
 actual typealias DataBuffer = DataView
 
-actual fun MemBuffer.getData(): DataBuffer = DataView(this)
+actual inline fun MemBuffer.getData(): DataBuffer = DataView(this)
 actual inline val DataBuffer.mem: MemBuffer get() = this.buffer
-actual fun DataBuffer.getByte(index: Int): Byte = this.getInt8(index)
-actual fun DataBuffer.setByte(index: Int, value: Byte): Unit = this.setInt8(index, value)
-actual fun DataBuffer.getShort(index: Int): Short = this.getInt16(index, true)
-actual fun DataBuffer.setShort(index: Int, value: Short): Unit = this.setInt16(index, value, true)
-actual fun DataBuffer.getInt(index: Int): Int = this.getInt32(index, true)
-actual fun DataBuffer.setInt(index: Int, value: Int): Unit = this.setInt32(index, value, true)
-actual fun DataBuffer.getFloat(index: Int): Float = this.getFloat32(index, true)
-actual fun DataBuffer.setFloat(index: Int, value: Float): Unit = this.setFloat32(index, value, true)
-actual fun DataBuffer.getDouble(index: Int): Double = this.getFloat64(index, true)
-actual fun DataBuffer.setDouble(index: Int, value: Double): Unit = this.setFloat64(index, value, true)
+actual inline fun DataBuffer.getByte(index: Int): Byte = this.getInt8(index)
+actual inline fun DataBuffer.setByte(index: Int, value: Byte): Unit = this.setInt8(index, value)
+actual inline fun DataBuffer.getShort(index: Int): Short = this.getInt16(index, true)
+actual inline fun DataBuffer.setShort(index: Int, value: Short): Unit = this.setInt16(index, value, true)
+actual inline fun DataBuffer.getInt(index: Int): Int = this.getInt32(index, true)
+actual inline fun DataBuffer.setInt(index: Int, value: Int): Unit = this.setInt32(index, value, true)
+actual inline fun DataBuffer.getFloat(index: Int): Float = this.getFloat32(index, true)
+actual inline fun DataBuffer.setFloat(index: Int, value: Float): Unit = this.setFloat32(index, value, true)
+actual inline fun DataBuffer.getDouble(index: Int): Double = this.getFloat64(index, true)
+actual inline fun DataBuffer.setDouble(index: Int, value: Double): Unit = this.setFloat64(index, value, true)
 
 actual typealias Int8Buffer = Int8Array
 

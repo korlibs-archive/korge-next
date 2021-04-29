@@ -35,57 +35,57 @@ actual fun MemBuffer._sliceFloat64Buffer(offset: Int, size: Int): Float64Buffer 
 
 actual typealias DataBuffer = MemBuffer
 actual val DataBuffer.mem: MemBuffer get() = this
-actual fun MemBuffer.getData(): DataBuffer = this
-actual fun DataBuffer.getByte(index: Int): Byte = buffer.get(index)
-actual fun DataBuffer.setByte(index: Int, value: Byte): Unit = run { buffer.put(index, value) }
-actual fun DataBuffer.getShort(index: Int): Short = buffer.getShort(index)
-actual fun DataBuffer.setShort(index: Int, value: Short): Unit = run { buffer.putShort(index, value) }
-actual fun DataBuffer.getInt(index: Int): Int = buffer.getInt(index)
-actual fun DataBuffer.setInt(index: Int, value: Int): Unit = run { buffer.putInt(index, value) }
-actual fun DataBuffer.getFloat(index: Int): Float = buffer.getFloat(index)
-actual fun DataBuffer.setFloat(index: Int, value: Float): Unit = run { buffer.putFloat(index, value) }
-actual fun DataBuffer.getDouble(index: Int): Double = buffer.getDouble(index)
-actual fun DataBuffer.setDouble(index: Int, value: Double): Unit = run { buffer.putDouble(index, value) }
+actual inline fun MemBuffer.getData(): DataBuffer = this
+actual inline fun DataBuffer.getByte(index: Int): Byte = buffer.get(index)
+actual inline fun DataBuffer.setByte(index: Int, value: Byte): Unit = run { buffer.put(index, value) }
+actual inline fun DataBuffer.getShort(index: Int): Short = buffer.getShort(index)
+actual inline fun DataBuffer.setShort(index: Int, value: Short): Unit = run { buffer.putShort(index, value) }
+actual inline fun DataBuffer.getInt(index: Int): Int = buffer.getInt(index)
+actual inline fun DataBuffer.setInt(index: Int, value: Int): Unit = run { buffer.putInt(index, value) }
+actual inline fun DataBuffer.getFloat(index: Int): Float = buffer.getFloat(index)
+actual inline fun DataBuffer.setFloat(index: Int, value: Float): Unit = run { buffer.putFloat(index, value) }
+actual inline fun DataBuffer.getDouble(index: Int): Double = buffer.getDouble(index)
+actual inline fun DataBuffer.setDouble(index: Int, value: Double): Unit = run { buffer.putDouble(index, value) }
 
 actual class Int8Buffer(val mbuffer: MemBuffer, val jbuffer: ByteBuffer)
 
 actual val Int8Buffer.mem: MemBuffer get() = mbuffer
 actual val Int8Buffer.offset: Int get() = (jbuffer as java.nio.Buffer).position()
 actual val Int8Buffer.size: Int get() = (jbuffer as java.nio.Buffer).limit() - offset
-actual operator fun Int8Buffer.get(index: Int): Byte = jbuffer.get(offset + index)
-actual operator fun Int8Buffer.set(index: Int, value: Byte): Unit = run { jbuffer.put(offset + index, value) }
+actual inline operator fun Int8Buffer.get(index: Int): Byte = jbuffer.get(offset + index)
+actual inline operator fun Int8Buffer.set(index: Int, value: Byte): Unit = run { jbuffer.put(offset + index, value) }
 
 actual class Int16Buffer(val mbuffer: MemBuffer, val jbuffer: ShortBuffer)
 
 actual val Int16Buffer.mem: MemBuffer get() = mbuffer
 actual val Int16Buffer.offset: Int get() = (jbuffer as java.nio.Buffer).position()
 actual val Int16Buffer.size: Int get() = (jbuffer as java.nio.Buffer).limit() - offset
-actual operator fun Int16Buffer.get(index: Int): Short = jbuffer.get(offset + index)
-actual operator fun Int16Buffer.set(index: Int, value: Short): Unit = run { jbuffer.put(offset + index, value) }
+actual inline operator fun Int16Buffer.get(index: Int): Short = jbuffer.get(offset + index)
+actual inline operator fun Int16Buffer.set(index: Int, value: Short): Unit = run { jbuffer.put(offset + index, value) }
 
 actual class Int32Buffer(val mbuffer: MemBuffer, val jbuffer: IntBuffer)
 
 actual val Int32Buffer.mem: MemBuffer get() = mbuffer
 actual val Int32Buffer.offset: Int get() = (jbuffer as java.nio.Buffer).position()
 actual val Int32Buffer.size: Int get() = (jbuffer as java.nio.Buffer).limit() - offset
-actual operator fun Int32Buffer.get(index: Int): Int = jbuffer.get(offset + index)
-actual operator fun Int32Buffer.set(index: Int, value: Int): Unit = run { jbuffer.put(offset + index, value) }
+actual inline operator fun Int32Buffer.get(index: Int): Int = jbuffer.get(offset + index)
+actual inline operator fun Int32Buffer.set(index: Int, value: Int): Unit = run { jbuffer.put(offset + index, value) }
 
 actual class Float32Buffer(val mbuffer: MemBuffer, val jbuffer: FloatBuffer)
 
 actual val Float32Buffer.mem: MemBuffer get() = mbuffer
 actual val Float32Buffer.offset: Int get() = (jbuffer as java.nio.Buffer).position()
 actual val Float32Buffer.size: Int get() = (jbuffer as java.nio.Buffer).limit() - offset
-actual operator fun Float32Buffer.get(index: Int): Float = jbuffer.get(offset + index)
-actual operator fun Float32Buffer.set(index: Int, value: Float): Unit = run { jbuffer.put(offset + index, value) }
+actual inline operator fun Float32Buffer.get(index: Int): Float = jbuffer.get(offset + index)
+actual inline operator fun Float32Buffer.set(index: Int, value: Float): Unit = run { jbuffer.put(offset + index, value) }
 
 actual class Float64Buffer(val mbuffer: MemBuffer, val jbuffer: DoubleBuffer)
 
 actual val Float64Buffer.mem: MemBuffer get() = mbuffer
 actual val Float64Buffer.offset: Int get() = (jbuffer as java.nio.Buffer).position()
 actual val Float64Buffer.size: Int get() = (jbuffer as java.nio.Buffer).limit() - offset
-actual operator fun Float64Buffer.get(index: Int): Double = jbuffer.get(offset + index)
-actual operator fun Float64Buffer.set(index: Int, value: Double): Unit = run { jbuffer.put(offset + index, value) }
+actual inline operator fun Float64Buffer.get(index: Int): Double = jbuffer.get(offset + index)
+actual inline operator fun Float64Buffer.set(index: Int, value: Double): Unit = run { jbuffer.put(offset + index, value) }
 
 inline operator fun ByteBuffer.set(index: Int, value: Byte) = this.put(index, value)
 inline operator fun ShortBuffer.set(index: Int, value: Short) = this.put(index, value)

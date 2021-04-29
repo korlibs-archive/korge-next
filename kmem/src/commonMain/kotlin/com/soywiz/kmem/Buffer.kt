@@ -48,18 +48,18 @@ expect inline fun Fast32Buffer.getI(index: Int): Int
 expect inline fun Fast32Buffer.setI(index: Int, value: Int)
 
 expect class DataBuffer
-expect fun MemBuffer.getData(): DataBuffer
 expect val DataBuffer.mem: MemBuffer
-expect fun DataBuffer.getByte(index: Int): Byte
-expect fun DataBuffer.setByte(index: Int, value: Byte): Unit
-expect fun DataBuffer.getShort(index: Int): Short
-expect fun DataBuffer.setShort(index: Int, value: Short): Unit
-expect fun DataBuffer.getInt(index: Int): Int
-expect fun DataBuffer.setInt(index: Int, value: Int): Unit
-expect fun DataBuffer.getFloat(index: Int): Float
-expect fun DataBuffer.setFloat(index: Int, value: Float): Unit
-expect fun DataBuffer.getDouble(index: Int): Double
-expect fun DataBuffer.setDouble(index: Int, value: Double): Unit
+expect inline fun MemBuffer.getData(): DataBuffer
+expect inline fun DataBuffer.getByte(index: Int): Byte
+expect inline fun DataBuffer.setByte(index: Int, value: Byte): Unit
+expect inline fun DataBuffer.getShort(index: Int): Short
+expect inline fun DataBuffer.setShort(index: Int, value: Short): Unit
+expect inline fun DataBuffer.getInt(index: Int): Int
+expect inline fun DataBuffer.setInt(index: Int, value: Int): Unit
+expect inline fun DataBuffer.getFloat(index: Int): Float
+expect inline fun DataBuffer.setFloat(index: Int, value: Float): Unit
+expect inline fun DataBuffer.getDouble(index: Int): Double
+expect inline fun DataBuffer.setDouble(index: Int, value: Double): Unit
 
 // @TODO: imul is super slow on Kotlin/JS. Why is that? Can't use Math.imul?
 //function imul(a_local, b_local) {
@@ -82,8 +82,8 @@ inline fun Int8BufferAlloc(size: Int): Int8Buffer = MemBufferAlloc(size * 1).sli
 expect val Int8Buffer.mem: MemBuffer
 expect val Int8Buffer.offset: Int
 expect val Int8Buffer.size: Int
-expect operator fun Int8Buffer.get(index: Int): Byte
-expect operator fun Int8Buffer.set(index: Int, value: Byte): Unit
+expect inline operator fun Int8Buffer.get(index: Int): Byte
+expect inline operator fun Int8Buffer.set(index: Int, value: Byte): Unit
 fun Int8Buffer.subarray(begin: Int, end: Int = this.size): Int8Buffer = this.mem.sliceInt8Buffer(this.offset + begin, end - begin)
 
 expect class Int16Buffer
@@ -91,8 +91,8 @@ inline fun Int16BufferAlloc(size: Int): Int16Buffer = MemBufferAlloc(size * 2).s
 expect val Int16Buffer.mem: MemBuffer
 expect val Int16Buffer.offset: Int
 expect val Int16Buffer.size: Int
-expect operator fun Int16Buffer.get(index: Int): Short
-expect operator fun Int16Buffer.set(index: Int, value: Short): Unit
+expect inline operator fun Int16Buffer.get(index: Int): Short
+expect inline operator fun Int16Buffer.set(index: Int, value: Short): Unit
 fun Int16Buffer.subarray(begin: Int, end: Int = this.size): Int16Buffer = this.mem.sliceInt16Buffer(this.offset + begin, end - begin)
 
 expect class Int32Buffer
@@ -100,8 +100,8 @@ inline fun Int32BufferAlloc(size: Int): Int32Buffer = MemBufferAlloc(size * 4).s
 expect val Int32Buffer.mem: MemBuffer
 expect val Int32Buffer.offset: Int
 expect val Int32Buffer.size: Int
-expect operator fun Int32Buffer.get(index: Int): Int
-expect operator fun Int32Buffer.set(index: Int, value: Int): Unit
+expect inline operator fun Int32Buffer.get(index: Int): Int
+expect inline operator fun Int32Buffer.set(index: Int, value: Int): Unit
 fun Int32Buffer.subarray(begin: Int, end: Int = this.size): Int32Buffer = this.mem.sliceInt32Buffer(this.offset + begin, end - begin)
 
 expect class Float32Buffer
@@ -109,8 +109,8 @@ inline fun Float32BufferAlloc(size: Int): Float32Buffer = MemBufferAlloc(size * 
 expect val Float32Buffer.mem: MemBuffer
 expect val Float32Buffer.offset: Int
 expect val Float32Buffer.size: Int
-expect operator fun Float32Buffer.get(index: Int): Float
-expect operator fun Float32Buffer.set(index: Int, value: Float): Unit
+expect inline operator fun Float32Buffer.get(index: Int): Float
+expect inline operator fun Float32Buffer.set(index: Int, value: Float): Unit
 fun Float32Buffer.subarray(begin: Int, end: Int = this.size): Float32Buffer = this.mem.sliceFloat32Buffer(this.offset + begin, end - begin)
 
 expect class Float64Buffer
@@ -118,8 +118,8 @@ inline fun Float64BufferAlloc(size: Int): Float64Buffer = MemBufferAlloc(size * 
 expect val Float64Buffer.mem: MemBuffer
 expect val Float64Buffer.offset: Int
 expect val Float64Buffer.size: Int
-expect operator fun Float64Buffer.get(index: Int): Double
-expect operator fun Float64Buffer.set(index: Int, value: Double): Unit
+expect inline operator fun Float64Buffer.get(index: Int): Double
+expect inline operator fun Float64Buffer.set(index: Int, value: Double): Unit
 fun Float64Buffer.subarray(begin: Int, end: Int = this.size): Float64Buffer = this.mem.sliceFloat64Buffer(this.offset + begin, end - begin)
 
 /** Copies [size] elements of [src] starting at [srcPos] into [dst] at [dstPos]  */
