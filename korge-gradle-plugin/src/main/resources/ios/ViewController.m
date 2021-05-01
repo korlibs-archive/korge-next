@@ -93,18 +93,21 @@
 
 -(void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     self.touches = [[NSArray alloc] init];
+    [self.gameWindow2.gameWindow dispatchTouchEventModeIos];
     [self.gameWindow2.gameWindow dispatchTouchEventStartStart];
     [self addTouches:touches];
     [self.gameWindow2.gameWindow dispatchTouchEventEnd];
 }
 
 -(void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    [self.gameWindow2.gameWindow dispatchTouchEventModeIos];
     [self.gameWindow2.gameWindow dispatchTouchEventStartMove];
     [self addTouches:touches];
     [self.gameWindow2.gameWindow dispatchTouchEventEnd];
 }
 
 -(void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    [self.gameWindow2.gameWindow dispatchTouchEventModeIos];
     [self.gameWindow2.gameWindow dispatchTouchEventStartEnd];
     [self addTouches:touches];
     [self.gameWindow2.gameWindow dispatchTouchEventEnd];

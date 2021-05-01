@@ -510,6 +510,8 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, Closeable, Cor
         }
     }
 
+    fun dispatchTouchEventModeIos() { touchBuilder.mode = TouchBuilder.Mode.IOS }
+
     fun dispatchTouchEventStartStart() = dispatchTouchEventStart(TouchEvent.Type.START)
     fun dispatchTouchEventStartMove() = dispatchTouchEventStart(TouchEvent.Type.MOVE)
     fun dispatchTouchEventStartEnd() = dispatchTouchEventStart(TouchEvent.Type.END)
@@ -519,7 +521,7 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, Closeable, Cor
     fun dispatchTouchEventAddTouchKeep(id: Int, x: Double, y: Double) = touchEvent.touch(id, x, y, Touch.Status.KEEP)
     fun dispatchTouchEventAddTouchRemove(id: Int, x: Double, y: Double) = touchEvent.touch(id, x, y, Touch.Status.REMOVE)
     fun dispatchTouchEventEnd() {
-        touchEvent.endFrame()
+        touchBuilder.endFrame()
         dispatch(touchEvent)
     }
 
