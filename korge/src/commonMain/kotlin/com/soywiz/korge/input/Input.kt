@@ -41,10 +41,35 @@ class Input : Extra by Extra.Mixin() {
         touch.copyFrom(touchEvent)
     }
 
+
+    /** Configures the delay time to consider a finger up event a tap */
+    var tapTime = 300.milliseconds
+    /** Configures the distance from down to up to consider a finger up event a tap */
+    var tapDistance = 64.0 // @TODO: We should take into account pointSize/DPI
+
+    /** Configures the delay time to consider a mouse up event a click */
+    var clickTime = 100.milliseconds
+    /** Configures the distance from down to up to consider a finger up event a tap */
+    var clickDistance = 20.0 // @TODO: We should take into account pointSize/DPI
+
     val mouse = Point(-1000.0, -1000.0)
+    val mouseDown = Point(-1000.0, -1000.0)
+
+    /** BitField with pressed mouse buttons */
     var mouseButtons = 0
+
+    /** Determine if a mouse button is pressed */
+    fun mouseButtonPressed(button: MouseButton) = mouseButtons.extract(button.id)
+
+    operator fun get(button: MouseButton) = mouseButtonPressed(button)
+
     var mouseInside = true
     var clicked = false
+
+    @KorgeInternal
+    fun toggleButton(button: MouseButton, down: Boolean) {
+        mouseButtons = mouseButtons.setBits(button.id, down)
+    }
 
     val keys = InputKeys()
 

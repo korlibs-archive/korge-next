@@ -211,6 +211,9 @@ data class TouchEvent(
         }
     }
 
+    val isStart get() = type == Type.START
+    val isEnd get() = type == Type.END
+
     enum class Type { START, END, MOVE, HOVER, UNKNOWN }
 }
 
