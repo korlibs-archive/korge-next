@@ -1,6 +1,7 @@
 package com.soywiz.korev
 
 import com.soywiz.kds.*
+import com.soywiz.kds.iterators.*
 import com.soywiz.klock.*
 import com.soywiz.korio.file.*
 import com.soywiz.korio.lang.*
@@ -70,9 +71,12 @@ data class Touch(
 	var id: Int = -1,
     var x: Double = 0.0,
     var y: Double = 0.0,
+    var force: Double = 1.0,
     var status: Status = Status.KEEP,
+    var kind: Kind = Kind.FINGER,
 ) : Extra by Extra.Mixin() {
     enum class Status { ADD, KEEP, REMOVE }
+    enum class Kind { FINGER, MOUSE, STYLUS, ERASER, UNKNOWN }
 
 	companion object {
 		val dummy = Touch(-1)
@@ -82,11 +86,42 @@ data class Touch(
         this.id = other.id
         this.x = other.x
         this.y = other.y
+        this.force = other.force
         this.status = other.status
+        this.kind = other.kind
     }
 
     override fun hashCode(): Int = index
     override fun equals(other: Any?): Boolean = other is Touch && this.index == other.index
+}
+
+class TouchBuilder {
+    val old = TouchEvent()
+    val new = TouchEvent()
+
+    inline fun frame(type: TouchEvent.Type, scaleCoords: Boolean = false, block: TouchBuilder.() -> Unit): TouchEvent {
+        new.scaleCoords = scaleCoords
+        new.startFrame(type)
+        try {
+            block()
+        } finally {
+            old.touches.fastForEach {
+                if (new.getTouchById(it.id) == null) {
+                    if (it.status != Touch.Status.REMOVE) {
+                        it.status = Touch.Status.REMOVE
+                        new.touch(it)
+                    }
+                }
+            }
+            old.copyFrom(new)
+        }
+        return new
+    }
+
+    fun touch(id: Int, x: Double, y: Double, force: Double = 1.0, kind: Touch.Kind = Touch.Kind.FINGER) {
+        val oldTouch = old.getTouchById(id)
+        new.touch(id, x, y, if (oldTouch == null) Touch.Status.ADD else Touch.Status.KEEP, force, kind)
+    }
 }
 
 data class TouchEvent(
@@ -100,26 +135,40 @@ data class TouchEvent(
     }
     private val bufferTouches = Array(MAX_TOUCHES) { Touch(it) }
     private val _touches = FastArrayList<Touch>()
+    private val _touchesById = FastIntMap<Touch>()
     val touches: List<Touch> get() = _touches
+    val size get() = touches.size
     var actionTouch: Touch? = null
+
+    fun getTouchById(id: Int) = _touchesById[id]
+
+    override fun toString(): String = "TouchEvent[$type][$size](${touches.joinToString(", ") { it.toString() }})"
 
     fun startFrame(type: Type) {
         this.type = type
         this.currentTime = DateTime.now()
         actionTouch = null
         _touches.clear()
+        _touchesById.clear()
     }
 
-    fun touch(id: Int, x: Double, y: Double, status: Touch.Status = Touch.Status.KEEP) {
+    fun touch(id: Int, x: Double, y: Double, status: Touch.Status = Touch.Status.KEEP, force: Double = 1.0, kind: Touch.Kind = Touch.Kind.FINGER) {
         val touch = bufferTouches[_touches.size]
         touch.id = id
         touch.x = x
         touch.y = y
         touch.status = status
+        touch.force = force
+        touch.kind = kind
         _touches.add(touch)
+        _touchesById[touch.id] = touch
         if (status != Touch.Status.KEEP) {
             actionTouch = touch
         }
+    }
+
+    fun touch(touch: Touch) {
+        touch(touch.id, touch.x, touch.y, touch.status, touch.force, touch.kind)
     }
 
     fun copyFrom(other: TouchEvent) {
@@ -129,6 +178,13 @@ data class TouchEvent(
         this.scaleCoords = other.scaleCoords
         for (n in 0 until MAX_TOUCHES) {
             bufferTouches[n].copyFrom(other.bufferTouches[n])
+        }
+        this._touches.clear()
+        this._touchesById.clear()
+        for (n in 0 until other.size) {
+            val touch = bufferTouches[n]
+            this._touches.add(touch)
+            this._touchesById[touch.id] = touch
         }
     }
 
