@@ -77,7 +77,7 @@ data class Touch(
     enum class Status { ADD, KEEP, REMOVE }
     enum class Kind { FINGER, MOUSE, STYLUS, ERASER, UNKNOWN }
 
-    val active: Boolean get() = status != Status.REMOVE
+    val isActive: Boolean get() = status != Status.REMOVE
 
 	companion object {
 		val dummy = Touch(-1)
@@ -108,7 +108,7 @@ class TouchBuilder {
     fun endFrame() {
         old.touches.fastForEach { oldTouch ->
             if (new.getTouchById(oldTouch.id) == null) {
-                if (oldTouch.active) {
+                if (oldTouch.isActive) {
                     oldTouch.status = Touch.Status.REMOVE
                     new.touch(oldTouch)
                 }
@@ -167,7 +167,7 @@ data class TouchEvent(
     fun endFrame() {
         _activeTouches.clear()
         touches.fastForEach {
-            if (it.active) _activeTouches.add(it)
+            if (it.isActive) _activeTouches.add(it)
         }
     }
 
@@ -199,10 +199,14 @@ data class TouchEvent(
             bufferTouches[n].copyFrom(other.bufferTouches[n])
         }
         this._touches.clear()
+        this._activeTouches.clear()
         this._touchesById.clear()
         for (n in 0 until other.numTouches) {
             val touch = bufferTouches[n]
             this._touches.add(touch)
+            if (touch.isActive) {
+                this._activeTouches.add(touch)
+            }
             this._touchesById[touch.id] = touch
         }
     }
