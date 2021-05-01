@@ -197,7 +197,7 @@ class BrowserGameWindow : GameWindow() {
 
     // JS TouchEvent contains only active touches (ie. touchend just return the list of non ended-touches)
     private fun touchEvent(e: TouchEvent, type: com.soywiz.korev.TouchEvent.Type) {
-        dispatch(touchBuilder.frame(type) {
+        dispatch(touchBuilder.frame(TouchBuilder.Mode.JS, type) {
             for (n in 0 until e.touches.length) {
                 val touch = e.touches.item(n) ?: continue
                 val touchId = touch.identifier

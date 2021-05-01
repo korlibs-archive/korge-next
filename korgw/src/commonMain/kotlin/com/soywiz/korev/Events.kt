@@ -99,9 +99,15 @@ data class Touch(
     override fun equals(other: Any?): Boolean = other is Touch && this.index == other.index
 }
 
+// On JS: each event contains the active down touches (ontouchend simply don't include the touch that has been removed)
+// On Android: ...
+// On iOS: each event contains partial touches with things that have changed for that specific event
 class TouchBuilder {
     val old = TouchEvent()
     val new = TouchEvent()
+    var mode = Mode.JS
+
+    enum class Mode { JS, Android, IOS }
 
     fun startFrame(type: TouchEvent.Type, scaleCoords: Boolean = false) {
         new.scaleCoords = scaleCoords
@@ -121,7 +127,8 @@ class TouchBuilder {
         old.copyFrom(new)
     }
 
-    inline fun frame(type: TouchEvent.Type, scaleCoords: Boolean = false, block: TouchBuilder.() -> Unit): TouchEvent {
+    inline fun frame(mode: Mode, type: TouchEvent.Type, scaleCoords: Boolean = false, block: TouchBuilder.() -> Unit): TouchEvent {
+        this.mode = mode
         startFrame(type, scaleCoords)
         try {
             block()

@@ -96,7 +96,7 @@ fun Project.configureNativeIos() {
     val xcodeGenFolder = korlibsFolder["XcodeGen"]
     val xcodeGenLocalExecutable = File("/usr/local/bin/xcodegen")
     val xcodeGenExecutable = xcodeGenFolder[".build/release/xcodegen"]
-    val xcodeGenGitTag = "2.18.0"
+    val xcodeGenGitTag = "2.21.0"
 
     tasks.create("installXcodeGen") { task ->
 		task.apply {

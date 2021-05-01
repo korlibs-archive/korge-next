@@ -24,6 +24,7 @@
     self.touches = [[NSArray alloc] init];
     self.gameWindow2 = [GameMainMyIosGameWindow2 myIosGameWindow2];
     self.rootGameMain = [GameMainRootGameMain rootGameMain];
+    self.view.multipleTouchEnabled = YES;
 
     self.context = [[EAGLContext alloc] initWithAPI:(kEAGLRenderingAPIOpenGLES2)];
     if (self.context == nil) {
