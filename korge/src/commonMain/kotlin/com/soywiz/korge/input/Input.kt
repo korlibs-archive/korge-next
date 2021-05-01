@@ -41,14 +41,8 @@ class Input : Extra by Extra.Mixin() {
         touch.copyFrom(touchEvent)
     }
 
-
-    /** Configures the delay time to consider a finger up event a tap */
-    var tapTime = 300.milliseconds
-    /** Configures the distance from down to up to consider a finger up event a tap */
-    var tapDistance = 64.0 // @TODO: We should take into account pointSize/DPI
-
     /** Configures the delay time to consider a mouse up event a click */
-    var clickTime = 100.milliseconds
+    var clickTime = 400.milliseconds
     /** Configures the distance from down to up to consider a finger up event a tap */
     var clickDistance = 20.0 // @TODO: We should take into account pointSize/DPI
 

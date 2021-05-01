@@ -277,16 +277,6 @@ object Korge {
             input.mouse.setTo(x, y)
             views.mouseUpdated()
             upPos.copyFrom(views.input.mouse)
-            // @TODO: Maybe we should implement click on the MouseEvents (we have to check if Macos trackpad taps are detected)
-            if (type == "onTouchEnd") {
-                upTime = DateTime.now()
-                val elapsedTime = upTime - downTime
-                val distance = input.mouseDown.distanceTo(input.mouse)
-                if ((elapsedTime <= input.tapTime) && (distance <= input.tapDistance)) {
-                    //Console.log("mouseClick: $name")
-                    views.dispatch(MouseEvent(MouseEvent.Type.CLICK))
-                }
-            }
         }
 
         fun mouseMove(type: String, x: Double, y: Double, inside: Boolean) {
@@ -350,7 +340,7 @@ object Korge {
             }
         }
 
-
+        val touchMouseEvent = MouseEvent()
         eventDispatcher.addEventListener<TouchEvent> { e ->
             logger.trace { "eventDispatcher.addEventListener<TouchEvent>:$e" }
 
@@ -365,19 +355,29 @@ object Korge {
                 val x = getRealX(t.x, e.scaleCoords)
                 val y = getRealY(t.y, e.scaleCoords)
                 val button = MouseButton.LEFT
+                touchMouseEvent.id = 0
+                touchMouseEvent.button = button
+                touchMouseEvent.buttons = if (end) 0 else 1 shl button.id
+                touchMouseEvent.x = x.toInt()
+                touchMouseEvent.y = y.toInt()
+                touchMouseEvent.scaleCoords = false
                 //updateTouch(t.id, x, y, start, end)
                 when {
                     start -> {
                         mouseDown("onTouchStart", x, y, button)
+                        touchMouseEvent.type = MouseEvent.Type.DOWN
                     }
                     end -> {
                         mouseUp("onTouchEnd", x, y, button)
                         moveMouseOutsideInNextFrame = true
+                        touchMouseEvent.type = MouseEvent.Type.UP
                     }
                     else -> {
                         mouseMove("onTouchMove", x, y, inside = true)
+                        touchMouseEvent.type = MouseEvent.Type.DRAG
                     }
                 }
+                views.dispatch(touchMouseEvent)
             }
 
         }

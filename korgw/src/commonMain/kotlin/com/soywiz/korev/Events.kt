@@ -150,6 +150,7 @@ data class TouchEvent(
     val touches: List<Touch> get() = _touches
     val activeTouches: List<Touch> get() = _activeTouches
     val numTouches get() = touches.size
+    val numActiveTouches get() = activeTouches.size
     var actionTouch: Touch? = null
 
     fun getTouchById(id: Int) = _touchesById[id]
