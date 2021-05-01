@@ -368,24 +368,42 @@ object Korge {
             }
         }
 
+        val touchMouseEvent = MouseEvent()
         eventDispatcher.addEventListener<TouchEvent> { e ->
             logger.trace { "eventDispatcher.addEventListener<TouchEvent>:$e" }
-            val touch = e.touches.first()
-            val ix = getRealX(touch.x, e.scaleCoords).toInt()
-            val iy = getRealX(touch.y, e.scaleCoords).toInt()
+            val firstTouch = e.touches.first()
+            val ix = getRealX(firstTouch.x, e.scaleCoords).toInt()
+            val iy = getRealX(firstTouch.y, e.scaleCoords).toInt()
+
+            input.updateTouches(e)
+
+            touchMouseEvent.id = 0
+            touchMouseEvent.x = ix
+            touchMouseEvent.y = iy
+            touchMouseEvent.button = MouseButton.LEFT
+            touchMouseEvent.buttons = 1
+
             when (e.type) {
                 TouchEvent.Type.START -> {
                     touch(e, start = true, end = false)
-                    views.dispatch(MouseEvent(MouseEvent.Type.DOWN, 0, ix, iy, MouseButton.LEFT, 1))
+                    touchMouseEvent.type = MouseEvent.Type.DOWN
                 }
                 TouchEvent.Type.MOVE -> {
                     touch(e, start = false, end = false)
-                    views.dispatch(MouseEvent(MouseEvent.Type.DRAG, 0, ix, iy, MouseButton.LEFT, 1))
+                    touchMouseEvent.type = MouseEvent.Type.DRAG
                 }
                 TouchEvent.Type.END -> {
                     touch(e, start = false, end = true)
-                    views.dispatch(MouseEvent(MouseEvent.Type.UP, 0, ix, iy, MouseButton.LEFT, 0))
+                    touchMouseEvent.type = MouseEvent.Type.UP
+                    touchMouseEvent.buttons = 0
                     //println("DISPATCH MouseEvent(MouseEvent.Type.UP)")
+                }
+            }
+            when (e.type) {
+                TouchEvent.Type.START, TouchEvent.Type.MOVE, TouchEvent.Type.END -> {
+                    if (e.numTouches == 1) {
+                        views.dispatch(touchMouseEvent)
+                    }
                 }
             }
             views.dispatch(e)

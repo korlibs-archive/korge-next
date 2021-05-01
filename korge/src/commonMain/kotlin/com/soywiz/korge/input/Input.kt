@@ -19,11 +19,16 @@ class Input : Extra by Extra.Mixin() {
     }
 
     val dummyTouch = Touch.dummy
-    val touches = (0 until 16).map { Touch(it) }.toTypedArray()
-    val activeTouches = arrayListOf<Touch>()
+
+    /** Last [TouchEvent] emitted */
+    val touch: TouchEvent = TouchEvent()
+    /** All the available touches including the ones that just ended */
+    val touches: List<Touch> get() = touch.touches
+    /** All the touches that are active (recently created or updated) */
+    val activeTouches: List<Touch> get() = touch.activeTouches
 
     @KorgeInternal
-    var _isTouchDeviceGen = { AGOpenglFactory.isTouchDevice }
+    internal var _isTouchDeviceGen = { AGOpenglFactory.isTouchDevice }
 
     val isTouchDevice: Boolean get() = _isTouchDeviceGen()
 
@@ -32,12 +37,8 @@ class Input : Extra by Extra.Mixin() {
     fun getTouch(id: Int) = touches.firstOrNull { it.id == id } ?: dummyTouch
 
     @KorgeInternal
-    @Deprecated("")
-    fun updateTouches() {
-        activeTouches.clear()
-        touches.fastForEach { touch ->
-            //if (touch.active) activeTouches.add(touch)
-        }
+    internal fun updateTouches(touchEvent: TouchEvent) {
+        touch.copyFrom(touchEvent)
     }
 
     val mouse = Point(-1000.0, -1000.0)
