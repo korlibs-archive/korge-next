@@ -62,7 +62,7 @@ class Input : Extra by Extra.Mixin() {
 
     @KorgeInternal
     fun toggleButton(button: MouseButton, down: Boolean) {
-        mouseButtons = mouseButtons.setBits(button.id, down)
+        mouseButtons = mouseButtons.setBits(button.bits, down)
     }
 
     val keys = InputKeys()
