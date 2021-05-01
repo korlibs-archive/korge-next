@@ -22,7 +22,9 @@ data class MouseEvent(
     var isCtrlDown: Boolean = false,
     var isAltDown: Boolean = false,
     var isMetaDown: Boolean = false,
-    var scaleCoords: Boolean = true
+    var scaleCoords: Boolean = true,
+    /** Not direct user mouse input. Maybe event generated from touch events? */
+    var emulated: Boolean = false
 ) : Event() {
     var component: Any? = null
 
@@ -52,6 +54,7 @@ data class MouseEvent(
         this.isAltDown = other.isAltDown
         this.isMetaDown = other.isMetaDown
         this.scaleCoords = other.scaleCoords
+        this.emulated = other.emulated
     }
 
     var requestLock: () -> Unit = { }

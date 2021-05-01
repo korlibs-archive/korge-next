@@ -361,6 +361,7 @@ object Korge {
                 touchMouseEvent.x = x.toInt()
                 touchMouseEvent.y = y.toInt()
                 touchMouseEvent.scaleCoords = false
+                touchMouseEvent.emulated = true
                 //updateTouch(t.id, x, y, start, end)
                 when {
                     start -> {
