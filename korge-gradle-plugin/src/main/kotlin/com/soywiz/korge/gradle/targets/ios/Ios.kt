@@ -568,7 +568,11 @@ fun Project.configureNativeIos() {
 										}
 									}
 								}
-								line("dependencies:")
+                                if (korge.iosDevelopmentTeam != null) {
+                                    line("settings:")
+                                    line("  DEVELOPMENT_TEAM: ${korge.iosDevelopmentTeam}")
+                                }
+                                line("dependencies:")
                                 line("  - framework: ../../bin/ios$target/${debugSuffix.toLowerCase()}Framework/GameMain.framework")
 							}
 						}
