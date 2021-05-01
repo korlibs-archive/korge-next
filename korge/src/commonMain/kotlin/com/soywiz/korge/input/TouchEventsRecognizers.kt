@@ -9,7 +9,10 @@ enum class SwipeRecognizerDirection(val dx: Int, val dy: Int) {
     LEFT(-1, 0);
 }
 
-fun TouchEvents.swipeRecognizer(thresold: Double = 32.0, block: (direction: SwipeRecognizerDirection) -> Unit) {
+fun TouchEvents.swipeRecognizer(
+    thresold: Double = 32.0,
+    block: (direction: SwipeRecognizerDirection) -> Unit
+) {
     var completed = false
     endAll {
         if (it.infos.size == 1) {
@@ -52,7 +55,7 @@ data class ScaleRecognizerInfo(
 }
 
 fun TouchEvents.scaleRecognizer(
-    start: ScaleRecognizerInfo.(ratio: Double) -> Unit = {},
+    start: ScaleRecognizerInfo.() -> Unit = {},
     end: ScaleRecognizerInfo.(ratio: Double) -> Unit = {},
     block: ScaleRecognizerInfo.(ratio: Double) -> Unit
 ) {
@@ -66,7 +69,7 @@ fun TouchEvents.scaleRecognizer(
             info.start = Point.distance(i0.startGlobal, i1.startGlobal)
             info.current = Point.distance(i0.global, i1.global)
             if (info.started) {
-                start(info, info.ratio)
+                start(info)
             }
             block(info, info.ratio)
         } else {
@@ -80,28 +83,38 @@ fun TouchEvents.scaleRecognizer(
     }
 }
 
-class RotationRecognizerInfo {
-    var completed: Boolean = false
-    var start: Angle = 0.degrees
-    var current: Angle = 0.degrees
+data class RotationRecognizerInfo(
+    var started: Boolean = false,
+    var completed: Boolean = false,
+    var start: Angle = 0.degrees,
+    var current: Angle = 0.degrees,
+) {
     val delta get() = current - start
 }
 
-fun TouchEvents.rotationRecognizer(block: RotationRecognizerInfo.(delta: Angle) -> Unit) {
+fun TouchEvents.rotationRecognizer(
+    start: RotationRecognizerInfo.() -> Unit = {},
+    end: RotationRecognizerInfo.(delta: Angle) -> Unit = {},
+    block: RotationRecognizerInfo.(delta: Angle) -> Unit
+) {
     val info = RotationRecognizerInfo()
     updateAll {
         if (it.infos.size >= 2) {
             val i0 = it.infos[0]
             val i1 = it.infos[1]
-
+            info.started = info.completed
             info.completed = false
             info.start = Angle.between(i0.startGlobal, i1.startGlobal)
             info.current = Angle.between(i0.global, i1.global)
+            if (info.started) {
+                start(info)
+            }
             block(info, info.delta)
         } else {
             if (!info.completed) {
                 info.completed = true
                 block(info, info.delta)
+                end(info, info.delta)
             }
         }
     }
