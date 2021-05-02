@@ -21,7 +21,6 @@
 
     self.initialized = false;
     self.reshape = true;
-    self.touches = [[NSArray alloc] init];
     self.gameWindow2 = [GameMainMyIosGameWindow2 myIosGameWindow2];
     self.rootGameMain = [GameMainRootGameMain rootGameMain];
     self.view.multipleTouchEnabled = YES;
@@ -89,45 +88,73 @@
 }
 
 -(void) engineInitialize {
+    if (self.touches == nil) self.touches = [[NSMutableArray alloc] init];
+    if (self.freeIds == nil) self.freeIds = [[NSMutableArray alloc] init];
+    if (self.touchesIds == nil) self.touchesIds = [[NSMutableArray alloc] init];
+    //self.lastTouchId = 0;
 }
 
 -(void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    self.touches = [[NSArray alloc] init];
     [self.gameWindow2.gameWindow dispatchTouchEventModeIos];
     [self.gameWindow2.gameWindow dispatchTouchEventStartStart];
-    [self addTouches:touches];
+    //printf("moved.");
+    [self addTouches:touches type: 0];
     [self.gameWindow2.gameWindow dispatchTouchEventEnd];
 }
 
 -(void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     [self.gameWindow2.gameWindow dispatchTouchEventModeIos];
     [self.gameWindow2.gameWindow dispatchTouchEventStartMove];
-    [self addTouches:touches];
+    //printf("moved.");
+    [self addTouches:touches type: 1];
     [self.gameWindow2.gameWindow dispatchTouchEventEnd];
 }
 
 -(void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     [self.gameWindow2.gameWindow dispatchTouchEventModeIos];
     [self.gameWindow2.gameWindow dispatchTouchEventStartEnd];
-    [self addTouches:touches];
+    //printf("ended.");
+    [self addTouches:touches type: 2];
     [self.gameWindow2.gameWindow dispatchTouchEventEnd];
 }
 
--(void)addTouches:(NSSet<UITouch *> *)touches {
+-(void)initOnce {
+
+}
+
+-(void)addTouches:(NSSet<UITouch *> *)touches type:(int)type {
+    [self initOnce];
+    //printf("addTouches[%d]\n", touches.count);
     for (UITouch* touch in touches) {
         CGPoint point = [touch locationInView:self.view];
-        int index = -1;
-        for (int n = 0; n < self.touches.count; n++) {
-            if ([self.touches objectAtIndex:n] == touch) {
-                index = n;
-                break;
+
+        NSUInteger index = [self.touches indexOfObject: touch];
+
+        if (index == NSNotFound) {
+            index = self.touches.count;
+            [self.touches addObject: touch];
+
+            int uid = 0;
+
+            if (self.freeIds.count > 0) {
+                uid = [self.freeIds lastObject].intValue;
+                [self.freeIds removeLastObject];
+            } else {
+                uid = self.lastTouchId++;
             }
+
+            [self.touchesIds addObject: [[NSNumber alloc] initWithInt: uid]];
         }
-        if (index == -1) {
-            index = (int)self.touches.count;
-            self.touches = [self.touches arrayByAddingObject:touch];
+
+        NSNumber *num = [self.touchesIds objectAtIndex: index];
+
+        //printf(" - %d: %d, %d\n", (int)num.intValue, (int)point.x, (int)point.y);
+
+        [self.gameWindow2.gameWindow dispatchTouchEventAddTouchId:num.intValue x:point.x* self.view.contentScaleFactor y:point.y* self.view.contentScaleFactor];
+
+        if (type == 2) {
+            [self.freeIds insertObject: num atIndex: 0];
         }
-        [self.gameWindow2.gameWindow dispatchTouchEventAddTouchId:index x:point.x* self.view.contentScaleFactor y:point.y* self.view.contentScaleFactor];
     }
 }
 
