@@ -203,7 +203,6 @@ data class TouchEvent(
     val activeTouches: List<Touch> get() = _activeTouches
     val numTouches get() = touches.size
     val numActiveTouches get() = activeTouches.size
-    var actionTouch: Touch? = null
 
     fun getTouchById(id: Int) = _touchesById[id]
 
@@ -212,7 +211,6 @@ data class TouchEvent(
     fun startFrame(type: Type) {
         this.type = type
         this.currentTime = DateTime.now()
-        actionTouch = null
         _touches.clear()
         _touchesById.clear()
     }
@@ -220,9 +218,6 @@ data class TouchEvent(
     fun endFrame() {
         _activeTouches.clear()
         touches.fastForEach {
-            if (it.status != Touch.Status.KEEP) {
-                actionTouch = it
-            }
             if (it.isActive) _activeTouches.add(it)
         }
     }
