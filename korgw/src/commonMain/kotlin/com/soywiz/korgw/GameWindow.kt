@@ -510,20 +510,13 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, Closeable, Cor
         }
     }
 
+    // iOS tools
     fun dispatchTouchEventModeIos() { touchBuilder.mode = TouchBuilder.Mode.IOS }
-
-    fun dispatchTouchEventStartStart() = dispatchTouchEventStart(TouchEvent.Type.START)
-    fun dispatchTouchEventStartMove() = dispatchTouchEventStart(TouchEvent.Type.MOVE)
-    fun dispatchTouchEventStartEnd() = dispatchTouchEventStart(TouchEvent.Type.END)
-    fun dispatchTouchEventStart(type: TouchEvent.Type) = touchBuilder.startFrame(type)
-    fun dispatchTouchEventAddTouch(id: Int, x: Double, y: Double) = touchEvent.touch(id, x, y)
-    fun dispatchTouchEventAddTouchAdd(id: Int, x: Double, y: Double) = touchEvent.touch(id, x, y, Touch.Status.ADD)
-    fun dispatchTouchEventAddTouchKeep(id: Int, x: Double, y: Double) = touchEvent.touch(id, x, y, Touch.Status.KEEP)
-    fun dispatchTouchEventAddTouchRemove(id: Int, x: Double, y: Double) = touchEvent.touch(id, x, y, Touch.Status.REMOVE)
-    fun dispatchTouchEventEnd() {
-        touchBuilder.endFrame()
-        dispatch(touchEvent)
-    }
+    fun dispatchTouchEventStartStart() = touchBuilder.startFrame(TouchEvent.Type.START)
+    fun dispatchTouchEventStartMove() = touchBuilder.startFrame(TouchEvent.Type.MOVE)
+    fun dispatchTouchEventStartEnd() = touchBuilder.startFrame(TouchEvent.Type.END)
+    fun dispatchTouchEventAddTouch(id: Int, x: Double, y: Double) = touchBuilder.touch(id, x, y)
+    fun dispatchTouchEventEnd() = dispatch(touchBuilder.endFrame())
 
     // @TODO: Is this used?
     fun entry(callback: suspend () -> Unit) {

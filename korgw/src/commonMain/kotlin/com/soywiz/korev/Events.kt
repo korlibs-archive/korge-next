@@ -131,7 +131,7 @@ class TouchBuilder {
         }
     }
 
-    fun endFrame() {
+    fun endFrame(): TouchEvent {
         when (mode) {
             Mode.JS -> {
                 old.touches.fastForEach { oldTouch ->
@@ -149,6 +149,7 @@ class TouchBuilder {
         }
         new.endFrame()
         old.copyFrom(new)
+        return new
     }
 
     inline fun frame(mode: Mode, type: TouchEvent.Type, scaleCoords: Boolean = false, block: TouchBuilder.() -> Unit): TouchEvent {
