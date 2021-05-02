@@ -39,7 +39,8 @@ open class BaseImage(
     var bitmap: BmpSlice
         get() = baseBitmap
         set(value) {
-            bitmapSrc = value
+            setBitmapSource = true
+            baseBitmap = value
         }
 
     var bitmapSrc: Resourceable<out BmpSlice> = bitmap
@@ -51,9 +52,10 @@ open class BaseImage(
 
     fun trySetSource() {
         if (setBitmapSource) return
-        bitmapSrc.getOrNull()?.let {
+        val source = bitmapSrc.getOrNull()
+        if (source != null) {
             setBitmapSource = true
-            this.baseBitmap = it
+            this.baseBitmap = source
         }
     }
 
@@ -68,6 +70,8 @@ open class BaseImage(
 
     override val bwidth: Double get() = baseBitmap.width.toDouble()
     override val bheight: Double get() = baseBitmap.height.toDouble()
+    override val anchorDispX get() = (anchorX * baseBitmap.frameWidth.toDouble() - baseBitmap.frameOffsetX.toDouble())
+    override val anchorDispY get() = (anchorY * baseBitmap.frameHeight.toDouble() - baseBitmap.frameOffsetY.toDouble())
 
     override fun createInstance(): View = BaseImage(bitmap, anchorX, anchorY, hitShape, smoothing)
 

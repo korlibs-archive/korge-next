@@ -31,7 +31,7 @@ actual val applicationVfs: VfsFile by lazy { localVfs(absoluteCwd) }
 actual val applicationDataVfs: VfsFile by lazy { localVfs(absoluteCwd) }
 actual val cacheVfs: VfsFile by lazy { MemoryVfs() }
 actual val externalStorageVfs: VfsFile by lazy { localVfs(absoluteCwd) }
-actual val userHomeVfs: VfsFile by lazy { localVfs(absoluteCwd) }
+actual val userHomeVfs: VfsFile by lazy { localVfs(System.getProperty("user.home")) }
 actual val tempVfs: VfsFile by lazy { localVfs(tmpdir) }
 
 actual fun localVfs(path: String): VfsFile = LocalVfsJvm()[path]
@@ -43,6 +43,7 @@ fun localVfs(base: File): VfsFile = localVfs(base.absolutePath)
 fun jailedLocalVfs(base: File): VfsFile = localVfs(base.absolutePath).jail()
 suspend fun File.open(mode: VfsOpenMode) = localVfs(this).open(mode)
 fun File.toVfs() = localVfs(this)
+fun File.toJailedVfs() = jailedLocalVfs(this.parentFile)[this.name]
 fun UrlVfs(url: URL): VfsFile = UrlVfs(url.toString())
 operator fun File.get(path: String) = File(this, path)
 

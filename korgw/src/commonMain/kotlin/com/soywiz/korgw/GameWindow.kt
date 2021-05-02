@@ -35,6 +35,10 @@ interface DialogInterface {
         unsupported()
 }
 
+suspend fun DialogInterface.alertError(e: Throwable) {
+    alert(e.stackTraceToString().lines().take(16).joinToString("\n"))
+}
+
 open class GameWindowCoroutineDispatcherSetNow : GameWindowCoroutineDispatcher() {
     var currentTime: TimeSpan = PerformanceCounter.reference
     override fun now() = currentTime
@@ -103,18 +107,28 @@ open class GameWindowCoroutineDispatcher : CoroutineDispatcher(), Delay, Closeab
                     item.continuation?.resume(Unit)
                     item.callback?.run()
                 }
-                if ((now() - startTime) >= availableTime) break
+                if ((now() - startTime) >= availableTime) {
+                    informTooMuchCallbacksToHandleInThisFrame()
+                    break
+                }
             }
 
             while (tasks.isNotEmpty()) {
                 val task = tasks.dequeue()
                 task?.run()
-                if ((now() - startTime) >= availableTime) break
+                if ((now() - startTime) >= availableTime) {
+                    informTooMuchCallbacksToHandleInThisFrame()
+                    break
+                }
             }
         } catch (e: Throwable) {
             println("Error in GameWindowCoroutineDispatcher.executePending:")
             e.printStackTrace()
         }
+    }
+
+    open fun informTooMuchCallbacksToHandleInThisFrame() {
+        //Console.warn("Too much callbacks to handle in this frame")
     }
 
     override fun close() {
@@ -196,7 +210,8 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, Closeable, Cor
     private val reshapeEvent = ReshapeEvent()
     protected val keyEvent = KeyEvent()
     protected val mouseEvent = MouseEvent()
-    protected val touchEvent = TouchEvent()
+    protected val touchBuilder = TouchBuilder()
+    protected val touchEvent get() = touchBuilder.new
     protected val dropFileEvent = DropFileEvent()
     protected val gamePadUpdateEvent = GamePadUpdateEvent()
     protected val gamePadConnectionEvent = GamePadConnectionEvent()
@@ -212,7 +227,7 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, Closeable, Cor
         return 60
     }
 
-    private val fpsCached by IntTimedCache(100.milliseconds) { computeDisplayRefreshRate() }
+    private val fpsCached by IntTimedCache(1000.milliseconds) { computeDisplayRefreshRate() }
 
     open var fps: Int
         get() = fpsCached
@@ -277,7 +292,10 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, Closeable, Cor
     fun exit(): Unit = close()
 
     var running = true; protected set
-    override fun close() = run {
+    private var closing = false
+    override fun close() {
+        if (closing) return
+        closing = true
         running = false
         println("GameWindow.close")
         coroutineDispatcher.close()
@@ -400,7 +418,10 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, Closeable, Cor
     fun dispatchDisposeEvent() = dispatch(disposeEvent)
     fun dispatchRenderEvent() = dispatchRenderEvent(true)
     fun dispatchRenderEvent(update: Boolean) = dispatch(renderEvent.also { it.update = update })
-    fun dispatchDropfileEvent(type: DropFileEvent.Type, files: List<VfsFile>?) = dispatch(dropFileEvent.also { it.type = type }.also { it.files = files })
+    fun dispatchDropfileEvent(type: DropFileEvent.Type, files: List<VfsFile>?) = dispatch(dropFileEvent.also {
+        it.type = type
+        it.files = files
+    })
     fun dispatchFullscreenEvent(fullscreen: Boolean) = dispatch(fullScreenEvent.also { it.fullscreen = fullscreen })
 
     fun dispatchReshapeEvent(x: Int, y: Int, width: Int, height: Int) {
@@ -489,12 +510,13 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, Closeable, Cor
         }
     }
 
-    fun dispatchTouchEventStartStart() = dispatchTouchEventStart(TouchEvent.Type.START)
-    fun dispatchTouchEventStartMove() = dispatchTouchEventStart(TouchEvent.Type.MOVE)
-    fun dispatchTouchEventStartEnd() = dispatchTouchEventStart(TouchEvent.Type.END)
-    fun dispatchTouchEventStart(type: TouchEvent.Type) = touchEvent.startFrame(type)
-    fun dispatchTouchEventAddTouch(id: Int, x: Double, y: Double) = touchEvent.touch(id, x, y)
-    fun dispatchTouchEventEnd() = dispatch(touchEvent)
+    // iOS tools
+    fun dispatchTouchEventModeIos() { touchBuilder.mode = TouchBuilder.Mode.IOS }
+    fun dispatchTouchEventStartStart() = touchBuilder.startFrame(TouchEvent.Type.START)
+    fun dispatchTouchEventStartMove() = touchBuilder.startFrame(TouchEvent.Type.MOVE)
+    fun dispatchTouchEventStartEnd() = touchBuilder.startFrame(TouchEvent.Type.END)
+    fun dispatchTouchEventAddTouch(id: Int, x: Double, y: Double) = touchBuilder.touch(id, x, y)
+    fun dispatchTouchEventEnd() = dispatch(touchBuilder.endFrame())
 
     // @TODO: Is this used?
     fun entry(callback: suspend () -> Unit) {
@@ -647,4 +669,12 @@ fun GameWindow.configure(
     this.icon = icon
     if (fullscreen != null) this.fullscreen = fullscreen
     this.visible = true
+}
+
+fun GameWindow.onDragAndDropFileEvent(block: suspend (DropFileEvent) -> Unit) {
+    addEventListener<DropFileEvent> { event ->
+        launchImmediately(coroutineDispatcher) {
+            block(event)
+        }
+    }
 }

@@ -1,13 +1,18 @@
 package com.soywiz.klogger
 
-actual inline fun Console.log(vararg msg: Any?) {
-    System.out.println("#" + Thread.currentThread().id + ": " + msg.joinToString(", "))
-}
+actual object Console : BaseConsole() {
+    override fun log(kind: Kind, vararg msg: Any?) {
+        val stream = if (kind == Kind.ERROR) System.err else System.out
+        stream.println(logToString(kind, *msg))
+    }
 
-actual inline fun Console.error(vararg msg: Any?) {
-	Console.log("ERROR: ", *msg)
-}
-
-actual inline fun Console.warn(vararg msg: Any?) {
-    Console.log("WARNING: ", *msg)
+    override fun logToString(kind: Kind, vararg msg: Any?): String = buildString {
+        val color = kind.color
+        if (color != null) appendFgColor(color)
+        append('#')
+        append(Thread.currentThread().id)
+        append(": ")
+        msg.joinTo(this, ", ")
+        if (color != null) appendReset()
+    }
 }

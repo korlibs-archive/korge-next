@@ -4,14 +4,9 @@ pluginManagement {
 	repositories {
 		mavenCentral()
 		gradlePluginPortal()
-        // @TODO: https://github.com/korlibs/korte/issues/13
-        jcenter()
-        maven ("https://dl.bintray.com/kotlin/kotlin-dev")
-		maven ("https://dl.bintray.com/kotlin/kotlin-eap")
+        maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
 	}
 }
-
-enableFeaturePreview("GRADLE_METADATA")
 
 /*
 for (file in rootDir.listFiles()) {
@@ -35,9 +30,6 @@ include(":korma-shape")
 include(":luak")
 include(":krypto")
 include(":korte")
-//include(":korte-ktor")
-//include(":korte-korio")
-//include(":korte-vertx")
 include(":korio")
 include(":korim")
 include(":korau")
@@ -45,14 +37,9 @@ include(":korgw")
 include(":korvi")
 include(":korge")
 include(":kbox2d")
-//include(":korge-box2d")
-//include(":korge-admob")
-//include(":korge-services")
-//include(":korge-billing")
 include(":korge-dragonbones")
 include(":korge-spine")
 include(":korge-swf")
-//include(":korge-intellij-plugin")
 include(":korge-gradle-plugin")
 
 /*
@@ -63,15 +50,20 @@ for (sample in (File(rootProject.projectDir, "samples").takeIf { it.isDirectory 
 }
 */
 
-fileTree(File(rootProject.projectDir, "samples")) {
-    include("**"+"/build.gradle.kts")
-    include("**"+"/build.gradle")
-    exclude("**"+"/build/**")
-}.forEach {
-    val sample = moduleName(it.parentFile)
-    include(":$sample")
-    //project(":$sample").projectDir = File(relativePath(it.parent))
+val skipKorgeSamples = System.getenv("SKIP_KORGE_SAMPLES") == "true"
+
+if (!skipKorgeSamples) {
+    fileTree(File(rootProject.projectDir, "samples")) {
+        include("**" + "/build.gradle.kts")
+        include("**" + "/build.gradle")
+        exclude("**" + "/build/**")
+    }.forEach {
+        val sample = moduleName(it.parentFile)
+        include(":$sample")
+        //project(":$sample").projectDir = File(relativePath(it.parent))
+    }
 }
+
 fun moduleName(f: File): String {
     return if (f.parentFile == rootDir) {
         f.name

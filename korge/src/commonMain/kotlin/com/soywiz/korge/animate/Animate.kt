@@ -133,7 +133,7 @@ abstract class AnBaseShape(final override val library: AnLibrary, final override
         val view = this
         container.uiCollapsibleSection("AnBaseShape") {
             uiEditableValue(Pair(view::dxDouble, view::dyDouble), name = "dxy", clamp = false)
-            button("Center") {
+            button("Center").onClick {
                 view.dx = (-view.width / 2).toFloat()
                 view.dy = (-view.height / 2).toFloat()
             }
@@ -220,9 +220,9 @@ class AnTextField(override val library: AnLibrary, override val symbol: AnTextFi
 		this += textField
 	}
 
-	var format: Html.Format by textField::format.redirected()
-	override var text: String by textField::text.redirected()
-	override var html: String by textField::html.redirected()
+	var format: Html.Format by textField::format
+	override var text: String by textField::text
+	override var html: String by textField::html
 
 	override fun createInstance(): View = symbol.create(library) as View
 
@@ -601,8 +601,8 @@ class AnMovieClip(override val library: AnLibrary, override val symbol: AnSymbol
                 internalSet = { frameName -> this@AnMovieClip.playAndStop(frameName) },
                 internalGet = { timelineRunner.currentStateName ?: "__start" },
             ))))
-            button("start") { play() }
-            button("stop") { stop() }
+            button("start").onClick { play() }
+            button("stop").onClick { stop() }
         }
         super.buildDebugComponent(views, container)
     }

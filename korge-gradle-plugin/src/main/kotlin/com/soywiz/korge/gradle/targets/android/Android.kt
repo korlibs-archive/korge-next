@@ -91,12 +91,14 @@ fun Project.configureAndroidIndirect() {
 					ensureParents().writeTextIfChanged(Indenter {
 						line("enableFeaturePreview(\"GRADLE_METADATA\")")
                         line("rootProject.name = ${project.name.quoted}")
-						if (parentProjectName != null && resolvedModules.isNotEmpty()) this@configureAndroidIndirect.parent?.projectDir?.let {
+						if (parentProjectName != null && resolvedModules.isNotEmpty()) this@configureAndroidIndirect.parent?.projectDir?.let { projectFile ->
+                            val projectPath = projectFile.absolutePath
 							line("include(\":$parentProjectName\")")
-							line("project(\":$parentProjectName\").projectDir = file(\'$it\')")
+							line("project(\":$parentProjectName\").projectDir = file(${projectPath.quoted})")
 							resolvedModules.forEach { (name, path) ->
+                                val subProjectPath = projectFile[name].absolutePath
 								line("include(\"$path\")")
-								line("project(\"$path\").projectDir = file(\'$it/$name\')")
+								line("project(\"$path\").projectDir = file(${subProjectPath.quoted})")
 							}
 						}
 					})
@@ -111,7 +113,7 @@ fun Project.configureAndroidIndirect() {
 
                 File(outputFolder, "build.extra.gradle").conditionally(ifNotExists) {
                     ensureParents().writeTextIfChanged(Indenter {
-                        line("// When this file exists, it won't be oerriden")
+                        line("// When this file exists, it won't be overriden")
                     })
                 }
 
@@ -151,6 +153,14 @@ fun Project.configureAndroidIndirect() {
 						line("apply plugin: 'kotlin-android-extensions'")
 
 						line("android") {
+                            line("compileOptions") {
+                                line("sourceCompatibility JavaVersion.VERSION_1_8")
+                                line("targetCompatibility JavaVersion.VERSION_1_8")
+                            }
+                            line("adbOptions") {
+                                line("installOptions = [\"-r\"]")
+                                line("timeOutInMs = 30 * 1000")
+                            }
                             line("lintOptions") {
                                 line("// @TODO: ../../build.gradle: All com.android.support libraries must use the exact same version specification (mixing versions can lead to runtime crashes). Found versions 28.0.0, 26.1.0. Examples include com.android.support:animated-vector-drawable:28.0.0 and com.android.support:customtabs:26.1.0")
                                 line("disable(\"GradleCompatible\")")
@@ -244,8 +254,9 @@ fun Project.configureAndroidIndirect() {
 							}
 
 							for ((name, version) in resolvedOtherArtifacts) {
-								line("implementation '$name:$version'")
-							}
+                                if (name.startsWith("net.java.dev.jna")) continue
+                                line("implementation '$name:$version'")
+                            }
 
 							for (dependency in korge.plugins.pluginExts.getAndroidDependencies() + info.androidDependencies) {
 								line("implementation ${dependency.quoted}")

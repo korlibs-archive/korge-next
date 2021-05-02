@@ -41,6 +41,7 @@ suspend fun main() = Korge {
 				for (n in 1 until samples.channels) {
 					arraycopy(samples.data[0], 0, samples.data[n], 0, samples.data[0].size)
 				}
+                samples.scaleVolume(.05f)
 				//MemorySyncStream().apply { writeShortArrayLE(samples.data[0]) }.toByteArray().writeToFile("/tmp/data.raw")
 				//for (n in 0 until 44100) println(samples.data[0][n])
 				stream.add(samples)
@@ -397,7 +398,7 @@ fun audioOutCallback(channel: Int, buf: ShortArray, reqn: Int = buf.size, bufn: 
 			state.currentsampleIndex += state.currentsampleIncrement
 			if (state.currentsampleIndex >= SAMPLE_COUNT) state.currentsampleIndex -= SAMPLE_COUNT.toFloat()
 		}
-		val rvalue = value.clamp(Short.MIN_VALUE.toFloat(), Short.MAX_VALUE.toFloat()).toShort()
+		val rvalue = value.clamp(Short.MIN_VALUE.toFloat(), Short.MAX_VALUE.toInt().toFloat()).toInt().toShort()
 		//for (n in 0 until nchannels) buf[bufn++] = value.toShort()
 		buf[bufn++] = rvalue
 		//buf[bufn++] = rvalue

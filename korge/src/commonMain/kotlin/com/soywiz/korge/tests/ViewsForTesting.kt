@@ -13,6 +13,7 @@ import com.soywiz.korge.internal.*
 import com.soywiz.korge.scene.*
 import com.soywiz.korge.view.*
 import com.soywiz.korgw.*
+import com.soywiz.korinject.AsyncInjector
 import com.soywiz.korio.async.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korio.util.*
@@ -103,11 +104,11 @@ open class ViewsForTesting(
 	}
 
     suspend fun mouseClick(button: MouseButton = MouseButton.LEFT) {
-        //mouseDown(button)
-        //simulateFrame(count = 2)
-        //mouseUp(button)
-        mouseEvent(MouseEvent.Type.CLICK, button, false)
+        mouseDown(button)
         simulateFrame(count = 2)
+        mouseUp(button)
+        //mouseEvent(MouseEvent.Type.CLICK, button, false)
+        //simulateFrame(count = 2)
     }
 
     private fun mouseEvent(type: MouseEvent.Type, button: MouseButton, set: Boolean?) {
@@ -128,6 +129,30 @@ open class ViewsForTesting(
         )
     }
 
+    suspend fun keyDown(key: Key) {
+        keyEvent(KeyEvent.Type.DOWN, key)
+        simulateFrame(count = 2)
+    }
+
+    suspend fun keyUp(key: Key) {
+        keyEvent(KeyEvent.Type.UP, key)
+        simulateFrame(count = 2)
+    }
+
+    private fun keyEvent(type: KeyEvent.Type, key: Key) {
+        gameWindow.dispatch(
+            KeyEvent(
+                type = type,
+                id = 0,
+                key = key,
+                keyCode = 0,
+                shift = false,
+                ctrl = false,
+                alt = false,
+                meta = false
+            )
+        )
+    }
     val View.viewMouse: MouseEvents get() {
         this.mouse.views = views
         return this.mouse
@@ -160,7 +185,9 @@ open class ViewsForTesting(
 	}
 
 	// @TODO: Run a faster eventLoop where timers happen much faster
-	fun viewsTest(timeout: TimeSpan? = DEFAULT_SUSPEND_TEST_TIMEOUT, frameTime: TimeSpan = this.frameTime, block: suspend Stage.() -> Unit): Unit = suspendTest(timeout = timeout, cond = { !OS.isNative && !OS.isAndroid }) {
+    fun viewsTest(timeout: TimeSpan? = DEFAULT_SUSPEND_TEST_TIMEOUT, frameTime: TimeSpan = this.frameTime, block: suspend Stage.() -> Unit) =
+        suspendTest(timeout = timeout, cond = { OS.isJvm && !OS.isAndroid }) {
+        //suspendTest(timeout = timeout, cond = { !OS.isAndroid && !OS.isJs && !OS.isNative }) {
         Korge.prepareViewsBase(views, gameWindow, fixedSizeStep = frameTime)
 
 		injector.mapInstance<Module>(object : Module() {
@@ -198,6 +225,7 @@ open class ViewsForTesting(
     @Suppress("UNCHECKED_CAST")
     inline fun <reified S : Scene> sceneTest(
         module: Module? = null,
+        crossinline mappingsForTest: AsyncInjector.() -> Unit = {},
         timeout: TimeSpan? = DEFAULT_SUSPEND_TEST_TIMEOUT,
         frameTime: TimeSpan = this.frameTime,
         crossinline block: suspend S.() -> Unit
@@ -206,6 +234,8 @@ open class ViewsForTesting(
             module?.apply {
                 injector.configure()
             }
+
+            injector.mappingsForTest()
 
             val container = sceneContainer(views)
             container.changeTo<S>()

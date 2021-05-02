@@ -21,7 +21,15 @@ open class PlatformAudioOutput(
 	open fun start() = Unit
     //open fun pause() = unsupported()
 	open fun stop() = Unit
-    override fun dispose() = stop()
+    // @TODO: We should week stop or dispose, but maybe not both
+
+    open suspend fun wait() {
+        while (availableSamples > 0) {
+            delay(10.milliseconds)
+        }
+    }
+
+    final override fun dispose() = stop()
 }
 
 open class DequeBasedPlatformAudioOutput(
@@ -51,11 +59,10 @@ open class DequeBasedPlatformAudioOutput(
 
     protected val availableRead get() = deque.availableRead
     protected fun readFloat(channel: Int): Float = if (deque.availableRead >= 1) (deque.readFloat(channel) * volumes[channel]).clamp(-1f, +1f) else 0f
-    protected fun readShort(channel: Int): Short = (readFloat(channel) * Short.MAX_VALUE).toShort()
+    protected fun readShort(channel: Int): Short = (readFloat(channel) * Short.MAX_VALUE).toInt().toShort()
 
     final override val availableSamples: Int get() = deque.availableRead
     final override suspend fun add(samples: AudioSamples, offset: Int, size: Int) {
         deque.write(samples, offset, size)
     }
-    final override fun dispose() = stop()
 }

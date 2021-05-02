@@ -4,10 +4,10 @@ import com.soywiz.korma.internal.*
 import com.soywiz.korma.interpolation.*
 
 interface IRectangle {
-    val _x: Double
-    val _y: Double
-    val _width: Double
-    val _height: Double
+    val x: Double
+    val y: Double
+    val width: Double
+    val height: Double
 
     companion object {
         inline operator fun invoke(x: Double, y: Double, width: Double, height: Double): IRectangle = Rectangle(x, y, width, height)
@@ -16,29 +16,35 @@ interface IRectangle {
     }
 }
 
-val IRectangle.x get() = _x
-val IRectangle.y get() = _y
-val IRectangle.width get() = _width
-val IRectangle.height get() = _height
+@Deprecated("Properties with underscores are deprecated and will be removed soon", ReplaceWith("x"), DeprecationLevel.ERROR)
+val IRectangle._x get() = x
+@Deprecated("Properties with underscores are deprecated and will be removed soon", ReplaceWith("y"), DeprecationLevel.ERROR)
+val IRectangle._y get() = y
+@Deprecated("Properties with underscores are deprecated and will be removed soon", ReplaceWith("width"), DeprecationLevel.ERROR)
+val IRectangle._width get() = width
+@Deprecated("Properties with underscores are deprecated and will be removed soon", ReplaceWith("height"), DeprecationLevel.ERROR)
+val IRectangle._height get() = height
 
-val IRectangle.left get() = _x
-val IRectangle.top get() = _y
-val IRectangle.right get() = _x + _width
-val IRectangle.bottom get() = _y + _height
+val IRectangle.left get() = x
+val IRectangle.top get() = y
+val IRectangle.right get() = x + width
+val IRectangle.bottom get() = y + height
 
 val IRectangle.topLeft get() = Point(left, top)
 val IRectangle.topRight get() = Point(right, top)
 val IRectangle.bottomLeft get() = Point(left, bottom)
 val IRectangle.bottomRight get() = Point(right, bottom)
 
+operator fun IRectangle.contains(that: IPoint) = contains(that.x, that.y)
+operator fun IRectangle.contains(that: IPointInt) = contains(that.x, that.y)
+fun IRectangle.contains(x: Double, y: Double) = (x >= left && x < right) && (y >= top && y < bottom)
+fun IRectangle.contains(x: Float, y: Float) = contains(x.toDouble(), y.toDouble())
+fun IRectangle.contains(x: Int, y: Int) = contains(x.toDouble(), y.toDouble())
+
 data class Rectangle(
-    var x: Double, var y: Double,
-    var width: Double, var height: Double
+    override var x: Double, override var y: Double,
+    override var width: Double, override var height: Double
 ) : MutableInterpolable<Rectangle>, Interpolable<Rectangle>, IRectangle, Sizeable {
-    override val _x: Double get() = x
-    override val _y: Double get() = y
-    override val _width: Double get() = width
-    override val _height: Double get() = height
 
     companion object {
         operator fun invoke(): Rectangle = Rectangle(0.0, 0.0, 0.0, 0.0)
@@ -90,18 +96,16 @@ data class Rectangle(
     operator fun div(scale: Int) = this / scale.toDouble()
 
     operator fun contains(that: Rectangle) = isContainedIn(that, this)
-    operator fun contains(that: Point) = contains(that.x, that.y)
-    operator fun contains(that: IPoint) = contains(that.x, that.y)
-    fun contains(x: Double, y: Double) = (x >= left && x < right) && (y >= top && y < bottom)
-    fun contains(x: Float, y: Float) = contains(x.toDouble(), y.toDouble())
-    fun contains(x: Int, y: Int) = contains(x.toDouble(), y.toDouble())
 
     infix fun intersects(that: Rectangle): Boolean = intersectsX(that) && intersectsY(that)
 
     infix fun intersectsX(that: Rectangle): Boolean = that.left <= this.right && that.right >= this.left
     infix fun intersectsY(that: Rectangle): Boolean = that.top <= this.bottom && that.bottom >= this.top
 
-    fun setToIntersection(a: Rectangle, b: Rectangle) = this.apply { a.intersection(b, this) }
+    fun setToIntersection(a: Rectangle, b: Rectangle): Rectangle {
+        a.intersection(b, this)
+        return this
+    }
 
     infix fun intersection(that: Rectangle) = intersection(that, Rectangle())
 
@@ -165,8 +169,10 @@ data class Rectangle(
         ratio.interpolate(l.height, r.height)
     )
 
-    fun getAnchoredPosition(anchor: Anchor, out: Point = Point()): Point =
-        out.setTo(left + width * anchor.sx, top + height * anchor.sy)
+    fun getAnchoredPosition(anchor: Anchor, out: Point = Point()): Point = getAnchoredPosition(anchor.sx, anchor.sy, out)
+
+    fun getAnchoredPosition(anchorX: Double, anchorY: Double, out: Point = Point()): Point =
+        out.setTo(left + width * anchorX, top + height * anchorY)
 
     fun toInt() = RectangleInt(x, y, width, height)
     fun floor(): Rectangle {
@@ -183,9 +189,11 @@ data class Rectangle(
     }
 }
 
+@Deprecated("Use non-mixed Int or Double variants for now")
 inline fun Rectangle.setTo(x: Number, y: Number, width: Number, height: Number) =
     this.setTo(x.toDouble(), y.toDouble(), width.toDouble(), height.toDouble())
 
+@Deprecated("Use non-mixed Int or Double variants for now")
 inline fun Rectangle.setBounds(left: Number, top: Number, right: Number, bottom: Number) = setBounds(left.toDouble(), top.toDouble(), right.toDouble(), bottom.toDouble())
 
 //////////// INT
@@ -251,6 +259,7 @@ inline class RectangleInt(val rect: Rectangle) : IRectangleInt {
         operator fun invoke(x: Int, y: Int, width: Int, height: Int) = RectangleInt(Rectangle(x, y, width, height))
         operator fun invoke(x: Float, y: Float, width: Float, height: Float) = RectangleInt(Rectangle(x, y, width, height))
         operator fun invoke(x: Double, y: Double, width: Double, height: Double) = RectangleInt(Rectangle(x, y, width, height))
+        operator fun invoke(other: IRectangleInt) = RectangleInt(Rectangle(other.x, other.y, other.width, other.height))
 
         fun fromBounds(left: Int, top: Int, right: Int, bottom: Int): RectangleInt =
             RectangleInt(left, top, right - left, bottom - top)
@@ -259,20 +268,29 @@ inline class RectangleInt(val rect: Rectangle) : IRectangleInt {
     override fun toString(): String = "Rectangle(x=$x, y=$y, width=$width, height=$height)"
 }
 
-fun RectangleInt.setTo(that: RectangleInt) = setTo(that.x, that.y, that.width, that.height)
+fun RectangleInt.setTo(that: IRectangleInt) = setTo(that.x, that.y, that.width, that.height)
 
-fun RectangleInt.setTo(x: Int, y: Int, width: Int, height: Int) = this.apply {
+fun RectangleInt.setTo(x: Int, y: Int, width: Int, height: Int): RectangleInt {
     this.x = x
     this.y = y
     this.width = width
     this.height = height
+
+    return this
 }
 
-fun RectangleInt.setPosition(x: Int, y: Int) = this.apply { this.x = x; this.y = y }
+fun RectangleInt.setPosition(x: Int, y: Int):RectangleInt {
+    this.x = x
+    this.y = y
 
-fun RectangleInt.setSize(width: Int, height: Int) = this.apply {
+    return this
+}
+
+fun RectangleInt.setSize(width: Int, height: Int): RectangleInt {
     this.width = width
     this.height = height
+
+    return this
 }
 
 fun RectangleInt.getPosition(out: PointInt = PointInt()): PointInt = out.setTo(x, y)
@@ -286,6 +304,11 @@ fun RectangleInt.setBoundsTo(left: Int, top: Int, right: Int, bottom: Int) = set
 ////////////////////
 
 operator fun IRectangleInt.contains(v: SizeInt): Boolean = (v.width <= width) && (v.height <= height)
+operator fun IRectangleInt.contains(that: IPoint) = contains(that.x, that.y)
+operator fun IRectangleInt.contains(that: IPointInt) = contains(that.x, that.y)
+fun IRectangleInt.contains(x: Double, y: Double) = (x >= left && x < right) && (y >= top && y < bottom)
+fun IRectangleInt.contains(x: Float, y: Float) = contains(x.toDouble(), y.toDouble())
+fun IRectangleInt.contains(x: Int, y: Int) = contains(x.toDouble(), y.toDouble())
 
 fun IRectangleInt.anchoredIn(container: RectangleInt, anchor: Anchor, out: RectangleInt = RectangleInt()): RectangleInt =
     out.setTo(
@@ -301,7 +324,7 @@ fun IRectangleInt.getAnchorPosition(anchor: Anchor, out: PointInt = PointInt()):
 fun Rectangle.asInt() = RectangleInt(this)
 fun RectangleInt.asDouble() = this.rect
 
-val IRectangle.int get() = RectangleInt(_x, _y, _width, _height)
+val IRectangle.int get() = RectangleInt(x, y, width, height)
 val IRectangleInt.float get() = Rectangle(x, y, width, height)
 
 fun IRectangleInt.anchor(ax: Double, ay: Double): PointInt =

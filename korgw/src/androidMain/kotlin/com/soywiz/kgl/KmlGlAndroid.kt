@@ -5,12 +5,13 @@
 package com.soywiz.kgl
 
 import android.opengl.GLES20.*
+import android.opengl.GLES30.*
 import com.soywiz.kmem.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.format.AndroidNativeImage
 import java.nio.ByteBuffer
 
-class KmlGlAndroid : KmlGl() {
+class KmlGlAndroid(val clientVersion: () -> Int) : KmlGlWithExtensions() {
     override fun activeTexture(texture: Int): Unit = glActiveTexture(texture)
     override fun attachShader(program: Int, shader: Int): Unit = glAttachShader(program, shader)
     override fun bindAttribLocation(program: Int, index: Int, name: String): Unit = glBindAttribLocation(program, index, name)
@@ -83,7 +84,7 @@ class KmlGlAndroid : KmlGl() {
     override fun getShaderInfoLog(shader: Int, bufSize: Int, length: FBuffer, infoLog: FBuffer): Unit = run { infoLog.putAsciiString(glGetShaderInfoLog(shader)) }
     override fun getShaderPrecisionFormat(shadertype: Int, precisiontype: Int, range: FBuffer, precision: FBuffer): Unit = glGetShaderPrecisionFormat(shadertype, precisiontype, range.nioIntBuffer, precision.nioIntBuffer)
     override fun getShaderSource(shader: Int, bufSize: Int, length: FBuffer, source: FBuffer): Unit = run { val len = IntArray(1); glGetShaderiv(shader, GL_SHADER_SOURCE_LENGTH, len, 0); val src = ByteArray(len[0]); glGetShaderSource(shader, bufSize, len, 0, src, 0); source.putAsciiString(src.toString(Charsets.US_ASCII)) }
-    override fun getString(name: Int): String = glGetString(name)
+    override fun getString(name: Int): String = glGetString(name) ?: ""
     override fun getTexParameterfv(target: Int, pname: Int, params: FBuffer): Unit = glGetTexParameterfv(target, pname, params.nioFloatBuffer)
     override fun getTexParameteriv(target: Int, pname: Int, params: FBuffer): Unit = glGetTexParameteriv(target, pname, params.nioIntBuffer)
     override fun getUniformfv(program: Int, location: Int, params: FBuffer): Unit = glGetUniformfv(program, location, params.nioFloatBuffer)
@@ -161,4 +162,15 @@ class KmlGlAndroid : KmlGl() {
     override fun vertexAttrib4fv(index: Int, v: FBuffer): Unit = glVertexAttrib4fv(index, v.nioFloatBuffer)
     override fun vertexAttribPointer(index: Int, size: Int, type: Int, normalized: Boolean, stride: Int, pointer: Long): Unit = glVertexAttribPointer(index, size, type, normalized, stride, pointer.toInt())
     override fun viewport(x: Int, y: Int, width: Int, height: Int): Unit = glViewport(x, y, width, height)
+
+    val cachedClientVersion by lazy { clientVersion() }
+
+    override val isInstancedSupported: Boolean by lazy {
+        //println("isInstancedSupported.clientVersion=$cachedClientVersion")
+        cachedClientVersion >= 3
+    }
+
+    override fun drawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int) = glDrawArraysInstanced(mode, first, count, instancecount)
+    override fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int) = glDrawElementsInstanced(mode, count, type, indices, instancecount)
+    override fun vertexAttribDivisor(index: Int, divisor: Int) = glVertexAttribDivisor(index, divisor)
 }

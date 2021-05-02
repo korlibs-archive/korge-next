@@ -20,6 +20,8 @@ fun Project.configureJvm() {
 	gkotlin.targets.add(jvmTarget)
 	//jvmTarget.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
 
+    project.korge.addDependency("jvmMainImplementation", "net.java.dev.jna:jna:$jnaVersion")
+    project.korge.addDependency("jvmMainImplementation", "net.java.dev.jna:jna-platform:$jnaVersion")
 	project.korge.addDependency("jvmMainImplementation", "org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	project.korge.addDependency("jvmTestImplementation", "org.jetbrains.kotlin:kotlin-test")
 	project.korge.addDependency("jvmTestImplementation", "org.jetbrains.kotlin:kotlin-test-junit")
@@ -78,16 +80,7 @@ open class KorgeJavaExec : JavaExec() {
         korgeClassPathGet
     }
 
-    @get:Input
-    val useZgc get() = ((System.getenv("JVM_USE_ZGC") == "true") || (javaVersion.majorVersion.toIntOrNull() ?: 8) >= 14) && (System.getenv("JVM_USE_ZGC") != "false")
-
     override fun exec() {
-        if (useZgc) {
-            println("Using ZGC")
-        }
-        if (useZgc) {
-            jvmArgs("-XX:+UnlockExperimentalVMOptions", "-XX:+UseZGC")
-        }
         classpath = korgeClassPath
         for (classPath in korgeClassPath.toList()) {
             project.logger.info("- $classPath")

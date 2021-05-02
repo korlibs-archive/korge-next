@@ -23,9 +23,17 @@ fun Project.configureAndroidDirect() {
     }
 
     android.apply {
+        compileOptions {
+            sourceCompatibility = JavaVersion.VERSION_1_8
+            targetCompatibility = JavaVersion.VERSION_1_8
+        }
+        adbOptions {
+            installOptions = listOf("-r")
+            timeOutInMs = (30 * 1000)
+        }
         packagingOptions {
             for (pattern in androidExcludePatterns()) {
-                it.exclude(pattern)
+                this.exclude(pattern)
             }
         }
         compileSdkVersion(28)

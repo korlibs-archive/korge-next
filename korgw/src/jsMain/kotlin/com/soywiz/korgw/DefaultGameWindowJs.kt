@@ -1,8 +1,10 @@
 package com.soywiz.korgw
 
+import com.soywiz.kds.iterators.*
 import com.soywiz.klock.PerformanceCounter
 import com.soywiz.korag.*
 import com.soywiz.korev.*
+import com.soywiz.korev.Touch
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.format.PNG
 import com.soywiz.korio.async.*
@@ -11,14 +13,12 @@ import com.soywiz.korio.net.*
 import com.soywiz.korio.util.*
 import com.soywiz.krypto.encoding.*
 import kotlinx.coroutines.*
-import org.w3c.dom.HTMLLinkElement
-import org.w3c.dom.TouchEvent
 import org.w3c.dom.events.*
-import org.w3c.dom.events.Event
 import org.w3c.dom.events.MouseEvent
-import org.w3c.dom.get
 import kotlinx.browser.*
-import kotlin.coroutines.*
+import org.w3c.dom.*
+import org.w3c.dom.TouchEvent
+import org.w3c.files.*
 
 private external val navigator: dynamic
 
@@ -97,6 +97,33 @@ class BrowserGameWindow : GameWindow() {
         canvas.style.right = "0"
         canvas.style.width = "${window.innerWidth}px"
         canvas.style.height = "${window.innerHeight}px"
+
+        canvas.ondragenter = {
+            dispatchDropfileEvent(DropFileEvent.Type.START, null)
+        }
+        canvas.ondragexit = {
+            dispatchDropfileEvent(DropFileEvent.Type.END, null)
+        }
+        canvas.ondragleave = {
+            dispatchDropfileEvent(DropFileEvent.Type.END, null)
+        }
+        canvas.ondragover = {
+            it.preventDefault()
+        }
+        canvas.ondragstart = {
+            dispatchDropfileEvent(DropFileEvent.Type.START, null)
+        }
+        canvas.ondragend = {
+            dispatchDropfileEvent(DropFileEvent.Type.END, null)
+        }
+        canvas.ondrop = {
+            it.preventDefault()
+            dispatchDropfileEvent(DropFileEvent.Type.END, null)
+            val items = it.dataTransfer!!.items
+            val files = (0 until items.length).map { items[it]?.getAsFile()?.toVfs() }.filterNotNull()
+            dispatchDropfileEvent(DropFileEvent.Type.DROP, files)
+        }
+
         //ag.resized(canvas.width, canvas.height)
         //dispatchReshapeEvent(0, 0, window.innerWidth, window.innerHeight)
         dispatchReshapeEvent(0, 0, canvas.width, canvas.height)
@@ -168,39 +195,45 @@ class BrowserGameWindow : GameWindow() {
         })
     }
 
+    // JS TouchEvent contains only active touches (ie. touchend just return the list of non ended-touches)
     private fun touchEvent(e: TouchEvent, type: com.soywiz.korev.TouchEvent.Type) {
-        touchEvent.scaleCoords = false
-        touchEvent.startFrame(type)
-        for (n in 0 until e.touches.length) {
-            val touch = e.touches.item(n) ?: continue
-            touchEvent.touch(
-                touch.identifier,
-                transformEventX(touch.clientX.toDouble()),
-                transformEventY(touch.clientY.toDouble())
-            )
-        }
-        dispatch(touchEvent)
+        dispatch(touchBuilder.frame(TouchBuilder.Mode.JS, type) {
+            for (n in 0 until e.touches.length) {
+                val touch = e.touches.item(n) ?: continue
+                val touchId = touch.identifier
+                touch(
+                    id = touchId,
+                    x = transformEventX(touch.clientX.toDouble()),
+                    y = transformEventY(touch.clientY.toDouble()),
+                    force = touch.asDynamic().force.unsafeCast<Double?>() ?: 1.0,
+                    kind = Touch.Kind.FINGER
+                )
+            }
+        }.also {
+            //println("touchEvent=$it")
+        })
     }
 
     private fun mouseEvent(e: MouseEvent, type: com.soywiz.korev.MouseEvent.Type, pressingType: com.soywiz.korev.MouseEvent.Type = type) {
-        if (!is_touch_device()) {
-            val tx = transformEventX(e.clientX.toDouble()).toInt()
-            val ty = transformEventY(e.clientY.toDouble()).toInt()
-            //console.log("mouseEvent", type.toString(), e.clientX, e.clientY, tx, ty)
-            dispatch(mouseEvent {
-                this.type = if (e.buttons.toInt() != 0) pressingType else type
-                this.scaleCoords = false
-                this.id = 0
-                this.x = tx
-                this.y = ty
-                this.button = MouseButton[e.button.toInt()]
-                this.buttons = e.buttons.toInt()
-                this.isShiftDown = e.shiftKey
-                this.isCtrlDown = e.ctrlKey
-                this.isAltDown = e.altKey
-                this.isMetaDown = e.metaKey
-            })
-        }
+        // If we are in a touch device, touch events will be dispatched, and then we don't want to emit mouse events, that would be duplicated
+        if (is_touch_device()) return
+
+        val tx = transformEventX(e.clientX.toDouble()).toInt()
+        val ty = transformEventY(e.clientY.toDouble()).toInt()
+        //console.log("mouseEvent", type.toString(), e.clientX, e.clientY, tx, ty)
+        dispatch(mouseEvent {
+            this.type = if (e.buttons.toInt() != 0) pressingType else type
+            this.scaleCoords = false
+            this.id = 0
+            this.x = tx
+            this.y = ty
+            this.button = MouseButton[e.button.toInt()]
+            this.buttons = e.buttons.toInt()
+            this.isShiftDown = e.shiftKey
+            this.isCtrlDown = e.ctrlKey
+            this.isAltDown = e.altKey
+            this.isMetaDown = e.metaKey
+        })
     }
 
     override var title: String
@@ -262,7 +295,32 @@ class BrowserGameWindow : GameWindow() {
     }
 
     override suspend fun openFileDialog(filter: String?, write: Boolean, multi: Boolean): List<VfsFile> {
-        TODO()
+        val deferred = CompletableDeferred<List<VfsFile>>()
+        val input = document.createElement("input").unsafeCast<HTMLInputElement>()
+        input.style.position = "absolute"
+        input.style.top = "0px"
+        input.style.left = "0px"
+        input.style.visibility = "hidden"
+        input.type = "file"
+        input.multiple = multi
+        input.onchange = {
+            val files = input.files
+            //document.body?.removeChild(input)
+            if (files != null) {
+                deferred.complete((0 until files.length).map { files[it]?.toVfs() }.filterNotNull())
+            } else {
+                deferred.complete(listOf())
+            }
+        }
+        input.oncancel = {
+            //document.body?.removeChild(input)
+        }
+        document.body?.appendChild(input)
+        input.click()
+        window.setTimeout({
+            document.body?.removeChild(input)
+        }, 100)
+        return deferred.await()
     }
 
     private var loopJob: Job? = null

@@ -4,35 +4,43 @@ import com.soywiz.kds.*
 import com.soywiz.klock.*
 import com.soywiz.korau.format.*
 import com.soywiz.korio.async.*
+import com.soywiz.korio.concurrent.atomic.*
 import com.soywiz.korio.file.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korio.stream.*
 import com.soywiz.korio.util.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
+import kotlin.coroutines.coroutineContext as coroutineContextKt
 
 expect val nativeSoundProvider: NativeSoundProvider
 
-open class NativeSoundProvider {
+open class NativeSoundProvider : Disposable {
 	open val target: String = "unknown"
 
-	private var initialized = false
+	private var initialized = korAtomic(false)
 
 	fun initOnce() {
-		if (!initialized) {
-			initialized = true
+		if (!initialized.value) {
+			initialized.value = true
 			init()
 		}
 	}
 
 	open fun createAudioStream(coroutineContext: CoroutineContext, freq: Int = 44100): PlatformAudioOutput = PlatformAudioOutput(coroutineContext, freq)
 
-    suspend fun createAudioStream(freq: Int = 44100): PlatformAudioOutput = createAudioStream(coroutineContext, freq)
+    suspend fun createAudioStream(freq: Int = 44100): PlatformAudioOutput = createAudioStream(coroutineContextKt, freq)
 
 	protected open fun init(): Unit = Unit
 
-	open suspend fun createSound(data: ByteArray, streaming: Boolean = false, props: AudioDecodingProps = AudioDecodingProps.DEFAULT, name: String = "Unknown"): Sound =
-        createStreamingSound(audioFormats.decodeStreamOrError(data.openAsync(), props), closeStream = true, name = name)
+	open suspend fun createSound(data: ByteArray, streaming: Boolean = false, props: AudioDecodingProps = AudioDecodingProps.DEFAULT, name: String = "Unknown"): Sound {
+        val stream = audioFormats.decodeStreamOrError(data.openAsync(), props)
+        return if (streaming) {
+            createStreamingSound(stream, closeStream = true, name = name)
+        } else {
+            createNonStreamingSound(stream.toData(), name = name)
+        }
+	}
 
     open val audioFormats: AudioFormats = AudioFormats(WAV)
     //open val audioFormats: AudioFormats = AudioFormats(WAV, MP3Decoder, OGG)
@@ -54,7 +62,12 @@ open class NativeSoundProvider {
 	suspend fun createSound(file: FinalVfsFile, streaming: Boolean = false, props: AudioDecodingProps = AudioDecodingProps.DEFAULT): Sound = createSound(file.vfs, file.path, streaming, props)
 	suspend fun createSound(file: VfsFile, streaming: Boolean = false, props: AudioDecodingProps = AudioDecodingProps.DEFAULT): Sound = createSound(file.getUnderlyingUnscapedFile(), streaming, props)
 
-	open suspend fun createSound(
+    open suspend fun createNonStreamingSound(
+        data: AudioData,
+        name: String = "Unknown"
+    ): Sound = createStreamingSound(data.toStream(), true, name)
+
+    open suspend fun createSound(
 		data: AudioData,
 		formats: AudioFormats = defaultAudioFormats,
 		streaming: Boolean = false,
@@ -65,9 +78,16 @@ open class NativeSoundProvider {
         SoundAudioStream(kotlin.coroutines.coroutineContext, stream, closeStream, name, onComplete)
 
     suspend fun playAndWait(stream: AudioStream, params: PlaybackParameters = PlaybackParameters.DEFAULT) = createStreamingSound(stream).playAndWait(params)
+
+    override fun dispose() {
+    }
 }
 
-class DummyNativeSoundProvider : NativeSoundProvider()
+open class DummyNativeSoundProvider(
+    override val audioFormats: AudioFormats
+) : NativeSoundProvider() {
+    companion object : DummyNativeSoundProvider(AudioFormats(WAV))
+}
 
 class DummySoundChannel(sound: Sound, val data: AudioData? = null) : SoundChannel(sound) {
 	private var timeStart = DateTime.now()
@@ -93,10 +113,29 @@ interface SoundProps : ReadonlySoundProps {
     override var panning: Double
 }
 
+object DummySoundProps : SoundProps {
+    override var volume: Double
+        get() = 1.0
+        set(v) = Unit
+    override var pitch: Double
+        get() = 1.0
+        set(v) = Unit
+    override var panning: Double
+        get() = 0.0
+        set(v) = Unit
+}
+
 fun SoundProps.copySoundPropsFrom(other: ReadonlySoundProps) {
     this.volume = other.volume
     this.pitch = other.pitch
     this.panning = other.panning
+}
+
+fun SoundProps.copySoundPropsFromCombined(l: ReadonlySoundProps, r: ReadonlySoundProps) {
+    this.volume = l.volume * r.volume
+    this.pitch = l.pitch * r.pitch
+    //this.panning = l.panning + r.panning
+    this.panning = r.panning
 }
 
 class SoundChannelGroup(volume: Double = 1.0, pitch: Double = 1.0, panning: Double = 0.0) : SoundChannelBase {
@@ -218,16 +257,26 @@ suspend fun SoundChannel.await(progress: SoundChannel.(current: TimeSpan, total:
 	}
 }
 
-abstract class Sound(val coroutineContext: CoroutineContext) : SoundProps, AudioStreamable {
+abstract class Sound(val creationCoroutineContext: CoroutineContext) : SoundProps, AudioStreamable {
+    var defaultCoroutineContext = creationCoroutineContext
+    @Deprecated("Use defaultCoroutineContext instead", ReplaceWith("defaultCoroutineContext"))
+    val coroutineContext: CoroutineContext get() = defaultCoroutineContext
+
     open val name: String = "UnknownNativeSound"
     override var volume: Double = 1.0
     override var panning: Double = 0.0
     override var pitch: Double = 1.0
 	open val length: TimeSpan = 0.seconds
     open val nchannels: Int get() = 1
-	open fun play(params: PlaybackParameters = PlaybackParameters.DEFAULT): SoundChannel = TODO()
-    fun play(times: PlaybackTimes, startTime: TimeSpan = 0.seconds): SoundChannel = play(PlaybackParameters(times, startTime))
-    fun playForever(startTime: TimeSpan = 0.seconds): SoundChannel = play(infinitePlaybackTimes, startTime)
+
+    open fun play(coroutineContext: CoroutineContext, params: PlaybackParameters = PlaybackParameters.DEFAULT): SoundChannel = TODO()
+    fun play(coroutineContext: CoroutineContext, times: PlaybackTimes, startTime: TimeSpan = 0.seconds): SoundChannel = play(coroutineContext, PlaybackParameters(times, startTime))
+    fun playForever(coroutineContext: CoroutineContext, startTime: TimeSpan = 0.seconds): SoundChannel = play(coroutineContext, infinitePlaybackTimes, startTime)
+
+    suspend fun play(params: PlaybackParameters = PlaybackParameters.DEFAULT): SoundChannel = play(coroutineContextKt, params)
+    suspend fun play(times: PlaybackTimes, startTime: TimeSpan = 0.seconds): SoundChannel = play(coroutineContextKt, times, startTime)
+    suspend fun playForever(startTime: TimeSpan = 0.seconds): SoundChannel = playForever(coroutineContextKt, startTime)
+
     suspend fun playAndWait(params: PlaybackParameters, progress: SoundChannel.(current: TimeSpan, total: TimeSpan) -> Unit = { current, total -> }): Unit = play(params).await(progress)
     suspend fun playAndWait(times: PlaybackTimes = 1.playbackTimes, startTime: TimeSpan = 0.seconds, progress: SoundChannel.(current: TimeSpan, total: TimeSpan) -> Unit = { current, total -> }): Unit = play(times, startTime).await(progress)
 
@@ -243,7 +292,9 @@ data class PlaybackParameters(
     val bufferTime: TimeSpan = 0.1.seconds,
     override val volume: Double = 1.0,
     override val pitch: Double = 1.0,
-    override val panning: Double = 0.0
+    override val panning: Double = 0.0,
+    val onCancel: (() -> Unit)? = null,
+    val onFinish: (() -> Unit)? = null,
 ) : ReadonlySoundProps {
     companion object {
         val DEFAULT = PlaybackParameters(1.playbackTimes, 0.seconds)

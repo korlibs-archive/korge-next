@@ -2,6 +2,7 @@ package com.soywiz.korge.component
 
 import com.soywiz.kds.*
 import com.soywiz.kds.iterators.*
+import com.soywiz.korge.baseview.*
 import com.soywiz.korge.view.*
 
 /**
@@ -15,6 +16,21 @@ interface StageComponent : Component {
     fun removed(views: Views)
 }
 
+fun <T : View> T.onAttachDetach(views: Views, onAttach: Views.(T) -> Unit = {}, onDetach: Views.(T) -> Unit = {}): T {
+    val view = this
+    views.registerStageComponent()
+    view.addComponent(object : StageComponent {
+        override val view: BaseView get() = view
+        override fun added(views: Views) {
+            onAttach(views, view)
+        }
+        override fun removed(views: Views) {
+            onDetach(views, view)
+        }
+    })
+    return this
+}
+
 /**
  * Enables the use of [StageComponent] components.
  */
@@ -22,10 +38,10 @@ fun Views.registerStageComponent() {
     val EXTRA_ID = "Views.registerStageComponent"
     if (views.getExtra(EXTRA_ID) == true) return
     views.setExtra(EXTRA_ID, true)
-    val componentsInStagePrev = ArrayList<StageComponent>()
+    val componentsInStagePrev = FastArrayList<StageComponent>()
     val componentsInStageCur = linkedSetOf<StageComponent>()
     val componentsInStage = linkedSetOf<StageComponent>()
-    val tempViews: ArrayList<View> = arrayListOf()
+    val tempViews: FastArrayList<View> = FastArrayList()
     onBeforeRender {
         componentsInStagePrev.clear()
         componentsInStagePrev += componentsInStageCur

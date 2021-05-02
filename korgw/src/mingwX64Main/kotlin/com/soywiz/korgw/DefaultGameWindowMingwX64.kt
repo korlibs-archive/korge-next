@@ -10,6 +10,7 @@ import com.soywiz.korio.file.*
 import com.soywiz.korio.net.*
 import com.soywiz.korma.geom.*
 import kotlinx.cinterop.*
+import platform.opengl32.*
 import platform.windows.*
 import kotlin.math.*
 
@@ -39,10 +40,10 @@ private fun Bitmap32.toWin32Icon(): HICON? {
         bi.bV5Compression = BI_BITFIELDS.convert()
         // The following mask specification specifies a supported 32 BPP
         // alpha format for Windows XP.
-        bi.bV5RedMask = 0x00FF0000.convert()
-        bi.bV5GreenMask = 0x0000FF00.convert()
-        bi.bV5BlueMask = 0x000000FF.convert()
-        bi.bV5AlphaMask = 0xFF000000.convert()
+        bi.bV5RedMask = 0x00_00_00_FF.convert()
+        bi.bV5GreenMask = 0x00_00_FF_00.convert()
+        bi.bV5BlueMask = 0x00_FF_00_00.convert()
+        bi.bV5AlphaMask = 0xFF_00_00_00.convert()
 
         val lpBits = alloc<COpaquePointerVar>()
         val hdc = GetDC(null)
@@ -444,6 +445,7 @@ fun WndProc(hWnd: HWND?, message: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
 
                 println("wglSwapIntervalEXT: $wglSwapIntervalEXT")
                 wglSwapIntervalEXT?.invoke(0)
+                glClear(0) // Required since wglMakeCurrent is in the windows package but requires openGL32.dll
 
                 println("GL_CONTEXT: ${windowsGameWindow.glRenderContext}")
             }

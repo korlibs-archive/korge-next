@@ -21,10 +21,12 @@ import com.soywiz.korio.file.VfsFile
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import androidx.core.app.ActivityCompat.startActivityForResult
+import com.soywiz.klock.*
+import kotlin.coroutines.*
 
 abstract class KorgwActivity : Activity() {
     var gameWindow: AndroidGameWindow = AndroidGameWindow(this)
-    private var mGLView: GLSurfaceView? = null
+    private var mGLView: KorgwSurfaceView? = null
     lateinit var ag: AGOpengl
     open val agCheck: Boolean get() = false
     open val agTrace: Boolean get() = false
@@ -39,7 +41,7 @@ abstract class KorgwActivity : Activity() {
 
     inner class KorgwActivityAGOpengl : AGOpengl() {
         //override val gl: KmlGl = CheckErrorsKmlGlProxy(KmlGlAndroid())
-        override val gl: KmlGl = KmlGlAndroid().checkedIf(agCheck).logIf(agCheck)
+        override val gl: KmlGl = KmlGlAndroid({ mGLView?.clientVersion ?: -1 }).checkedIf(agCheck).logIf(agCheck)
         override val nativeComponent: Any get() = this@KorgwActivity
         override val gles: Boolean = true
 
@@ -65,69 +67,21 @@ abstract class KorgwActivity : Activity() {
         //ag = AGOpenglFactory.create(this).create(this, AGConfig())
         ag = KorgwActivityAGOpengl()
 
-        mGLView = object : GLSurfaceView(this) {
-            val view = this
-
-            init {
-                println("KorgwActivity: Created GLSurfaceView $this for ${this@KorgwActivity}")
-
-                setEGLContextClientVersion(2)
-                setRenderer(object : GLSurfaceView.Renderer {
-                    override fun onSurfaceCreated(unused: GL10, config: EGLConfig) {
-                        //GLES20.glClearColor(0.0f, 0.4f, 0.7f, 1.0f)
-                        gameWindow.handleContextLost()
-                    }
-
-                    override fun onDrawFrame(unused: GL10) {
-                        gameWindow.handleInitEventIfRequired()
-                        gameWindow.handleReshapeEventIfRequired(0, 0, view.width, view.height)
-                        gameWindow.frame()
-                    }
-
-                    override fun onSurfaceChanged(unused: GL10, width: Int, height: Int) {
-                        println("---------------- GLSurfaceView.onSurfaceChanged($width, $height) --------------")
-                        //ag.contextVersion++
-                        //GLES20.glViewport(0, 0, width, height)
-                        //surfaceChanged = true
-                    }
-                })
-            }
-
-            private val touches = TouchEventHandler()
-            private val coords = MotionEvent.PointerCoords()
-
-            override fun onTouchEvent(ev: MotionEvent): Boolean {
-                val gameWindow = gameWindow ?: return false
-
-                touches.handleEvent(gameWindow, gameWindow.coroutineContext, when (ev.action) {
-                    MotionEvent.ACTION_DOWN -> TouchEvent.Type.START
-                    MotionEvent.ACTION_MOVE -> TouchEvent.Type.MOVE
-                    MotionEvent.ACTION_UP -> TouchEvent.Type.END
-                    else -> TouchEvent.Type.END
-                }, { currentTouchEvent ->
-                    for (n in 0 until ev.pointerCount) {
-                        ev.getPointerCoords(n, coords)
-                        currentTouchEvent.touch(ev.getPointerId(n), coords.x.toDouble(), coords.y.toDouble())
-                    }
-                })
-                return true
-            }
-        }
+        mGLView = KorgwSurfaceView(this, this, gameWindow)
 
         gameWindow.initializeAndroid()
         setContentView(mGLView)
 
-        val androidContext = this
-        Korio(androidContext) {
-            try {
-                kotlinx.coroutines.withContext(coroutineContext + gameWindow) {
-                    withAndroidContext(androidContext) {
-                        activityMain()
-                    }
+        mGLView!!.onDraw.once {
+            suspend {
+                activityMain()
+            }.startCoroutine(object : Continuation<Unit> {
+                override val context: CoroutineContext get() = com.soywiz.korio.android.AndroidCoroutineContext(this@KorgwActivity) + gameWindow
+
+                override fun resumeWith(result: Result<Unit>) {
+                    println("KorgwActivity.activityMain completed! result=$result")
                 }
-            } finally {
-                println("KorgwActivity.activityMain completed!")
-            }
+            })
         }
     }
 

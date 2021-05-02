@@ -85,6 +85,7 @@ interface INativeGL {
     fun glGetShaderPrecisionFormat(shadertype: Int, precisiontype: Int, range: IntPtr, precision: IntPtr)
     fun glGetShaderSource(shader: Int, bufSize: Int, length: IntPtr, source: VoidPtr)
     fun glGetString(name: Int): String?
+    fun glGetStringi(name: Int, i: Int): String?
     fun glGetTexParameterfv(target: Int, pname: Int, params: FloatPtr)
     fun glGetTexParameteriv(target: Int, pname: Int, params: IntPtr)
     fun glGetUniformfv(program: Int, location: Int, params: FloatPtr)
@@ -155,7 +156,11 @@ interface INativeGL {
     fun glVertexAttrib4fv(index: Int, v: FloatPtr)
     fun glVertexAttribPointer(index: Int, size: Int, type: Int, normalized: Int, stride: Int, pointer: IntSize)
     fun glViewport(x: Int, y: Int, width: Int, height: Int)
-    
+
+    fun glDrawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int)
+    fun glDrawElementsInstanced(mode: Int, count: Int, type: Int, indices: IntSize, instancecount: Int)
+    fun glVertexAttribDivisor(index: Int, divisor: Int)
+
     companion object {
         const val DEPTH_BUFFER_BIT: Int = 0x0100
         const val STENCIL_BUFFER_BIT: Int = 0x0400

@@ -46,24 +46,23 @@ fun Project.installAndroidRun(dependsOnList: List<String>, direct: Boolean) {
         val suffixDebug = if (debug) "Debug" else "Release"
         val installAndroidTask = when {
             direct -> tasks.create("installAndroid$suffixDebug", Task::class.java) { task ->
-                task.group = GROUP_KORGE_INSTALL
                 for (dependsOnTaskNAme in dependsOnList) {
                     task.dependsOn(dependsOnTaskNAme)
                 }
-                task.dependsOn("korgeProcessedResourcesJvmMain")
                 task.dependsOn("install$suffixDebug")
             }
             else -> tasks.create("installAndroid$suffixDebug", GradleBuild::class.java) { task ->
-                task.group = GROUP_KORGE_INSTALL
                 for (dependsOnTaskNAme in dependsOnList) {
                     task.dependsOn(dependsOnTaskNAme)
                 }
-                task.dependsOn("korgeProcessedResourcesJvmMain")
                 task.buildFile = File(buildDir, "platforms/android/build.gradle")
                 //task.versi = "4.10.1"
                 task.tasks = listOf("install$suffixDebug")
             }
         }
+        installAndroidTask.group = GROUP_KORGE_INSTALL
+        installAndroidTask.dependsOn("korgeProcessedResourcesJvmMain")
+        installAndroidTask.dependsOn("korgeProcessedResourcesMetadataMain")
 
         for (emulator in listOf(null, false, true)) {
             val suffixDevice = when (emulator) {
@@ -86,6 +85,21 @@ fun Project.installAndroidRun(dependsOnList: List<String>, direct: Boolean) {
                         it.commandLine(
                             "$androidSdkPath/platform-tools/adb", *extra, "shell", "am", "start", "-n",
                             "${korge.id}/${korge.id}.MainActivity"
+                        )
+                    }
+                    val pid = run {
+                        for (n in 0 until 10) {
+                            try {
+                                return@run execOutput("$androidSdkPath/platform-tools/adb", *extra, "shell", "pidof", korge.id).trim()
+                            } catch (e: Throwable) {
+                                Thread.sleep(500L)
+                                if (n == 9) throw e
+                            }
+                        }
+                    }
+                    execLogger {
+                        it.commandLine(
+                            "$androidSdkPath/platform-tools/adb", *extra, "logcat", "--pid=$pid"
                         )
                     }
                 }
