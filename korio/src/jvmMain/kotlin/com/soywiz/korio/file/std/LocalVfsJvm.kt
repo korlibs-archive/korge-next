@@ -420,35 +420,37 @@ private class LocalVfsJvm : LocalVfsV2() {
 					val file = rfilepath.toFile()
 					val absolutePath = file.absolutePath
 					val vfsFile = file(absolutePath)
-					when (kind) {
-						StandardWatchEventKinds.OVERFLOW -> {
-							println("Overflow WatchService")
-						}
-						StandardWatchEventKinds.ENTRY_CREATE -> {
-							handler(
-								FileEvent(
-									FileEvent.Kind.CREATED,
-									vfsFile
-								)
-							)
-						}
-						StandardWatchEventKinds.ENTRY_MODIFY -> {
-							handler(
-								FileEvent(
-									FileEvent.Kind.MODIFIED,
-									vfsFile
-								)
-							)
-						}
-						StandardWatchEventKinds.ENTRY_DELETE -> {
-							handler(
-								FileEvent(
-									FileEvent.Kind.DELETED,
-									vfsFile
-								)
-							)
-						}
-					}
+                    withContext(coroutineContext) {
+                        when (kind) {
+                            StandardWatchEventKinds.OVERFLOW -> {
+                                println("Overflow WatchService")
+                            }
+                            StandardWatchEventKinds.ENTRY_CREATE -> {
+                                handler(
+                                    FileEvent(
+                                        FileEvent.Kind.CREATED,
+                                        vfsFile
+                                    )
+                                )
+                            }
+                            StandardWatchEventKinds.ENTRY_MODIFY -> {
+                                handler(
+                                    FileEvent(
+                                        FileEvent.Kind.MODIFIED,
+                                        vfsFile
+                                    )
+                                )
+                            }
+                            StandardWatchEventKinds.ENTRY_DELETE -> {
+                                handler(
+                                    FileEvent(
+                                        FileEvent.Kind.DELETED,
+                                        vfsFile
+                                    )
+                                )
+                            }
+                        }
+                    }
 				}
 
                 if (!key.reset()) {
