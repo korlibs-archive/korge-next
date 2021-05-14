@@ -6,6 +6,11 @@ plugins {
 	id("com.gradle.plugin-publish")
 }
 
+//val kotlinVersion: String by project
+val androidBuildGradleVersion: String by project
+val proguardVersion: String by project
+val kotlinGradlePluginApiVersion: String by project
+
 group = "com.soywiz.korlibs.korge.plugins"
 
 //apply(plugin = "kotlin")
@@ -38,8 +43,8 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).all {
     kotlinOptions {
         jvmTarget = "1.8"
         sourceCompatibility = "1.8"
-        apiVersion = "1.4"
-        languageVersion = "1.4"
+        apiVersion = kotlinGradlePluginApiVersion
+        languageVersion = kotlinGradlePluginApiVersion
 		//jvmTarget = "1.6"
     }
 }
@@ -57,10 +62,6 @@ tasks {
         dependsOn("test")
     }
 }
-
-//val kotlinVersion: String by project
-val androidBuildGradleVersion: String by project
-val proguardVersion: String by project
 
 dependencies {
 	//implementation(project(":korge-build"))
