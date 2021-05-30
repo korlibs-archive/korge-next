@@ -43,65 +43,77 @@ suspend fun TileSetData.toTiledSet(
 	transparentColor: RGBA = Colors.FUCHSIA,
 	createBorder: Int = 1
 ): TiledTileset {
-	val tileset = this
-	var bmp = try {
-		when (tileset.image) {
-			is Image.Embedded -> TODO()
-			is Image.External -> folder[tileset.image.source].readBitmapOptimized()
-			null -> Bitmap32(0, 0)
-		}
-	} catch (e: Throwable) {
-		e.printStackTrace()
-		Bitmap32(tileset.width, tileset.height)
-	}
+    val tileset = this
+    var bmp = try {
+        when (tileset.image) {
+            is Image.Embedded -> TODO()
+            is Image.External -> folder[tileset.image.source].readBitmapOptimized()
+            null -> Bitmap32(0, 0)
+        }
+    } catch (e: Throwable) {
+        e.printStackTrace()
+        Bitmap32(tileset.width, tileset.height)
+    }
 
-	// @TODO: Preprocess this, so in JS we don't have to do anything!
-	if (hasTransparentColor) {
-		bmp = bmp.toBMP32()
-		for (n in 0 until bmp.area) {
-			if (bmp.data[n] == transparentColor) bmp.data[n] = Colors.TRANSPARENT_BLACK
-		}
-	}
+    // @TODO: Preprocess this, so in JS we don't have to do anything!
+    if (hasTransparentColor) {
+        bmp = bmp.toBMP32()
+        for (n in 0 until bmp.area) {
+            if (bmp.data[n] == transparentColor) bmp.data[n] = Colors.TRANSPARENT_BLACK
+        }
+    }
 
-	val ptileset = if (createBorder > 0) {
-		bmp = bmp.toBMP32()
+    val ptileset = if (createBorder > 0) {
+        bmp = bmp.toBMP32()
 
-		if (tileset.spacing >= createBorder) {
-			// There is already separation between tiles, use it as it is
-			val slices = TileSet.extractBmpSlices(
-				bmp,
-				tileset.tileWidth,
-				tileset.tileHeight,
-				tileset.columns,
-				tileset.tileCount,
-				tileset.spacing,
-				tileset.margin
-			)
-			TileSet(slices, tileset.tileWidth, tileset.tileHeight)
-		} else {
-			// No separation between tiles: create a new Bitmap adding that separation
-			val bitmaps = TileSet.extractBitmaps(
-				bmp,
-				tileset.tileWidth,
-				tileset.tileHeight,
-				tileset.columns,
-				tileset.tileCount,
-				tileset.spacing,
-				tileset.margin
-			)
-			TileSet.fromBitmaps(tileset.tileWidth, tileset.tileHeight, bitmaps, border = createBorder, mipmaps = false)
-		}
-	} else {
-		TileSet(bmp.slice(), tileset.tileWidth, tileset.tileHeight, tileset.columns, tileset.tileCount)
-	}
+        if (tileset.spacing >= createBorder) {
+            // There is already separation between tiles, use it as it is
+            val slices = TileSet.extractBmpSlices(
+                bmp,
+                tileset.tileWidth,
+                tileset.tileHeight,
+                tileset.columns,
+                tileset.tileCount,
+                tileset.spacing,
+                tileset.margin
+            )
+            TileSet(slices, tileset.tileWidth, tileset.tileHeight)
+        } else {
+            // No separation between tiles: create a new Bitmap adding that separation
+            val bitmaps = if (bmp.width != 0 && bmp.height != 0) {
+                TileSet.extractBitmaps(
+                    bmp,
+                    tileset.tileWidth,
+                    tileset.tileHeight,
+                    tileset.columns,
+                    tileset.tileCount,
+                    tileset.spacing,
+                    tileset.margin
+                )
+            } else if (tileset.tiles.isNotEmpty()) {
+                tileset.tiles.map {
+                    when (it.image) {
+                        is Image.Embedded -> TODO()
+                        is Image.External -> folder[it.image.source].readBitmapOptimized().toBMP32()
+                        else -> Bitmap32(0, 0)
+                    }
+                }
+            } else {
+                emptyList()
+            }
+            TileSet.fromBitmaps(tileset.tileWidth, tileset.tileHeight, bitmaps, border = createBorder, mipmaps = false)
+        }
+    } else {
+        TileSet(bmp.slice(), tileset.tileWidth, tileset.tileHeight, tileset.columns, tileset.tileCount)
+    }
 
-	val tiledTileset = TiledTileset(
-		tileset = ptileset,
-		data = tileset,
-		firstgid = tileset.firstgid
-	)
+    val tiledTileset = TiledTileset(
+        tileset = ptileset,
+        data = tileset,
+        firstgid = tileset.firstgid
+    )
 
-	return tiledTileset
+    return tiledTileset
 }
 
 suspend fun VfsFile.readTiledMapData(): TiledMapData {
@@ -116,6 +128,7 @@ suspend fun VfsFile.readTiledMapData(): TiledMapData {
 	val orientation = mapXml.getString("orientation")
 	tiledMap.orientation = when (orientation) {
 		"orthogonal" -> TiledMap.Orientation.ORTHOGONAL
+        "staggered" -> TiledMap.Orientation.STAGGERED
 		else -> unsupported("Orientation \"$orientation\" is not supported")
 	}
 	val renderOrder = mapXml.getString("renderorder")
