@@ -110,26 +110,26 @@ open class TileMap(
 
         val renderTilesCounter = ctx.stats.counter("renderedTiles")
 
-        val initY = (if (staggerAxis != null) tileSize.height - tileHeight else 0.0).let {
-            min2(m.transformX(it, 0.0), m.transformY(0.0, it))
-        }
         val posX = m.transformX(0.0, 0.0)
         val posY = m.transformY(0.0, 0.0)
         val dUX = m.transformX(tileWidth, 0.0) - posX
         val dUY = m.transformY(tileWidth, 0.0) - posY
         val dVX = m.transformX(0.0, tileHeight) - posX
         val dVY = m.transformY(0.0, tileHeight) - posY
+        val initY = (if (staggerAxis != null) tileSize.height - tileHeight else 0.0).let {
+            min2(m.transformX(it, 0.0) - posX, m.transformY(0.0, it))
+        }
         val nextTileX = (tileSize.width / if (staggerAxis == TiledMap.StaggerAxis.X) 2.0 else 1.0).let { width ->
-            min2(m.transformX(width, 0.0), m.transformY(0.0, width))
+            min2(m.transformX(width, 0.0) - posX, m.transformY(0.0, width) - posY)
         }
         val nextTileY = (tileSize.height / if (staggerAxis == TiledMap.StaggerAxis.Y) 2.0 else 1.0).let { height ->
-            min2(m.transformX(height, 0.0), m.transformY(0.0, height))
+            min2(m.transformX(height, 0.0) - posX, m.transformY(0.0, height) - posY)
         }
         val staggerX = (tileWidth / 2.0).let{ width ->
-            min2(m.transformX(width, 0.0), m.transformY(0.0, width))
+            min2(m.transformX(width, 0.0) - posX, m.transformY(0.0, width) - posY)
         }
         val staggerY = (tileSize.height / 2.0).let{ height ->
-            min2(m.transformX(height, 0.0), m.transformY(0.0, height))
+            min2(m.transformX(height, 0.0) - posX, m.transformY(0.0, height) - posY)
         }
 
         val colMul = renderColorMul
