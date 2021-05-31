@@ -326,7 +326,7 @@ open class TileMap(
 
         infos.fastForEach { buffer ->
             ctx.batch.drawVertices(
-                buffer.vertices, ctx.getTex(buffer.tex), smoothing, AG.Blending(AG.BlendFactor.ONE, AG.BlendFactor.ONE_MINUS_SOURCE_ALPHA), buffer.vcount, buffer.icount
+                buffer.vertices, ctx.getTex(buffer.tex), smoothing, renderBlendMode.factors, buffer.vcount, buffer.icount
             )
         }
 		ctx.flush()
