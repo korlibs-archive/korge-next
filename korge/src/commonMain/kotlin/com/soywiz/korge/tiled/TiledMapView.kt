@@ -6,6 +6,7 @@ import com.soywiz.korge.view.tiles.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
 import com.soywiz.korma.geom.*
+import kotlin.math.*
 
 inline fun Container.tiledMapView(tiledMap: TiledMap, showShapes: Boolean = true, smoothing: Boolean = true, callback: TiledMapView.() -> Unit = {}) =
 	TiledMapView(tiledMap, showShapes, smoothing).addTo(this, callback)
@@ -13,21 +14,30 @@ inline fun Container.tiledMapView(tiledMap: TiledMap, showShapes: Boolean = true
 class TiledMapView(tiledMap: TiledMap, showShapes: Boolean = true, smoothing: Boolean = true) : Container() {
     val tileset = tiledMap.tilesets.toTileSet()
 
-    fun globalPixelHitTestByte(globalX: Double, globalY: Double): Byte {
-        return pixelHitTestByte(globalToLocalX(globalX, globalY).toInt(), globalToLocalY(globalX, globalY).toInt())
+    fun globalPixelHitTest(globalXY: IPoint): TileSetCollisionType = globalPixelHitTest(globalXY.x, globalXY.y)
+
+    fun globalPixelHitTest(globalX: Double, globalY: Double): TileSetCollisionType {
+        return pixelHitTest(
+            round(globalToLocalX(globalX, globalY) / scaleX).toInt(),
+            round(globalToLocalY(globalX, globalY) / scaleY).toInt()
+        )
     }
 
-    fun pixelHitTestByte(x: Int, y: Int): Byte {
-        var out = 0.toInt()
+    fun pixelHitTest(x: Int, y: Int): TileSetCollisionType {
+        var out = TileSetCollisionType.NONE
+
         fastForEachChild { child ->
             when (child) {
                 is TileMap -> {
                     // @TODO: handle scale and offset of each layer (use transform)
-                    out = out or child.pixelHitTestByte(x, y).toInt()
+                    out += child.pixelHitTest(x, y)
                 }
             }
         }
-        return out.toByte()
+
+        //println("TESTING $x, $y . out = $out")
+
+        return out
     }
 
     init {

@@ -67,30 +67,27 @@ suspend fun TileSetData.toTiledSet(
 		}
 	}
 
-    val colliderPalette = RgbaArray(IntArray(0x100) { RGBA(it, it, it, it).value })
-    val collisionProvider: TileSetCollisionProvider = { id ->
-        val tile = tileset.tilesById[id]
-        println("id=$id, tile=$tile")
-        if (tile != null) {
-            when (tile.type) {
-                "collision" -> Bitmap8(tileWidth, tileHeight, ByteArray(tileWidth * tileHeight) { 0xFF.toByte() }, colliderPalette)
-                else -> null
+    val collisionsMap = IntMap<TileSetCollision>()
+    tileset.tiles.fastForEach { tile ->
+        val collision = tile.type == "collision"
+        collisionsMap[tile.id] = object : TileSetCollision() {
+            override fun get(x: Int, y: Int): TileSetCollisionType {
+                return if (collision) TileSetCollisionType.ALL else TileSetCollisionType.NONE
             }
-        } else {
-            null
         }
     }
 
-	val ptileset = when {
+
+    val ptileset = when {
 	    atlas != null -> {
-            val tileSet = TileSet(bmp.slice(), tileset.tileWidth, tileset.tileHeight, tileset.columns, tileset.tileCount, collisionProvider)
+            val tileSet = TileSet(bmp.slice(), tileset.tileWidth, tileset.tileHeight, tileset.columns, tileset.tileCount, collisionsMap)
             val map = IntMap<BmpSlice>()
             tileSet.textures.fastForEachWithIndex { index, value ->
                 if (value != null) {
                     map[index] = atlas.add(value, Unit).slice
                 }
             }
-            TileSet(map, tileset.tileWidth, tileset.tileHeight, collisionProvider)
+            TileSet(map, tileset.tileWidth, tileset.tileHeight, collisionsMap)
 	    }
         createBorder > 0 -> {
             bmp = bmp.toBMP32()
@@ -106,7 +103,7 @@ suspend fun TileSetData.toTiledSet(
                     tileset.spacing,
                     tileset.margin
                 )
-                TileSet(slices, tileset.tileWidth, tileset.tileHeight, collisionProvider)
+                TileSet(slices, tileset.tileWidth, tileset.tileHeight, collisionsMap)
             } else {
                 // No separation between tiles: create a new Bitmap adding that separation
                 val bitmaps = if (bmp.width != 0 && bmp.height != 0) {
@@ -133,11 +130,11 @@ suspend fun TileSetData.toTiledSet(
                 } else {
                     emptyList()
                 }
-                TileSet.fromBitmapSlices(tileset.tileWidth, tileset.tileHeight, bitmaps, border = createBorder, mipmaps = false, collisionProvider = collisionProvider)
+                TileSet.fromBitmapSlices(tileset.tileWidth, tileset.tileHeight, bitmaps, border = createBorder, mipmaps = false, collisionsMap = collisionsMap)
             }
         }
         else -> {
-            TileSet(bmp.slice(), tileset.tileWidth, tileset.tileHeight, tileset.columns, tileset.tileCount, collisionProvider)
+            TileSet(bmp.slice(), tileset.tileWidth, tileset.tileHeight, tileset.columns, tileset.tileCount, collisionsMap)
         }
     }
 

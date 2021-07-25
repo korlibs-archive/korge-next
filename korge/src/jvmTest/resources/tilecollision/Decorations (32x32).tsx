@@ -41,5 +41,5 @@
    <object id="1" type="collision" x="0" y="0" width="32" height="15"/>
   </objectgroup>
  </tile>
- <tile id="25"/>
+ <tile id="25" type="collision"/>
 </tileset>

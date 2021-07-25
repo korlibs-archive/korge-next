@@ -6,6 +6,7 @@ import com.soywiz.korge.tiled.*
 import com.soywiz.korge.view.*
 import com.soywiz.korge.view.animation.*
 import com.soywiz.korim.atlas.*
+import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
 import com.soywiz.korim.format.*
 import com.soywiz.korio.file.std.*
@@ -77,6 +78,8 @@ suspend fun Stage.mainVampire() {
         imageDataView(slices["pumpkin"]).xy(64, 50)
     }
 
+    //image(tiledMapView.collisionToBitmap()).scale(2.0)
+
     //val ase2 = resourcesVfs["vampire.ase"].readImageData(ASE, atlas = atlas)
     //val ase3 = resourcesVfs["vampire.ase"].readImageData(ASE, atlas = atlas)
     //for (bitmap in atlas.allBitmaps) image(bitmap) // atlas generation
@@ -101,31 +104,55 @@ suspend fun Stage.mainVampire() {
         }
     }
     //val path = buildPath { rect(300, 0, 100, 100) }
-    val collider = gg.toCollider()
+    //val collider = gg.toCollider()
+    val collider = tiledMapView.toCollider()
 
     container {
         keepChildrenSortedByY()
 
         val character1 = imageDataView(characters["vampire"], "down") {
             stop()
-            xy(100, 100)
+            xy(200, 200)
         }
 
         val character2 = imageDataView(characters["vamp"], "down") {
             stop()
-            xy(120, 110)
+            xy(160, 110)
         }
 
         controlWithKeyboard(
             character1, collider,
             up = Key.UP, right = Key.RIGHT, down = Key.DOWN, left = Key.LEFT,
             onBeforeMove = { char, dx, dy ->
-                println("dx=$dx, dy=$dy, tiledMapView=${tiledMapView.globalPixelHitTestByte(char.globalX, char.globalY)}")
-                tiledMap.allLayers
+                val oldX = char.x
+                val oldY = char.y
+                char.x += dx
+                char.y += dy
+                if (tiledMapView.globalPixelHitTest(char.globalXY()).value != 0) {
+                    char.x = oldX
+                    char.y = oldY
+                }
+                true
             }
         )
         controlWithKeyboard(character2, collider, up = Key.W, right = Key.D, down = Key.S, left = Key.A)
     }
+}
+
+private fun TiledMapView.toCollider(): MovementCollider {
+    return object : MovementCollider() {
+        override fun tryMove(line: Line, out: Point) {
+            TODO("Not yet implemented")
+        }
+    }
+}
+
+fun TiledMapView.collisionToBitmap(): Bitmap {
+    val bmp = Bitmap32(this.width.toInt(), this.height.toInt())
+    for (y in 0 until bmp.height) for (x in 0 until bmp.width) {
+        bmp[x, y] = if (pixelHitTest(x, y).value != 0) Colors.WHITE else Colors.TRANSPARENT_BLACK
+    }
+    return bmp
 }
 
 fun Stage.controlWithKeyboard(
@@ -135,7 +162,7 @@ fun Stage.controlWithKeyboard(
     right: Key = Key.RIGHT,
     down: Key = Key.DOWN,
     left: Key = Key.LEFT,
-    onBeforeMove: (ImageDataView, dx: Double, dy: Double) -> Unit = { data, dx, dy -> }
+    onBeforeMove: (ImageDataView, dx: Double, dy: Double) -> Boolean = { data, dx, dy -> true }
 ) {
     addUpdater { dt ->
         val speed = 5.0 * (dt / 16.0.milliseconds)
@@ -150,8 +177,12 @@ fun Stage.controlWithKeyboard(
         if (pressingUp) dy = -1.0
         if (pressingDown) dy = +1.0
         if (dx != 0.0 || dy != 0.0) {
-            onBeforeMove(char, dx, dy)
-            char.moveWithCollider(Point(dx, dy).normalized * speed, collider)
+            val dpos = Point(dx, dy).normalized * speed
+            if (onBeforeMove(char, dpos.x, dpos.y)) {
+                //char.moveWithCollider(dpos, collider)
+                //char.x += dpos.x
+                //char.y += dpos.y
+            }
         }
         char.animation = when {
             pressingLeft -> "left"

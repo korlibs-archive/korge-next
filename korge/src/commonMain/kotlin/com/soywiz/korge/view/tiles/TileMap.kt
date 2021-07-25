@@ -4,14 +4,11 @@ import com.soywiz.kds.*
 import com.soywiz.kds.IntArray2
 import com.soywiz.kds.iterators.*
 import com.soywiz.kmem.*
-import com.soywiz.korag.AG
 import com.soywiz.korge.internal.*
 import com.soywiz.korge.render.*
 import com.soywiz.korge.tiled.TiledMap
-import com.soywiz.korge.util.*
 import com.soywiz.korge.view.*
 import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.*
 import com.soywiz.korma.geom.*
 import kotlin.math.*
 
@@ -68,20 +65,20 @@ open class TileMap(
 	val tileWidth = tileset.width.toDouble()
 	val tileHeight = tileset.height.toDouble()
 
-    fun pixelHitTestByte(x: Int, y: Int): Byte {
+    fun pixelHitTest(x: Int, y: Int): TileSetCollisionType {
+        if (x < 0 || y < 0) return TileSetCollisionType.ALL // Outside bounds
         val tw = tileset.width
         val th = tileset.height
-        return pixelHitTestByte(x / tw, y / th, x % tw, y % th)
+        return pixelHitTest(x / tw, y / th, x % tw, y % th)
     }
 
-    fun pixelHitTestByte(tileX: Int, tileY: Int, x: Int, y: Int): Byte {
-        println("pixelHitTestByte: tileX=$tileX, tileY=$tileY, x=$x, y=$y")
+    fun pixelHitTest(tileX: Int, tileY: Int, x: Int, y: Int): TileSetCollisionType {
+        //println("pixelHitTestByte: tileX=$tileX, tileY=$tileY, x=$x, y=$y")
         //println(tileset.collisions.toList())
-        if (!intMap.inside(tileX, tileY)) return 0
+        if (!intMap.inside(tileX, tileY)) return TileSetCollisionType.ALL
         val tile = intMap[tileX, tileY]
-        val collision = tileset.collisions[tile] ?: return 0
-        if (collision.inside(x, y)) return 0
-        return collision[x, y].toByte()
+        val collision = tileset.collisions[tile] ?: return TileSetCollisionType.NONE
+        return collision[x, y]
     }
 
 	enum class Repeat(val get: (v: Int, max: Int) -> Int) {

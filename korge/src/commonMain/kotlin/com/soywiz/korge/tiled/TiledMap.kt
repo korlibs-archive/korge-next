@@ -15,7 +15,6 @@ import com.soywiz.korio.lang.*
 import com.soywiz.korio.serialization.xml.*
 import com.soywiz.korio.util.*
 import com.soywiz.korma.geom.*
-import kotlin.collections.set
 
 class TiledMapData(
     var orientation: TiledMap.Orientation = TiledMap.Orientation.ORTHOGONAL,
@@ -166,12 +165,16 @@ fun List<TiledMap.TiledTileset>.toTileSet(): TileSet {
     val tilesets = this
     val maxGid = tilesets.map { it.maxgid }.maxOrNull() ?: 0
     val tiles = IntMap<BmpSlice>(maxGid * 2)
+    val collisions = IntMap<TileSetCollision>(maxGid * 2)
     tilesets.fastForEach { tileset ->
         tileset.tileset.texturesMap.fastForEach { key, value ->
             tiles[tileset.firstgid + key] = value
         }
+        tileset.tileset.collisionsMap.fastForEach { key, value ->
+            collisions[tileset.firstgid + key] = value
+        }
     }
-    return TileSet(tiles)
+    return TileSet(tiles, collisionsMap = collisions)
 }
 
 //e: java.lang.UnsupportedOperationException: Class literal annotation arguments are not yet supported: Factory

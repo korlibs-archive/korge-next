@@ -6,24 +6,44 @@ import com.soywiz.kmem.*
 import com.soywiz.korim.bitmap.*
 import kotlin.math.*
 
-typealias TileSetCollisionProvider = TileSet.(id: Int) -> Bitmap8?
+inline class TileSetCollisionType(val value: Int) {
+    operator fun plus(that: TileSetCollisionType): TileSetCollisionType = TileSetCollisionType(this.value or that.value)
+
+    constructor(up: Boolean, right: Boolean, down: Boolean, left: Boolean)
+        : this(0.insert(up, 0).insert(right, 1).insert(down, 2).insert(left, 3))
+
+    companion object {
+        val NONE = TileSetCollisionType(false, false, false, false)
+        val ALL = TileSetCollisionType(true, true, true, true)
+        val UP = TileSetCollisionType(true, false, false, false)
+        val RIGHT = TileSetCollisionType(false, true, false, false)
+        val DOWN = TileSetCollisionType(false, false, true, false)
+        val LEFT = TileSetCollisionType(false, false, false, true)
+    }
+
+    val up: Boolean get() = value.extractBool(0)
+    val right: Boolean get() = value.extractBool(1)
+    val down: Boolean get() = value.extractBool(2)
+    val left: Boolean get() = value.extractBool(3)
+
+    override fun toString(): String = "TileSetCollisionType(up=$up,right=$right,down=$down,left=$left)"
+}
+
+open class TileSetCollision {
+    open operator fun get(x: Int, y: Int): TileSetCollisionType = TileSetCollisionType(0)
+}
 
 class TileSet(
     val texturesMap: IntMap<BmpSlice>,
 	//val textures: List<BmpSlice?>,
-	val width: Int = texturesMap.firstValue().width,
-	val height: Int = texturesMap.firstValue().height,
-    val collisionProvider: TileSetCollisionProvider? = null,
+    val width: Int = texturesMap.firstValue().width,
+    val height: Int = texturesMap.firstValue().height,
+    val collisionsMap: IntMap<TileSetCollision> = IntMap(),
 ) {
     val base: Bitmap by lazy { if (texturesMap.size == 0) Bitmaps.transparent.bmpBase else texturesMap.firstValue().bmpBase }
     val hasMultipleBaseBitmaps by lazy { texturesMap.values.any { it !== null && it.bmpBase !== base } }
     val textures by lazy { Array<BmpSlice?>(texturesMap.keys.maxOrNull()?.plus(1) ?: 0) { texturesMap[it] } }
-    val collisions by lazy {
-        println("Computing collisions:")
-        Array<Bitmap8?>(texturesMap.keys.maxOrNull()?.plus(1) ?: 0) { collisionProvider?.invoke(this@TileSet, it) }.also { tileset ->
-            println("collisionProvider=$collisionProvider : ${tileset.toList()}")
-        }
-    }
+    val collisions by lazy { Array<TileSetCollision?>(texturesMap.keys.maxOrNull()?.plus(1) ?: 0) { collisionsMap[it] } }
 	//init { if (hasMultipleBaseBitmaps) throw RuntimeException("All tiles in the set must have the same base texture") }
 
     //init {
@@ -38,37 +58,37 @@ class TileSet(
 	companion object {
 		operator fun invoke(
             textureMap: Map<Int, BmpSlice>,
-            collisionProvider: TileSetCollisionProvider? = null,
-        ): TileSet = TileSet(textureMap.toIntMap(), collisionProvider = collisionProvider)
+            collisionsMap: IntMap<TileSetCollision> = IntMap(),
+        ): TileSet = TileSet(textureMap.toIntMap(), collisionsMap = collisionsMap)
 
         operator fun invoke(
             tileSets: List<TileSet>,
-            collisionProvider: TileSetCollisionProvider? = null,
+            collisionsMap: IntMap<TileSetCollision> = IntMap(),
         ): TileSet {
             val map = IntMap<BmpSlice>()
             tileSets.fastForEach { tileSet ->
                 map.putAll(tileSet.texturesMap)
             }
-            return TileSet(map, collisionProvider = collisionProvider)
+            return TileSet(map, collisionsMap = collisionsMap)
         }
 
         operator fun invoke(
             tiles: List<BmpSlice>,
             width: Int, height: Int,
-            collisionProvider: TileSetCollisionProvider? = null,
+            collisionsMap: IntMap<TileSetCollision> = IntMap(),
         ): TileSet {
             val map = IntMap<BmpSlice>()
             tiles.fastForEachWithIndex { index, value -> map[index] = value }
-            return TileSet(map, width, height, collisionProvider)
+            return TileSet(map, width, height, collisionsMap = collisionsMap)
         }
 
 		operator fun invoke(
-			base: BitmapSlice<Bitmap>,
-			tileWidth: Int,
-			tileHeight: Int,
-			columns: Int = -1,
-			totalTiles: Int = -1,
-            collisionProvider: TileSetCollisionProvider? = null,
+            base: BitmapSlice<Bitmap>,
+            tileWidth: Int,
+            tileHeight: Int,
+            columns: Int = -1,
+            totalTiles: Int = -1,
+            collisionsMap: IntMap<TileSetCollision> = IntMap(),
 		): TileSet {
 			val out = IntMap<BmpSlice>()
 			val rows = base.height / tileHeight
@@ -83,7 +103,7 @@ class TileSet(
 				}
 			}
 
-			return TileSet(out, tileWidth, tileHeight, collisionProvider)
+			return TileSet(out, tileWidth, tileHeight, collisionsMap = collisionsMap)
 		}
 
         fun extractBmpSlices(
@@ -125,9 +145,9 @@ class TileSet(
             bitmaps: List<Bitmap32>,
             border: Int = 1,
             mipmaps: Boolean = false,
-            collisionProvider: TileSetCollisionProvider? = null,
+            collisionsMap: IntMap<TileSetCollision> = IntMap(),
         ): TileSet {
-            return fromBitmapSlices(tilewidth, tileheight, bitmaps.map { it.slice() }, border, mipmaps, collisionProvider)
+            return fromBitmapSlices(tilewidth, tileheight, bitmaps.map { it.slice() }, border, mipmaps, collisionsMap = collisionsMap)
         }
 
 		fun fromBitmapSlices(
@@ -136,7 +156,7 @@ class TileSet(
             bmpSlices: List<BitmapSlice<Bitmap32>>,
             border: Int = 1,
             mipmaps: Boolean = false,
-            collisionProvider: TileSetCollisionProvider? = null,
+            collisionsMap: IntMap<TileSetCollision> = IntMap(),
         ): TileSet {
 			check(bmpSlices.all { it.width == tilewidth && it.height == tileheight })
 			if (bmpSlices.isEmpty()) return TileSet(IntMap(), tilewidth, tileheight)
@@ -177,7 +197,7 @@ class TileSet(
 				}
 			}
 
-			return TileSet(texs, tilewidth, tileheight, collisionProvider = collisionProvider)
+			return TileSet(texs, tilewidth, tileheight, collisionsMap = collisionsMap)
 		}
 	}
 }
