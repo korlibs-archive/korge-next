@@ -6,14 +6,12 @@ import com.soywiz.korge.tiled.*
 import com.soywiz.korge.view.*
 import com.soywiz.korge.view.animation.*
 import com.soywiz.korim.atlas.*
-import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
 import com.soywiz.korim.format.*
 import com.soywiz.korio.file.std.*
 import com.soywiz.korio.stream.*
 import com.soywiz.korma.geom.*
 import com.soywiz.korma.geom.collider.*
-import com.soywiz.korma.geom.shape.*
 import com.soywiz.korma.geom.vector.*
 import kotlinx.coroutines.*
 
@@ -64,10 +62,12 @@ suspend fun Stage.mainVampire() {
 
     //image(atlas.bitmap);return
 
+    lateinit var tiledMapView: TiledMapView
+
     container {
         scale(2.0)
         //tiledMapView(tiledMap, smoothing = false)
-        tiledMapView(tiledMap, smoothing = true)
+        tiledMapView = tiledMapView(tiledMap, smoothing = true)
     }
 
     container {
@@ -116,7 +116,14 @@ suspend fun Stage.mainVampire() {
             xy(120, 110)
         }
 
-        controlWithKeyboard(character1, collider, up = Key.UP, right = Key.RIGHT, down = Key.DOWN, left = Key.LEFT)
+        controlWithKeyboard(
+            character1, collider,
+            up = Key.UP, right = Key.RIGHT, down = Key.DOWN, left = Key.LEFT,
+            onBeforeMove = { char, dx, dy ->
+                println("dx=$dx, dy=$dy, tiledMapView=${tiledMapView.globalPixelHitTestByte(char.globalX, char.globalY)}")
+                tiledMap.allLayers
+            }
+        )
         controlWithKeyboard(character2, collider, up = Key.W, right = Key.D, down = Key.S, left = Key.A)
     }
 }
@@ -128,6 +135,7 @@ fun Stage.controlWithKeyboard(
     right: Key = Key.RIGHT,
     down: Key = Key.DOWN,
     left: Key = Key.LEFT,
+    onBeforeMove: (ImageDataView, dx: Double, dy: Double) -> Unit = { data, dx, dy -> }
 ) {
     addUpdater { dt ->
         val speed = 5.0 * (dt / 16.0.milliseconds)
@@ -142,6 +150,7 @@ fun Stage.controlWithKeyboard(
         if (pressingUp) dy = -1.0
         if (pressingDown) dy = +1.0
         if (dx != 0.0 || dy != 0.0) {
+            onBeforeMove(char, dx, dy)
             char.moveWithCollider(Point(dx, dy).normalized * speed, collider)
         }
         char.animation = when {

@@ -67,16 +67,30 @@ suspend fun TileSetData.toTiledSet(
 		}
 	}
 
+    val colliderPalette = RgbaArray(IntArray(0x100) { RGBA(it, it, it, it).value })
+    val collisionProvider: TileSetCollisionProvider = { id ->
+        val tile = tileset.tilesById[id]
+        println("id=$id, tile=$tile")
+        if (tile != null) {
+            when (tile.type) {
+                "collision" -> Bitmap8(tileWidth, tileHeight, ByteArray(tileWidth * tileHeight) { 0xFF.toByte() }, colliderPalette)
+                else -> null
+            }
+        } else {
+            null
+        }
+    }
+
 	val ptileset = when {
 	    atlas != null -> {
-            val tileSet = TileSet(bmp.slice(), tileset.tileWidth, tileset.tileHeight, tileset.columns, tileset.tileCount)
+            val tileSet = TileSet(bmp.slice(), tileset.tileWidth, tileset.tileHeight, tileset.columns, tileset.tileCount, collisionProvider)
             val map = IntMap<BmpSlice>()
             tileSet.textures.fastForEachWithIndex { index, value ->
                 if (value != null) {
                     map[index] = atlas.add(value, Unit).slice
                 }
             }
-            TileSet(map, tileset.tileWidth, tileset.tileHeight)
+            TileSet(map, tileset.tileWidth, tileset.tileHeight, collisionProvider)
 	    }
         createBorder > 0 -> {
             bmp = bmp.toBMP32()
@@ -92,7 +106,7 @@ suspend fun TileSetData.toTiledSet(
                     tileset.spacing,
                     tileset.margin
                 )
-                TileSet(slices, tileset.tileWidth, tileset.tileHeight)
+                TileSet(slices, tileset.tileWidth, tileset.tileHeight, collisionProvider)
             } else {
                 // No separation between tiles: create a new Bitmap adding that separation
                 val bitmaps = if (bmp.width != 0 && bmp.height != 0) {
@@ -119,11 +133,11 @@ suspend fun TileSetData.toTiledSet(
                 } else {
                     emptyList()
                 }
-                TileSet.fromBitmapSlices(tileset.tileWidth, tileset.tileHeight, bitmaps, border = createBorder, mipmaps = false)
+                TileSet.fromBitmapSlices(tileset.tileWidth, tileset.tileHeight, bitmaps, border = createBorder, mipmaps = false, collisionProvider = collisionProvider)
             }
         }
         else -> {
-            TileSet(bmp.slice(), tileset.tileWidth, tileset.tileHeight, tileset.columns, tileset.tileCount)
+            TileSet(bmp.slice(), tileset.tileWidth, tileset.tileHeight, tileset.columns, tileset.tileCount, collisionProvider)
         }
     }
 
@@ -283,7 +297,7 @@ private fun Xml.parseTile(): TileData {
 	}
 	return TileData(
 		id = tile.int("id"),
-		type = tile.int("type", -1),
+		type = tile.strNull("type"),
 		terrain = tile.str("terrain").takeIf { it.isNotEmpty() }?.split(',')?.map { it.toIntOrNull() },
 		probability = tile.double("probability"),
 		image = tile.child("image")?.parseImage(),

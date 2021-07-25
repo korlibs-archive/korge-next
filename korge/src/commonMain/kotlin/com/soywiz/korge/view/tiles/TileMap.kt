@@ -68,6 +68,22 @@ open class TileMap(
 	val tileWidth = tileset.width.toDouble()
 	val tileHeight = tileset.height.toDouble()
 
+    fun pixelHitTestByte(x: Int, y: Int): Byte {
+        val tw = tileset.width
+        val th = tileset.height
+        return pixelHitTestByte(x / tw, y / th, x % tw, y % th)
+    }
+
+    fun pixelHitTestByte(tileX: Int, tileY: Int, x: Int, y: Int): Byte {
+        println("pixelHitTestByte: tileX=$tileX, tileY=$tileY, x=$x, y=$y")
+        //println(tileset.collisions.toList())
+        if (!intMap.inside(tileX, tileY)) return 0
+        val tile = intMap[tileX, tileY]
+        val collision = tileset.collisions[tile] ?: return 0
+        if (collision.inside(x, y)) return 0
+        return collision[x, y].toByte()
+    }
+
 	enum class Repeat(val get: (v: Int, max: Int) -> Int) {
 		NONE({ v, max -> v }),
 		REPEAT({ v, max -> v umod max }),

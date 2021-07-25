@@ -12,7 +12,25 @@ inline fun Container.tiledMapView(tiledMap: TiledMap, showShapes: Boolean = true
 
 class TiledMapView(tiledMap: TiledMap, showShapes: Boolean = true, smoothing: Boolean = true) : Container() {
     val tileset = tiledMap.tilesets.toTileSet()
-	init {
+
+    fun globalPixelHitTestByte(globalX: Double, globalY: Double): Byte {
+        return pixelHitTestByte(globalToLocalX(globalX, globalY).toInt(), globalToLocalY(globalX, globalY).toInt())
+    }
+
+    fun pixelHitTestByte(x: Int, y: Int): Byte {
+        var out = 0.toInt()
+        fastForEachChild { child ->
+            when (child) {
+                is TileMap -> {
+                    // @TODO: handle scale and offset of each layer (use transform)
+                    out = out or child.pixelHitTestByte(x, y).toInt()
+                }
+            }
+        }
+        return out.toByte()
+    }
+
+    init {
 		tiledMap.allLayers.fastForEachWithIndex { index, layer ->
             val view: View = when (layer) {
                 is TiledMap.Layer.Tiles -> tileMap(

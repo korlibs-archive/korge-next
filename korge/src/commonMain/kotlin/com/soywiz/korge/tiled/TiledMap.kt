@@ -124,7 +124,7 @@ class WangSet(
 
 data class TileData(
     val id: Int,
-    val type: Int = -1,
+    val type: String? = null,
     val terrain: List<Int?>? = null,
     val probability: Double = 0.0,
     val image: TiledMap.Image? = null,
@@ -155,6 +155,8 @@ data class TileSetData(
     val tiles: List<TileData> = listOf(),
     val properties: Map<String, TiledMap.Property> = mapOf()
 ) {
+    val tilesById = tiles.associateByInt { _, it -> it.id }
+
     val width: Int get() = image?.width ?: 0
     val height: Int get() = image?.height ?: 0
     fun clone() = copy()

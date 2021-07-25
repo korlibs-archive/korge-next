@@ -166,7 +166,7 @@ private fun WangSet.toXml(): Xml {
 private fun TileData.toXml(): Xml {
 	return buildXml("tile",
 		"id" to id,
-		"type" to type.takeIf { it != -1 },
+		"type" to type,
 		"terrain" to terrain?.joinToString(",") { it?.toString() ?: "" },
 		"probability" to probability.takeIf { it != 0.0 }?.niceStr
 	) {
