@@ -70,19 +70,19 @@ suspend fun TileSetData.toTiledSet(
 		}
 	}
 
-    class ShapeInfo(val type: TileSetCollisionType, val path: VectorPath) : HitTestable {
+    class ShapeInfo(val type: HitTestDirectionFlags, val path: VectorPath) : HitTestable {
         override fun hitTestAny(x: Double, y: Double, direction: HitTestDirection): Boolean {
-            return path.containsPoint(x, y) && type.checkTestDirection(direction)
+            return path.containsPoint(x, y) && type.matches(direction)
         }
     }
 
     val collisionsMap = IntMap<HitTestable>()
     tileset.tiles.fastForEach { tile ->
-        val collisionType = TileSetCollisionType.fromString(tile.type)
+        val collisionType = HitTestDirectionFlags.fromString(tile.type)
         val vectorPaths = fastArrayListOf<ShapeInfo>()
         if (tile.objectGroup != null) {
             tile.objectGroup.objects.fastForEach {
-                vectorPaths.add(ShapeInfo(TileSetCollisionType.fromString(it.type), it.toVectorPath()))
+                vectorPaths.add(ShapeInfo(HitTestDirectionFlags.fromString(it.type), it.toVectorPath()))
             }
         }
         //println("tile.objectGroup=${tile.objectGroup}")
@@ -93,7 +93,7 @@ suspend fun TileSetData.toTiledSet(
                         if (it.hitTestAny(x, y, direction)) return true
                     }
                 }
-                return collisionType.checkTestDirection(direction)
+                return collisionType.matches(direction)
             }
         }
     }

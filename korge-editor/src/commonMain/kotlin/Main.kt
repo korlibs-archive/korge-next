@@ -103,9 +103,6 @@ suspend fun Stage.mainVampire() {
             //star(400, 400, 50)
         }
     }
-    //val path = buildPath { rect(300, 0, 100, 100) }
-    //val collider = gg.toCollider()
-    val collider = tiledMapView.toCollider()
 
     container {
         keepChildrenSortedByY()
@@ -124,15 +121,6 @@ suspend fun Stage.mainVampire() {
 
         controlWithKeyboard(character1, hitTestable, up = Key.UP, right = Key.RIGHT, down = Key.DOWN, left = Key.LEFT,)
         controlWithKeyboard(character2, hitTestable, up = Key.W, right = Key.D, down = Key.S, left = Key.A)
-    }
-}
-
-
-private fun TiledMapView.toCollider(): MovementCollider {
-    return object : MovementCollider() {
-        override fun tryMove(line: Line, out: Point) {
-            TODO("Not yet implemented")
-        }
     }
 }
 
@@ -166,7 +154,7 @@ fun Stage.controlWithKeyboard(
         if (pressingDown) dy = +1.0
         if (dx != 0.0 || dy != 0.0) {
             val dpos = Point(dx, dy).normalized * speed
-            char.moveWithCollision(collider, dpos.x, dpos.y)
+            char.moveWithHitTestable(collider, dpos.x, dpos.y)
         }
         char.animation = when {
             pressingLeft -> "left"

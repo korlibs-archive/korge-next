@@ -7,50 +7,6 @@ import com.soywiz.korge.view.*
 import com.soywiz.korim.bitmap.*
 import kotlin.math.*
 
-inline class TileSetCollisionType(val value: Int) {
-    operator fun plus(that: TileSetCollisionType): TileSetCollisionType = TileSetCollisionType(this.value or that.value)
-
-    constructor(up: Boolean = false, right: Boolean = false, down: Boolean = false, left: Boolean = false)
-        : this(0.insert(up, 0).insert(right, 1).insert(down, 2).insert(left, 3))
-
-    companion object {
-        val NONE = TileSetCollisionType(false, false, false, false)
-        val ALL = TileSetCollisionType(true, true, true, true)
-        val UP = TileSetCollisionType(up = true)
-        val RIGHT = TileSetCollisionType(right = true)
-        val DOWN = TileSetCollisionType(down = true)
-        val LEFT = TileSetCollisionType(left = true)
-
-        fun fromString(kind: String?): TileSetCollisionType = when (kind) {
-            "collision" -> ALL
-            "up_collision" -> UP
-            "right_collision" -> RIGHT
-            "left_collision" -> LEFT
-            "down_collision" -> LEFT
-            else -> NONE
-        }
-    }
-
-    val all: Boolean get() = up && right && down && left
-    val any: Boolean get() = value != 0
-    val up: Boolean get() = value.extractBool(0)
-    val right: Boolean get() = value.extractBool(1)
-    val down: Boolean get() = value.extractBool(2)
-    val left: Boolean get() = value.extractBool(3)
-
-    fun checkTestDirection(hitTestDirection: HitTestDirection): Boolean {
-        return when (hitTestDirection) {
-            HitTestDirection.ANY -> any
-            HitTestDirection.UP -> up
-            HitTestDirection.RIGHT -> right
-            HitTestDirection.DOWN -> down
-            HitTestDirection.LEFT -> left
-        }
-    }
-
-    override fun toString(): String = "TileSetCollisionType(up=$up,right=$right,down=$down,left=$left)"
-}
-
 class TileSet(
     val texturesMap: IntMap<BmpSlice>,
 	//val textures: List<BmpSlice?>,
