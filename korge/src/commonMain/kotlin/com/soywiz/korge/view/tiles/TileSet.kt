@@ -3,22 +3,32 @@ package com.soywiz.korge.view.tiles
 import com.soywiz.kds.*
 import com.soywiz.kds.iterators.*
 import com.soywiz.kmem.*
+import com.soywiz.korge.view.*
 import com.soywiz.korim.bitmap.*
 import kotlin.math.*
 
 inline class TileSetCollisionType(val value: Int) {
     operator fun plus(that: TileSetCollisionType): TileSetCollisionType = TileSetCollisionType(this.value or that.value)
 
-    constructor(up: Boolean, right: Boolean, down: Boolean, left: Boolean)
+    constructor(up: Boolean = false, right: Boolean = false, down: Boolean = false, left: Boolean = false)
         : this(0.insert(up, 0).insert(right, 1).insert(down, 2).insert(left, 3))
 
     companion object {
         val NONE = TileSetCollisionType(false, false, false, false)
         val ALL = TileSetCollisionType(true, true, true, true)
-        val UP = TileSetCollisionType(true, false, false, false)
-        val RIGHT = TileSetCollisionType(false, true, false, false)
-        val DOWN = TileSetCollisionType(false, false, true, false)
-        val LEFT = TileSetCollisionType(false, false, false, true)
+        val UP = TileSetCollisionType(up = true)
+        val RIGHT = TileSetCollisionType(right = true)
+        val DOWN = TileSetCollisionType(down = true)
+        val LEFT = TileSetCollisionType(left = true)
+
+        fun fromString(kind: String?): TileSetCollisionType = when (kind) {
+            "collision" -> ALL
+            "up_collision" -> UP
+            "right_collision" -> RIGHT
+            "left_collision" -> LEFT
+            "down_collision" -> LEFT
+            else -> NONE
+        }
     }
 
     val all: Boolean get() = up && right && down && left
@@ -28,11 +38,17 @@ inline class TileSetCollisionType(val value: Int) {
     val down: Boolean get() = value.extractBool(2)
     val left: Boolean get() = value.extractBool(3)
 
-    override fun toString(): String = "TileSetCollisionType(up=$up,right=$right,down=$down,left=$left)"
-}
+    fun checkTestDirection(hitTestDirection: HitTestDirection): Boolean {
+        return when (hitTestDirection) {
+            HitTestDirection.ANY -> any
+            HitTestDirection.UP -> up
+            HitTestDirection.RIGHT -> right
+            HitTestDirection.DOWN -> down
+            HitTestDirection.LEFT -> left
+        }
+    }
 
-open class TileSetCollision {
-    open operator fun get(x: Int, y: Int): TileSetCollisionType = TileSetCollisionType(0)
+    override fun toString(): String = "TileSetCollisionType(up=$up,right=$right,down=$down,left=$left)"
 }
 
 class TileSet(
@@ -40,12 +56,12 @@ class TileSet(
 	//val textures: List<BmpSlice?>,
     val width: Int = texturesMap.firstValue().width,
     val height: Int = texturesMap.firstValue().height,
-    val collisionsMap: IntMap<TileSetCollision> = IntMap(),
+    val collisionsMap: IntMap<HitTestable> = IntMap(),
 ) {
     val base: Bitmap by lazy { if (texturesMap.size == 0) Bitmaps.transparent.bmpBase else texturesMap.firstValue().bmpBase }
     val hasMultipleBaseBitmaps by lazy { texturesMap.values.any { it !== null && it.bmpBase !== base } }
     val textures by lazy { Array<BmpSlice?>(texturesMap.keys.maxOrNull()?.plus(1) ?: 0) { texturesMap[it] } }
-    val collisions by lazy { Array<TileSetCollision?>(texturesMap.keys.maxOrNull()?.plus(1) ?: 0) { collisionsMap[it] } }
+    val collisions by lazy { Array<HitTestable?>(texturesMap.keys.maxOrNull()?.plus(1) ?: 0) { collisionsMap[it] } }
 	//init { if (hasMultipleBaseBitmaps) throw RuntimeException("All tiles in the set must have the same base texture") }
 
     //init {
@@ -60,12 +76,12 @@ class TileSet(
 	companion object {
 		operator fun invoke(
             textureMap: Map<Int, BmpSlice>,
-            collisionsMap: IntMap<TileSetCollision> = IntMap(),
+            collisionsMap: IntMap<HitTestable> = IntMap(),
         ): TileSet = TileSet(textureMap.toIntMap(), collisionsMap = collisionsMap)
 
         operator fun invoke(
             tileSets: List<TileSet>,
-            collisionsMap: IntMap<TileSetCollision> = IntMap(),
+            collisionsMap: IntMap<HitTestable> = IntMap(),
         ): TileSet {
             val map = IntMap<BmpSlice>()
             tileSets.fastForEach { tileSet ->
@@ -77,7 +93,7 @@ class TileSet(
         operator fun invoke(
             tiles: List<BmpSlice>,
             width: Int, height: Int,
-            collisionsMap: IntMap<TileSetCollision> = IntMap(),
+            collisionsMap: IntMap<HitTestable> = IntMap(),
         ): TileSet {
             val map = IntMap<BmpSlice>()
             tiles.fastForEachWithIndex { index, value -> map[index] = value }
@@ -90,7 +106,7 @@ class TileSet(
             tileHeight: Int,
             columns: Int = -1,
             totalTiles: Int = -1,
-            collisionsMap: IntMap<TileSetCollision> = IntMap(),
+            collisionsMap: IntMap<HitTestable> = IntMap(),
 		): TileSet {
 			val out = IntMap<BmpSlice>()
 			val rows = base.height / tileHeight
@@ -147,7 +163,7 @@ class TileSet(
             bitmaps: List<Bitmap32>,
             border: Int = 1,
             mipmaps: Boolean = false,
-            collisionsMap: IntMap<TileSetCollision> = IntMap(),
+            collisionsMap: IntMap<HitTestable> = IntMap(),
         ): TileSet {
             return fromBitmapSlices(tilewidth, tileheight, bitmaps.map { it.slice() }, border, mipmaps, collisionsMap = collisionsMap)
         }
@@ -158,7 +174,7 @@ class TileSet(
             bmpSlices: List<BitmapSlice<Bitmap32>>,
             border: Int = 1,
             mipmaps: Boolean = false,
-            collisionsMap: IntMap<TileSetCollision> = IntMap(),
+            collisionsMap: IntMap<HitTestable> = IntMap(),
         ): TileSet {
 			check(bmpSlices.all { it.width == tilewidth && it.height == tileheight })
 			if (bmpSlices.isEmpty()) return TileSet(IntMap(), tilewidth, tileheight)

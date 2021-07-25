@@ -35,16 +35,7 @@ class TiledMapView(tiledMap: TiledMap, showShapes: Boolean = true, smoothing: Bo
         fastForEachChild { child ->
             when (child) {
                 is TileMap -> {
-                    val res = child.pixelHitTest(x, y)
-                    //println("res=$res")
-                    if (when (direction) {
-                        HitTestDirection.ANY -> res.any
-                        HitTestDirection.LEFT -> res.left
-                        HitTestDirection.RIGHT -> res.right
-                        HitTestDirection.UP -> res.up
-                        HitTestDirection.DOWN -> res.down
-                        else -> false
-                    }) return child
+                    if (child.pixelHitTest(x, y, direction)) return child
                 }
             }
         }
@@ -71,15 +62,15 @@ class TiledMapView(tiledMap: TiledMap, showShapes: Boolean = true, smoothing: Bo
                             val gid = obj.gid
                             //println("ID:${obj.id} : ${obj::class}")
                             var shouldShow = showShapes
-                            val view: View = when (val type = obj.objectType) {
-                                is TiledMap.Object.Type.PPoint -> {
+                            val view: View = when (val type = obj.objectShape) {
+                                is TiledMap.Object.Shape.PPoint -> {
                                     solidRect(1.0, 1.0, Colors.WHITE)
                                 }
-                                is TiledMap.Object.Type.Ellipse -> {
+                                is TiledMap.Object.Shape.Ellipse -> {
                                     ellipse(bounds.width / 2, bounds.height / 2)
                                     //solidRect(bounds.width, bounds.width, Colors.RED)
                                 }
-                                is TiledMap.Object.Type.Rectangle -> {
+                                is TiledMap.Object.Shape.Rectangle -> {
                                     if (gid != null) {
                                         val tileTex = tileset[gid] ?: Bitmaps.transparent
                                         //println("tileTex[gid=$gid]: $tileTex!")
@@ -90,7 +81,7 @@ class TiledMapView(tiledMap: TiledMap, showShapes: Boolean = true, smoothing: Bo
                                         solidRect(bounds.width, bounds.height, Colors.WHITE)
                                     }
                                 }
-                                is TiledMap.Object.Type.Polygon -> graphics {
+                                is TiledMap.Object.Shape.Polygon -> graphics {
                                     fill(Colors.WHITE) {
                                         var first = true
                                         var firstPoint: Point? = null
@@ -107,7 +98,7 @@ class TiledMapView(tiledMap: TiledMap, showShapes: Boolean = true, smoothing: Bo
                                         close()
                                     }
                                 }
-                                is TiledMap.Object.Type.Polyline -> graphics {
+                                is TiledMap.Object.Shape.Polyline -> graphics {
                                     fill(Colors.WHITE) {
                                         var first = true
                                         for (point in type.points) {
@@ -121,7 +112,7 @@ class TiledMapView(tiledMap: TiledMap, showShapes: Boolean = true, smoothing: Bo
                                         close()
                                     }
                                 }
-                                is TiledMap.Object.Type.Text -> {
+                                is TiledMap.Object.Shape.Text -> {
                                     TODO("Unsupported tiled object $obj")
                                 }
                             }

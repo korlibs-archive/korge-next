@@ -65,20 +65,20 @@ open class TileMap(
 	val tileWidth = tileset.width.toDouble()
 	val tileHeight = tileset.height.toDouble()
 
-    fun pixelHitTest(x: Int, y: Int): TileSetCollisionType {
-        if (x < 0 || y < 0) return TileSetCollisionType.ALL // Outside bounds
+    fun pixelHitTest(x: Int, y: Int, direction: HitTestDirection): Boolean {
+        if (x < 0 || y < 0) return false // Outside bounds
         val tw = tileset.width
         val th = tileset.height
-        return pixelHitTest(x / tw, y / th, x % tw, y % th)
+        return pixelHitTest(x / tw, y / th, x % tw, y % th, direction)
     }
 
-    fun pixelHitTest(tileX: Int, tileY: Int, x: Int, y: Int): TileSetCollisionType {
+    fun pixelHitTest(tileX: Int, tileY: Int, x: Int, y: Int, direction: HitTestDirection): Boolean {
         //println("pixelHitTestByte: tileX=$tileX, tileY=$tileY, x=$x, y=$y")
         //println(tileset.collisions.toList())
-        if (!intMap.inside(tileX, tileY)) return TileSetCollisionType.ALL
+        if (!intMap.inside(tileX, tileY)) return false
         val tile = intMap[tileX, tileY]
-        val collision = tileset.collisions[tile] ?: return TileSetCollisionType.NONE
-        return collision[x, y]
+        val collision = tileset.collisions[tile] ?: return false
+        return collision.hitTestAny(x.toDouble(), y.toDouble(), direction)
     }
 
 	enum class Repeat(val get: (v: Int, max: Int) -> Int) {

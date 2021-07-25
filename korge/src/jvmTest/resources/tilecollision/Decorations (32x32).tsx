@@ -16,7 +16,7 @@
    <object id="1" type="up_collision" x="0" y="0" width="32" height="7"/>
   </objectgroup>
  </tile>
- <tile id="12" type="up_collision">
+ <tile id="12">
   <objectgroup draworder="index" id="2">
    <object id="1" type="collision" x="0" y="0" width="32" height="7"/>
   </objectgroup>

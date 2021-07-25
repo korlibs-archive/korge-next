@@ -45,16 +45,17 @@ fun View.moveWithCollision(collision: HitTestable, dx: Double, dy: Double) {
     val char = this
     val deltaXY = Point(dx, dy)
     val angle = Angle.between(0.0, 0.0, deltaXY.x, deltaXY.y)
-    val hitTestDirection = HitTestDirection.fromAngle(angle)
     val length = deltaXY.length
     val oldX = char.x
     val oldY = char.y
     MOVE_ANGLES.fastForEach { dangle ->
         MOVE_SCALES.fastForEach { dscale ->
             val rangle = angle + dangle * dscale
-            val dpoint = Point.fromPolar(rangle, length)
+            val lengthScale = dangle.cosine
+            val dpoint = Point.fromPolar(rangle, length * lengthScale)
             char.x = oldX + dpoint.x
             char.y = oldY + dpoint.y
+            val hitTestDirection = HitTestDirection.fromAngle(angle)
             if (!collision.hitTestAny(char.globalX, char.globalY, hitTestDirection)) {
                 return // Accept movement
             }

@@ -4,6 +4,8 @@ import com.soywiz.kds.*
 import com.soywiz.kds.iterators.*
 import com.soywiz.kmem.*
 import com.soywiz.korge.tiled.TiledMap.*
+import com.soywiz.korge.tiled.TiledMap.Image
+import com.soywiz.korge.view.*
 import com.soywiz.korge.view.tiles.*
 import com.soywiz.korim.atlas.*
 import com.soywiz.korim.bitmap.*
@@ -15,6 +17,7 @@ import com.soywiz.korio.file.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korio.serialization.xml.*
 import com.soywiz.korma.geom.*
+import com.soywiz.korma.geom.vector.*
 import com.soywiz.krypto.encoding.*
 import kotlin.collections.set
 
@@ -67,12 +70,30 @@ suspend fun TileSetData.toTiledSet(
 		}
 	}
 
-    val collisionsMap = IntMap<TileSetCollision>()
+    class ShapeInfo(val type: TileSetCollisionType, val path: VectorPath) : HitTestable {
+        override fun hitTestAny(x: Double, y: Double, direction: HitTestDirection): Boolean {
+            return path.containsPoint(x, y) && type.checkTestDirection(direction)
+        }
+    }
+
+    val collisionsMap = IntMap<HitTestable>()
     tileset.tiles.fastForEach { tile ->
-        val collision = tile.type == "collision"
-        collisionsMap[tile.id] = object : TileSetCollision() {
-            override fun get(x: Int, y: Int): TileSetCollisionType {
-                return if (collision) TileSetCollisionType.ALL else TileSetCollisionType.NONE
+        val collisionType = TileSetCollisionType.fromString(tile.type)
+        val vectorPaths = fastArrayListOf<ShapeInfo>()
+        if (tile.objectGroup != null) {
+            tile.objectGroup.objects.fastForEach {
+                vectorPaths.add(ShapeInfo(TileSetCollisionType.fromString(it.type), it.toVectorPath()))
+            }
+        }
+        //println("tile.objectGroup=${tile.objectGroup}")
+        collisionsMap[tile.id] = object : HitTestable {
+            override fun hitTestAny(x: Double, y: Double, direction: HitTestDirection): Boolean {
+                if (vectorPaths.isNotEmpty()) {
+                    vectorPaths.fastForEach {
+                        if (it.hitTestAny(x, y, direction)) return true
+                    }
+                }
+                return collisionType.checkTestDirection(direction)
             }
         }
     }
@@ -486,12 +507,12 @@ private fun Xml.parseObjectLayer(): Layer.Objects {
 		val polygon = obj.child("polygon")
 		val polyline = obj.child("polyline")
 		val text = obj.child("text")
-		val objectType: Object.Type = when {
-			ellipse != null -> Object.Type.Ellipse
-			point != null -> Object.Type.PPoint
-			polygon != null -> Object.Type.Polygon(polygon.readPoints())
-			polyline != null -> Object.Type.Polyline(polyline.readPoints())
-			text != null -> Object.Type.Text(
+		val objectShape: Object.Shape = when {
+			ellipse != null -> Object.Shape.Ellipse(objInstance.bounds.width, objInstance.bounds.height)
+			point != null -> Object.Shape.PPoint
+			polygon != null -> Object.Shape.Polygon(polygon.readPoints())
+			polyline != null -> Object.Shape.Polyline(polyline.readPoints())
+			text != null -> Object.Shape.Text(
 				fontFamily = text.str("fontfamily", "sans-serif"),
 				pixelSize = text.int("pixelsize", 16),
 				wordWrap = text.int("wrap", 0) == 1,
@@ -508,10 +529,10 @@ private fun Xml.parseObjectLayer(): Layer.Objects {
 					TextVAlignment.values().find { it.value == align } ?: TextVAlignment.TOP
 				}
 			)
-			else -> Object.Type.Rectangle
+			else -> Object.Shape.Rectangle(objInstance.bounds.width, objInstance.bounds.height)
 		}
 
-		objInstance.objectType = objectType
+		objInstance.objectShape = objectShape
 		layer.objects.add(objInstance)
 	}
 
