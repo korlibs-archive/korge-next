@@ -14,30 +14,41 @@ inline fun Container.tiledMapView(tiledMap: TiledMap, showShapes: Boolean = true
 class TiledMapView(tiledMap: TiledMap, showShapes: Boolean = true, smoothing: Boolean = true) : Container() {
     val tileset = tiledMap.tilesets.toTileSet()
 
-    fun globalPixelHitTest(globalXY: IPoint): TileSetCollisionType = globalPixelHitTest(globalXY.x, globalXY.y)
+    override fun hitTest(x: Double, y: Double, direction: HitTestDirection): View? {
+        //return super.hitTest(x, y, direction)
+        return globalPixelHitTest(x, y, direction)
+    }
 
-    fun globalPixelHitTest(globalX: Double, globalY: Double): TileSetCollisionType {
+    //protected override fun hitTestInternal(x: Double, y: Double, direction: HitTestDirection): View? = globalPixelHitTest(x, y, direction)
+
+    //fun globalPixelHitTest(globalXY: IPoint, direction: HitTestDirection = HitTestDirection.ANY): View? = globalPixelHitTest(globalXY.x, globalXY.y, direction)
+
+    fun globalPixelHitTest(globalX: Double, globalY: Double, direction: HitTestDirection = HitTestDirection.ANY): View? {
         return pixelHitTest(
             round(globalToLocalX(globalX, globalY) / scaleX).toInt(),
-            round(globalToLocalY(globalX, globalY) / scaleY).toInt()
+            round(globalToLocalY(globalX, globalY) / scaleY).toInt(),
+            direction
         )
     }
 
-    fun pixelHitTest(x: Int, y: Int): TileSetCollisionType {
-        var out = TileSetCollisionType.NONE
-
+    fun pixelHitTest(x: Int, y: Int, direction: HitTestDirection = HitTestDirection.ANY): View? {
         fastForEachChild { child ->
             when (child) {
                 is TileMap -> {
-                    // @TODO: handle scale and offset of each layer (use transform)
-                    out += child.pixelHitTest(x, y)
+                    val res = child.pixelHitTest(x, y)
+                    //println("res=$res")
+                    if (when (direction) {
+                        HitTestDirection.ANY -> res.any
+                        HitTestDirection.LEFT -> res.left
+                        HitTestDirection.RIGHT -> res.right
+                        HitTestDirection.UP -> res.up
+                        HitTestDirection.DOWN -> res.down
+                        else -> false
+                    }) return child
                 }
             }
         }
-
-        //println("TESTING $x, $y . out = $out")
-
-        return out
+        return null
     }
 
     init {

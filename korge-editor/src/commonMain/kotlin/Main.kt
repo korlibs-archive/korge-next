@@ -120,24 +120,13 @@ suspend fun Stage.mainVampire() {
             xy(160, 110)
         }
 
-        controlWithKeyboard(
-            character1, collider,
-            up = Key.UP, right = Key.RIGHT, down = Key.DOWN, left = Key.LEFT,
-            onBeforeMove = { char, dx, dy ->
-                val oldX = char.x
-                val oldY = char.y
-                char.x += dx
-                char.y += dy
-                if (tiledMapView.globalPixelHitTest(char.globalXY()).value != 0) {
-                    char.x = oldX
-                    char.y = oldY
-                }
-                true
-            }
-        )
-        controlWithKeyboard(character2, collider, up = Key.W, right = Key.D, down = Key.S, left = Key.A)
+        val hitTestable = listOf(tiledMapView, gg).toHitTestable()
+
+        controlWithKeyboard(character1, hitTestable, up = Key.UP, right = Key.RIGHT, down = Key.DOWN, left = Key.LEFT,)
+        controlWithKeyboard(character2, hitTestable, up = Key.W, right = Key.D, down = Key.S, left = Key.A)
     }
 }
+
 
 private fun TiledMapView.toCollider(): MovementCollider {
     return object : MovementCollider() {
@@ -150,19 +139,18 @@ private fun TiledMapView.toCollider(): MovementCollider {
 fun TiledMapView.collisionToBitmap(): Bitmap {
     val bmp = Bitmap32(this.width.toInt(), this.height.toInt())
     for (y in 0 until bmp.height) for (x in 0 until bmp.width) {
-        bmp[x, y] = if (pixelHitTest(x, y).value != 0) Colors.WHITE else Colors.TRANSPARENT_BLACK
+        bmp[x, y] = if (pixelHitTest(x, y) != null) Colors.WHITE else Colors.TRANSPARENT_BLACK
     }
     return bmp
 }
 
 fun Stage.controlWithKeyboard(
     char: ImageDataView,
-    collider: MovementCollider,
+    collider: HitTestable,
     up: Key = Key.UP,
     right: Key = Key.RIGHT,
     down: Key = Key.DOWN,
     left: Key = Key.LEFT,
-    onBeforeMove: (ImageDataView, dx: Double, dy: Double) -> Boolean = { data, dx, dy -> true }
 ) {
     addUpdater { dt ->
         val speed = 5.0 * (dt / 16.0.milliseconds)
@@ -178,11 +166,7 @@ fun Stage.controlWithKeyboard(
         if (pressingDown) dy = +1.0
         if (dx != 0.0 || dy != 0.0) {
             val dpos = Point(dx, dy).normalized * speed
-            if (onBeforeMove(char, dpos.x, dpos.y)) {
-                //char.moveWithCollider(dpos, collider)
-                //char.x += dpos.x
-                //char.y += dpos.y
-            }
+            char.moveWithCollision(collider, dpos.x, dpos.y)
         }
         char.animation = when {
             pressingLeft -> "left"

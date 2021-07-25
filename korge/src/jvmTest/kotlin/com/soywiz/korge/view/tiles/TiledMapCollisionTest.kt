@@ -10,8 +10,8 @@ class TiledMapCollisionTest {
     fun test() = suspendTest {
         val tiledMap = resourcesVfs["tilecollision/untitled.tmx"].readTiledMap()
         val tiledMapView = TiledMapView(tiledMap)
-        assertEquals(TileSetCollisionType.ALL, tiledMapView.pixelHitTest(-16, -16), "outside bounds")
-        assertEquals(TileSetCollisionType.NONE, tiledMapView.pixelHitTest(16, 16), "empty tile")
-        assertEquals(TileSetCollisionType.ALL, tiledMapView.pixelHitTest(48, 16), "block tile")
+        assertTrue(tiledMapView.pixelHitTest(-16, -16) != null, "outside bounds")
+        assertTrue(tiledMapView.pixelHitTest(16, 16) == null, "empty tile")
+        assertTrue(tiledMapView.pixelHitTest(48, 16) != null, "block tile")
     }
 }

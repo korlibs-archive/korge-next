@@ -21,6 +21,8 @@ inline class TileSetCollisionType(val value: Int) {
         val LEFT = TileSetCollisionType(false, false, false, true)
     }
 
+    val all: Boolean get() = up && right && down && left
+    val any: Boolean get() = value != 0
     val up: Boolean get() = value.extractBool(0)
     val right: Boolean get() = value.extractBool(1)
     val down: Boolean get() = value.extractBool(2)
