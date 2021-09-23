@@ -229,6 +229,10 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
 
     enum class TextureTargetKind { TEXTURE_2D, TEXTURE_3D, TEXTURE_CUBE_MAP } //TODO: there are other possible values
 
+    interface TextureRef {
+        val texture: Texture
+    }
+
     //TODO: would it better if this was an interface ?
     open inner class Texture : Closeable {
         var isFbo = false

@@ -1,6 +1,7 @@
 package com.soywiz.korio.process
 
 import com.soywiz.kds.concurrent.*
+import com.soywiz.kds.lock.*
 import com.soywiz.klock.*
 import com.soywiz.korio.async.*
 import com.soywiz.korio.file.VfsProcessHandler
@@ -11,14 +12,18 @@ import kotlin.native.concurrent.*
 actual suspend fun posixExec(
     path: String, cmdAndArgs: List<String>, env: Map<String, String>, handler: VfsProcessHandler
 ): Int {
+    class Packet(val kind: Int, val data: ByteArray, val value: Int) {
+        init {
+            this.freeze()
+        }
+    }
+
     class Info(
         val commandLine: String,
-        val stdout: ConcurrentDeque<ByteArray>,
-        val stderr: ConcurrentDeque<ByteArray>,
-        val result: ConcurrentDeque<Int>,
+        val deque: ConcurrentDeque<Packet>,
     )
 
-    println("@WARNING: this exec implementation is not scaping, not setting env variables, or the current path")
+    println("@WARNING: this exec implementation is not escaping, not setting env variables, or the current path")
 
     // @TODO: escape stuff
     // @TODO: place environment variables like ENV=value ENV2=value2 cd path; command
@@ -27,11 +32,9 @@ actual suspend fun posixExec(
 
     //println("[MAIN] BEFORE WORKER: commandLine=$commandLine")
 
-    val stdoutQueue = ConcurrentDeque<ByteArray>()
-    val stderrQueue = ConcurrentDeque<ByteArray>()
-    val resultQueue = ConcurrentDeque<Int>()
+    val deque = ConcurrentDeque<Packet>()
     val worker = Worker.start()
-    worker.execute(TransferMode.SAFE, { Info(commandLine, stdoutQueue, stderrQueue, resultQueue) }, { info ->
+    worker.execute(TransferMode.SAFE, { Info(commandLine, deque) }, { info ->
         memScoped {
             val f = _popen(info.commandLine, "r")
             //println("[WORKER] OPENED ${info.commandLine}")
@@ -42,12 +45,13 @@ actual suspend fun posixExec(
                     val result = fread(tempAddress, 1, temp.size.convert(), f).toLong()
                     //println("[WORKER] fread result $result")
                     if (result <= 0L) break
-                    info.stdout.add(temp.copyOf(result.toInt()))
+                    info.deque.add(Packet(0, temp.copyOf(result.toInt()), 0))
                 }
             }
             val exitCode = _pclose(f)
             //println("[WORKER] pclose $exitCode")
-            info.result.add(exitCode)
+            info.deque.add(Packet(-1, byteArrayOf(), exitCode))
+            info.deque.close()
         }
     })
 
@@ -55,20 +59,12 @@ actual suspend fun posixExec(
 
     //println("[MAIN] START WAIT")
 
-    while (exitCode == null) {
-        stdoutQueue.consume()?.let {
-            //println("[MAIN] ON OUT: ${it.size}")
-            handler.onOut(it)
+    deque.consumeAllSuspend {
+        when (it.kind) {
+            -1 -> exitCode = it.value
+            0 -> handler.onOut(it.data)
+            1 -> handler.onErr(it.data)
         }
-        stderrQueue.consume()?.let {
-            //println("[MAIN] ON ERR: ${it.size}")
-            handler.onErr(it)
-        }
-        exitCode = resultQueue.consume()
-        if (exitCode != null) {
-            //println("[MAIN] ON EXIT: $exitCode")
-        }
-        delay(1.milliseconds)
     }
 
     //println("[MAIN] END WAIT")
@@ -76,5 +72,5 @@ actual suspend fun posixExec(
     worker.requestTermination()
 
     //println("[MAIN] END WAIT 2")
-    return exitCode
+    return exitCode!!
 }

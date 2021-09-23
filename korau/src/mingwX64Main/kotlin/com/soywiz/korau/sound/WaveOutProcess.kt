@@ -4,7 +4,6 @@ import com.soywiz.kds.concurrent.*
 import com.soywiz.kmem.*
 import kotlinx.cinterop.*
 import platform.windows.*
-import kotlin.math.*
 import kotlin.native.concurrent.*
 
 private interface WaveOutPart
@@ -159,7 +158,7 @@ class WaveOutProcess(val freq: Int, val nchannels: Int) {
                     process@while (true) {
                         clearCompletedChunks()
                         while (true) {
-                            val it = info.deque.consume() ?: break
+                            val it = info.deque.consumeOrTimeoutNull(5L) ?: break
                             //println("CONSUME: $item")
                             when (it) {
                                 is WaveOutReopen -> {
@@ -181,7 +180,6 @@ class WaveOutProcess(val freq: Int, val nchannels: Int) {
                                 }
                             }
                         }
-                        Sleep(5.convert())
                     }
                 } finally {
                     //println("finalizing...")
