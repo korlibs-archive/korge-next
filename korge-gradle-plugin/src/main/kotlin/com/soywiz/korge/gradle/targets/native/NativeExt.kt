@@ -1,6 +1,7 @@
 package com.soywiz.korge.gradle.targets.native
 
 import com.soywiz.korge.gradle.*
+import com.soywiz.korge.gradle.util.*
 import org.gradle.api.*
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
@@ -32,6 +33,18 @@ fun KotlinTarget.configureKotlinNativeTarget(project: Project) {
                 //"-Xoverride-konan-properties=clangFlags.mingw_x64=-cc1 -emit-obj -disable-llvm-passes -x ir -femulated-tls -target-cpu x86-64"
                 "-Xoverride-konan-properties=clangFlags.mingw_x64=-cc1 -emit-obj -disable-llvm-passes -x ir -target-cpu x86-64"
             )
+        }
+    }
+
+    // https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md#switch-to-the-new-mm
+    if (project.korge.useNewMemoryModel && SemVer(BuildVersions.KOTLIN) >= SemVer("1.6.0")) {
+        project.setProperty("kotlin.native.binary.memoryModel", "experimental")
+        (this as? KotlinNativeTarget?)?.apply {
+            compilations.all {
+                it.kotlinOptions.freeCompilerArgs = it.kotlinOptions.freeCompilerArgs + listOf("-Xbinary=memoryModel=experimental")
+            }
+            // @TODO: Enable for Kotlin 1.6.0
+            //binaries.all { it.binaryOptions["memoryModel"] = "experimental" }
         }
     }
 }
