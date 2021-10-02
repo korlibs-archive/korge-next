@@ -19,7 +19,7 @@ class MingwX64NativeSocketTest {
 
         val client = createTcpClient(secure = true)
         client.connect("www.google.es", 443)
-        client.write("GET / HTTP/1.1\r\nHost: google.es\r\nConnection: close\r\n\r\n".toByteArray(UTF8))
+        client.write("GET / HTTP/1.1\r\nHost: google.es\r\nAccept-Encoding: gzip, deflate\r\nConnection: close\r\n\r\n".toByteArray(UTF8))
         val bytes = client.readAll()
         println("READ BYTES ${bytes.size} ${bytes.hex}")
         println(bytes.toString(UTF8))

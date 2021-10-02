@@ -84,7 +84,7 @@ private val emojiFontNames get() = listOf(
 )
 
 open class FolderBasedNativeSystemFontProvider(
-    val folders: List<String> = linuxFolders + windowsFolders + macosFolders + androidFolders + iosFolders,
+    val folders: List<String> = StandardPaths.fonts,
     val fontCacheFile: String = "~/.korimFontCache"
 ) : TtfNativeSystemFontProvider() {
     fun listFontNamesMap(): Map<String, VfsFile> = runBlockingNoJs {

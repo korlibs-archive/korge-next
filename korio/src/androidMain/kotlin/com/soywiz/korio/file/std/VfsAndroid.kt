@@ -18,19 +18,10 @@ import kotlin.math.*
 private val absoluteCwd by lazy { File(".").absolutePath }
 val tmpdir: String by lazy { System.getProperty("java.io.tmpdir") }
 
-private var androidContext: Context? = null
 private var resourcesVfsProvider: ResourcesVfsProviderAndroid? = null
 private lateinit var jailedResourcesVfsFile: VfsFile
 
-actual val resourcesVfs: VfsFile
-get() {
-    if(resourcesVfsProvider == null) {
-        resourcesVfsProvider = ResourcesVfsProviderAndroid().apply {
-            jailedResourcesVfsFile = this.invoke().root.jail()
-        }
-    }
-    return jailedResourcesVfsFile
-}
+actual val resourcesVfs: VfsFile get() = AndroidResourcesVfs
 
 actual val rootLocalVfs: VfsFile by lazy { localVfs(absoluteCwd) }
 actual val applicationVfs: VfsFile by lazy { localVfs(absoluteCwd) }
@@ -51,41 +42,15 @@ suspend fun File.open(mode: VfsOpenMode) = localVfs(this).open(mode)
 fun File.toVfs() = localVfs(this)
 fun UrlVfs(url: URL): VfsFile = UrlVfs(url.toString())
 
-class ResourcesVfsProviderAndroid {
 
-    private var androidResourcesVfs: AndroidResourcesVfs? = null
-
-    fun deinit() {
-        androidContext = null
-        androidResourcesVfs?.context = null
-        androidResourcesVfs = null
-    }
-
-	operator fun invoke(): Vfs {
-
-        val merged = MergedVfs()
-
-        return object: Vfs.Decorator(merged.root) {
-			override suspend fun init() = run<ResourcesVfsProviderAndroid, Unit> {
-                androidContext = androidContext()
-                androidResourcesVfs = AndroidResourcesVfs(androidContext).apply {
-                    merged += root
-                }
-			}
-			override fun toString(): String = "ResourcesVfs"
-		}
-	}
-}
-
-class AndroidResourcesVfs(var context: Context?) : Vfs() {
-
+object AndroidResourcesVfs : Vfs() {
 	override suspend fun open(path: String, mode: VfsOpenMode): AsyncStream {
 		return readRange(path, LONG_ZERO_TO_MAX_RANGE).openAsync(mode.cmode)
 	}
 
-	override suspend fun readRange(path: String, range: LongRange): ByteArray = executeIo {
-        context?.let { context ->
-
+	override suspend fun readRange(path: String, range: LongRange): ByteArray {
+        val context = androidContext()
+        return executeIo {
             //val path = "/assets/" + path.trim('/')
             val rpath = path.trim('/')
 
@@ -101,8 +66,8 @@ class AndroidResourcesVfs(var context: Context?) : Vfs() {
                 available -= read
             }
             out.toByteArray()
-        } ?: throw IllegalStateException("Android context not set and required to access assets")
-	}
+        }
+    }
 }
 
 
