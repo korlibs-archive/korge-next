@@ -8,11 +8,20 @@ import platform.posix.*
 import platform.posix.AF_INET
 import platform.posix.SOCK_STREAM
 import platform.windows.*
-import platform.windows.WSAStartup
 import platform.windows.WSAGetLastError
+import platform.windows.WSAStartup
+import win32ssl.*
 
-class NativeSocket private constructor(internal val sockfd: SOCKET, private var endpoint: Endpoint, val secure: Boolean, val debug: Boolean) {
+
+class NativeSocket private constructor(
+    internal val sockfd: SOCKET,
+    private var endpoint: Endpoint,
+    val secure: Boolean,
+    val debug: Boolean
+) {
 	companion object {
+        const val DEBUG_SOCKET = false
+
 		init {
             InitCommonControls()
             //OleInitialize(null) // @TODO: C:\Users\soywi\.konan\dependencies\msys2-mingw-w64-x86_64-clang-llvm-lld-compiler_rt-8.0.1\bin\ld: C:\Users\soywi\AppData\Local\Temp\konan_temp15231878231369805640\result.o:out:(.text+0xaf7403): referencia a `__imp_OleInitialize' sin definir  //clang++: error: linker command failed with exit code 1 (use -v to see invocation)
@@ -29,42 +38,18 @@ class NativeSocket private constructor(internal val sockfd: SOCKET, private var 
             //if (debug) println("Before loading Fwpuclnt.dll")
         }
 
-        val FwpuclntDll = LoadLibraryW("Fwpuclnt.dll")
-        val _WSASetSocketSecurity: CPointer<CFunction<
-                (Socket: SOCKET, SecuritySettings: CValuesRef<SOCKET_SECURITY_SETTINGS>?, SecuritySettingsLen: ULONG, Overlapped: LPWSAOVERLAPPED?, CompletionRoutine: LPWSAOVERLAPPED_COMPLETION_ROUTINE?) -> Int
-            >>? = GetProcAddress(FwpuclntDll, "WSASetSocketSecurity")?.reinterpret()
-        val _WSASetSocketPeerTargetName: CPointer<CFunction<
-                (Socket: SOCKET, PeerTargetName: CValuesRef<SOCKET_PEER_TARGET_NAME>?, PeerTargetNameLen: ULONG, Overlapped: LPWSAOVERLAPPED?, CompletionRoutine: LPWSAOVERLAPPED_COMPLETION_ROUTINE?) -> Int
-            >>? = GetProcAddress(FwpuclntDll, "WSASetSocketPeerTargetName")?.reinterpret()
-
-        init {
-            //if (debug) println("After loading Fwpuclnt.dll")
-        }
-
         operator fun invoke(secure: Boolean): NativeSocket {
-            if (secure) TODO("Secure sockets not implemented on Kotlin/Native Windows")
-            val debug = secure
+            //if (secure) TODO("Secure sockets not implemented on Kotlin/Native Windows")
+            //val debug = secure
+            if (secure) {
+                println("WARNING: secure NativeSocket in win32 is experimental. Please, report the bugs you found.")
+            }
+            val debug = DEBUG_SOCKET
             if (debug) println("NativeSocket.secure=$secure")
             val socket = WSASocket!!(platform.windows.AF_INET, platform.windows.SOCK_STREAM, platform.windows.IPPROTO_TCP, null, 0u, 0u)
             checkErrors("WSASocket")
 			//val socket = platform.windows.socket(platform.windows.AF_INET, platform.windows.SOCK_STREAM, platform.windows.IPPROTO_TCP)
-            if (secure) {
-                memScoped {
-                    //InitializeSecurityContextA
-                    if (_WSASetSocketSecurity == null) error("Can't use secure sockets because couldn't load Fwpuclnt.dll properly")
-                    // https://docs.microsoft.com/en-us/windows/win32/winsock/using-secure-socket-extensions
-                    val securitySettings = alloc<SOCKET_SECURITY_SETTINGS>()
-                    securitySettings.SecurityProtocol = _SOCKET_SECURITY_PROTOCOL.SOCKET_SECURITY_PROTOCOL_DEFAULT
-                    securitySettings.SecurityFlags = 0.convert()
-                    if (debug) println("FwpuclntDll=$FwpuclntDll, _WSASetSocketSecurity=$_WSASetSocketSecurity, _WSASetSocketPeerTargetName=$_WSASetSocketPeerTargetName")
-                    if (debug) println("BEFORE: _WSASetSocketSecurity")
-                    val sockErr = _WSASetSocketSecurity.invoke(socket, securitySettings.ptr, sizeOf<SOCKET_SECURITY_SETTINGS>().convert(), null, null)
-                    if (debug) println("AFTER: _WSASetSocketSecurity")
-                    if (sockErr == SOCKET_ERROR) {
-                        checkErrors("WSASetSocketSecurity")
-                    }
-                }
-            }
+            val ssl = if (secure) SSL_alloc() else null
 			return NativeSocket(socket, Endpoint(IP(0, 0, 0, 0), 0), secure, debug = debug)
 		}
 		suspend fun connect(host: String, port: Int, secure: Boolean = false) = NativeSocket(secure).apply { connect(host, port) }
@@ -134,67 +119,46 @@ class NativeSocket private constructor(internal val sockfd: SOCKET, private var 
 
     private val arena = Arena()
 
-    private fun cleanup() {
-        arena.clear()
+    var ssl: CPointer<SSL_SOCKET>? = null
+
+    private inline fun debug(message: () -> String) {
+        if (debug) println(message())
     }
 
 	fun connect(host: String, port: Int) {
 		memScoped {
+            doClose()
 			val ip = IP.fromHost(host)
-			//val connected = platform.windows.connect(sockfd, addr as CValuesRef<sockaddr>?, sockaddr_in.size.convert())
 
-            //if (secure) {
-            if (false) {
-                /*
-                // WIN64
-                printf("%d\n", sizeof(void*)); // 8
-                printf("%d\n", sizeof(_SOCKET_PEER_TARGET_NAME)); // 144
-                printf("%d\n", offsetof(_SOCKET_PEER_TARGET_NAME, SecurityProtocol)); // 0
-                printf("%d\n", offsetof(_SOCKET_PEER_TARGET_NAME, PeerAddress)); // 8
-                printf("%d\n", offsetof(_SOCKET_PEER_TARGET_NAME, PeerTargetNameStringLen)); // 136
-                printf("%d\n", offsetof(_SOCKET_PEER_TARGET_NAME, AllStrings)); // 140
-                 */
-
-                // https://docs.microsoft.com/en-us/windows/win32/winsock/using-secure-socket-extensions
-                //val peerTargetLen = (sizeOf<SOCKET_PEER_TARGET_NAME>() + (host.length + 1) * 2)
-                val peerTargetLen = (144 + host.length * sizeOf<wchar_tVar>().toInt())
-                val peerTargetName = arena.allocArray<ByteVar>(peerTargetLen)
-                //val peerTargetName = allocArray<ByteVar>(peerTargetLen)
-                (peerTargetName + 0)!!.reinterpret<SOCKET_SECURITY_PROTOCOLVar>().pointed.value = SOCKET_SECURITY_PROTOCOL.SOCKET_SECURITY_PROTOCOL_DEFAULT
-                (peerTargetName + 136)!!.reinterpret<ULONGVar>().pointed.value = host.length.convert()
-                (peerTargetName + 144)!!.reinterpret<wchar_tVar>().writeWString(host)
-                if (debug) println("BEFORE: _WSASetSocketPeerTargetName: $peerTargetName")
-                if (debug) println("BEFORE: _WSASetSocketPeerTargetName: ${(peerTargetName + 136)!!.reinterpret<ULONGVar>().pointed.value}")
-                if (debug) println(ByteArray(peerTargetLen) { peerTargetName[it].toByte() }.hex)
-                val sockErr = _WSASetSocketPeerTargetName!!(sockfd, peerTargetName.reinterpret(), peerTargetLen.convert(), null, null)
-                if (debug) println("AFTER: _WSASetSocketPeerTargetName")
-                if (sockErr == SOCKET_ERROR) {
-                    checkErrors("WSASetSocketPeerTargetName")
-                }
-            }
-
-            if (debug) println("Before WSAConnect: host=$host, ip=$ip, port=$port")
+            debug { "Before WSAConnect: host=$host, ip=$ip, port=$port" }
 			//val connected = platform.windows.connect(sockfd, addr.reinterpret(), sockaddr_in.size.convert())
             val addr: CPointer<sockaddr_in> = allocArray<sockaddr_in>(1)
             addr.set(ip, port)
 
-            if (debug) println("sockaddr_in: ${addr.getBytes(sizeOf<sockaddr_in>().toInt()).hex}")
+            debug { "sockaddr_in: ${addr.getBytes(sizeOf<sockaddr_in>().toInt()).hex}" }
             val connected = WSAConnect(sockfd, addr.reinterpret(), sizeOf<sockaddr_in>().convert(), null, null, null, null)
-            if (debug) println("After WSAConnect")
+            debug { "After WSAConnect" }
 			checkErrors("connect")
 			endpoint = Endpoint(ip, port)
 			setSocketBlockingEnabled(false)
+            if (secure) {
+                ssl = SSL_alloc()
+                SSL_setDestinationName(ssl, host.cstr)
+                SSL_setDebug(ssl, if (debug) 1 else 0)
+            }
+
 			if (connected != 0) {
                 doClose()
 				error("Can't connect to $ip:$port ('$host')")
 			}
 			_connected = true
-            if (debug) println("Connected = true")
+            debug { "Connected = true" }
 		}
 	}
 
 	fun bind(host: String, port: Int, backlog: Int = 10) {
 		memScoped {
+            if (secure) error("Server secure socket not implemented on win32 yet")
 			val ip = IP.fromHost(host)
 			val addr = alloc<sockaddr_in>()
 			addr.ptr.set(ip, port)
@@ -267,15 +231,72 @@ class NativeSocket private constructor(internal val sockfd: SOCKET, private var 
     private fun doClose() {
         _connected = false
         arena.clear()
+        if (ssl != null) {
+            SSL_free(ssl)
+            ssl = null
+        }
+    }
+
+    // @TODO: This looks like a Kotlin bug
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE", "UNUSED_VALUE")
+    private fun SSL_process(kind: String): Boolean {
+        memScoped {
+            val BUFFER_SIZE = 10240
+            val c = allocArray<ByteVar>(BUFFER_SIZE)
+            debug { "SSL_process[$kind][0]" }
+            do {
+                var retry = false
+                SSL_process(ssl)
+
+                while (true) {
+                    val toWriteCount = SSL_outDequeue(ssl, c, BUFFER_SIZE)
+                    if (toWriteCount > 0) {
+                        debug { "---send($toWriteCount)" }
+                        var pos = 0
+                        while (pos < toWriteCount) {
+                            val sent: Int = send(sockfd, (c + pos), toWriteCount - pos, 0)
+                            if (sent <= 0) break
+                            pos += sent
+                        }
+                        retry = true
+                        //send(s, c, toWriteCount, 0);
+                    } else {
+                        break
+                    }
+                }
+
+                while (true) {
+                    val readCount: Int = platform.windows.recv(sockfd, c, BUFFER_SIZE, 0)
+                    //printf("-->%d, errno=%d\n", readCount, errno);
+                    if (readCount <= 0 && !wouldBlock()) {
+                        SSL_process(ssl)
+                        return true
+                    }
+                    if (readCount > 0) {
+                        debug { "---recv($readCount)" }
+                        SSL_writeReceived(ssl, c, readCount)
+                        retry = true
+                    } else {
+                        break;
+                    }
+                }
+            } while (retry)
+        }
+        return false
     }
 
 	fun recv(data: ByteArray, offset: Int = 0, count: Int = data.size - offset): Int {
-        while (true) {
-            val result = platform.windows.recv(sockfd, data.refTo(offset), count.convert(), 0).toInt()
-            if (wouldBlock()) return 0
-            checkErrors("recv")
-            return result
+        if (ssl != null) {
+            val processRes = SSL_process("recv")
+            val res = SSL_inDequeue(ssl, data.refTo(offset), count.convert())
+            debug { "recv.SSL_inDequeue processRes=$processRes, res=$res, offset=$offset, count=$count" }
+            if (res > 0) return res
+            return if (processRes) -1 else 0
         }
+        val result = platform.windows.recv(sockfd, data.refTo(offset), count.convert(), 0).toInt()
+        if (wouldBlock()) return 0
+        checkErrors("recv")
+        return result
 	}
 
 	fun recv(count: Int): ByteArray {
@@ -289,30 +310,40 @@ class NativeSocket private constructor(internal val sockfd: SOCKET, private var 
 	}
 
 	fun tryRecv(data: ByteArray, offset: Int = 0, count: Int = data.size - offset): Int {
-		if (availableBytes <= 0) return -1
+		//if (availableBytes <= 0) return -1
+        if (availableBytes < 0) return -1
 		return recv(data, offset, count)
 	}
 
 	fun tryRecv(count: Int): ByteArray? {
-		if (availableBytes <= 0) return null
+		//if (availableBytes <= 0) return null
+        if (availableBytes < 0) return null
 		return recv(count)
 	}
 
 	fun send(data: ByteArray, offset: Int = 0, count: Int = data.size - offset) {
 		if (count <= 0) return
 
-		memScoped {
-			//val result = platform.windows.send(sockfd, data.refTo(offset), count.convert(), 0)
-			val result = platform.posix.send(sockfd, data.refTo(offset), count.convert(), 0)
-			checkErrors("send")
-			if (result < count) {
+        if (ssl != null) {
+            SSL_process("send0")
+            SSL_writeToSend(ssl, data.refTo(offset), count.convert())
+            SSL_process("send1")
+        } else {
+            //val result = platform.windows.send(sockfd, data.refTo(offset), count.convert(), 0)
+            val result = platform.posix.send(sockfd, data.refTo(offset), count.convert(), 0)
+            checkErrors("send")
+            if (result < count) {
                 doClose()
-				error("Socket write error")
-			}
-		}
+                error("Socket write error")
+            }
+        }
 	}
 
-	fun close() {
+	suspend fun close() {
+        if (ssl != null) {
+            SSL_close(ssl)
+            SSL_process("close")
+        }
 		platform.windows.closesocket(sockfd)
 		checkErrors("closesocket")
 		//platform.posix.shutdown(sockfd, SHUT_RDWR)
@@ -372,13 +403,21 @@ private fun CPointer<wchar_tVar>.writeWStringz(str: String) {
 suspend fun NativeSocket.suspendRecvUpTo(data: ByteArray, offset: Int = 0, count: Int = data.size - offset): Int {
 	if (count <= 0) return count
 
+    var time = 0L
 	while (true) {
 		val read = tryRecv(data, offset, count)
-		if (read <= 0) {
-			delay(10L)
-			continue
-		}
-		return read
+        when {
+            read < 0 -> {
+                //error("Socket error suspendRecvUpTo: read=$read")
+                return -1
+            }
+            read == 0 -> {
+                delay(time)
+                time = (time + 1).coerceAtMost(10L)
+                continue
+            }
+            else -> return read
+        }
 	}
 }
 
@@ -388,6 +427,7 @@ suspend fun NativeSocket.suspendRecvExact(data: ByteArray, offset: Int = 0, coun
 	while (true) {
 		if (remaining <= 0) return count
 		val read = suspendRecvUpTo(data, position, remaining)
+        if (read < 0) error("suspendRecvExact EOF before reading completely")
 		remaining -= read
 		position += read
 	}
@@ -408,11 +448,13 @@ suspend fun NativeSocket.suspendSend(data: ByteArray, offset: Int = 0, count: In
 }
 
 suspend fun NativeSocket.accept(): NativeSocket {
+    var time = 0L
 	while (true) {
 		val socket = tryAccept()
 		//println("suspendAccept: $socket")
 		if (socket != null) return socket
-		delay(10L)
+		delay(time)
+        time = (time + 1).coerceAtMost(10L)
 	}
 }
 

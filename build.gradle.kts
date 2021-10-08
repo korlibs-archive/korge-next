@@ -169,12 +169,12 @@ allprojects {
 }
 
 val beforeJava9 = System.getProperty("java.version").startsWith("1.")
-val addOpens = arrayOf(
+
+val javaAddOpens = arrayOf(
     "--add-opens=java.desktop/sun.java2d.opengl=ALL-UNNAMED",
     "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
     "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
-    "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED",
-)
+    "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED",)
 
 subprojects {
     val doConfigure =
@@ -244,8 +244,8 @@ subprojects {
                 jvmTestFix.classpath = jvmTest.classpath
                 jvmTestFix.bootstrapClasspath = jvmTest.bootstrapClasspath
                 if (!beforeJava9) {
-                    jvmTest.jvmArgs(*addOpens)
-                    jvmTestFix.jvmArgs(*addOpens)
+                    jvmTest.jvmArgs(*javaAddOpens)
+                    jvmTestFix.jvmArgs(*javaAddOpens)
                 }
                 if (headlessTests) {
                     jvmTest.systemProperty("java.awt.headless", "true")
@@ -410,6 +410,10 @@ subprojects {
                     val macosIosWatchosCommon by lazy { createPairSourceSet("macosIosWatchosCommon", nativePosixApple) }
                     val iosCommon by lazy { createPairSourceSet("iosCommon", iosWatchosTvosCommon) }
 
+                    val macosCommon by lazy { createPairSourceSet("macosCommon", nativePosixApple) }
+                    val linuxCommon by lazy { createPairSourceSet("linuxCommon", nativePosixNonApple) }
+                    val mingwCommon by lazy { createPairSourceSet("wCommon", nativeDesktop) }
+
                     val nativeTargets = nativeTargets()
 
                     for (target in nativeTargets) {
@@ -422,11 +426,16 @@ subprojects {
                         }
                         if (target.isLinux) {
                             native.dependsOn(nativePosixNonApple)
+                            native.dependsOn(linuxCommon)
+                        }
+                        if (target.isWin) {
+                            native.dependsOn(mingwCommon)
                         }
                         if (target.isMacos) {
                             native.dependsOn(nativePosixApple)
                             native.dependsOn(macosIosTvosCommon)
                             native.dependsOn(macosIosWatchosCommon)
+                            native.dependsOn(macosCommon)
                         }
                     }
 
@@ -675,7 +684,7 @@ samples {
         val runJvm by creating(KorgeJavaExec::class) {
             group = "run"
             main = "MainKt"
-            if (!beforeJava9) jvmArgs(*addOpens)
+            if (!beforeJava9) jvmArgs(*javaAddOpens)
         }
         val runJs by creating {
             group = "run"
