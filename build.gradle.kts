@@ -170,6 +170,12 @@ allprojects {
 
 val beforeJava9 = System.getProperty("java.version").startsWith("1.")
 
+val javaAddOpens = arrayOf(
+    "--add-opens=java.desktop/sun.java2d.opengl=ALL-UNNAMED",
+    "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+    "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
+    "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED",)
+
 subprojects {
     val doConfigure =
             project.name != "korge-gradle-plugin" &&
@@ -238,8 +244,8 @@ subprojects {
                 jvmTestFix.classpath = jvmTest.classpath
                 jvmTestFix.bootstrapClasspath = jvmTest.bootstrapClasspath
                 if (!beforeJava9) {
-                    jvmTest.jvmArgs("--add-opens=java.desktop/sun.java2d.opengl=ALL-UNNAMED")
-                    jvmTestFix.jvmArgs("--add-opens=java.desktop/sun.java2d.opengl=ALL-UNNAMED")
+                    jvmTest.jvmArgs(*javaAddOpens)
+                    jvmTestFix.jvmArgs(*javaAddOpens)
                 }
                 if (headlessTests) {
                     jvmTest.systemProperty("java.awt.headless", "true")
@@ -678,7 +684,7 @@ samples {
         val runJvm by creating(KorgeJavaExec::class) {
             group = "run"
             main = "MainKt"
-            if (!beforeJava9) jvmArgs("--add-opens=java.desktop/sun.java2d.opengl=ALL-UNNAMED")
+            if (!beforeJava9) jvmArgs(*javaAddOpens)
         }
         val runJs by creating {
             group = "run"

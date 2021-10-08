@@ -293,6 +293,13 @@ class KorgeExtension(val project: Project) {
     var icon: File? = project.projectDir["icon.png"]
     var banner: File? = project.projectDir["banner.png"]
 
+    var javaAddOpens: List<String> = listOf(
+        "--add-opens=java.desktop/sun.java2d.opengl=ALL-UNNAMED",
+        "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+        "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
+        "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED",
+    )
+
 	var gameCategory: GameCategory? = null
 
 	var fullscreen = true
