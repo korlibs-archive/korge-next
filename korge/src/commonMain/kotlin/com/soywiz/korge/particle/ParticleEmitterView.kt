@@ -100,8 +100,8 @@ class ParticleEmitterView(
 //                simulator.emitterPos.setTo(x, y)
 //            }
             if (dt > 0.milliseconds) {
-                val gx = globalX / stage!!.scaleX
-                val gy = globalY / stage!!.scaleY
+                val gx = globalX / (stage?.scaleX ?: 1.0)
+                val gy = globalY / (stage?.scaleY ?: 1.0)
 
                 val dx = if (this.localCoords) 0.0 else lastPosition.x - gx
                 val dy = if (this.localCoords) 0.0 else lastPosition.y - gy
