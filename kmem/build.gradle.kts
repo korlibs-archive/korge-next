@@ -1,5 +1,7 @@
 description = "Memory utilities for Kotlin"
 
+val jnaVersion: String by project
+
 /*
 project.ext.props = [
     "project.scm.url" : "https://github.com/korlibs/klogger",
@@ -43,4 +45,9 @@ kotlin {
             maybeCreate("fastmem")
         }
     }
+}
+
+dependencies {
+    add("jvmMainApi", "net.java.dev.jna:jna:$jnaVersion")
+    add("jvmMainApi", "net.java.dev.jna:jna-platform:$jnaVersion")
 }
