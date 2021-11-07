@@ -178,9 +178,11 @@ val javaAddOpens = ArrayList<String>().apply {
     if (isLinux) add("--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED")
 }.toTypedArray()
 
+val Project.isJavaOnlyPlugin get() =  project.name == "korge-gradle-plugin" || project.name.contains("ksp-")
+
 subprojects {
     val doConfigure =
-            project.name != "korge-gradle-plugin" &&
+            !project.isJavaOnlyPlugin &&
             project.hasBuildGradle()
 
     if (doConfigure) {
@@ -557,7 +559,7 @@ rootProject.configureMavenCentralRelease()
 nonSamples {
     plugins.apply("maven-publish")
 
-    val doConfigure = project.name != "korge-gradle-plugin" && project.hasBuildGradle()
+    val doConfigure = !project.isJavaOnlyPlugin && project.hasBuildGradle()
 
     if (doConfigure) {
         configurePublishing()

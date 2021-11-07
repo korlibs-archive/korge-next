@@ -9,6 +9,24 @@ expect abstract class NPointed
 expect class FunctionPtr<T : Function<*>> : NPointed
 expect class FunctionPtrWrapper<T : NPointed>
 
+annotation class NativeLibrary {
+    companion object {
+        @PublishedApi internal val mapping = LinkedHashMap<KClass<*>, (String) -> Any?>()
+
+        inline fun <reified T : Library> register(noinline gen: (name: String) -> T): Unit {
+            mapping[T::class] = gen
+        }
+        inline operator fun <reified T : Library> get(name: String): T =
+            (mapping[T::class]?.invoke(name) as? T?) ?: error("Can't find library for ${T::class}")
+    }
+}
+expect interface Library
+
+@NativeLibrary
+interface MyNativeLibrary : Library {
+    fun Sleep(time: Int32): Unit
+}
+
 expect inline operator fun <reified R> FunctionPtrWrapper<FunctionPtr<() -> R>>.invoke(): R
 expect inline operator fun <reified P1, reified R> FunctionPtrWrapper<FunctionPtr<(P1) -> R>>.invoke(p1: P1): R
 //expect operator fun <P1, P2, R> FunctionPtrWrapper<FunctionPtr<(P1, P2) -> R>>.invoke(p1: P1, p2: P2): R

@@ -1,3 +1,7 @@
+plugins {
+    id("com.google.devtools.ksp")
+}
+
 description = "Memory utilities for Kotlin"
 
 val jnaVersion: String by project
@@ -50,4 +54,6 @@ kotlin {
 dependencies {
     add("jvmMainApi", "net.java.dev.jna:jna:$jnaVersion")
     add("jvmMainApi", "net.java.dev.jna:jna-platform:$jnaVersion")
+    kspJvm(project(":ksp-native-lib"))
+    kspMingwX64(project(":ksp-native-lib"))
 }

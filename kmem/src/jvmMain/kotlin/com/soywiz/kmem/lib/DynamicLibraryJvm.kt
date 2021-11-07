@@ -3,6 +3,7 @@ package com.soywiz.kmem.lib
 import com.sun.jna.*
 
 actual typealias VoidPtr = Pointer
+actual typealias Library = com.sun.jna.Library
 actual abstract class NPointed
 actual class FunctionPtr<T : Function<*>>(val func: com.sun.jna.Function) : NPointed()
 actual class FunctionPtrWrapper<T : NPointed>(val ptr: FunctionPtr<*>) {
@@ -37,8 +38,8 @@ actual inline operator fun <reified P1, reified R> FunctionPtrWrapper<FunctionPt
 
 
 actual open class DynLibraryBase actual constructor(val name: String, val convention: DynCallConvention) : DynSymbolResolver {
-    val nativeLibrary: NativeLibrary? = try {
-        NativeLibrary.getInstance(name, mapOf(
+    val nativeLibrary: com.sun.jna.NativeLibrary? = try {
+        com.sun.jna.NativeLibrary.getInstance(name, mapOf(
             Library.OPTION_CALLING_CONVENTION to (when (convention) {
                 DynCallConvention.STD -> com.sun.jna.Function.C_CONVENTION
                 DynCallConvention.ALT -> com.sun.jna.Function.ALT_CONVENTION

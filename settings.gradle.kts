@@ -15,6 +15,12 @@ pluginManagement {
         }
         maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
 	}
+    val kotlinVersion: String by settings
+    val kspVersion: String by settings
+    plugins {
+        id("com.google.devtools.ksp") version kspVersion
+        kotlin("jvm") version kotlinVersion
+    }
 }
 
 val inCI = System.getProperty("CI") == "true"
@@ -52,7 +58,7 @@ include(":korge-spine")
 include(":korge-swf")
 include(":korge-box2d")
 include(":korge-gradle-plugin")
-//include(":tensork")
+include(":ksp-native-lib")
 
 if (!inCI) {
     include(":korge-sandbox")
