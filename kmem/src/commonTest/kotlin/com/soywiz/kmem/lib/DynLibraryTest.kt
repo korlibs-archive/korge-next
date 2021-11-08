@@ -17,8 +17,12 @@ class DynLibraryTest {
         nativeLibrary.memScoped {
             val ptr = alloc(1024)
             val result = nativeLibrary.GetModuleFileNameA(null, ptr, 1024)
-            val text = ptr.readBytes(result).decodeToString()
+            println(MyStructDesc(ptr).value)
+            MyStructDesc(ptr).value = 0x55555555
+            MyStructDesc(ptr).struct.value = 0x66666666
             //ptr.readStringzUtf8()
+
+            val text = ptr.readBytes(result).decodeToString()
             println("result=$result, text=$text")
         }
     }

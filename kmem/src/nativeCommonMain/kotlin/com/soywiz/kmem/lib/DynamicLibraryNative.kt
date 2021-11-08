@@ -14,6 +14,8 @@ actual typealias VoidPtr = kotlin.native.internal.NativePtr
 actual fun Long.toVoidPtr(): VoidPtr = this.toCPointer<ByteVar>().rawValue
 actual fun VoidPtr.toLongPtr(): Long = this.toLong()
 
+actual val NativeIntSize: Int = sizeOf<platform.posix.ssize_tVar>().toInt()
+
 actual typealias NPointed = CPointed
 actual interface Library
 actual interface StdCallLibrary : Library
@@ -35,11 +37,17 @@ actual fun VoidPtr.transferBytes(bytes: ByteArray, index: Int, size: Int, write:
         }
     }
 }
-actual fun VoidPtr.getByte(offset: Int): Byte {
-    val pointer = this.toLong().toCPointer<ByteVar>() ?: return 0
-    return pointer[offset]
-}
-actual fun VoidPtr.setByte(value: Byte, offset: Int) {
-    val pointer = this.toLong().toCPointer<ByteVar>() ?: return
-    pointer[offset] = value
-}
+
+private fun invalidPointerError(): Nothing = error("Invalid Pointer")
+
+actual fun VoidPtr.getByte(offset: Int): Byte = ((this.toLong() + offset).toCPointer<ByteVar>() ?: invalidPointerError())[0]
+actual fun VoidPtr.setByte(offset: Int, value: Byte) { ((this.toLong() + offset).toCPointer<ByteVar>() ?: invalidPointerError())[0] = value }
+
+actual fun VoidPtr.getShort(offset: Int): Short = ((this.toLong() + offset).toCPointer<ShortVar>() ?: invalidPointerError())[0]
+actual fun VoidPtr.setShort(offset: Int, value: Short) { ((this.toLong() + offset).toCPointer<ShortVar>() ?: invalidPointerError())[0] = value }
+
+actual fun VoidPtr.getInt(offset: Int): Int = ((this.toLong() + offset).toCPointer<IntVar>() ?: invalidPointerError())[0]
+actual fun VoidPtr.setInt(offset: Int, value: Int) { ((this.toLong() + offset).toCPointer<IntVar>() ?: invalidPointerError())[0] = value }
+
+actual fun VoidPtr.getLong(offset: Int): Long = ((this.toLong() + offset).toCPointer<LongVar>() ?: invalidPointerError())[0]
+actual fun VoidPtr.setLong(offset: Int, value: Long) { ((this.toLong() + offset).toCPointer<LongVar>() ?: invalidPointerError())[0] = value }
