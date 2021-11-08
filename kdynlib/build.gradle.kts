@@ -36,7 +36,10 @@ dependencies {
 
     add("jvmMainApi", "net.java.dev.jna:jna:$jnaVersion")
     add("jvmMainApi", "net.java.dev.jna:jna-platform:$jnaVersion")
+}
 
+// Code for use kdynlib dynamic libraries via interface
+dependencies {
     for (target in kotlin.targets) {
         val baseKind = when (target.name) {
             "metadata" -> "metadata"
@@ -45,7 +48,10 @@ dependencies {
             "android" -> "dummy"
             else -> "native"
         }
-        add("ksp${target.name.capitalize()}", project(":kdynlib-ksp-native-lib-$baseKind"))
+        val configName = "ksp${target.name.capitalize()}"
+        if (configurations.findByName(configName) != null) {
+            add(configName, project(":kdynlib-ksp-native-lib-$baseKind"))
+        }
         val sourceSetName = "${target.name}Main"
         kotlin.sourceSets.maybeCreate(sourceSetName).kotlin.srcDir(File(buildDir, "generated/ksp/$sourceSetName/kotlin"))
     }

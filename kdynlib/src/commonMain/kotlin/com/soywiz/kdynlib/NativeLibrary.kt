@@ -24,6 +24,7 @@ expect class VoidPtr
 expect fun Long.toVoidPtr(): VoidPtr
 expect fun VoidPtr.toLongPtr(): Long
 
+val VoidPtrSize: Int get() = NativeIntSize
 expect val NativeIntSize: Int
 expect val NativeLibrarySupported: Boolean
 
@@ -42,6 +43,12 @@ expect fun VoidPtr.getInt(offset: Int): Int
 expect fun VoidPtr.setInt(offset: Int, value: Int)
 expect fun VoidPtr.getLong(offset: Int): Long
 expect fun VoidPtr.setLong(offset: Int, value: Long)
+
+fun VoidPtrNew(value: Long): VoidPtr = value.toVoidPtr()
+fun VoidPtrNew(value: Int): VoidPtr = value.toLong().toVoidPtr()
+
+fun VoidPtr.getChar(offset: Int): Char = getShort(offset).toInt().toChar()
+fun VoidPtr.setChar(offset: Int, value: Char) = setShort(offset, value.code.toShort())
 
 fun VoidPtr.getFloat(offset: Int): Float = Float.fromBits(getInt(offset))
 fun VoidPtr.setFloat(offset: Int, value: Float) = setInt(offset, value.toRawBits())
@@ -103,10 +110,27 @@ fun VoidPtr.readBytes(count: Int, offset: Int = 0): ByteArray =
     ByteArray(count).also { readBytes(it, offset = offset) }
 
 
-fun VoidPtr.readStringzUtf8(offset: Int = 0, estimatedSize: Int = 1024) = readBytesUpTo(offset = 0).decodeToString()
+fun VoidPtr.readStringzUtf8(offset: Int = 0, estimatedSize: Int = 1024) = readBytesUpTo(offset = offset, estimatedSize = estimatedSize).decodeToString()
+fun VoidPtr.readStringzUtf16(offset: Int = 0, estimatedSize: Int = 1024): String {
+    val sb = StringBuilder(estimatedSize)
+    var n = 0
+    while (true) {
+        val c = this.getChar(offset + n * 2)
+        if (c == '\u0000') break
+        sb.append(c)
+        n++
+    }
+    return sb.toString()
+}
 
 fun NArena.allocBytes(data: ByteArray): VoidPtr = alloc(data.size).also { it.writeBytes(data) }
 fun NArena.allocStringz(str: String): VoidPtr = allocBytes(byteArrayOf(*str.encodeToByteArray(), 0))
+fun NArena.allocStringzUtf16(str: String): VoidPtr {
+    val ptr = alloc((str.length + 1) * 2)
+    for (n in 0 until str.length) ptr.setChar(n * 2, str[n])
+    ptr.setChar(str.length * 2, '\u0000')
+    return ptr
+}
 
 interface LibraryCompanion<T : Library> {
     operator fun invoke(): T = TODO("Execute Interface(\"dllname\") instead (even if the symbol doesn't exist)")

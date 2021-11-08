@@ -56,79 +56,21 @@ afterEvaluate {
     }
 }
 
-/*
-import org.apache.tools.ant.taskdefs.condition.Os
-
-apply plugin: com.soywiz.korlibs.KorlibsPlugin
-
-korlibs {
-    exposeVersion()
-    //dependencyCInteropsExternal("com.soywiz.korlibs.korim:korim:$korimVersion", "stb_image", ["linuxX64", "iosX64", "iosArm64"])
-    //dependencyCInterops("GL", ["linuxX64"])
-
-    dependencies {
-        if (hasAndroid) {
-            add("androidMainApi", "com.android.support:appcompat-v7:28.0.0")
+// Code for use kdynlib dynamic libraries via interface
+dependencies {
+    for (target in kotlin.targets) {
+        val baseKind = when (target.name) {
+            "metadata" -> "metadata"
+            "jvm" -> "jvm"
+            "js" -> "dummy"
+            "android" -> "dummy"
+            else -> "native"
         }
-    }
-}
-
-kotlin {
-    if (korlibs.linuxEnabled) {
-        linuxX64 {
-            compilations.main {
-                cinterops {
-                    GL {
-                        //print(it)
-                        //def linuxFolder = new File(rootDir, "nlib/linuxX64")
-                        //compilerOpts("-I${new File(linuxFolder, "include").absolutePath}")
-                        //linkerOpts("-L${new File(linuxFolder, "lib/x86_64-linux-gnu").absolutePath}")
-                    }
-                    //gtk3 {
-                    //    ["/opt/local/include", "/usr/include", "/usr/local/include"].forEach {
-                    //        includeDirs(
-                    //            "$it/atk-1.0",
-                    //            "$it/gdk-pixbuf-2.0",
-                    //            "$it/cairo",
-                    //            "$it/harfbuzz",
-                    //            "$it/pango-1.0",
-                    //            "$it/gtk-3.0",
-                    //            "$it/glib-2.0"
-                    //        )
-                    //    }
-//
-                    //    includeDirs(
-                    //        "/opt/local/lib/glib-2.0/include",
-                    //        "/usr/lib/x86_64-linux-gnu/glib-2.0/include",
-                    //        "/usr/local/lib/glib-2.0/include"
-                    //    )
-                    //}
-                }
-            }
+        val configName = "ksp${target.name.capitalize()}"
+        if (configurations.findByName(configName) != null) {
+            add(configName, project(":kdynlib-ksp-native-lib-$baseKind"))
         }
+        val sourceSetName = "${target.name}Main"
+        kotlin.sourceSets.maybeCreate(sourceSetName).kotlin.srcDir(File(buildDir, "generated/ksp/$sourceSetName/kotlin"))
     }
 }
-
-kotlin.sourceSets {
-    jvmMain {
-        resources.srcDir("libs")
-    }
-}
-
-task runSample(type: JavaExec) {
-    classpath = kotlin.targets.jvm.compilations.test.runtimeDependencyFiles
-    main = 'com.soywiz.korgw.TestGameWindow'
-}
-
-task runSampleFirstThread(type: JavaExec) {
-    classpath = kotlin.targets.jvm.compilations.test.runtimeDependencyFiles
-    if (Os.isFamily(Os.FAMILY_MAC)) {
-        jvmArgs "-XstartOnFirstThread"
-    }
-    main = 'com.soywiz.korgw.TestGameWindow'
-}
-
-task runSampleMainThread {
-    dependsOn runSampleFirstThread
-}
-*/

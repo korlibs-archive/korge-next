@@ -30,7 +30,10 @@ actual class NArena {
 }
 actual fun NArenaAlloc() = NArena()
 actual fun NArena.close() = this.clear()
-actual fun NArena.alloc(size: Int): VoidPtr = Memory(size.toLong()).also { this.add(it) }
+actual fun NArena.alloc(size: Int): VoidPtr = Memory(size.toLong()).also {
+    it.clear()
+    this.add(it)
+}
 actual fun VoidPtr.transferBytes(bytes: ByteArray, index: Int, size: Int, write: Boolean, offset: Int) {
     if (write) {
         this.write(offset.toLong(), bytes, index, size)
