@@ -8,14 +8,18 @@ import org.gradle.api.*
 import org.gradle.api.Project
 import org.gradle.api.plugins.*
 import org.gradle.api.tasks.*
+import org.gradle.kotlin.dsl.*
 import org.gradle.plugins.ide.idea.model.*
 import org.gradle.util.*
 import org.jetbrains.kotlin.gradle.dsl.*
+import org.jetbrains.kotlin.gradle.plugin.*
 import java.io.*
 
 class KorgeGradleApply(val project: Project) {
 	fun apply(includeIndirectAndroid: Boolean = true) = project {
 		System.setProperty("java.awt.headless", "true")
+
+        project.setProperty("ksp.version.check", "false")
 
 		val currentGradleVersion = SemVer(project.gradle.gradleVersion)
         //val expectedGradleVersion = SemVer("6.8.1")
@@ -102,6 +106,38 @@ class KorgeGradleApply(val project: Project) {
 			}
 		}
 	}
+
+    private fun Project.configureKsp() {
+        project.plugins.apply("com.google.devtools.ksp")
+// Code for use kdynlib dynamic libraries via interface
+        dependencies {
+            for (target in kotlin.targets) {
+                val configName = "ksp${target.name.capitalize()}"
+                if (configurations.findByName(configName) != null) {
+                    //add(configName, project(":kdynlib-ksp"))
+                    add(configName, "com.soywiz.korlibs:kdynlib-ksp:${BuildVersions.KMEM}")
+                }
+                val sourceSetName = "${target.name}Main"
+                //kotlin.sourceSets.maybeCreate(sourceSetName).kotlin.srcDir(File(buildDir, "generated/ksp/$sourceSetName/kotlin"))
+            }
+
+            tasks.withType<com.google.devtools.ksp.gradle.KspTask> {
+                val task = this
+
+                val targetName = task.name.removePrefix("kspKotlin").removePrefix("kspDebugKotlin").removePrefix("kspReleaseKotlin").decapitalize()
+                val targetKind = when (task) {
+                    is com.google.devtools.ksp.gradle.KspTaskJS -> "js"
+                    is com.google.devtools.ksp.gradle.KspTaskJvm -> "jvm"
+                    is com.google.devtools.ksp.gradle.KspTaskNative -> "native"
+                    is com.google.devtools.ksp.gradle.KspTaskMetadata -> "metadata"
+                    else -> "unknown"
+                }
+                task.options.add(SubpluginOption("apoption", "kotlinTarget=$targetName"))
+                task.options.add(SubpluginOption("apoption", "kotlinTargetKind=$targetKind"))
+            }
+        }
+
+    }
 
 	private fun Project.addVersionExtension() {
 		ext.set("korioVersion", korioVersion)

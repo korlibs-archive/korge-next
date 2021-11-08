@@ -13,9 +13,10 @@ buildscript {
         mavenCentral()
         google()
         maven { url = uri("https://plugins.gradle.org/m2/") }
-        if (kotlinVersion.contains("-M") || kotlinVersion.contains("-RC") || kotlinVersion.contains("eap") || kotlinVersion.contains("-release")) {
+        if (kotlinVersion.contains("-M") || kotlinVersion.contains("-dev") || kotlinVersion.contains("-RC") || kotlinVersion.contains("eap") || kotlinVersion.contains("-release")) {
             maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/temporary")
             maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-coroutines/maven")
+            maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap/")
         }
         maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
     }
@@ -33,6 +34,7 @@ plugins {
     kotlin("multiplatform") //version realKotlinVersion
     signing
     `maven-publish`
+    //id("com.github.gmazzo.buildconfig") version "2.0.2" apply false
 }
 
 //val headlessTests = true
@@ -178,7 +180,7 @@ val javaAddOpens = ArrayList<String>().apply {
     if (isLinux) add("--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED")
 }.toTypedArray()
 
-val Project.isJavaOnlyPlugin get() =  project.name == "korge-gradle-plugin" || project.name.contains("ksp-")
+val Project.isJavaOnlyPlugin get() = project.name.contains("gradle-plugin") || project.name.contains("-ksp")
 
 subprojects {
     val doConfigure =

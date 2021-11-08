@@ -1,5 +1,9 @@
 description = "Portable UI with accelerated graphics support for Kotlin"
 
+plugins {
+    id("com.google.devtools.ksp")
+}
+
 val enableKotlinNative: String by project
 val doEnableKotlinNative get() = enableKotlinNative == "true"
 
@@ -58,19 +62,39 @@ afterEvaluate {
 
 // Code for use kdynlib dynamic libraries via interface
 dependencies {
-    for (target in kotlin.targets) {
-        val baseKind = when (target.name) {
-            "metadata" -> "metadata"
-            "jvm" -> "jvm"
-            "js" -> "dummy"
-            "android" -> "dummy"
-            else -> "native"
+    tasks.withType<com.google.devtools.ksp.gradle.KspTask> {
+        val task = this
+
+        //println("$project : task=$task")
+
+        val targetName = task.name.removePrefix("kspKotlin").removePrefix("kspDebugKotlin").removePrefix("kspReleaseKotlin").decapitalize()
+        val targetKind = when (task) {
+            is com.google.devtools.ksp.gradle.KspTaskJS -> "js"
+            is com.google.devtools.ksp.gradle.KspTaskJvm -> "jvm"
+            is com.google.devtools.ksp.gradle.KspTaskNative -> "native"
+            is com.google.devtools.ksp.gradle.KspTaskMetadata -> "metadata"
+            else -> "unknown"
         }
-        val configName = "ksp${target.name.capitalize()}"
-        if (configurations.findByName(configName) != null) {
-            add(configName, project(":kdynlib-ksp-native-lib-$baseKind"))
+        task.options.add(org.jetbrains.kotlin.gradle.plugin.SubpluginOption("apoption", "kotlinTarget=$targetName"))
+        task.options.add(org.jetbrains.kotlin.gradle.plugin.SubpluginOption("apoption", "kotlinTargetKind=$targetKind"))
+    }
+
+    // Old Kotlin 1.5
+    if (configurations.findByName("ksp") != null) {
+        add("ksp", project(":kdynlib-ksp"))
+    }
+
+    afterEvaluate {
+        for (target in kotlin.targets) {
+            val configName = "ksp${target.name.capitalize()}"
+            if (configurations.findByName(configName) != null) {
+                add(configName, project(":kdynlib-ksp"))
+                //println("$project : $configName")
+            } else {
+                //println("$project : $configName - NOT FOUND!")
+            }
+            //val sourceSetName = "${target.name}Main"
+            //kotlin.sourceSets.maybeCreate(sourceSetName).kotlin.srcDir(File(buildDir, "generated/ksp/$sourceSetName/kotlin"))
         }
-        val sourceSetName = "${target.name}Main"
-        kotlin.sourceSets.maybeCreate(sourceSetName).kotlin.srcDir(File(buildDir, "generated/ksp/$sourceSetName/kotlin"))
     }
 }

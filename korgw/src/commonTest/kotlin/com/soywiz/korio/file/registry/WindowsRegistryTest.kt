@@ -10,7 +10,7 @@ import kotlin.test.*
 class WindowsRegistryTest {
     @Test
     fun testRegistry() = suspendTest({ WindowsRegistry.isSupported }) {
-        assertEquals(WindowsRegistryBase.KEY_MAP.keys.toList().sorted(), WindowsRegistryVfs.root.listNames().sorted())
+        assertEquals(WindowsRegistry.KEY_MAP.keys.toList().sorted(), WindowsRegistryVfs.root.listNames().sorted())
 
         assertTrue { WindowsRegistryVfs["HKEY_CURRENT_USER"].listNames().map { it.lowercase() }.contains("software") }
         assertTrue { WindowsRegistryVfs["HKEY_LOCAL_MACHINE/Software"].listNames().map { it.lowercase() }.contains("windows") }
@@ -40,6 +40,10 @@ class WindowsRegistryTest {
         assertEquals("1024", korge["MyIntValue"].readString())
         assertEquals("1024", korge["MyLongValue"].readString())
 
+        assertTrue { korge["MyKey"].exists() }
+
         cleanup()
+
+        assertFalse { korge["MyKey"].exists() }
     }
 }

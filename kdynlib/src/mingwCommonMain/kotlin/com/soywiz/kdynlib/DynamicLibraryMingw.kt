@@ -9,7 +9,7 @@ public actual open class DynamicLibrary actual constructor(public val name: Stri
         if (handle == null) println("Couldn't load '$name' library")
     }
     public actual val isAvailable: Boolean get() = handle != null
-    override fun getSymbol(name: String): VoidPtr? = if (handle == null) null else GetProcAddress(handle, name)?.rawValue
+    override fun getSymbol(name: String): VoidPtr = handle?.let { GetProcAddress(it, name) }?.rawValue ?: VoidPtrNull
     public actual fun close() {
         FreeLibrary(handle)
     }

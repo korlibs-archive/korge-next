@@ -2,6 +2,7 @@ rootProject.name = "korlibs-next"
 
 pluginManagement {
 	repositories {
+        mavenLocal()
 		mavenCentral()
 		gradlePluginPortal()
 
@@ -9,9 +10,10 @@ pluginManagement {
         //val kotlinVersion = gradleProperties["kotlinVersion"].toString()
         val kotlinVersion: String by settings
 
-        if (kotlinVersion.contains("-M") || kotlinVersion.contains("-RC") || kotlinVersion.contains("eap") || kotlinVersion.contains("-release")) {
+        if (kotlinVersion.contains("-M") || kotlinVersion.contains("-dev") || kotlinVersion.contains("-RC") || kotlinVersion.contains("eap") || kotlinVersion.contains("-release")) {
             maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/temporary")
             maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-coroutines/maven")
+            maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap/")
         }
         maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
 	}
@@ -60,11 +62,8 @@ include(":korge-box2d")
 include(":korge-gradle-plugin")
 
 include(":kdynlib")
-include(":kdynlib-ksp-common")
-include(":kdynlib-ksp-native-lib-dummy")
-include(":kdynlib-ksp-native-lib-jvm")
-include(":kdynlib-ksp-native-lib-native")
-include(":kdynlib-ksp-native-lib-metadata")
+include(":kdynlib-ksp")
+include(":kdynlib-gradle-plugin")
 
 if (!inCI) {
     include(":korge-sandbox")

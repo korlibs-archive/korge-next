@@ -57,9 +57,13 @@ val kotlinVersion: String by project
 val androidBuildGradleVersion: String by project
 val proguardVersion: String by project
 val closureCompilerVersion: String by project
+val kspVersion: String by project
 
 dependencies {
 	//implementation(project(":korge-build"))
+    implementation(project(":kdynlib-ksp"))
+    implementation("com.google.devtools.ksp:symbol-processing-gradle-plugin:$kspVersion")
+
     implementation(kotlin("gradle-plugin"))
     implementation(kotlin("serialization"))
 

@@ -1,6 +1,6 @@
-plugins {
-    id("com.google.devtools.ksp")
-}
+import org.jetbrains.kotlin.gradle.plugin.*
+
+//plugins { id("com.google.devtools.ksp") }
 
 description = "Dynamic libraries for Kotlin"
 
@@ -36,23 +36,4 @@ dependencies {
 
     add("jvmMainApi", "net.java.dev.jna:jna:$jnaVersion")
     add("jvmMainApi", "net.java.dev.jna:jna-platform:$jnaVersion")
-}
-
-// Code for use kdynlib dynamic libraries via interface
-dependencies {
-    for (target in kotlin.targets) {
-        val baseKind = when (target.name) {
-            "metadata" -> "metadata"
-            "jvm" -> "jvm"
-            "js" -> "dummy"
-            "android" -> "dummy"
-            else -> "native"
-        }
-        val configName = "ksp${target.name.capitalize()}"
-        if (configurations.findByName(configName) != null) {
-            add(configName, project(":kdynlib-ksp-native-lib-$baseKind"))
-        }
-        val sourceSetName = "${target.name}Main"
-        kotlin.sourceSets.maybeCreate(sourceSetName).kotlin.srcDir(File(buildDir, "generated/ksp/$sourceSetName/kotlin"))
-    }
 }

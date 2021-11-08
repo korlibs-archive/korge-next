@@ -48,7 +48,7 @@ abstract class NativeStructDesc<T : NativeStruct>(val gen: (VoidPtr) -> T) {
         inline operator fun setValue(struct: NativeStruct, property: KProperty<*>, value: ByteArray) = struct.ptr.writeBytes(value, 0, size, offset = offset)
     }
     class StructRefDef<T : NativeStruct>(val desc: NativeStructDesc<T>, val offset: Int) {
-        inline operator fun getValue(struct: NativeStruct, property: KProperty<*>): T = desc.gen((struct.ptr.toLongPtr() + offset).toVoidPtr())
+        inline operator fun getValue(struct: NativeStruct, property: KProperty<*>): T = desc.gen((struct.ptr!!.toLongPtr() + offset).toVoidPtr()!!)
         inline operator fun setValue(struct: NativeStruct, property: KProperty<*>, value: T) {
             Unit
         }
