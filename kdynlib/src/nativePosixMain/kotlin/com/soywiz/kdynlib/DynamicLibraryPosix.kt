@@ -17,7 +17,7 @@ public actual open class DynamicLibrary actual constructor(val name: String) : D
     public actual val isAvailable get() = handle != null
     override fun getSymbol(name: String): VoidPtr? {
         if (DEBUG_DYNAMIC_LIB) println("Requesting ${this.name}.$name...")
-        val out: CPointer<CFunction<*>>? = if (handle == null) null else dlsym(handle, name)?.rawValue
+        val out: VoidPtr? = if (handle == null) null else dlsym(handle, name)?.rawValue
         if (DEBUG_DYNAMIC_LIB) println("Got ${this.name}.$name...$out")
         return out
     }
