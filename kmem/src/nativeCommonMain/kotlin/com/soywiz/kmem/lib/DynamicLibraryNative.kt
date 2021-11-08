@@ -16,7 +16,6 @@ actual fun VoidPtr.toLongPtr(): Long = this.toLong()
 
 actual val NativeIntSize: Int = sizeOf<platform.posix.ssize_tVar>().toInt()
 
-actual typealias NPointed = CPointed
 actual interface Library
 actual interface StdCallLibrary : Library
 

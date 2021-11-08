@@ -20,7 +20,6 @@ expect fun VoidPtr.toLongPtr(): Long
 
 expect val NativeIntSize: Int
 
-expect abstract class NPointed
 expect interface Library
 expect interface StdCallLibrary : Library
 expect class NArena
@@ -160,9 +159,9 @@ abstract class LibStructDesc<T : LibStruct>(val gen: (VoidPtr) -> T) {
             Unit
         }
     }
-    private var offset = 0
-    var maxAlign = 1; private set
-    private fun offset(size: Int, align: Int = size): Int {
+    protected var offset = 0
+    var maxAlign = 1; protected set
+    protected open fun offset(size: Int, align: Int = size): Int {
         maxAlign = max(maxAlign, align)
         return offset.nextAlignedTo(align).also { offset += size }
     }
@@ -179,3 +178,10 @@ abstract class LibStructDesc<T : LibStruct>(val gen: (VoidPtr) -> T) {
     val size get() = offset.nextAlignedTo(maxAlign)
 }
 
+abstract class LibUnionDesc<T : LibStruct>(gen: (VoidPtr) -> T) : LibStructDesc<T>(gen) {
+    override fun offset(size: Int, align: Int): Int {
+        offset = max(offset, size)
+        maxAlign = max(maxAlign, align)
+        return 0
+    }
+}

@@ -10,7 +10,6 @@ actual fun VoidPtr.toLongPtr(): Long = this.toLong()
 
 actual val NativeIntSize: Int = Int.SIZE_BYTES
 
-actual abstract class NPointed
 actual interface Library
 actual interface StdCallLibrary : Library
 actual class NArena

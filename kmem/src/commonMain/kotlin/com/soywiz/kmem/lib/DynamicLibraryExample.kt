@@ -9,6 +9,7 @@ interface MyNativeLibrary : Library, StdCallLibrary {
     fun GetModuleFileNameA(module: VoidPtr?, name: VoidPtr?, size: Int32): Int32
 }
 
+// @TODO: Can we do this via the plugin too?
 class MyStructDesc(override val ptr: VoidPtr) : LibStruct {
     companion object : LibStructDesc<MyStructDesc>({ MyStructDesc(it) }) {
         val value = int()

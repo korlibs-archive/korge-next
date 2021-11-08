@@ -14,7 +14,6 @@ actual val NativeIntSize: Int = Native.POINTER_SIZE
 
 actual typealias Library = com.sun.jna.Library
 actual typealias StdCallLibrary = com.sun.jna.win32.StdCallLibrary
-actual abstract class NPointed
 
 actual class NArena {
     val ptrs = arrayListOf<Memory>()
