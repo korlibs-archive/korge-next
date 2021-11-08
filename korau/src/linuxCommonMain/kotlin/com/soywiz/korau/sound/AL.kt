@@ -9,6 +9,7 @@ import kotlin.native.concurrent.AtomicInt
 import kotlin.native.concurrent.AtomicReference
 import kotlin.reflect.KProperty
 import com.soywiz.kmem.*
+import com.soywiz.kdynlib.*
 
 //typealias ALuintVar = UIntVar
 typealias ALuint = Int

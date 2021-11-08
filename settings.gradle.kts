@@ -58,11 +58,13 @@ include(":korge-spine")
 include(":korge-swf")
 include(":korge-box2d")
 include(":korge-gradle-plugin")
-include(":ksp-common")
-include(":ksp-native-lib-dummy")
-include(":ksp-native-lib-jvm")
-include(":ksp-native-lib-native")
-include(":ksp-native-lib-metadata")
+
+include(":kdynlib")
+include(":kdynlib-ksp-common")
+include(":kdynlib-ksp-native-lib-dummy")
+include(":kdynlib-ksp-native-lib-jvm")
+include(":kdynlib-ksp-native-lib-native")
+include(":kdynlib-ksp-native-lib-metadata")
 
 if (!inCI) {
     include(":korge-sandbox")

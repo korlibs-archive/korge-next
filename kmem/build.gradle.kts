@@ -4,8 +4,6 @@ plugins {
 
 description = "Memory utilities for Kotlin"
 
-val jnaVersion: String by project
-
 /*
 project.ext.props = [
     "project.scm.url" : "https://github.com/korlibs/klogger",
@@ -48,23 +46,5 @@ kotlin {
         target.compilations["main"].cinterops {
             maybeCreate("fastmem")
         }
-    }
-}
-
-dependencies {
-    add("jvmMainApi", "net.java.dev.jna:jna:$jnaVersion")
-    add("jvmMainApi", "net.java.dev.jna:jna-platform:$jnaVersion")
-
-    for (target in kotlin.targets) {
-        val baseKind = when (target.name) {
-            "metadata" -> "metadata"
-            "jvm" -> "jvm"
-            "js" -> "dummy"
-            "android" -> "dummy"
-            else -> "native"
-        }
-        add("ksp${target.name.capitalize()}", project(":ksp-native-lib-$baseKind"))
-        val sourceSetName = "${target.name}Main"
-        kotlin.sourceSets.maybeCreate(sourceSetName).kotlin.srcDir(File(buildDir, "generated/ksp/$sourceSetName/kotlin"))
     }
 }

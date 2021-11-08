@@ -1,7 +1,5 @@
 description = "Portable UI with accelerated graphics support for Kotlin"
 
-val jnaVersion: String by project
-
 val enableKotlinNative: String by project
 val doEnableKotlinNative get() = enableKotlinNative == "true"
 
@@ -39,8 +37,7 @@ if (doEnableKotlinNative) {
 
 dependencies {
     add("commonMainApi", project(":korim"))
-    add("jvmMainApi", "net.java.dev.jna:jna:$jnaVersion")
-    add("jvmMainApi", "net.java.dev.jna:jna-platform:$jnaVersion")
+    add("commonMainApi", project(":kdynlib"))
     if (hasAndroid) {
         add("androidMainApi", "com.android.support:appcompat-v7:28.0.0")
     }

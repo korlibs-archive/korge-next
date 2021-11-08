@@ -5,6 +5,7 @@
 package com.soywiz.kgl
 
 import com.soywiz.kmem.*
+import com.soywiz.kdynlib.*
 import kotlinx.cinterop.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.format.*

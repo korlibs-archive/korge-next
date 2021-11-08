@@ -1,4 +1,10 @@
-description = "Portable Audio library for Kotlin"
+plugins {
+    id("com.google.devtools.ksp")
+}
+
+description = "Dynamic libraries for Kotlin"
+
+val jnaVersion: String by project
 
 val enableKotlinNative: String by project
 val doEnableKotlinNative get() = enableKotlinNative == "true"
@@ -8,6 +14,10 @@ val doEnableKotlinRaspberryPi get() = enableKotlinRaspberryPi == "true"
 
 val isWindows get() = org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_WINDOWS)
 val isMacos get() = org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_MAC)
+
+dependencies {
+    //add("androidMainApi", "com.implimentz:unsafe:0.0.6")
+}
 
 fun org.jetbrains.kotlin.gradle.dsl.KotlinTargetContainerWithPresetFunctions.nativeTargets(): List<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
     return when {
@@ -21,19 +31,22 @@ fun org.jetbrains.kotlin.gradle.dsl.KotlinTargetContainerWithPresetFunctions.nat
     }
 }
 
-if (doEnableKotlinNative) {
-    kotlin {
-        for (target in nativeTargets()) {
-            target.compilations["main"].cinterops {
-                maybeCreate("minimp3")
-                maybeCreate("stb_vorbis")
-            }
-        }
-
-    }
-}
-
 dependencies {
-    add("commonMainApi", project(":korio"))
-    add("commonMainApi", project(":kdynlib"))
+    add("commonMainApi", project(":kmem"))
+
+    add("jvmMainApi", "net.java.dev.jna:jna:$jnaVersion")
+    add("jvmMainApi", "net.java.dev.jna:jna-platform:$jnaVersion")
+
+    for (target in kotlin.targets) {
+        val baseKind = when (target.name) {
+            "metadata" -> "metadata"
+            "jvm" -> "jvm"
+            "js" -> "dummy"
+            "android" -> "dummy"
+            else -> "native"
+        }
+        add("ksp${target.name.capitalize()}", project(":kdynlib-ksp-native-lib-$baseKind"))
+        val sourceSetName = "${target.name}Main"
+        kotlin.sourceSets.maybeCreate(sourceSetName).kotlin.srcDir(File(buildDir, "generated/ksp/$sourceSetName/kotlin"))
+    }
 }
