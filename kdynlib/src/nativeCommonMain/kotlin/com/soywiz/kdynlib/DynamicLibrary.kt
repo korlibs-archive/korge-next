@@ -4,19 +4,13 @@ import kotlinx.cinterop.*
 import kotlin.native.concurrent.*
 import kotlin.reflect.*
 
-public expect open class DynamicLibraryBase(name: String) : DynamicSymbolResolver {
+public expect open class DynamicLibrary(name: String) : DynamicSymbolResolver {
     public val isAvailable: Boolean
     public fun close()
 }
 
-public open class DynamicLibrary(name: String) : DynamicLibraryBase(name) {
-    public fun <T : Function<*>> func(name: String? = null): DynamicFun<T> = DynamicFun<T>(this, name)
-    public fun <T : Function<*>> funcNull(name: String? = null): DynamicFunNull<T> = DynamicFunNull<T>(this, name)
-}
-
-public fun interface DynamicSymbolResolver {
-    public fun getSymbol(name: String): CPointer<CFunction<*>>?
-}
+public fun <T : Function<*>> DynamicSymbolResolver.func(name: String? = null): DynamicFun<T> = DynamicFun<T>(this, name)
+public fun <T : Function<*>> DynamicSymbolResolver.funcNull(name: String? = null): DynamicFunNull<T> = DynamicFunNull<T>(this, name)
 
 public abstract class DynamicFunBase<T : Function<*>>(public val name: String? = null) {
     private var _set = AtomicInt(0)
@@ -36,7 +30,7 @@ public abstract class DynamicFunBase<T : Function<*>>(public val name: String? =
 }
 
 public abstract class DynamicFunLibrary<T : Function<*>>(public val library: DynamicSymbolResolver, name: String? = null) : DynamicFunBase<T>(name) {
-    override fun glGetProcAddressT(name: String): CPointer<CFunction<T>>? = library.getSymbol(name) as CPointer<CFunction<T>>?
+    override fun glGetProcAddressT(name: String): CPointer<CFunction<T>>? = library.getSymbol(name)?.toLong()?.toCPointer()
 }
 
 public open class DynamicFun<T : Function<*>>(library: DynamicSymbolResolver, name: String? = null) : DynamicFunLibrary<T>(library, name) {

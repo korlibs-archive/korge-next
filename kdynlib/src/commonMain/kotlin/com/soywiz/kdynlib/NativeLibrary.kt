@@ -4,6 +4,12 @@ import com.soywiz.kmem.*
 import kotlin.math.*
 import kotlin.reflect.*
 
+annotation class NativeLibrary {
+    companion object {
+        val SUPPORTED get() = NativeLibrarySupported
+    }
+}
+
 typealias Int32 = Int
 typealias Int64 = Long
 
@@ -19,6 +25,7 @@ expect fun Long.toVoidPtr(): VoidPtr
 expect fun VoidPtr.toLongPtr(): Long
 
 expect val NativeIntSize: Int
+expect val NativeLibrarySupported: Boolean
 
 expect interface Library
 expect interface StdCallLibrary : Library
@@ -101,11 +108,13 @@ fun VoidPtr.readStringzUtf8(offset: Int = 0, estimatedSize: Int = 1024) = readBy
 fun NArena.allocBytes(data: ByteArray): VoidPtr = alloc(data.size).also { it.writeBytes(data) }
 fun NArena.allocStringz(str: String): VoidPtr = allocBytes(byteArrayOf(*str.encodeToByteArray(), 0))
 
-annotation class NativeLibrary
-
 interface LibraryCompanion<T : Library> {
     operator fun invoke(): T = TODO("Execute Interface(\"dllname\") instead (even if the symbol doesn't exist)")
 }
 
 @Suppress("unused")
 inline fun <T> Library.memScoped(block: NArena.() -> T) = libMemScope(block)
+
+public fun interface DynamicSymbolResolver {
+    public fun getSymbol(name: String): VoidPtr?
+}

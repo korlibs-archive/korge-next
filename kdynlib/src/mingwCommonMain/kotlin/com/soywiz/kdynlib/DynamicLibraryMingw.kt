@@ -3,13 +3,13 @@ package com.soywiz.kdynlib
 import kotlinx.cinterop.*
 import platform.windows.*
 
-public actual open class DynamicLibraryBase actual constructor(public val name: String) : DynamicSymbolResolver {
+public actual open class DynamicLibrary actual constructor(public val name: String) : DynamicSymbolResolver {
     public val handle: CPointer<HINSTANCE__>? = LoadLibraryW(name)
     init {
         if (handle == null) println("Couldn't load '$name' library")
     }
     public actual val isAvailable: Boolean get() = handle != null
-    override fun getSymbol(name: String): CPointer<CFunction<*>>? = if (handle == null) null else GetProcAddress(handle, name)?.reinterpret()
+    override fun getSymbol(name: String): VoidPtr? = if (handle == null) null else GetProcAddress(handle, name)?.rawValue
     public actual fun close() {
         FreeLibrary(handle)
     }

@@ -10,12 +10,12 @@ internal interface MyNativeLibrary : Library, StdCallLibrary {
 }
 
 // @TODO: Can we do this via the plugin too?
-internal class MyStructDesc(override val ptr: VoidPtr) : NativeStruct {
-    companion object : NativeStructDesc<MyStructDesc>({ MyStructDesc(it) }) {
+internal class MyNativeStruct(override val ptr: VoidPtr) : NativeStruct {
+    companion object : NativeStructDesc<MyNativeStruct>({ MyNativeStruct(it) }) {
         val value = int()
-        val struct = structRef(MyStructDesc)
+        val struct = structRef(MyNativeStruct)
         //val value = nativeInt()
     }
-    var value by MyStructDesc.value
-    var struct by MyStructDesc.struct
+    var value by MyNativeStruct.value
+    var struct by MyNativeStruct.struct
 }

@@ -9,6 +9,7 @@ actual fun Long.toVoidPtr(): VoidPtr = this.toInt()
 actual fun VoidPtr.toLongPtr(): Long = this.toLong()
 
 actual val NativeIntSize: Int = Int.SIZE_BYTES
+actual val NativeLibrarySupported: Boolean = false
 
 actual interface Library
 actual interface StdCallLibrary : Library

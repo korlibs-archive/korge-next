@@ -11,6 +11,7 @@ actual fun Long.toVoidPtr(): VoidPtr = Pointer(this)
 actual fun VoidPtr.toLongPtr(): Long = Pointer.nativeValue(this)
 
 actual val NativeIntSize: Int = Native.POINTER_SIZE
+actual val NativeLibrarySupported: Boolean = true
 
 actual typealias Library = com.sun.jna.Library
 actual typealias StdCallLibrary = com.sun.jna.win32.StdCallLibrary

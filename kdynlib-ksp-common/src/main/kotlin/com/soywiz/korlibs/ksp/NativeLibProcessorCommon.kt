@@ -49,17 +49,18 @@ class NativeLibProcessorCommon(
                             isJvm -> {
                                 file.appendln("internal class $className(val libName: String) : $interfaceName by com.sun.jna.Native.load(libName, $interfaceName::class.java)")
                                 file.appendln("internal operator fun com.soywiz.kdynlib.LibraryCompanion<$interfaceName>.invoke(name: String): $interfaceName = $className(name)")
+                                file.appendln("internal operator fun com.soywiz.kdynlib.LibraryCompanion<$interfaceName>.invoke(resolver: com.soywiz.kdynlib.DynamicSymbolResolver): $interfaceName = TODO(\"Library with resolver not implemented in the JVM\")")
                             }
                             isDummy -> {
                                 file.appendln("internal operator fun com.soywiz.kdynlib.LibraryCompanion<$interfaceName>.invoke(name: String): $interfaceName = TODO(\"Can't instantiate '$interfaceName' in this target\")")
+                                file.appendln("internal operator fun com.soywiz.kdynlib.LibraryCompanion<$interfaceName>.invoke(resolver: com.soywiz.kdynlib.DynamicSymbolResolver): $interfaceName = invoke(\"dummy\")")
                             }
                             isNative -> {
                                 file.appendln("import kotlinx.cinterop.*")
-                                file.appendln("internal class $className(val libName: String) : $interfaceName {")
-                                file.appendln("  inline private fun com.soywiz.kdynlib.VoidPtr.convert() = this.toLong().toCPointer<CPointed>()")
-                                file.appendln("  inline private fun COpaquePointer.convert() = this.rawValue")
+                                file.appendln("internal class $className(val __LIB__: com.soywiz.kdynlib.DynamicSymbolResolver) : $interfaceName {")
+                                file.appendln("  private inline fun com.soywiz.kdynlib.VoidPtr.convert() = this.toLong().toCPointer<CPointed>()")
+                                file.appendln("  private inline fun COpaquePointer.convert() = this.rawValue")
                                 run {
-                                    file.appendln("  val __LIB__ = com.soywiz.kdynlib.DynamicLibrary(libName)\n")
                                     for (func in classDeclaration.getDeclaredFunctions()) {
                                         val funcName = func.simpleName.getShortName()
                                         val paramsStr = func.parameters.map { "${it.name?.getShortName()}: ${it.type.toMyType().type}" }.joinToString(", ")
@@ -91,10 +92,12 @@ class NativeLibProcessorCommon(
                                     }
                                     file.appendln("}")
                                 }
-                                file.appendln("internal operator fun com.soywiz.kdynlib.LibraryCompanion<$interfaceName>.invoke(name: String): $interfaceName = $className(name)")
+                                file.appendln("internal operator fun com.soywiz.kdynlib.LibraryCompanion<$interfaceName>.invoke(name: String): $interfaceName = $className(com.soywiz.kdynlib.DynamicLibrary(name))")
+                                file.appendln("internal operator fun com.soywiz.kdynlib.LibraryCompanion<$interfaceName>.invoke(resolver: com.soywiz.kdynlib.DynamicSymbolResolver): $interfaceName = $className(resolver)")
                             }
                             isMetadata -> {
                                 file.appendln("internal expect operator fun com.soywiz.kdynlib.LibraryCompanion<$interfaceName>.invoke(name: String): $interfaceName")
+                                file.appendln("internal expect operator fun com.soywiz.kdynlib.LibraryCompanion<$interfaceName>.invoke(resolver: com.soywiz.kdynlib.DynamicSymbolResolver): $interfaceName")
                             }
                         }
                     }
