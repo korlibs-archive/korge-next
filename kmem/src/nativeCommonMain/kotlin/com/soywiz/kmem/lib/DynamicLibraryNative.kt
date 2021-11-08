@@ -2,21 +2,44 @@ package com.soywiz.kmem.lib
 
 import com.soywiz.kmem.*
 import kotlinx.cinterop.*
-import kotlinx.cinterop.invoke as invoke2
+import platform.posix.*
+
+//actual typealias NativeInt = platform.posix.ssize_t // Can't typealias another typealias, and we would need this for 32-bit and 64-bit targets
+
+actual typealias NativeInt = kotlin.native.internal.NativePtr
+actual fun Long.toNativeInt(): NativeInt = this.toCPointer<ByteVar>().rawValue
+actual fun NativeInt.toLongValue(): Long = this.toLong()
 
 actual typealias VoidPtr = kotlin.native.internal.NativePtr
+actual fun Long.toVoidPtr(): VoidPtr = this.toCPointer<ByteVar>().rawValue
+actual fun VoidPtr.toLongPtr(): Long = this.toLong()
+
 actual typealias NPointed = CPointed
-actual typealias FunctionPtr<T> = CFunction<T>
-actual typealias FunctionPtrWrapper<T> = CPointer<T>
+actual interface Library
+actual interface StdCallLibrary : Library
 
-actual open class DynLibraryBase actual constructor(val name: String, val convention: DynCallConvention) : DynSymbolResolver {
-    val library = DynamicLibrary(name)
-
-    actual val isAvailable: Boolean get() = library.isAvailable
-    actual fun close() = library.close()
-    override fun getSymbol(name: String): FunctionPtrWrapper<FunctionPtr<*>>? = library.getSymbol(name)
+actual typealias NArena = kotlinx.cinterop.Arena
+actual fun NArenaAlloc(): NArena = Arena()
+actual fun NArena.close() {
+    this.clear()
 }
-
-// e: C:/Users/soywi/projects/korlibs/korge-next/kmem/src/nativeCommonMain/kotlin/com/soywiz/kmem/lib/DynamicLibraryNative.kt: (19, 100): type R of com.soywiz.kmem.lib.invoke  of return value is not supported here: doesn't correspond to any C type
-actual inline operator fun <reified R> FunctionPtrWrapper<FunctionPtr<() -> R>>.invoke(): R = this.invoke2<R>()
-actual inline operator fun <reified P1, reified R> FunctionPtrWrapper<FunctionPtr<(P1) -> R>>.invoke(p1: P1): R = this.invoke2<P1, R>(p1)
+actual fun NArena.alloc(size: Int): VoidPtr = this.allocArray<ByteVar>(size).rawValue
+actual fun VoidPtr.transferBytes(bytes: ByteArray, index: Int, size: Int, write: Boolean, offset: Int) {
+    val src = this.toLong().toCPointer<ByteVar>() ?: return
+    bytes.usePinned { bytesPin ->
+        val dst = bytesPin.startAddressOf
+        if (write) {
+            platform.posix.memcpy(src + offset, dst + index, size.convert())
+        } else {
+            platform.posix.memcpy(dst + index, src + offset, size.convert())
+        }
+    }
+}
+actual fun VoidPtr.getByte(offset: Int): Byte {
+    val pointer = this.toLong().toCPointer<ByteVar>() ?: return 0
+    return pointer[offset]
+}
+actual fun VoidPtr.setByte(value: Byte, offset: Int) {
+    val pointer = this.toLong().toCPointer<ByteVar>() ?: return
+    pointer[offset] = value
+}
