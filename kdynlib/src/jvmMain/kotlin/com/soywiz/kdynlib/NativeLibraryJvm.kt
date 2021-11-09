@@ -1,6 +1,7 @@
 package com.soywiz.kdynlib
 
 import com.sun.jna.*
+import kotlin.reflect.*
 
 actual typealias NativeInt = Pointer
 actual fun Long.toNativeInt(): NativeInt = Pointer(this)
@@ -57,4 +58,11 @@ actual fun VoidPtr.getLong(offset: Int): Long = this.getLong(offset.toLong())
 actual fun VoidPtr.setLong(offset: Int, value: Long) {
     //println("setLong")
     this.setLong(offset.toLong(), value)
+}
+
+object NativeLibraryJvm {
+    @JvmStatic fun register(clazz: KClass<*>, name: String) {
+        //println("clazz=$clazz, ${clazz::class.java}")
+        Native.register(clazz.java, name)
+    }
 }

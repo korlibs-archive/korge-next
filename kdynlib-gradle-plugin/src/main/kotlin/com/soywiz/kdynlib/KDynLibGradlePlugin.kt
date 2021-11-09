@@ -21,12 +21,14 @@ class KDynLibGradlePlugin : KotlinCompilerPluginSupportPlugin {
         //return kotlinCompilation.platformType == KotlinPlatformType.js
     }
 
+    val VERSION = "2.0.0.999" // @TODO: Fix this
+
     override fun getPluginArtifact(): SubpluginArtifact {
         //println("KDynLibGradlePlugin.getPluginArtifact")
         return SubpluginArtifact(
             groupId = "com.soywiz.korlibs.kdynlib.irplugin",
             artifactId = "kdynlib-gradle-plugin",
-            version = "2.0.0.999" // @TODO: Fix this
+            version = VERSION
         )
     }
 
@@ -35,6 +37,7 @@ class KDynLibGradlePlugin : KotlinCompilerPluginSupportPlugin {
     override fun applyToCompilation(kotlinCompilation: KotlinCompilation<*>): Provider<List<SubpluginOption>> {
         //println("KDynLibGradlePlugin.applyToCompilation")
         kotlinCompilation.dependencies {
+            implementation("com.soywiz.korlibs.kdynlib:kdynlib-jvm:$VERSION")
         }
         val project = kotlinCompilation.target.project
         return project.provider { listOf(SubpluginOption("targetName", kotlinCompilation.target.name)) }
