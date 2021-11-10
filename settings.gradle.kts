@@ -19,8 +19,10 @@ pluginManagement {
 	}
     val kotlinVersion: String by settings
     val kspVersion: String by settings
+    val kirpterVersion: String by settings
     plugins {
         id("com.google.devtools.ksp") version kspVersion
+        id("com.soywiz.kirpter") version kirpterVersion
         kotlin("jvm") version kotlinVersion
     }
 }
@@ -62,6 +64,7 @@ include(":korge-box2d")
 include(":korge-gradle-plugin")
 
 include(":kdynlib")
+include(":kdynlib-kirpter")
 include(":kdynlib-ksp")
 include(":kdynlib-gradle-plugin")
 

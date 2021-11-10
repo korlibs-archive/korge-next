@@ -180,7 +180,7 @@ val javaAddOpens = ArrayList<String>().apply {
     if (isLinux) add("--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED")
 }.toTypedArray()
 
-val Project.isJavaOnlyPlugin get() = project.name.contains("gradle-plugin") || project.name.contains("-ksp")
+val Project.isJavaOnlyPlugin get() = project.name.contains("gradle-plugin") || project.name.contains("-ksp") || project.name.contains("-kirpter")
 
 subprojects {
     val doConfigure =
