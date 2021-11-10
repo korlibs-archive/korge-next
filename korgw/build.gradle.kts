@@ -1,8 +1,6 @@
 description = "Portable UI with accelerated graphics support for Kotlin"
 
-plugins {
-    id("com.google.devtools.ksp")
-}
+//plugins { id("com.google.devtools.ksp") }
 
 val enableKotlinNative: String by project
 val doEnableKotlinNative get() = enableKotlinNative == "true"
@@ -60,6 +58,7 @@ afterEvaluate {
     }
 }
 
+/*
 // Code for use kdynlib dynamic libraries via interface
 dependencies {
     tasks.withType<com.google.devtools.ksp.gradle.KspTask> {
@@ -98,3 +97,4 @@ dependencies {
         }
     }
 }
+*/

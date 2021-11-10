@@ -61,8 +61,8 @@ val kspVersion: String by project
 
 dependencies {
 	//implementation(project(":korge-build"))
-    implementation(project(":kdynlib-ksp"))
-    implementation("com.google.devtools.ksp:symbol-processing-gradle-plugin:$kspVersion")
+    //implementation(project(":kdynlib-ksp"))
+    //implementation("com.google.devtools.ksp:symbol-processing-gradle-plugin:$kspVersion")
 
     implementation(kotlin("gradle-plugin"))
     implementation(kotlin("serialization"))

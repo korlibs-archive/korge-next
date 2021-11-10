@@ -1,6 +1,4 @@
-plugins {
-    id("com.google.devtools.ksp")
-}
+//plugins { id("com.google.devtools.ksp") }
 
 description = "Memory utilities for Kotlin"
 
