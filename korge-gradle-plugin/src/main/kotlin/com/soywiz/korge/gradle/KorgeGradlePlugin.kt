@@ -108,6 +108,7 @@ class KorgeGradleApply(val project: Project) {
 	}
 
     private fun Project.configureKsp() {
+        /*
         project.plugins.apply("com.google.devtools.ksp")
 // Code for use kdynlib dynamic libraries via interface
         dependencies {
@@ -136,7 +137,7 @@ class KorgeGradleApply(val project: Project) {
                 task.options.add(SubpluginOption("apoption", "kotlinTargetKind=$targetKind"))
             }
         }
-
+         */
     }
 
 	private fun Project.addVersionExtension() {
