@@ -38,6 +38,7 @@ class KorgeExtension(val project: Project) {
     fun ios() {
         iosArm64()
         iosX64()
+        iosSimulatorArm64()
     }
     fun tvos() {
         tvosArm64()
@@ -52,6 +53,7 @@ class KorgeExtension(val project: Project) {
 
     fun iosArm64() = project.kotlin.iosArm64().korgeConfigure()
     fun iosX64() = project.kotlin.iosX64().korgeConfigure()
+    fun iosSimulatorArm64() = project.kotlin.iosSimulatorArm64().korgeConfigure()
 
     fun tvosArm64() = project.kotlin.tvosArm64().korgeConfigure()
     fun tvosX64() = project.kotlin.tvosX64().korgeConfigure()
