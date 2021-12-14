@@ -72,7 +72,7 @@ open class ImageAnimationView<T: SmoothedBmpSlice>(
                 ImageAnimation.Direction.REVERSE -> -1
                 ImageAnimation.Direction.PING_PONG -> if (frame.index + dir !in 0 until nframes) -dir else dir
             }
-            nextFrameIndex = (frame.index + dir) umod nframes
+            nextFrameIndex = (frameIndex + dir) umod nframes
         } else {
             layers.fastForEach { it.bitmap = Bitmaps.transparent }
         }
