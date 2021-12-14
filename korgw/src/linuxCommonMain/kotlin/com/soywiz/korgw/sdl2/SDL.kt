@@ -37,6 +37,7 @@ internal val SDL_SetWindowTitle by lazy { sdlFunc<(SDL_Window, CValues<ByteVar>)
 internal val SDL_SetWindowSize by lazy { sdlFunc<(SDL_Window, Int, Int) -> Unit>("SDL_SetWindowSize") }
 internal val SDL_GetDesktopDisplayMode by lazy { sdlFunc<(Int, CValuesRef<*>) -> Int>("SDL_GetDesktopDisplayMode") }
 internal val SDL_ShowCursor by lazy { sdlFunc<(Int) -> Int>("SDL_ShowCursor") }
+internal val SDL_ShowSimpleMessageBox by lazy { sdlFunc<(Uint32, CValues<ByteVar>, CValues<ByteVar>, SDL_Window?) -> Int>("SDL_ShowSimpleMessageBox")}
 
 internal val SDL_GL_CreateContext by lazy { sdlFunc<(SDL_Window) -> SDL_GLContext>("SDL_GL_CreateContext") }
 internal val SDL_GL_DeleteContext by lazy { sdlFunc<(SDL_GLContext) -> Unit>("SDL_GL_DeleteContext") }

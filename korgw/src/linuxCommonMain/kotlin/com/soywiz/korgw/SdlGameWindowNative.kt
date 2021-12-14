@@ -8,6 +8,8 @@ import com.soywiz.korev.KeyEvent
 import com.soywiz.korev.MouseButton
 import com.soywiz.korev.MouseEvent
 import com.soywiz.korgw.sdl2.*
+import kotlinx.cinterop.cstr
+import kotlinx.cinterop.invoke
 
 private val sdl by lazy { SDL() }
 
@@ -178,5 +180,14 @@ class SdlGameWindowNative : EventLoopGameWindow() {
         r?.destroy()
         w?.destroy()
         sdl.quit()
+    }
+
+    override suspend fun alert(message: String) {
+        SDL_ShowSimpleMessageBox(
+            32 /*SDL_MESSAGEBOX_WARNING*/,
+            "Alert".cstr,
+            message.cstr,
+            w?.w
+        )
     }
 }
