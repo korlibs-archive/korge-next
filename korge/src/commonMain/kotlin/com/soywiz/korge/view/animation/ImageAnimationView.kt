@@ -70,7 +70,7 @@ open class ImageAnimationView<T: SmoothedBmpSlice>(
             dir = when (computedDirection) {
                 ImageAnimation.Direction.FORWARD -> +1
                 ImageAnimation.Direction.REVERSE -> -1
-                ImageAnimation.Direction.PING_PONG -> if (frame.index + dir !in 0 until nframes) -dir else dir
+                ImageAnimation.Direction.PING_PONG -> if (frameIndex + dir !in 0 until nframes) -dir else dir
             }
             nextFrameIndex = (frameIndex + dir) umod nframes
         } else {
