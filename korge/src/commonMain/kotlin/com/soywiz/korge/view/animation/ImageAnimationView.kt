@@ -63,7 +63,6 @@ open class ImageAnimationView<T: SmoothedBmpSlice>(
             frame.layerData.fastForEach {
                 val image = layers[it.layer.index]
                 image.bitmap = it.slice
-                image.smoothing = smoothing
                 (image as View).xy(it.targetX, it.targetY)
             }
             nextFrameIn = frame.duration
@@ -95,6 +94,7 @@ open class ImageAnimationView<T: SmoothedBmpSlice>(
         if (animation != null) {
             for (layer in animation.layers) {
                 val image = createImage()
+                image.smoothing = smoothing
                 layers.add(image)
                 layersByName[layer.name ?: "default"] = image
                 addChild(image as View)
