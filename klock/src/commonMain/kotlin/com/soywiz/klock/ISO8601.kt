@@ -9,6 +9,7 @@ object ISO8601 {
         companion object {
             private val ref = DateTime(1900, 1, 1)
         }
+
         private val dateTimeFormat = BaseIsoDateTimeFormat(format)
 
         override fun format(dd: TimeSpan): String = dateTimeFormat.format(ref + dd)
@@ -424,7 +425,13 @@ val DateTime.weekOfYear0: Int
     get() {
         val firstThursday = year.first(DayOfWeek.Thursday)
         val offset = firstThursday.dayOfMonth - 3
-        return (dayOfYear - offset) / 7
+        val firstStartingWeekDayOfYear = (dayOfYear - offset) / 7
+        return if (offset > dayOfYear) {
+            val previousYear = minus(1.years).endOfYear
+            previousYear.weekOfYear0
+        } else {
+            firstStartingWeekDayOfYear
+        }
     }
 
 val DateTime.weekOfYear1: Int get() = weekOfYear0 + 1
