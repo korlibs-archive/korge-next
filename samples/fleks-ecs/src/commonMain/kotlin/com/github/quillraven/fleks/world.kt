@@ -200,7 +200,7 @@ class World(
      * a no argument constructor.
      */
 // MK    inline fun <reified T : Any> mapper(): ComponentMapper<T> = componentService.mapper(T::class)
-    inline fun <reified T : Any> mapper(noinline gen: () -> T): ComponentMapper<T> = componentService.mapper(T::class, gen)
+    inline fun <reified T : Any> mapper(noinline factory: () -> T): ComponentMapper<T> = componentService.mapper(typeOf<ComponentMapper<T>>(), factory)
 
     /**
      * Updates all [enabled][IntervalSystem.enabled] [systems][IntervalSystem] of the world

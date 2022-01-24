@@ -38,17 +38,26 @@ class ExampleScene : Scene() {
             inject(dummy)
         }
 
+        val entity = world.entity {
+            add(::Position) {
+                x = 50f
+                y = 100f
+            }
+        }
+
         addUpdater { dt ->
             world.update(dt.milliseconds.toFloat())
         }
     }
 }
 
-data class MyClass(val text: String = "n/a")
+data class MyClass(val text: String = "")
+data class Position(var x: Float = 0f, var y: Float = 0f)
 
 class MoveSystem : IntervalSystem(
     interval = Fixed(1000f)  // every second
 ) {
+
     private lateinit var dummy: MyClass
 
     override fun onInit() {
@@ -64,7 +73,13 @@ class PositionSystem : IteratingSystem(
     interval = Fixed(500f)  // every 500 millisecond
 ) {
 
+    private val position = ComponentMapper(::Position)
+
+    override fun onInit() {
+    }
+
     override fun onTickEntity(entity: Entity) {
         println("PositionSystem: onTickEntity")
     }
 }
+

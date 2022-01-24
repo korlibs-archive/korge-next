@@ -54,8 +54,8 @@ class EntityCreateCfg(
      */
 // MK    inline fun <reified T : Any> add(configuration: T.() -> Unit = {}): T {
 //        val mapper = cmpService.mapper<T>()
-    inline fun <reified T : Any> add(noinline gen: () -> T, configuration: T.() -> Unit = {}): T {
-        val mapper = cmpService.mapper<T>(gen)
+    inline fun <reified T : Any> add(noinline factory: () -> T, configuration: T.() -> Unit = {}): T {
+        val mapper = cmpService.mapper(factory)
 
         cmpMask.set(mapper.id)
         return mapper.addInternal(entity, configuration)

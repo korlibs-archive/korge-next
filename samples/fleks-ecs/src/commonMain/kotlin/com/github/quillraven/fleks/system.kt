@@ -247,8 +247,8 @@ abstract class IteratingSystem(
  */
 class SystemService(
     world: World,
-    systemFactorys: MutableList<Pair<KType, () -> IntervalSystem>>,
-    injectables: MutableMap<KType, Injectable>
+    systemFactorys: List<Pair<KType, () -> IntervalSystem>>,
+    injectables: Map<KType, Injectable>
 ) {
     @PublishedApi
     internal val systems: Array<IntervalSystem>
@@ -256,14 +256,14 @@ class SystemService(
     init {
         // create systems
         val entityService = world.entityService
-        val cmpService = world.componentService  // TODO add to newSystem
+// Mk        val cmpService = world.componentService
         val allFamilies = mutableListOf<Family>()  // TODO add to newSystem
         val systemList = systemFactorys.toList()
         systems = Array(systemFactorys.size) { sysIdx ->
             val sysType = systemList[sysIdx].first
             val newSystem = systemList[sysIdx].second.invoke()
 
-//            // set world reference of newly created system
+// Mk            // set world reference of newly created system
 //            val worldField = field(newSystem, "world")
 //            worldField.isAccessible = true
 //            worldField.set(newSystem, world)
@@ -429,9 +429,9 @@ class Injector(
 ) {
     inline fun <reified T : Any> get(): T {
         val injectType = typeOf<T>()
-        if (injectType in injectObjects) {
-            injectObjects[injectType]!!.used = true
-            return injectObjects[injectType]!!.injObj as T
-        } else throw FleksSystemCreationException(injectType)
+        return if (injectType in injectObjects) {
+                injectObjects[injectType]!!.used = true
+                injectObjects[injectType]!!.injObj as T
+            } else throw FleksSystemCreationException(injectType)
     }
 }

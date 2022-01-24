@@ -20,8 +20,8 @@ class FleksInjectableAlreadyAddedException(type: KType) :
 class FleksInjectableWithoutNameException :
     FleksException("Injectables must be registered with a non-null name")
 
-class FleksMissingNoArgsComponentConstructorException(component: KClass<*>) :
-    FleksException("Component ${component.simpleName} is missing a no-args constructor")
+class FleksMissingNoArgsComponentConstructorException(component: KType) :
+    FleksException("Component $component is missing a no-args constructor")
 
 class FleksNoSuchComponentException(entity: Entity, component: String) :
     FleksException("Entity $entity has no component of type $component")
