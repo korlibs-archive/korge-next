@@ -2,8 +2,10 @@ package com.github.quillraven.fleks
 
 import com.github.quillraven.fleks.collection.BitArray
 import com.github.quillraven.fleks.collection.EntityComparator
-import java.lang.reflect.Field
+// MK import java.lang.reflect.Field
 import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.typeOf
 
 /**
  * An interval for an [IntervalSystem]. There are two kind of intervals:
@@ -141,7 +143,8 @@ abstract class IteratingSystem(
      * Returns the [family][Family] of this system.
      * This reference gets updated by the [SystemService] when the system gets created via reflection.
      */
-    private lateinit var family: Family
+    lateinit var family: Family
+        internal set
 
     /**
      * Returns the [entityService][EntityService] of this system.
@@ -149,7 +152,6 @@ abstract class IteratingSystem(
      */
     @PublishedApi
     internal lateinit var entityService: EntityService
-        private set
 
     /**
      * Flag that defines if sorting of [entities][Entity] will be performed the next time [onTick] is called.
@@ -181,17 +183,18 @@ abstract class IteratingSystem(
      * that a removed entity of this family will still be part of the [onTickEntity] for the current iteration.
      */
     override fun onTick() {
-        if (family.isDirty) {
-            family.updateActiveEntities()
-        }
-        if (doSort) {
-            doSort = sortingType == Automatic
-            family.sort(comparator)
-        }
-
-        entityService.delayRemoval = true
-        family.forEach { onTickEntity(it) }
-        entityService.cleanupDelays()
+//        if (family.isDirty) {
+//            family.updateActiveEntities()
+//        }
+//        if (doSort) {
+//            doSort = sortingType == Automatic
+//            family.sort(comparator)
+//        }
+//
+//        entityService.delayRemoval = true
+//        family.forEach { onTickEntity(it) }
+//        entityService.cleanupDelays()
+        println("IteratingSystem: onTick")
     }
 
     /**
@@ -206,13 +209,13 @@ abstract class IteratingSystem(
      * @param alpha a value between 0 (inclusive) and 1 (exclusive) that describes the progress between two ticks.
      */
     override fun onAlpha(alpha: Float) {
-        if (family.isDirty) {
-            family.updateActiveEntities()
-        }
-
-        entityService.delayRemoval = true
-        family.forEach { onAlphaEntity(it, alpha) }
-        entityService.cleanupDelays()
+//        if (family.isDirty) {
+//            family.updateActiveEntities()
+//        }
+//
+//        entityService.delayRemoval = true
+//        family.forEach { onAlphaEntity(it, alpha) }
+//        entityService.cleanupDelays()
     }
 
     /**
@@ -235,12 +238,12 @@ abstract class IteratingSystem(
  * each time [update] is called.
  *
  * @param world the [world][World] the service belongs to.
- * @param systemTypes the [systems][IntervalSystem] to be created.
+ * @param systemFactorys the factory methods to create the [systems][IntervalSystem].
  * @param injectables the required dependencies to create the [systems][IntervalSystem].
  */
 class SystemService(
     world: World,
-    systemTypes: List<KClass<out IntervalSystem>>,
+    systemFactorys: MutableList<Pair<KType, () -> IntervalSystem>>,
     injectables: Map<String, Injectable>
 ) {
     @PublishedApi
@@ -251,26 +254,37 @@ class SystemService(
         val entityService = world.entityService
         val cmpService = world.componentService
         val allFamilies = mutableListOf<Family>()
-        systems = Array(systemTypes.size) { sysIdx ->
-            val sysType = systemTypes[sysIdx]
-            val newSystem = newInstance(sysType, cmpService, injectables)
+        val systemList = systemFactorys.toList()
+        systems = Array(systemFactorys.size) { sysIdx ->
+            val sysType = systemList[sysIdx].first
+            val newSystem = systemList[sysIdx].second.invoke()
+
+//            // set world reference of newly created system
+//            val worldField = field(newSystem, "world")
+//            worldField.isAccessible = true
+//            worldField.set(newSystem, world)
+//
+//            if (IteratingSystem::class.java.isAssignableFrom(sysType.java)) {
+//                // set family and entity service reference of newly created iterating system
+//                @Suppress("UNCHECKED_CAST")
+//                val family = family(sysType as KClass<out IteratingSystem>, entityService, cmpService, allFamilies)
+//                val famField = field(newSystem, "family")
+//                famField.isAccessible = true
+//                famField.set(newSystem, family)
+//
+//                val eServiceField = field(newSystem, "entityService")
+//                eServiceField.isAccessible = true
+//                eServiceField.set(newSystem, entityService)
+//            }
+//
 
             // set world reference of newly created system
-            val worldField = field(newSystem, "world")
-            worldField.isAccessible = true
-            worldField.set(newSystem, world)
+            newSystem.world = world
 
-            if (IteratingSystem::class.java.isAssignableFrom(sysType.java)) {
+            if (sysType == typeOf<IteratingSystem>()) {
                 // set family and entity service reference of newly created iterating system
-                @Suppress("UNCHECKED_CAST")
-                val family = family(sysType as KClass<out IteratingSystem>, entityService, cmpService, allFamilies)
-                val famField = field(newSystem, "family")
-                famField.isAccessible = true
-                famField.set(newSystem, family)
-
-                val eServiceField = field(newSystem, "entityService")
-                eServiceField.isAccessible = true
-                eServiceField.set(newSystem, entityService)
+// TODO                (newSystem as IteratingSystem).family = family(sysType as KClass<out IteratingSystem>, entityService, cmpService, allFamilies)
+                (newSystem as IteratingSystem).entityService = entityService
             }
 
             newSystem.apply { onInit() }
@@ -280,9 +294,11 @@ class SystemService(
     /**
      * Returns [Annotation] of the specific type if the class has that annotation. Otherwise, returns null.
      */
-    private inline fun <reified T : Annotation> KClass<*>.annotation(): T? {
-        return this.java.getAnnotation(T::class.java)
-    }
+// MK    private inline fun <reified T : Annotation> KClass<*>.annotation(): T? {
+//        return this.java.getAnnotation(T::class.java)
+//    }
+
+/*
 
     /**
      * Creates or returns an already created [family][Family] for the given [IteratingSystem]
@@ -343,7 +359,7 @@ class SystemService(
         }
         return family
     }
-
+/*MK */
     /**
      * Returns a [Field] of name [fieldName] of the given [system].
      *
@@ -363,7 +379,7 @@ class SystemService(
         }
         return classField
     }
-
+Mk */
     /**
      * Returns the specified [system][IntervalSystem].
      *

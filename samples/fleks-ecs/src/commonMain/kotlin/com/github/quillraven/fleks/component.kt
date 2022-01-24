@@ -2,7 +2,7 @@ package com.github.quillraven.fleks
 
 import com.github.quillraven.fleks.collection.Bag
 import com.github.quillraven.fleks.collection.bag
-import java.lang.reflect.Constructor
+// MK import java.lang.reflect.Constructor
 import kotlin.math.max
 import kotlin.reflect.KClass
 
@@ -27,7 +27,8 @@ class ComponentMapper<T>(
     @PublishedApi
     internal var components: Array<T?>,
     @PublishedApi
-    internal val cstr: Constructor<T>
+// MK    internal val cstr: Constructor<T>
+    internal val cstr: () -> T
 ) {
     @PublishedApi
     internal val listeners = bag<ComponentListener<T>>(2)
@@ -44,7 +45,8 @@ class ComponentMapper<T>(
         }
         val cmp = components[entity.id]
         return if (cmp == null) {
-            val newCmp = cstr.newInstance().apply(configuration)
+// MK            val newCmp = cstr.newInstance().apply(configuration)
+            val newCmp = cstr.invoke().apply(configuration)
             components[entity.id] = newCmp
             listeners.forEach { it.onComponentAdded(entity, newCmp) }
             newCmp
@@ -80,7 +82,8 @@ class ComponentMapper<T>(
      * @throws [FleksNoSuchComponentException] if the [entity] does not have such a component.
      */
     operator fun get(entity: Entity): T {
-        return components[entity.id] ?: throw FleksNoSuchComponentException(entity, cstr.name)
+// MK        return components[entity.id] ?: throw FleksNoSuchComponentException(entity, cstr.name)
+        return components[entity.id] ?: throw FleksNoSuchComponentException(entity, cstr.toString())
     }
 
     /**
@@ -112,7 +115,8 @@ class ComponentMapper<T>(
     operator fun contains(listener: ComponentListener<T>) = listener in listeners
 
     override fun toString(): String {
-        return "ComponentMapper(id=$id, component=${cstr.name})"
+// MK        return "ComponentMapper(id=$id, component=${cstr.name})"
+        return "ComponentMapper(id=$id, component=${cstr})"
     }
 }
 
@@ -137,11 +141,13 @@ class ComponentService {
     /**
      * Returns a [ComponentMapper] for the given [type]. If the mapper does not exist then it will be created.
      *
+     * @param gen The generator function for creating [type] component objects.
      * @throws [FleksMissingNoArgsComponentConstructorException] if the component of the given [type] does not have
      * a no argument constructor.
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> mapper(type: KClass<T>): ComponentMapper<T> {
+// MK    fun <T : Any> mapper(type: KClass<T>): ComponentMapper<T> {
+    fun <T : Any> mapper(type: KClass<T>, gen: () -> T): ComponentMapper<T> {
         var mapper = mappers[type]
 
         if (mapper == null) {
@@ -149,8 +155,9 @@ class ComponentService {
                 mapper = ComponentMapper(
                     mappers.size,
                     Array<Any?>(64) { null } as Array<T?>,
-                    // use java constructor because it is ~4x faster than calling Kotlin's createInstance on a KClass
-                    type.java.getDeclaredConstructor()
+// MK                    // use java constructor because it is ~4x faster than calling Kotlin's createInstance on a KClass
+//                    type.java.getDeclaredConstructor()
+                    gen
                 )
                 mappers[type] = mapper
                 mappersBag.add(mapper)
@@ -165,10 +172,12 @@ class ComponentService {
     /**
      * Returns a [ComponentMapper] for the specific type. If the mapper does not exist then it will be created.
      *
+     * @param gen The generator function for creating [T] objects.
      * @throws [FleksMissingNoArgsComponentConstructorException] if the component of the specific type does not have
      * a no argument constructor.
      */
-    inline fun <reified T : Any> mapper(): ComponentMapper<T> = mapper(T::class)
+// MK    inline fun <reified T : Any> mapper(): ComponentMapper<T> = mapper(T::class)
+    inline fun <reified T : Any> mapper(noinline gen: () -> T): ComponentMapper<T> = mapper(T::class, gen)
 
     /**
      * Returns an already existing [ComponentMapper] for the given [cmpId].

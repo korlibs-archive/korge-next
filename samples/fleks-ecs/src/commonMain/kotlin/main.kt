@@ -1,3 +1,4 @@
+import com.github.quillraven.fleks.*
 import com.soywiz.klock.*
 import com.soywiz.korge.Korge
 import com.soywiz.korge.scene.MaskTransition
@@ -7,15 +8,6 @@ import com.soywiz.korge.view.*
 import com.soywiz.korge.view.filter.TransitionFilter
 import com.soywiz.korim.atlas.MutableAtlasUnit
 import com.soywiz.korim.color.Colors
-import com.soywiz.korim.format.*
-import com.soywiz.korio.file.std.resourcesVfs
-import ecs.entitysystem.EntitySystem
-import ecs.entitytypes.SpawnerEntity
-import ecs.subsystems.ImageAnimationSystem
-import ecs.subsystems.MovingSystem
-import ecs.subsystems.SpawningSystem
-
-import com.github.quillraven.fleks.World
 
 const val scaleFactor = 1
 
@@ -32,24 +24,43 @@ suspend fun main() = Korge(width = 384 * scaleFactor, height = 216 * scaleFactor
     )
 }
 
-var aseImage: ImageData? = null
-
 class ExampleScene : Scene() {
 
     private val atlas = MutableAtlasUnit(1024, 1024)
-    private val entitySystem: EntitySystem = EntitySystem()
 
     override suspend fun Container.sceneInit() {
-        val sw = Stopwatch().start()
-        aseImage = resourcesVfs["sprites2.ase"].readImageData(ASE, atlas = atlas)
-        println("loaded resources in ${sw.elapsed}")
     }
 
     override suspend fun Container.sceneMain() {
-        container {
-            scale(scaleFactor)
 
+        val world = World {
+            entityCapacity = 20
 
+            system(::MoveSystem)
+            system(::PositionSystem)
+        }
+
+        addUpdater() { dt ->
+            world.update(dt.milliseconds.toFloat())
         }
     }
+}
+
+class MoveSystem : IntervalSystem(
+    interval = Fixed(1000f)  // every second
+) {
+
+    override fun onTick() {
+        println("MoveSystem: onTick")
+    }
+}
+
+class PositionSystem : IteratingSystem(
+    interval = Fixed(500f)  // every 500 millisecond
+) {
+
+    override fun onTickEntity(entity: Entity) {
+        println("PositionSystem: onTickEntity")
+    }
+
 }
