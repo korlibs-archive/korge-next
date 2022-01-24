@@ -37,7 +37,7 @@ class WorldConfiguration {
     internal val systemFactorys = mutableListOf<Pair<KType, () -> IntervalSystem>>()
 
     @PublishedApi
-    internal val injectables = mutableMapOf<String, Injectable>()
+    internal val injectables = mutableMapOf<KType, Injectable>()
 
     @PublishedApi
     internal val cmpListenerTypes = mutableListOf<KClass<out ComponentListener<out Any>>>()
@@ -63,16 +63,16 @@ class WorldConfiguration {
     }
 
     /**
-     * Adds the specified [dependency] under the given [name] which can then be injected to any [IntervalSystem].
+     * Adds the specified [dependency] under the given [type] which can then be injected to any [IntervalSystem].
      *
      * @throws [FleksInjectableAlreadyAddedException] if the dependency was already added before.
      */
-    fun <T : Any> inject(name: String, dependency: T) {
-        if (name in injectables) {
-            throw FleksInjectableAlreadyAddedException(name)
+    fun <T : Any> inject(type: KType, dependency: T) {
+        if (type in injectables) {
+            throw FleksInjectableAlreadyAddedException(type)
         }
 
-        injectables[name] = Injectable(dependency)
+        injectables[type] = Injectable(dependency)
     }
 
     /**
@@ -80,11 +80,9 @@ class WorldConfiguration {
      * Refer to [inject]: the name is the qualifiedName of the class of the [dependency].
      *
      * @throws [FleksInjectableAlreadyAddedException] if the dependency was already added before.
-     * @throws [FleksInjectableWithoutNameException] if the qualifiedName of the [dependency] is null.
      */
     inline fun <reified T : Any> inject(dependency: T) {
-// MK        val key = T::class.qualifiedName ?: throw FleksInjectableWithoutNameException()
-        val key = typeOf<T>().toString()
+        val key = typeOf<T>()
         inject(key, dependency)
     }
 

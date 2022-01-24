@@ -1,9 +1,7 @@
 package com.github.quillraven.fleks
 
-import com.github.quillraven.fleks.collection.BitArray
 import com.github.quillraven.fleks.collection.EntityComparator
 // MK import java.lang.reflect.Field
-import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -43,6 +41,12 @@ abstract class IntervalSystem(
      */
     lateinit var world: World
         internal set
+
+    /**
+     * An [Injector] which is used to inject objects from outside the [IntervalSystem].
+     */
+    @PublishedApi
+    internal lateinit var injector: Injector
 
     private var accumulator: Float = 0.0f
 
@@ -244,7 +248,7 @@ abstract class IteratingSystem(
 class SystemService(
     world: World,
     systemFactorys: MutableList<Pair<KType, () -> IntervalSystem>>,
-    injectables: Map<String, Injectable>
+    injectables: MutableMap<KType, Injectable>
 ) {
     @PublishedApi
     internal val systems: Array<IntervalSystem>
@@ -252,8 +256,8 @@ class SystemService(
     init {
         // create systems
         val entityService = world.entityService
-        val cmpService = world.componentService
-        val allFamilies = mutableListOf<Family>()
+        val cmpService = world.componentService  // TODO add to newSystem
+        val allFamilies = mutableListOf<Family>()  // TODO add to newSystem
         val systemList = systemFactorys.toList()
         systems = Array(systemFactorys.size) { sysIdx ->
             val sysType = systemList[sysIdx].first
@@ -286,6 +290,8 @@ class SystemService(
 // TODO                (newSystem as IteratingSystem).family = family(sysType as KClass<out IteratingSystem>, entityService, cmpService, allFamilies)
                 (newSystem as IteratingSystem).entityService = entityService
             }
+
+            newSystem.injector = Injector(injectables)
 
             newSystem.apply { onInit() }
         }
@@ -411,5 +417,21 @@ Mk */
      */
     fun dispose() {
         systems.forEach { it.onDispose() }
+    }
+}
+
+/**
+ * An [Injector] which is used to inject objects from outside the [IntervalSystem].
+ */
+class Injector(
+    @PublishedApi
+    internal val injectObjects: Map<KType, Injectable>
+) {
+    inline fun <reified T : Any> get(): T {
+        val injectType = typeOf<T>()
+        if (injectType in injectObjects) {
+            injectObjects[injectType]!!.used = true
+            return injectObjects[injectType]!!.injObj as T
+        } else throw FleksSystemCreationException(injectType)
     }
 }

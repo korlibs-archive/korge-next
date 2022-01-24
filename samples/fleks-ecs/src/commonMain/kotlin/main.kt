@@ -1,13 +1,10 @@
-import com.github.quillraven.fleks.*
-import com.soywiz.klock.*
 import com.soywiz.korge.Korge
-import com.soywiz.korge.scene.MaskTransition
 import com.soywiz.korge.scene.Scene
 import com.soywiz.korge.scene.sceneContainer
 import com.soywiz.korge.view.*
-import com.soywiz.korge.view.filter.TransitionFilter
 import com.soywiz.korim.atlas.MutableAtlasUnit
 import com.soywiz.korim.color.Colors
+import com.github.quillraven.fleks.*
 
 const val scaleFactor = 1
 
@@ -18,10 +15,7 @@ suspend fun main() = Korge(width = 384 * scaleFactor, height = 216 * scaleFactor
     val rootSceneContainer = sceneContainer()
     views.debugViews = true
 
-    rootSceneContainer.changeTo<ExampleScene>(
-        transition = MaskTransition(transition = TransitionFilter.Transition.CIRCULAR, reversed = false, smooth = true),
-        time = 0.5.seconds
-    )
+    rootSceneContainer.changeTo<ExampleScene>()
 }
 
 class ExampleScene : Scene() {
@@ -33,25 +27,36 @@ class ExampleScene : Scene() {
 
     override suspend fun Container.sceneMain() {
 
+        val dummy = MyClass(text = "Hello injector!")
+
         val world = World {
             entityCapacity = 20
 
             system(::MoveSystem)
             system(::PositionSystem)
+
+            inject(dummy)
         }
 
-        addUpdater() { dt ->
+        addUpdater { dt ->
             world.update(dt.milliseconds.toFloat())
         }
     }
 }
 
+data class MyClass(val text: String = "n/a")
+
 class MoveSystem : IntervalSystem(
     interval = Fixed(1000f)  // every second
 ) {
+    private lateinit var dummy: MyClass
+
+    override fun onInit() {
+        dummy = injector.get()
+    }
 
     override fun onTick() {
-        println("MoveSystem: onTick")
+        println("MoveSystem: onTick (text: ${dummy.text})")
     }
 }
 
@@ -62,5 +67,4 @@ class PositionSystem : IteratingSystem(
     override fun onTickEntity(entity: Entity) {
         println("PositionSystem: onTickEntity")
     }
-
 }
