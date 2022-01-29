@@ -2,6 +2,7 @@ package com.github.quillraven.fleks
 
 import com.github.quillraven.fleks.collection.BitArray
 import com.github.quillraven.fleks.collection.EntityComparator
+import kotlin.native.concurrent.ThreadLocal
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
@@ -46,8 +47,8 @@ abstract class IntervalSystem(
     /**
      * An [Injector] which is used to inject objects from outside the [IntervalSystem].
      */
-    @PublishedApi
-    internal lateinit var injector: Injector
+//    @PublishedApi
+//    internal lateinit var injector: Injector
 
     private var accumulator: Float = 0.0f
 
@@ -259,14 +260,14 @@ class SystemService(
     internal val systems: Array<IntervalSystem>
 
     init {
+        // Configure injector before instantiating systems
+        val compService = world.componentService
+        Inject.injectObjects = injectables
+        Inject.mapperObjects = compService.mappers
         // Create systems
         val entityService = world.entityService
-        val compService = world.componentService
         val allFamilies = mutableListOf<Family>()
         val systemList = systemFactory.toList()
-//        val systemList = systemFactory.mapValuesTo(destination = , ) toList()
-//        val systemList: Array<IntervalSystem> = systemFactory.fil to mapKeysTo() //toList() toList()
-// TODO check if we can use here some map lambda to directly create an Array object with fix size
         systems = Array(systemFactory.size) { sysIdx ->
             val newSystem = systemList[sysIdx].second.invoke()
 
@@ -279,7 +280,6 @@ class SystemService(
                 newSystem.entityService = entityService
             }
 
-            newSystem.injector = Injector(injectables, compService.mappers)
             newSystem.apply { onInit() }
         }
     }
@@ -359,17 +359,18 @@ class SystemService(
 }
 
 /**
- * An [Injector] which is used to inject objects from outside the [IntervalSystem].
+ * An [injector][Inject] which is used to inject objects from outside the [IntervalSystem].
  *
  * @throws [FleksSystemInjectException] if the Injector does not contain an entry
  * for the given type in its internal maps.
  */
-class Injector(
+@ThreadLocal
+object Inject {
     @PublishedApi
-    internal val injectObjects: Map<KClass<*>, Injectable>,
+    internal lateinit var injectObjects: Map<KClass<*>, Injectable>
     @PublishedApi
-    internal val mapperObjects: Map<KClass<*>, ComponentMapper<*>>
-) {
+    internal lateinit var mapperObjects: Map<KClass<*>, ComponentMapper<*>>
+
     inline fun <reified T : Any> dependency(): T {
         val injectType = T::class
         return when {

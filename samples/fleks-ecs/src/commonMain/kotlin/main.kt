@@ -5,6 +5,8 @@ import com.soywiz.korge.view.*
 import com.soywiz.korim.atlas.MutableAtlasUnit
 import com.soywiz.korim.color.Colors
 import com.github.quillraven.fleks.*
+import kotlin.native.concurrent.ThreadLocal
+import kotlin.reflect.KClass
 
 const val scaleFactor = 1
 
@@ -38,6 +40,7 @@ class ExampleScene : Scene() {
             inject(dummy)
 
             // Register all needed components
+            // TODO remove and create components directly on system creation time
             component(::Position)
         }
 
@@ -61,10 +64,9 @@ class MoveSystem : IntervalSystem(
     interval = Fixed(1000f)  // every second
 ) {
 
-    private lateinit var dummy: MyClass
+    private val dummy: MyClass = Inject.dependency()
 
     override fun onInit() {
-        dummy = injector.dependency()
     }
 
     override fun onTick() {
@@ -77,14 +79,14 @@ class PositionSystem : IteratingSystem(
     interval = Fixed(500f)  // every 500 millisecond
 ) {
 
-    private lateinit var position: ComponentMapper<Position>
+    private val position: ComponentMapper<Position> = Inject.componentMapper()
 
     override fun onInit() {
-        position = injector.componentMapper()
     }
 
     override fun onTickEntity(entity: Entity) {
         println("PositionSystem: onTickEntity")
+        println("pos id: ${position.id} x: ${position[entity].x} y: ${position[entity].y}")
     }
 }
 
