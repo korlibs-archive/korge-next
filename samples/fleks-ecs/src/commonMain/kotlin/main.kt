@@ -36,10 +36,13 @@ class ExampleScene : Scene() {
             system(::PositionSystem)
 
             inject(dummy)
+
+            // Register all needed components
+            component(::Position)
         }
 
         val entity = world.entity {
-            add(::Position) {
+            add<Position> {
                 x = 50f
                 y = 100f
             }
@@ -61,7 +64,7 @@ class MoveSystem : IntervalSystem(
     private lateinit var dummy: MyClass
 
     override fun onInit() {
-        dummy = injector.get()
+        dummy = injector.dependency()
     }
 
     override fun onTick() {
@@ -70,12 +73,14 @@ class MoveSystem : IntervalSystem(
 }
 
 class PositionSystem : IteratingSystem(
+    allOf = AllOf(arrayOf(Position::class)),
     interval = Fixed(500f)  // every 500 millisecond
 ) {
 
-    private val position = ComponentMapper(::Position)
+    private lateinit var position: ComponentMapper<Position>
 
     override fun onInit() {
+        position = injector.componentMapper()
     }
 
     override fun onTickEntity(entity: Entity) {

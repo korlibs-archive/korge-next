@@ -5,26 +5,23 @@ import com.github.quillraven.fleks.collection.EntityComparator
 import com.github.quillraven.fleks.collection.IntBag
 import kotlin.reflect.KClass
 
-/**
+/** TODO change readme
  * An annotation for an [IteratingSystem] to define a [Family].
  * [Entities][Entity] must have all [components] specified to be part of the [family][Family].
  */
-@Target(AnnotationTarget.CLASS)
-annotation class AllOf(val components: Array<KClass<*>> = [])
+data class AllOf(val components: Array<KClass<*>>)
 
-/**
+/** TODO change readme
  * An annotation for an [IteratingSystem] to define a [Family].
  * [Entities][Entity] must not have any [components] specified to be part of the [family][Family].
  */
-@Target(AnnotationTarget.CLASS)
-annotation class NoneOf(val components: Array<KClass<*>> = [])
+data class NoneOf(val components: Array<KClass<*>>)
 
-/**
+/** TODO change readme
  * An annotation for an [IteratingSystem] to define a [Family].
  * [Entities][Entity] must have at least one of the [components] specified to be part of the [family][Family].
  */
-@Target(AnnotationTarget.CLASS)
-annotation class AnyOf(val components: Array<KClass<*>> = [])
+data class AnyOf(val components: Array<KClass<*>>)
 
 /**
  * A family of [entities][Entity]. It stores [entities][Entity] that have a specific configuration of components.

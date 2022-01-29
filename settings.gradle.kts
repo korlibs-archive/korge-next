@@ -59,6 +59,8 @@ if (System.getenv("DISABLED_EXTRA_KORGE_LIBS") != "true") {
 //include(":tensork")
 //include(":samples:parallax-scrolling-aseprite")
 //include(":samples:tiled-background")
+//include(":samples:ase-animations")
+include(":samples:fleks-ecs")
 
 if (!inCI) {
     include(":korge-sandbox")

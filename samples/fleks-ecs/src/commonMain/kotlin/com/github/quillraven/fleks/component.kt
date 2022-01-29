@@ -2,10 +2,8 @@ package com.github.quillraven.fleks
 
 import com.github.quillraven.fleks.collection.Bag
 import com.github.quillraven.fleks.collection.bag
-// MK import java.lang.reflect.Constructor
 import kotlin.math.max
-import kotlin.reflect.KType
-import kotlin.reflect.typeOf
+import kotlin.reflect.KClass
 
 /**
  * Interface of a component listener that gets notified when a component of a specific type
@@ -25,12 +23,11 @@ interface ComponentListener<T> {
 @Suppress("UNCHECKED_CAST")
 class ComponentMapper<T>(
     @PublishedApi
-// MK    internal val cstr: Constructor<T>
-    internal val factory: () -> T,
-    @PublishedApi
     internal val id: Int = 0,
     @PublishedApi
-    internal var components: Array<T?> = Array<Any?>(64) { null } as Array<T?>
+    internal var components: Array<T?> = Array<Any?>(64) { null } as Array<T?>,
+    @PublishedApi
+    internal val factory: () -> T
 ) {
     @PublishedApi
     internal val listeners = bag<ComponentListener<T>>(2)
@@ -47,7 +44,6 @@ class ComponentMapper<T>(
         }
         val cmp = components[entity.id]
         return if (cmp == null) {
-// MK            val newCmp = cstr.newInstance().apply(configuration)
             val newCmp = factory.invoke().apply(configuration)
             components[entity.id] = newCmp
             listeners.forEach { it.onComponentAdded(entity, newCmp) }
@@ -81,12 +77,9 @@ class ComponentMapper<T>(
     /**
      * Returns a component of the specific type of the given [entity].
      *
-     * @throws [FleksNoSuchComponentException] if the [entity] does not have such a component.
+     * @throws [FleksNoSuchEntityComponentException] if the [entity] does not have such a component.
      */
-    operator fun get(entity: Entity): T {
-// MK        return components[entity.id] ?: throw FleksNoSuchComponentException(entity, cstr.name)
-        return components[entity.id] ?: throw FleksNoSuchComponentException(entity, factory.toString())
-    }
+    operator fun get(entity: Entity): T = components[entity.id] ?: throw FleksNoSuchEntityComponentException(entity, factory.toString())
 
     /**
      * Returns true if and only if the given [entity] has a component of the specific type.
@@ -116,23 +109,22 @@ class ComponentMapper<T>(
      */
     operator fun contains(listener: ComponentListener<T>) = listener in listeners
 
-    override fun toString(): String {
-// MK        return "ComponentMapper(id=$id, component=${cstr.name})"
-        return "ComponentMapper(id=$id, component=${factory})"
-    }
+    override fun toString(): String  = "ComponentMapper(id=$id, component=${factory})"
 }
 
 /**
  * A service class that is responsible for managing [ComponentMapper] instances.
  * It creates a [ComponentMapper] for every unique component type and assigns a unique id for each mapper.
  */
-class ComponentService {
+class ComponentService(
+    componentFactory: Map<KClass<out Any>, () -> Any>
+) {
     /**
      * Returns map of [ComponentMapper] that stores mappers by its component type.
      * It is used by the [SystemService] during system creation and by the [EntityService] for entity creation.
      */
     @PublishedApi
-    internal val mappers = HashMap<KType, ComponentMapper<*>>()
+    internal val mappers: Map<KClass<*>, ComponentMapper<*>>
 
     /**
      * Returns [Bag] of [ComponentMapper]. The id of the mapper is the index of the bag.
@@ -140,46 +132,32 @@ class ComponentService {
      */
     private val mappersBag = bag<ComponentMapper<*>>()
 
+    init {
+        // Create component mappers with help of constructor functions from component factory
+        mappers = componentFactory.mapValues { entry ->
+            ComponentMapper(factory = entry.value)
+        }
+    }
+
     /**
-     * Returns a [ComponentMapper] for the given [type]. If the mapper does not exist then it will be created.
+     * Returns a [ComponentMapper] for the given [type].
      *
-     * @param gen The generator function for creating [type] component objects.
-     * @throws [FleksMissingNoArgsComponentConstructorException] if the component of the given [type] does not have
-     * a no argument constructor.
+     * @throws [FleksNoSuchComponentException] if the component of the given [type] does not exist in the
+     * world configuration.
      */
     @Suppress("UNCHECKED_CAST")
-// MK    fun <T : Any> mapper(type: KClass<T>): ComponentMapper<T> {
-    fun <T : Any> mapper(type: KType, factory: () -> T): ComponentMapper<T> {
-        var mapper = mappers[type]
-
-        if (mapper == null) {
-//            try {
-                mapper = ComponentMapper(
-                    factory,
-                    mappers.size,
-                    Array<Any?>(64) { null } as Array<T?>,
-// MK                    // use java constructor because it is ~4x faster than calling Kotlin's createInstance on a KClass
-//                    type.java.getDeclaredConstructor()
-                )
-                mappers[type] = mapper
-                mappersBag.add(mapper)
-//            } catch (e: Exception) {
-//                throw FleksMissingNoArgsComponentConstructorException(type)
-//            }
-        }
-
+    fun <T : Any> mapper(type: KClass<T>): ComponentMapper<T> {
+        val mapper = mappers[type] ?: throw FleksNoSuchComponentException(type)
         return mapper as ComponentMapper<T>
     }
 
     /**
-     * Returns a [ComponentMapper] for the specific type. If the mapper does not exist then it will be created.
+     * Returns a [ComponentMapper] for the specific type.
      *
-     * @param factory The generator function for creating [T] objects.
-     * @throws [FleksMissingNoArgsComponentConstructorException] if the component of the specific type does not have
-     * a no argument constructor.
+     * @throws [FleksNoSuchComponentException] if the component of the given [type] does not exist in the
+     * world configuration.
      */
-// MK    inline fun <reified T : Any> mapper(): ComponentMapper<T> = mapper(T::class)
-    inline fun <reified T : Any> mapper(noinline factory: () -> T): ComponentMapper<T> = mapper(typeOf<ComponentMapper<T>>(), factory)
+    inline fun <reified T : Any> mapper(): ComponentMapper<T> = mapper(T::class)
 
     /**
      * Returns an already existing [ComponentMapper] for the given [cmpId].

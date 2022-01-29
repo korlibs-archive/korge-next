@@ -7,8 +7,6 @@ import com.github.quillraven.fleks.collection.bag
 /**
  * An entity of a [world][World]. It represents a unique id.
  */
-// MK @JvmInline
-// value class Entity(val id: Int)
 data class Entity(val id: Int)
 
 /**
@@ -48,15 +46,9 @@ class EntityCreateCfg(
     /**
      * Adds and returns a component of the given type to the [entity] and
      * applies the [configuration] to the component.
-     *
-     * @throws [FleksMissingNoArgsComponentConstructorException] if the component of the given type
-     * does not have a no argument constructor.
      */
-// MK    inline fun <reified T : Any> add(configuration: T.() -> Unit = {}): T {
-//        val mapper = cmpService.mapper<T>()
-    inline fun <reified T : Any> add(noinline factory: () -> T, configuration: T.() -> Unit = {}): T {
-        val mapper = cmpService.mapper(factory)
-
+    inline fun <reified T : Any> add(configuration: T.() -> Unit = {}): T {
+        val mapper = cmpService.mapper<T>()
         cmpMask.set(mapper.id)
         return mapper.addInternal(entity, configuration)
     }
