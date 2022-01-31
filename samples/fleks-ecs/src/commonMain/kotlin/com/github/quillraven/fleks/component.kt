@@ -134,8 +134,10 @@ class ComponentService(
 
     init {
         // Create component mappers with help of constructor functions from component factory
-        mappers = componentFactory.mapValues { entry ->
-            ComponentMapper(factory = entry.value)
+        mappers = componentFactory.mapValues {
+            val compMapper = ComponentMapper(factory = it.value)
+            mappersBag.add(compMapper)
+            compMapper
         }
     }
 

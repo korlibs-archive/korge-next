@@ -4,8 +4,6 @@ import com.github.quillraven.fleks.collection.BitArray
 import com.github.quillraven.fleks.collection.EntityComparator
 import kotlin.native.concurrent.ThreadLocal
 import kotlin.reflect.KClass
-import kotlin.reflect.KType
-import kotlin.reflect.typeOf
 
 /**
  * An interval for an [IntervalSystem]. There are two kind of intervals:
@@ -142,9 +140,9 @@ object Manual : SortingType
  * @param enabled defines if the system gets updated when the [world][World] gets updated. Default is true.
  */
 abstract class IteratingSystem(
-    val allOf: AllOf? = null,
-    val noneOf: NoneOf? = null,
-    val anyOf: AnyOf? = null,
+    val allOfComponents: Array<KClass<*>>? = null,
+    val noneOfComponents: Array<KClass<*>>? = null,
+    val anyOfComponents: Array<KClass<*>>? = null,
     private val comparator: EntityComparator = EMPTY_COMPARATOR,
     private val sortingType: SortingType = Automatic,
     interval: Interval = EachFrame,
@@ -300,9 +298,10 @@ class SystemService(
         cmpService: ComponentService,
         allFamilies: MutableList<Family>
     ): Family {
-        val allOfComps = system.allOf?.components?.map { cmpService.mapper(it) }
-        val noneOfComps = system.noneOf?.components?.map { cmpService.mapper(it) }
-        val anyOfComps = system.anyOf?.components?.map { cmpService.mapper(it) }
+//        val allOfComps = system.allOfComponents?.components?.map { cmpService.mapper(it) }
+        val allOfComps = system.allOfComponents?.map { cmpService.mapper(it) }
+        val noneOfComps = system.noneOfComponents?.map { cmpService.mapper(it) }
+        val anyOfComps = system.anyOfComponents?.map { cmpService.mapper(it) }
 
         if ((allOfComps == null || allOfComps.isEmpty())
             && (noneOfComps == null || noneOfComps.isEmpty())

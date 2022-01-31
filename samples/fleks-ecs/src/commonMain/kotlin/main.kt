@@ -5,8 +5,6 @@ import com.soywiz.korge.view.*
 import com.soywiz.korim.atlas.MutableAtlasUnit
 import com.soywiz.korim.color.Colors
 import com.github.quillraven.fleks.*
-import kotlin.native.concurrent.ThreadLocal
-import kotlin.reflect.KClass
 
 const val scaleFactor = 1
 
@@ -29,7 +27,7 @@ class ExampleScene : Scene() {
 
     override suspend fun Container.sceneMain() {
 
-        val dummy = MyClass(text = "Hello injector!")
+        val dummyInMoveSystem = MoveSystem.MyClass(text = "Hello injector!")
 
         val world = World {
             entityCapacity = 20
@@ -37,17 +35,18 @@ class ExampleScene : Scene() {
             system(::MoveSystem)
             system(::PositionSystem)
 
-            inject(dummy)
+            inject(dummyInMoveSystem)
 
-            // Register all needed components
-            // TODO remove and create components directly on system creation time
-            component(::Position)
+            // Register all needed components and its listener if needed to the world
+            component(::Position, ::PositionListener)
+            component(::ImageAnimation)
+
         }
 
         val entity = world.entity {
             add<Position> {
                 x = 50f
-                y = 100f
+                y = 120f
             }
         }
 
@@ -57,12 +56,24 @@ class ExampleScene : Scene() {
     }
 }
 
-data class MyClass(val text: String = "")
+class PositionListener : ComponentListener<Position> {
+    override fun onComponentAdded(entity: Entity, component: Position) {
+        println("Component $component added to $entity!")
+    }
+
+    override fun onComponentRemoved(entity: Entity, component: Position) {
+        println("Component $component removed from $entity!")
+    }
+}
+
 data class Position(var x: Float = 0f, var y: Float = 0f)
+data class ImageAnimation(var imageData: String = "", var isPlaying: Boolean = false)
 
 class MoveSystem : IntervalSystem(
     interval = Fixed(1000f)  // every second
 ) {
+
+    class MyClass(val text: String = "")
 
     private val dummy: MyClass = Inject.dependency()
 
@@ -75,7 +86,7 @@ class MoveSystem : IntervalSystem(
 }
 
 class PositionSystem : IteratingSystem(
-    allOf = AllOf(arrayOf(Position::class)),
+    allOfComponents = arrayOf(Position::class),
     interval = Fixed(500f)  // every 500 millisecond
 ) {
 

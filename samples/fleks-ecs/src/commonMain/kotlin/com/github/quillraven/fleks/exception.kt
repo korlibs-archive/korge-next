@@ -20,7 +20,7 @@ class FleksNoSuchComponentException(component: KClass<*>) :
     FleksException("There is no component of type ${component.simpleName} in the ComponentMapper. Did you add the component to the ${WorldConfiguration::class.simpleName}?")
 
 class FleksInjectableAlreadyAddedException(type: KClass<*>) :
-    FleksException("Injectable with name ${type} is already part of the ${WorldConfiguration::class.simpleName}.")
+    FleksException("Injectable with name ${type.simpleName} is already part of the ${WorldConfiguration::class.simpleName}.")
 
 class FleksSystemInjectException(injectType: KClass<*>) :
     FleksException("Injection object of type ${injectType.simpleName} cannot be found. Did you add all necessary injectables?")
@@ -28,7 +28,7 @@ class FleksSystemInjectException(injectType: KClass<*>) :
 class FleksNoSuchEntityComponentException(entity: Entity, component: String) :
     FleksException("Entity $entity has no component of type $component.")
 
-class FleksComponentListenerAlreadyAddedException(listener: KClass<out ComponentListener<*>>) :
+class FleksComponentListenerAlreadyAddedException(listener: KClass<*>) :
     FleksException("ComponentListener ${listener.simpleName} is already part of the ${WorldConfiguration::class.simpleName}.")
 
 class FleksUnusedInjectablesException(unused: List<KClass<*>>) :
