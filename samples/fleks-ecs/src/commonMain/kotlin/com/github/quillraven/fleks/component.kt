@@ -20,11 +20,11 @@ interface ComponentListener<T> {
  *
  * Refer to [ComponentService] for more details.
  */
-@Suppress("UNCHECKED_CAST")
 class ComponentMapper<T>(
     @PublishedApi
     internal val id: Int = 0,
     @PublishedApi
+    @Suppress("UNCHECKED_CAST")
     internal var components: Array<T?> = Array<Any?>(64) { null } as Array<T?>,
     @PublishedApi
     internal val factory: () -> T
@@ -42,8 +42,8 @@ class ComponentMapper<T>(
         if (entity.id >= components.size) {
             components = components.copyOf(max(components.size * 2, entity.id + 1))
         }
-        val cmp = components[entity.id]
-        return if (cmp == null) {
+        val comp = components[entity.id]
+        return if (comp == null) {
             val newCmp = factory.invoke().apply(configuration)
             components[entity.id] = newCmp
             listeners.forEach { it.onComponentAdded(entity, newCmp) }
@@ -53,8 +53,8 @@ class ComponentMapper<T>(
             // Call onComponentRemoved first in case users do something special in onComponentAdded.
             // Otherwise, onComponentAdded will be executed twice on a single component without executing onComponentRemoved
             // which is not correct.
-            listeners.forEach { it.onComponentRemoved(entity, cmp) }
-            val existingCmp = cmp.apply(configuration)
+            listeners.forEach { it.onComponentRemoved(entity, comp) }
+            val existingCmp = comp.apply(configuration)
             listeners.forEach { it.onComponentAdded(entity, existingCmp) }
             existingCmp
         }
@@ -82,8 +82,8 @@ class ComponentMapper<T>(
      */
     @PublishedApi
     internal fun removeInternal(entity: Entity) {
-        components[entity.id]?.let { cmp ->
-            listeners.forEach { it.onComponentRemoved(entity, cmp) }
+        components[entity.id]?.let { comp ->
+            listeners.forEach { it.onComponentRemoved(entity, comp) }
         }
         components[entity.id] = null
     }
@@ -180,7 +180,7 @@ class ComponentService(
     inline fun <reified T : Any> mapper(): ComponentMapper<T> = mapper(T::class)
 
     /**
-     * Returns an already existing [ComponentMapper] for the given [cmpId].
+     * Returns an already existing [ComponentMapper] for the given [compId].
      */
-    fun mapper(cmpId: Int) = mappersBag[cmpId]
+    fun mapper(compId: Int) = mappersBag[compId]
 }

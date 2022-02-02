@@ -20,10 +20,10 @@ interface EntityListener {
      *
      * @param entity the [entity][Entity] with the updated component configuration.
      *
-     * @param cmpMask the [BitArray] representing what type of components the entity has. Each component type has a
+     * @param compMask the [BitArray] representing what type of components the entity has. Each component type has a
      * unique id. Refer to [ComponentMapper] for more details.
      */
-    fun onEntityCfgChanged(entity: Entity, cmpMask: BitArray) = Unit
+    fun onEntityCfgChanged(entity: Entity, compMask: BitArray) = Unit
 }
 
 @DslMarker
@@ -35,13 +35,13 @@ annotation class EntityCfgMarker
 @EntityCfgMarker
 class EntityCreateCfg(
     @PublishedApi
-    internal val cmpService: ComponentService
+    internal val compService: ComponentService
 ) {
     @PublishedApi
     internal var entity = Entity(0)
 
     @PublishedApi
-    internal lateinit var cmpMask: BitArray
+    internal lateinit var compMask: BitArray
 
     /**
      * Adds and returns a component of the given type to the [entity] and
@@ -49,8 +49,8 @@ class EntityCreateCfg(
      * Notifies any registered [ComponentListener].
      */
     inline fun <reified T : Any> add(configuration: T.() -> Unit = {}): T {
-        val mapper = cmpService.mapper<T>()
-        cmpMask.set(mapper.id)
+        val mapper = compService.mapper<T>()
+        compMask.set(mapper.id)
         return mapper.addInternal(entity, configuration)
     }
 }
@@ -63,7 +63,7 @@ class EntityCreateCfg(
 @EntityCfgMarker
 class EntityUpdateCfg {
     @PublishedApi
-    internal lateinit var cmpMask: BitArray
+    internal lateinit var compMask: BitArray
 
     /**
      * Adds and returns a component of the given type to the [entity] and applies the [configuration] to that component.
@@ -72,7 +72,7 @@ class EntityUpdateCfg {
      * Notifies any registered [ComponentListener].
      */
     inline fun <reified T : Any> ComponentMapper<T>.add(entity: Entity, configuration: T.() -> Unit = {}): T {
-        cmpMask.set(this.id)
+        compMask.set(this.id)
         return this.addInternal(entity, configuration)
     }
 
@@ -83,7 +83,7 @@ class EntityUpdateCfg {
      * Notifies any registered [ComponentListener] if a new component is created.
      */
     inline fun <reified T : Any> ComponentMapper<T>.addOrUpdate(entity: Entity, configuration: T.() -> Unit = {}): T {
-        cmpMask.set(this.id)
+        compMask.set(this.id)
         return this.addOrUpdateInternal(entity, configuration)
     }
 
@@ -94,7 +94,7 @@ class EntityUpdateCfg {
      * @throws [ArrayIndexOutOfBoundsException] if the id of the [entity] exceeds the mapper's capacity.
      */
     inline fun <reified T : Any> ComponentMapper<T>.remove(entity: Entity) {
-        cmpMask.clear(this.id)
+        compMask.clear(this.id)
         this.removeInternal(entity)
     }
 }
@@ -106,7 +106,7 @@ class EntityUpdateCfg {
  */
 class EntityService(
     initialEntityCapacity: Int,
-    private val cmpService: ComponentService
+    private val compService: ComponentService
 ) {
     /**
      * The id that will be given to a newly created [entity][Entity] if there are no [recycledEntities].
@@ -137,16 +137,16 @@ class EntityService(
      * Returns the maximum capacity of active entities.
      */
     val capacity: Int
-        get() = cmpMasks.capacity
+        get() = compMasks.capacity
 
     /**
      * The component configuration per [entity][Entity].
      */
     @PublishedApi
-    internal val cmpMasks = bag<BitArray>(initialEntityCapacity)
+    internal val compMasks = bag<BitArray>(initialEntityCapacity)
 
     @PublishedApi
-    internal val createCfg = EntityCreateCfg(cmpService)
+    internal val createCfg = EntityCreateCfg(compService)
 
     @PublishedApi
     internal val updateCfg = EntityUpdateCfg()
@@ -180,16 +180,16 @@ class EntityService(
             recycled
         }
 
-        if (newEntity.id >= cmpMasks.size) {
-            cmpMasks[newEntity.id] = BitArray(64)
+        if (newEntity.id >= compMasks.size) {
+            compMasks[newEntity.id] = BitArray(64)
         }
-        val cmpMask = cmpMasks[newEntity.id]
+        val compMask = compMasks[newEntity.id]
         createCfg.run {
             this.entity = newEntity
-            this.cmpMask = cmpMask
+            this.compMask = compMask
             configuration(this.entity)
         }
-        listeners.forEach { it.onEntityCfgChanged(newEntity, cmpMask) }
+        listeners.forEach { it.onEntityCfgChanged(newEntity, compMask) }
 
         return newEntity
     }
@@ -199,12 +199,12 @@ class EntityService(
      * Notifies any registered [EntityListener].
      */
     inline fun configureEntity(entity: Entity, configuration: EntityUpdateCfg.(Entity) -> Unit) {
-        val cmpMask = cmpMasks[entity.id]
+        val compMask = compMasks[entity.id]
         updateCfg.run {
-            this.cmpMask = cmpMask
+            this.compMask = compMask
             configuration(entity)
         }
-        listeners.forEach { it.onEntityCfgChanged(entity, cmpMask) }
+        listeners.forEach { it.onEntityCfgChanged(entity, compMask) }
     }
 
     /**
@@ -225,13 +225,13 @@ class EntityService(
             delayedEntities.add(entity.id)
         } else {
             removedEntities.set(entity.id)
-            val cmpMask = cmpMasks[entity.id]
+            val compMask = compMasks[entity.id]
             recycledEntities.add(entity)
-            cmpMask.forEachSetBit { cmpId ->
-                cmpService.mapper(cmpId).removeInternal(entity)
+            compMask.forEachSetBit { compId ->
+                compService.mapper(compId).removeInternal(entity)
             }
-            cmpMask.clearAll()
-            listeners.forEach { it.onEntityCfgChanged(entity, cmpMask) }
+            compMask.clearAll()
+            listeners.forEach { it.onEntityCfgChanged(entity, compMask) }
         }
     }
 

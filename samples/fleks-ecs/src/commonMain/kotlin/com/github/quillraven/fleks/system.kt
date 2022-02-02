@@ -124,8 +124,8 @@ object Manual : SortingType
 /**
  * An [IntervalSystem] of a [world][World] with a context to [entities][Entity].
  *
- * It must have at least one of [AllOf], [AnyOf] or [NoneOf] objects defined. These objects define
- * a [Family] to which this [IteratingSystem] belongs.
+ * It must have at least one of [allOfComponents], [anyOfComponents] or [noneOfComponents] objects defined.
+ * These objects define a [Family] to which this [IteratingSystem] belongs.
  *
  * @param comparator an optional [EntityComparator] that is used to sort [entities][Entity].
  * Default value is an empty comparator which means no sorting.
@@ -239,7 +239,7 @@ abstract class IteratingSystem(
  * each time [update] is called.
  *
  * @param world the [world][World] the service belongs to.
- * @param systemFactorys the factory methods to create the [systems][IntervalSystem].
+ * @param systemFactory the factory methods to create the [systems][IntervalSystem].
  * @param injectables the required dependencies to create the [systems][IntervalSystem].
  */
 class SystemService(
@@ -277,23 +277,23 @@ class SystemService(
 
     /**
      * Creates or returns an already created [family][Family] for the given [IteratingSystem]
-     * by analyzing the system's [AllOf], [AnyOf] and [NoneOf] annotations.
+     * by analyzing the system's "allOfComponents", "anyOfComponents" and "noneOfComponents" properties.
      *
      * @throws [FleksSystemCreationException] if the [IteratingSystem] does not contain at least one
-     * [AllOf], [AnyOf] or [NoneOf] annotation.
+     * "allOfComponents", "anyOfComponents" and "noneOfComponents" property.
      *
-     * @throws [FleksNoSuchComponentException] if the component of the given [type] does not exist in the
+     * @throws [FleksNoSuchComponentException] if the component of the given type from the family does not exist in the
      * world configuration.
      */
     private fun family(
         system: IteratingSystem,
         entityService: EntityService,
-        cmpService: ComponentService,
+        compService: ComponentService,
         allFamilies: MutableList<Family>
     ): Family {
-        val allOfComps = system.allOfComponents?.map { cmpService.mapper(it) }
-        val noneOfComps = system.noneOfComponents?.map { cmpService.mapper(it) }
-        val anyOfComps = system.anyOfComponents?.map { cmpService.mapper(it) }
+        val allOfComps = system.allOfComponents?.map { compService.mapper(it) }
+        val noneOfComps = system.noneOfComponents?.map { compService.mapper(it) }
+        val anyOfComps = system.anyOfComponents?.map { compService.mapper(it) }
 
         if ((allOfComps == null || allOfComps.isEmpty())
             && (noneOfComps == null || noneOfComps.isEmpty())

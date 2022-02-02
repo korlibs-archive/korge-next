@@ -82,11 +82,12 @@ class WorldConfiguration {
     }
 
     /**
-     * Adds the specified [ComponentListener] to the [world][World].
+     * Adds the specified [Component] and its [ComponentListener] to the [world][World]. If a component listener
+     * is not needed than it can be omitted.
      *
-     * TODO
-     * @param compFactory
-     * @param listenerFactory
+     * @param compFactory the constructor method for creating the component.
+     * @param listenerFactory the constructor method for creating the component listener.
+     * @throws [FleksComponentAlreadyAddedException] if the component was already added before.
      * @throws [FleksComponentListenerAlreadyAddedException] if the listener was already added before.
      */
     inline fun <reified T : Any> component(noinline compFactory: () -> T, noinline listenerFactory: (() -> ComponentListener<*>)? = null) {
