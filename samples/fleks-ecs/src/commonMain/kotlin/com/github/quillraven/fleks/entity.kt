@@ -46,6 +46,7 @@ class EntityCreateCfg(
     /**
      * Adds and returns a component of the given type to the [entity] and
      * applies the [configuration] to the component.
+     * Notifies any registered [ComponentListener].
      */
     inline fun <reified T : Any> add(configuration: T.() -> Unit = {}): T {
         val mapper = cmpService.mapper<T>()
@@ -68,6 +69,7 @@ class EntityUpdateCfg {
      * Adds and returns a component of the given type to the [entity] and applies the [configuration] to that component.
      * If the [entity] already has a component of the given type then no new component is created and instead
      * the existing one will be updated.
+     * Notifies any registered [ComponentListener].
      */
     inline fun <reified T : Any> ComponentMapper<T>.add(entity: Entity, configuration: T.() -> Unit = {}): T {
         cmpMask.set(this.id)
@@ -75,7 +77,19 @@ class EntityUpdateCfg {
     }
 
     /**
+     * Adds a new component of the given type to the [entity] if it does not have it yet.
+     * Otherwise, updates the already existing component.
+     * Applies the [configuration] in both cases and returns the component.
+     * Notifies any registered [ComponentListener] if a new component is created.
+     */
+    inline fun <reified T : Any> ComponentMapper<T>.addOrUpdate(entity: Entity, configuration: T.() -> Unit = {}): T {
+        cmpMask.set(this.id)
+        return this.addOrUpdateInternal(entity, configuration)
+    }
+
+    /**
      * Removes a component of the given type from the [entity].
+     * Notifies any registered [ComponentListener].
      *
      * @throws [ArrayIndexOutOfBoundsException] if the id of the [entity] exceeds the mapper's capacity.
      */
@@ -233,6 +247,19 @@ class EntityService(
                 continue
             }
             remove(entity)
+        }
+    }
+
+    /**
+     * Performs the given [action] on each active [entity][Entity].
+     */
+    fun forEach(action: (Entity) -> Unit) {
+        for (id in 0 until nextId) {
+            val entity = Entity(id)
+            if (removedEntities[entity.id]) {
+                continue
+            }
+            entity.run(action)
         }
     }
 

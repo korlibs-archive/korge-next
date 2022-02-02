@@ -42,12 +42,6 @@ abstract class IntervalSystem(
     lateinit var world: World
         internal set
 
-    /**
-     * An [Injector] which is used to inject objects from outside the [IntervalSystem].
-     */
-//    @PublishedApi
-//    internal lateinit var injector: Injector
-
     private var accumulator: Float = 0.0f
 
     /**
@@ -152,8 +146,7 @@ abstract class IteratingSystem(
      * Returns the [family][Family] of this system.
      * This reference gets updated by the [SystemService] when the system gets created via reflection.
      */
-    lateinit var family: Family
-        internal set
+    internal lateinit var family: Family
 
     /**
      * Returns the [entityService][EntityService] of this system.
@@ -298,7 +291,6 @@ class SystemService(
         cmpService: ComponentService,
         allFamilies: MutableList<Family>
     ): Family {
-//        val allOfComps = system.allOfComponents?.components?.map { cmpService.mapper(it) }
         val allOfComps = system.allOfComponents?.map { cmpService.mapper(it) }
         val noneOfComps = system.noneOfComponents?.map { cmpService.mapper(it) }
         val anyOfComps = system.anyOfComponents?.map { cmpService.mapper(it) }

@@ -61,6 +61,20 @@ class ComponentMapper<T>(
     }
 
     /**
+     * Creates a new component if the [entity] does not have it yet. Otherwise, updates the existing component.
+     * Applies the [configuration] in both cases and returns the component.
+     * Notifies any registered [ComponentListener] if a new component is created.
+     */
+    @PublishedApi
+    internal inline fun addOrUpdateInternal(entity: Entity, configuration: T.() -> Unit = {}): T {
+        return if (entity in this) {
+            this[entity].apply(configuration)
+        } else {
+            addInternal(entity, configuration)
+        }
+    }
+
+    /**
      * Removes a component of the specific type from the given [entity].
      * Notifies any registered [ComponentListener].
      *
@@ -79,7 +93,9 @@ class ComponentMapper<T>(
      *
      * @throws [FleksNoSuchEntityComponentException] if the [entity] does not have such a component.
      */
-    operator fun get(entity: Entity): T = components[entity.id] ?: throw FleksNoSuchEntityComponentException(entity, factory.toString())
+    operator fun get(entity: Entity): T {
+        return components[entity.id] ?: throw FleksNoSuchEntityComponentException(entity, factory.toString())
+    }
 
     /**
      * Returns true if and only if the given [entity] has a component of the specific type.
@@ -109,7 +125,9 @@ class ComponentMapper<T>(
      */
     operator fun contains(listener: ComponentListener<T>) = listener in listeners
 
-    override fun toString(): String  = "ComponentMapper(id=$id, component=${factory})"
+    override fun toString(): String {
+        return "ComponentMapper(id=$id, component=${factory})"
+    }
 }
 
 /**

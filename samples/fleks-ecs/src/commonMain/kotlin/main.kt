@@ -37,7 +37,7 @@ class ExampleScene : Scene() {
 
             inject(dummyInMoveSystem)
 
-            // Register all needed components and its listener if needed to the world
+            // Register all needed components and its listeners (if needed) to the world
             component(::Position, ::PositionListener)
             component(::ImageAnimation)
 
