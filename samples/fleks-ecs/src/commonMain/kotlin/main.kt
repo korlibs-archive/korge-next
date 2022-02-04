@@ -5,8 +5,10 @@ import com.soywiz.korge.view.*
 import com.soywiz.korim.atlas.MutableAtlasUnit
 import com.soywiz.korim.color.Colors
 import com.github.quillraven.fleks.*
+import systems.*
+import components.*
 
-const val scaleFactor = 1
+const val scaleFactor = 2
 
 suspend fun main() = Korge(width = 384 * scaleFactor, height = 216 * scaleFactor, bgcolor = Colors["#000000"]) {
 
@@ -27,77 +29,66 @@ class ExampleScene : Scene() {
 
     override suspend fun Container.sceneMain() {
 
-        val dummyInMoveSystem = MoveSystem.MyClass(text = "Hello injector!")
+//        val dummyInMoveSystem = MoveSystem.MyClass(text = "Hello injector!")
 
+        // This is the world object of the entity component system (ECS)
+        // It contains all ECS related configuration
         val world = World {
             entityCapacity = 20
 
+            // Register all needed systems
             system(::MoveSystem)
-            system(::PositionSystem)
+            system(::SpawnerSystem)
+            system(::ImageAnimationSystem)
 
-            inject(dummyInMoveSystem)
-
-            // Register all needed components and its listeners (if needed) to the world
+            // Register all needed components and its listeners (if needed)
             component(::Position, ::PositionListener)
-            component(::ImageAnimation)
+            component(::ImageAnimation, ::ImageAnimationListener)
+            component(::Spawner)
 
+            // Register external objects which are used by systems and component listeners
+//            inject(dummyInMoveSystem)
         }
 
-        val entity = world.entity {
-            add<Position> {
-                x = 50f
-                y = 120f
+        val spawner = world.entity {
+            add<Position> {  // Position of spawner
+                x = 130.0
+                y = 100.0
+            }
+            add<Spawner> {  // Config for spawner object
+                numberOfObjects = 7
+                interval = 1
+                timeVariation = 0
+                xPosVariation = 50.0
+                yPosVariation = 7.0
+                xAccel = -0.8
+                yAccel = -1.0
+            }
+            add<ImageAnimation> {  // Config for spawner object
+                imageData = "sprite2"
+                animation = "FireTrail"  // "FireTrail" - "TestNum"
+                isPlaying = true
             }
         }
+/*
+                // Initialize entity data and config
+                entity.spawnerComponent.numberOfObjects = 7
+                entity.positionComponent.x = 130.0
+                entity.positionComponent.y = 100.0
+                entity.spawnerComponent.interval = 1
+                entity.spawnerComponent.timeVariation = 0
+                entity.spawnerComponent.xPosVariation = 50.0
+                entity.spawnerComponent.yPosVariation = 7.0
+                entity.spawnerComponent.xAccel = -0.8
+                entity.spawnerComponent.yAccel = -1.0
+
+                entity.imageAnimationComponent.imageData = "sprite2"
+                entity.imageAnimationComponent.animation = "FireTrail"  // "FireTrail" - "TestNum"
+                entity.imageAnimationComponent.isPlaying = true
+*/
 
         addUpdater { dt ->
             world.update(dt.milliseconds.toFloat())
         }
     }
 }
-
-class PositionListener : ComponentListener<Position> {
-    override fun onComponentAdded(entity: Entity, component: Position) {
-        println("Component $component added to $entity!")
-    }
-
-    override fun onComponentRemoved(entity: Entity, component: Position) {
-        println("Component $component removed from $entity!")
-    }
-}
-
-data class Position(var x: Float = 0f, var y: Float = 0f)
-data class ImageAnimation(var imageData: String = "", var isPlaying: Boolean = false)
-
-class MoveSystem : IntervalSystem(
-    interval = Fixed(1000f)  // every second
-) {
-
-    class MyClass(val text: String = "")
-
-    private val dummy: MyClass = Inject.dependency()
-
-    override fun onInit() {
-    }
-
-    override fun onTick() {
-        println("MoveSystem: onTick (text: ${dummy.text})")
-    }
-}
-
-class PositionSystem : IteratingSystem(
-    allOfComponents = arrayOf(Position::class),
-    interval = Fixed(500f)  // every 500 millisecond
-) {
-
-    private val position: ComponentMapper<Position> = Inject.componentMapper()
-
-    override fun onInit() {
-    }
-
-    override fun onTickEntity(entity: Entity) {
-        println("PositionSystem: onTickEntity")
-        println("pos id: ${position.id} x: ${position[entity].x} y: ${position[entity].y}")
-    }
-}
-

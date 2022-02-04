@@ -125,7 +125,7 @@ object Manual : SortingType
  * An [IntervalSystem] of a [world][World] with a context to [entities][Entity].
  *
  * It must have at least one of [allOfComponents], [anyOfComponents] or [noneOfComponents] objects defined.
- * These objects define a [Family] to which this [IteratingSystem] belongs.
+ * These objects define a [Family] of entities for which the [IteratingSystem] will get active and.
  *
  * @param comparator an optional [EntityComparator] that is used to sort [entities][Entity].
  * Default value is an empty comparator which means no sorting.
