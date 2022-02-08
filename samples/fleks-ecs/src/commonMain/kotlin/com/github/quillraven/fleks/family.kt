@@ -3,7 +3,22 @@ package com.github.quillraven.fleks
 import com.github.quillraven.fleks.collection.BitArray
 import com.github.quillraven.fleks.collection.EntityComparator
 import com.github.quillraven.fleks.collection.IntBag
+import kotlin.reflect.KClass
 
+/**
+ * [Entities][Entity] must have all [components] specified to be part of the [family][Family].
+ */
+class AllOf(val components: Array<KClass<*>>)
+
+/**
+ * [Entities][Entity] must not have any [components] specified to be part of the [family][Family].
+ */
+class NoneOf(val components: Array<KClass<*>>)
+
+/**
+ * [Entities][Entity] must have at least one of the [components] specified to be part of the [family][Family].
+ */
+class AnyOf(val components: Array<KClass<*>>)
 
 /**
  * A family of [entities][Entity]. It stores [entities][Entity] that have a specific configuration of components.

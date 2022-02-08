@@ -2,6 +2,10 @@ package components
 
 import com.github.quillraven.fleks.ComponentListener
 import com.github.quillraven.fleks.Entity
+import com.soywiz.kds.Pool
+import com.soywiz.korge.view.Image
+import com.soywiz.korge.view.animation.ImageAnimationView
+import com.soywiz.korim.bitmap.Bitmaps
 
 data class ImageAnimation(
     var lifeCycle: LifeCycle = LifeCycle.INACTIVE,
@@ -17,6 +21,15 @@ data class ImageAnimation(
 }
 
 class ImageAnimationListener : ComponentListener<ImageAnimation> {
+
+    private val imageAnimationViewPool = Pool(reset = { it.rewind() }) {
+        ImageAnimationView(/* TODO enableUpdater = false*/) { imageBitmapTransparentPool.alloc() }.apply { smoothing = true }
+    }
+    private val imageBitmapTransparentPool = Pool(reset = { it.bitmap = Bitmaps.transparent }, preallocate = 20) {
+        Image(Bitmaps.transparent)
+    }
+
+
     override fun onComponentAdded(entity: Entity, component: ImageAnimation) {
 
         // Init component view

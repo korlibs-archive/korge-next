@@ -124,7 +124,7 @@ object Manual : SortingType
 /**
  * An [IntervalSystem] of a [world][World] with a context to [entities][Entity].
  *
- * It must have at least one of [allOfComponents], [anyOfComponents] or [noneOfComponents] objects defined.
+ * It must have at least one of [allOf], [anyOf] or [noneOf] objects defined.
  * These objects define a [Family] of entities for which the [IteratingSystem] will get active and.
  *
  * @param comparator an optional [EntityComparator] that is used to sort [entities][Entity].
@@ -134,9 +134,9 @@ object Manual : SortingType
  * @param enabled defines if the system gets updated when the [world][World] gets updated. Default is true.
  */
 abstract class IteratingSystem(
-    val allOfComponents: Array<KClass<*>>? = null,
-    val noneOfComponents: Array<KClass<*>>? = null,
-    val anyOfComponents: Array<KClass<*>>? = null,
+    val allOf: AllOf? = null,
+    val noneOf: NoneOf? = null,
+    val anyOf: AnyOf? = null,
     private val comparator: EntityComparator = EMPTY_COMPARATOR,
     private val sortingType: SortingType = Automatic,
     interval: Interval = EachFrame,
@@ -291,9 +291,9 @@ class SystemService(
         compService: ComponentService,
         allFamilies: MutableList<Family>
     ): Family {
-        val allOfComps = system.allOfComponents?.map { compService.mapper(it) }
-        val noneOfComps = system.noneOfComponents?.map { compService.mapper(it) }
-        val anyOfComps = system.anyOfComponents?.map { compService.mapper(it) }
+        val allOfComps = system.allOf?.components?.map { compService.mapper(it) }
+        val noneOfComps = system.noneOf?.components?.map { compService.mapper(it) }
+        val anyOfComps = system.anyOf?.components?.map { compService.mapper(it) }
 
         if ((allOfComps == null || allOfComps.isEmpty())
             && (noneOfComps == null || noneOfComps.isEmpty())

@@ -11,7 +11,7 @@ fun ClosedFloatingPointRange<Float>.random() = Random.nextDouble(start.toDouble(
 fun IntRange.random() = Random.nextInt(start, endInclusive)
 
 class SpawnerSystem : IteratingSystem(
-    allOfComponents = arrayOf(Spawner::class),
+    AllOf(arrayOf(Spawner::class)),
     interval = Fixed(500f)  // every 500 millisecond
 ) {
 

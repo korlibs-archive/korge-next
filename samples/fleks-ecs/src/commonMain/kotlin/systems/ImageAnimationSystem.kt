@@ -3,13 +3,9 @@ package systems
 //import aseImage
 import com.github.quillraven.fleks.*
 import com.soywiz.kds.Pool
-import com.soywiz.kds.iterators.fastForEach
-import com.soywiz.klock.TimeSpan
 import com.soywiz.korge.view.*
 import com.soywiz.korge.view.animation.ImageAnimationView
-import com.soywiz.korim.bitmap.Bitmaps
 import components.*
-import components.ImageAnimation.LifeCycle
 
 /**
  * This System takes care of displaying sprites (image-animation objects) on the screen. It takes the configuration from
@@ -17,10 +13,12 @@ import components.ImageAnimation.LifeCycle
  *
  */
 class ImageAnimationSystem : IteratingSystem(
-    allOfComponents = arrayOf(ImageAnimation::class, Position::class),
+    allOf = AllOf(arrayOf(ImageAnimation::class, Position::class)),
     interval = Fixed(500f)  // every 500 millisecond
 ) {
 
+    private val imageAnimationViewPool: Pool<ImageAnimationView<Image>> = Inject.dependency()
+    private val imageBitmapTransparentPool: Pool<Image> = Inject.dependency()
     private val position: ComponentMapper<Position> = Inject.componentMapper()
     private val imageAnimation: ComponentMapper<ImageAnimation> = Inject.componentMapper()
 
@@ -121,11 +119,5 @@ class ImageAnimationSystem(
         }
     }
 
-    private val imageAnimationViewPool = Pool(reset = { it.rewind() }) {
-        ImageAnimationView(enableUpdater = false) { imageBitmapTransparentPool.alloc() }.apply { smoothing = doSmoothing }
-    }
-    private val imageBitmapTransparentPool = Pool(reset = { it.bitmap = Bitmaps.transparent }, preallocate = 20) {
-        Image(Bitmaps.transparent)
-    }
 }
 */

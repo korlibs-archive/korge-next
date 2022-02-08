@@ -29,6 +29,7 @@ class ExampleScene : Scene() {
 
     override suspend fun Container.sceneMain() {
 
+
 //        val dummyInMoveSystem = MoveSystem.MyClass(text = "Hello injector!")
 
         // This is the world object of the entity component system (ECS)
@@ -47,8 +48,11 @@ class ExampleScene : Scene() {
             component(::Spawner)
 
             // Register external objects which are used by systems and component listeners
-//            inject(dummyInMoveSystem)
+//            inject(imageAnimationViewPool)
+//            inject(imageBitmapTransparentPool)
         }
+
+        val pos = world.mapper<Position>()
 
         val spawner = world.entity {
             add<Position> {  // Position of spawner
@@ -70,22 +74,6 @@ class ExampleScene : Scene() {
                 isPlaying = true
             }
         }
-/*
-                // Initialize entity data and config
-                entity.spawnerComponent.numberOfObjects = 7
-                entity.positionComponent.x = 130.0
-                entity.positionComponent.y = 100.0
-                entity.spawnerComponent.interval = 1
-                entity.spawnerComponent.timeVariation = 0
-                entity.spawnerComponent.xPosVariation = 50.0
-                entity.spawnerComponent.yPosVariation = 7.0
-                entity.spawnerComponent.xAccel = -0.8
-                entity.spawnerComponent.yAccel = -1.0
-
-                entity.imageAnimationComponent.imageData = "sprite2"
-                entity.imageAnimationComponent.animation = "FireTrail"  // "FireTrail" - "TestNum"
-                entity.imageAnimationComponent.isPlaying = true
-*/
 
         addUpdater { dt ->
             world.update(dt.milliseconds.toFloat())

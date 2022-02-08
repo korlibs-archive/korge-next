@@ -4,7 +4,7 @@ import com.github.quillraven.fleks.*
 import components.*
 
 class MoveSystem : IteratingSystem(
-    allOfComponents = arrayOf(Position::class),
+    AllOf(arrayOf(Position::class)),
     interval = Fixed(500f)  // every 500 millisecond
 ) {
 

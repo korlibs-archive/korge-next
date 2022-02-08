@@ -17,6 +17,7 @@ interface ComponentListener<T> {
 /**
  * A class that is responsible to store components of a specific type for all [entities][Entity] in a [world][World].
  * Each component is assigned a unique [id] for fast access and to avoid lookups via a class which is slow.
+ * Hint: A component at index [id] in the [components] array belongs to [Entity] with the same [id].
  *
  * Refer to [ComponentService] for more details.
  */
@@ -44,19 +45,19 @@ class ComponentMapper<T>(
         }
         val comp = components[entity.id]
         return if (comp == null) {
-            val newCmp = factory.invoke().apply(configuration)
-            components[entity.id] = newCmp
-            listeners.forEach { it.onComponentAdded(entity, newCmp) }
-            newCmp
+            val newComp = factory.invoke().apply(configuration)
+            components[entity.id] = newComp
+            listeners.forEach { it.onComponentAdded(entity, newComp) }
+            newComp
         } else {
             // component already added -> reuse it and do not create a new instance.
             // Call onComponentRemoved first in case users do something special in onComponentAdded.
             // Otherwise, onComponentAdded will be executed twice on a single component without executing onComponentRemoved
             // which is not correct.
             listeners.forEach { it.onComponentRemoved(entity, comp) }
-            val existingCmp = comp.apply(configuration)
-            listeners.forEach { it.onComponentAdded(entity, existingCmp) }
-            existingCmp
+            val existingComp = comp.apply(configuration)
+            listeners.forEach { it.onComponentAdded(entity, existingComp) }
+            existingComp
         }
     }
 
@@ -153,7 +154,7 @@ class ComponentService(
     init {
         // Create component mappers with help of constructor functions from component factory
         mappers = componentFactory.mapValues {
-            val compMapper = ComponentMapper(factory = it.value)
+            val compMapper = ComponentMapper(id = mappersBag.size, factory = it.value)
             mappersBag.add(compMapper)
             compMapper
         }
