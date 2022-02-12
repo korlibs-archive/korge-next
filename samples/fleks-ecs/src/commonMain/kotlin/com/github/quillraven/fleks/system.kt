@@ -2,7 +2,6 @@ package com.github.quillraven.fleks
 
 import com.github.quillraven.fleks.collection.BitArray
 import com.github.quillraven.fleks.collection.EntityComparator
-import kotlin.native.concurrent.ThreadLocal
 import kotlin.reflect.KClass
 
 /**
@@ -125,8 +124,13 @@ object Manual : SortingType
  * An [IntervalSystem] of a [world][World] with a context to [entities][Entity].
  *
  * It must have at least one of [allOf], [anyOf] or [noneOf] objects defined.
- * These objects define a [Family] of entities for which the [IteratingSystem] will get active and.
+ * These objects define a [Family] of entities for which the [IteratingSystem] will get active.
+ * The [IteratingSystem] will use those components which are part of the family config for
+ * any specific processing within this system.
  *
+ * @param allOf is specifying the family to which this system belongs.
+ * @param noneOf is specifying the family to which this system belongs.
+ * @param anyOf is specifying the family to which this system belongs.
  * @param comparator an optional [EntityComparator] that is used to sort [entities][Entity].
  * Default value is an empty comparator which means no sorting.
  * @param sortingType the [type][SortingType] of sorting for entities when using a [comparator].
@@ -355,7 +359,6 @@ class SystemService(
  * @throws [FleksSystemInjectException] if the Injector does not contain an entry
  * for the given type in its internal maps.
  */
-@ThreadLocal
 object Inject {
     @PublishedApi
     internal lateinit var injectObjects: Map<KClass<*>, Injectable>
