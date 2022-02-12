@@ -2,6 +2,7 @@ package systems
 
 import kotlin.random.Random
 import com.github.quillraven.fleks.*
+import com.soywiz.korge.ui.uiObservable
 import components.*
 
 class SpawnerSystem : IteratingSystem(
@@ -10,7 +11,6 @@ class SpawnerSystem : IteratingSystem(
 //    interval = Fixed(500f)  // for testing every 500 millisecond
 ) {
 
-    private val sprites: ComponentMapper<Sprite> = Inject.componentMapper()
     private val positions: ComponentMapper<Position> = Inject.componentMapper()
     private val spawners: ComponentMapper<Spawner> = Inject.componentMapper()
 
@@ -32,24 +32,54 @@ class SpawnerSystem : IteratingSystem(
     }
 
     private fun spawn(entity: Entity) {
-        val pos = positions[entity]
+        val spawnerPosition = positions[entity]
         val spawner = spawners[entity]
         for (i in 0 until spawner.numberOfObjects) {
             world.entity {
                 add<Position> {  // Position of spawner
-                    x = pos.x
+                    x = spawnerPosition.x + spawner.positionX
                     if (spawner.positionVariationX != 0.0) x += (-spawner.positionVariationX..spawner.positionVariationX).random()
-                    y = pos.y
+                    y = spawnerPosition.y + spawner.positionY
                     if (spawner.positionVariationY != 0.0) y += (-spawner.positionVariationY..spawner.positionVariationY).random()
                     xAcceleration = spawner.positionAccelerationX
                     yAcceleration = spawner.positionAccelerationY
+                    if (spawner.positionAccelerationVariation != 0.0) {
+                        val variation = (-spawner.positionAccelerationVariation..spawner.positionAccelerationVariation).random()
+                        xAcceleration += variation
+                        xAcceleration += variation
+                    }
                 }
-                add<Sprite> {  // Config for spawned object
-                    imageData = spawner.spriteImageData
-                    animation = spawner.spriteAnimation
-                    isPlaying = spawner.spriteIsPlaying
-                    forwardDirection = spawner.spriteForwardDirection
-                    loop = spawner.spriteLoop
+                // Add spawner feature
+                if (spawner.spawnerNumberOfObjects != 0) {
+                    add<Spawner> {
+                        numberOfObjects = spawner.spawnerNumberOfObjects
+                        interval = spawner.spawnerInterval
+                        timeVariation = spawner.spawnerTimeVariation
+                        // Position details for spawned objects
+                        positionX = spawner.spawnerPositionX
+                        positionY = spawner.spawnerPositionY
+                        positionVariationX = spawner.spawnerPositionVariationX
+                        positionVariationY = spawner.spawnerPositionVariationY
+                        positionAccelerationX = spawner.spawnerPositionAccelerationX
+                        positionAccelerationY = spawner.spawnerPositionAccelerationY
+                        positionAccelerationVariation = spawner.spawnerPositionAccelerationVariation
+                        // Sprite animation details for spawned objects
+                        spriteImageData = spawner.spawnerSpriteImageData
+                        spriteAnimation = spawner.spawnerSpriteAnimation
+                        spriteIsPlaying = spawner.spawnerSpriteIsPlaying
+                        spriteForwardDirection = spawner.spawnerSpriteForwardDirection
+                        spriteLoop = spawner.spawnerSpriteLoop
+                    }
+                }
+                // Add sprite animations
+                if (spawner.spriteImageData.isNotEmpty()) {
+                    add<Sprite> {  // Config for spawned object
+                        imageData = spawner.spriteImageData
+                        animation = spawner.spriteAnimation
+                        isPlaying = spawner.spriteIsPlaying
+                        forwardDirection = spawner.spriteForwardDirection
+                        loop = spawner.spriteLoop
+                    }
                 }
             }
         }

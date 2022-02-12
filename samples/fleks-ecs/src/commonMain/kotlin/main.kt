@@ -17,7 +17,7 @@ import systems.*
 import systems.SpriteSystem.SpriteListener
 import components.*
 
-const val scaleFactor = 2
+const val scaleFactor = 1
 
 suspend fun main() = Korge(width = 384 * scaleFactor, height = 216 * scaleFactor, bgcolor = Colors["#000000"]) {
 
@@ -60,6 +60,7 @@ class ExampleScene : Scene() {
                 system(::MoveSystem)
                 system(::SpawnerSystem)
                 system(::SpriteSystem)
+                system(::CollisionSystem)
 
                 // Register all needed components and its listeners (if needed)
                 component(::Position)
@@ -72,20 +73,30 @@ class ExampleScene : Scene() {
 
             val spawner = world.entity {
                 add<Position> {  // Position of spawner
-                    x = 130.0
-                    y = 100.0
+                    x = 100.0
+                    y = -10.0
                 }
                 add<Spawner> {  // Config for spawner object
                     numberOfObjects = 1  // which will be created at once
-                    interval = 30  // every 30 frames
+                    interval = 60  // every 60 frames
                     timeVariation = 0
-                    positionVariationX = 50.0
+                    // Spawner details for spawned objects (spawned objects do also spawn objects itself)
+                    spawnerNumberOfObjects = 5 // Enable spawning feature for spawned object
+                    spawnerInterval = 1
+                    spawnerPositionVariationX = 10.0
+                    spawnerPositionVariationY = 10.0
+                    spawnerPositionAccelerationX = -80.0
+                    spawnerPositionAccelerationY = -100.0
+                    spawnerPositionAccelerationVariation = 10.0
+                    spawnerSpriteImageData = "sprite"  // "" - Disable sprite graphic for spawned object
+                    spawnerSpriteAnimation = "FireTrail"  // "FireTrail" - "TestNum"
+                    spawnerSpriteIsPlaying = true
+                    // Set position details for spawned objects
+                    positionVariationX = 100.0
                     positionVariationY = 0.0
-                    positionAccelerationX = 40.0
-                    positionAccelerationY = 50.0
-//                    spriteImageData = "sprite"
-//                    spriteAnimation = "FireTrail"  // "FireTrail" - "TestNum"
-//                    spriteIsPlaying = true
+                    positionAccelerationX = 160.0
+                    positionAccelerationY = 200.0
+                    positionAccelerationVariation = 10.0
                 }
             }
 
