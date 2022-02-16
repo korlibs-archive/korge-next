@@ -17,7 +17,7 @@ import systems.*
 import systems.SpriteSystem.SpriteListener
 import components.*
 
-const val scaleFactor = 1
+const val scaleFactor = 3
 
 suspend fun main() = Korge(width = 384 * scaleFactor, height = 216 * scaleFactor, bgcolor = Colors["#000000"]) {
 
@@ -45,11 +45,9 @@ class ExampleScene : Scene() {
         container {
             scale = scaleFactor.toDouble()
 
-
-//        val dummyInMoveSystem = MoveSystem.MyClass(text = "Hello injector!")
-
             // TODO build a views container for handling layers for the ImageAnimationSystem of Fleks ECS
-            val layerContainer = container()
+            val layer0 = container()
+            val layer1 = container()
 
             // This is the world object of the entity component system (ECS)
             // It contains all ECS related configuration
@@ -68,7 +66,8 @@ class ExampleScene : Scene() {
                 component(::Spawner)
 
                 // Register external objects which are used by systems and component listeners
-                inject(layerContainer)
+                inject("layer0", layer0)
+// TODO                inject("layer1", layer1)
             }
 
             val spawner = world.entity {

@@ -2,12 +2,11 @@ package systems
 
 import com.github.quillraven.fleks.ComponentListener
 import com.github.quillraven.fleks.Entity
-import com.github.quillraven.fleks.Inject
+import com.github.quillraven.fleks.*
 import com.soywiz.korge.view.Container
 import com.soywiz.korge.view.addTo
 import com.soywiz.korim.format.ImageAnimation
 
-import com.github.quillraven.fleks.*
 import components.*
 import components.Sprite
 import components.Sprite.LifeCycle
@@ -54,7 +53,7 @@ class SpriteSystem : IteratingSystem(
 
     class SpriteListener : ComponentListener<Sprite> {
 
-        private val layerContainer: Container = Inject.dependency()
+        private val layerContainer: Container = Inject.dependency("layer0")
 
         override fun onComponentAdded(entity: Entity, component: Sprite) {
             // Set animation object
@@ -62,7 +61,7 @@ class SpriteSystem : IteratingSystem(
                 // TODO get this from Assets object with "imageData" string
                 aseImage?.animationsByName?.getOrElse(component.animation) { aseImage?.defaultAnimation }
 //        component.imageAnimView.onDestroyLayer = { image -> imageBitmapTransparentPool.free(image) }
-            component.imageAnimView.onPlayFinished = { component.lifeCycle = Sprite.LifeCycle.DESTROY }
+            component.imageAnimView.onPlayFinished = { component.lifeCycle = LifeCycle.DESTROY }
             component.imageAnimView.addTo(layerContainer)
             // Set play status
             component.imageAnimView.direction = when {
@@ -72,7 +71,7 @@ class SpriteSystem : IteratingSystem(
                 else -> ImageAnimation.Direction.FORWARD
             }
             if (component.isPlaying) { component.imageAnimView.play() }
-            component.lifeCycle = Sprite.LifeCycle.ACTIVE
+            component.lifeCycle = LifeCycle.ACTIVE
 
 //        println("Component $component")
 //        println("  added to Entity '${entity.id}'!")
