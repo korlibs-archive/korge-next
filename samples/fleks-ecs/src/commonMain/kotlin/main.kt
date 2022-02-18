@@ -59,15 +59,18 @@ class ExampleScene : Scene() {
                 system(::SpawnerSystem)
                 system(::SpriteSystem)
                 system(::CollisionSystem)
+                system(::DestructSystem)
 
                 // Register all needed components and its listeners (if needed)
                 component(::Position)
                 component(::Sprite, ::SpriteListener)
                 component(::Spawner)
+                component(::Destruct)
+                component(::Rigidbody)
 
                 // Register external objects which are used by systems and component listeners
                 inject("layer0", layer0)
-// TODO                inject("layer1", layer1)
+//              inject("layer1", layer1)  TODO add more layers for explosion objects to be on top
             }
 
             val spawner = world.entity {
@@ -84,18 +87,20 @@ class ExampleScene : Scene() {
                     spawnerInterval = 1
                     spawnerPositionVariationX = 10.0
                     spawnerPositionVariationY = 10.0
-                    spawnerPositionAccelerationX = -80.0
+                    spawnerPositionAccelerationX = -30.0
                     spawnerPositionAccelerationY = -100.0
-                    spawnerPositionAccelerationVariation = 10.0
+                    spawnerPositionAccelerationVariation = 20.0
                     spawnerSpriteImageData = "sprite"  // "" - Disable sprite graphic for spawned object
                     spawnerSpriteAnimation = "FireTrail"  // "FireTrail" - "TestNum"
                     spawnerSpriteIsPlaying = true
                     // Set position details for spawned objects
                     positionVariationX = 100.0
                     positionVariationY = 0.0
-                    positionAccelerationX = 160.0
+                    positionAccelerationX = 90.0
                     positionAccelerationY = 200.0
                     positionAccelerationVariation = 10.0
+                    // Destruct info for spawned objects
+                    destruct = true
                 }
             }
 

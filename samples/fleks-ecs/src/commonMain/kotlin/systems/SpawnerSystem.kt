@@ -1,12 +1,11 @@
 package systems
 
-import kotlin.random.Random
 import com.github.quillraven.fleks.*
-import com.soywiz.korge.ui.uiObservable
 import components.*
+import utils.random
 
 class SpawnerSystem : IteratingSystem(
-    allOf = AllOf(arrayOf(Spawner::class)),
+    allOfComponents = arrayOf(Spawner::class),
     interval = EachFrame
 //    interval = Fixed(500f)  // for testing every 500 millisecond
 ) {
@@ -81,10 +80,15 @@ class SpawnerSystem : IteratingSystem(
                         loop = spawner.spriteLoop
                     }
                 }
+                // Add destruct details
+                if (spawner.destruct) {
+                    add<Destruct> {
+                        spawnExplosion = true
+                        explosionParticleRange = 20.0
+                        explosionParticleAcceleration = 200.0
+                    }
+                }
             }
         }
     }
-
-    private fun ClosedFloatingPointRange<Double>.random() = Random.nextDouble(start, endInclusive)
-    private fun ClosedFloatingPointRange<Float>.random() = Random.nextDouble(start.toDouble(), endInclusive.toDouble()).toFloat()
 }

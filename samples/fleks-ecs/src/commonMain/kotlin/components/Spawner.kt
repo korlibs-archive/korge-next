@@ -35,6 +35,9 @@ data class Spawner(
     var spriteIsPlaying: Boolean = false,
     var spriteForwardDirection: Boolean = true,
     var spriteLoop: Boolean = false,
+    // Destruct info for spawned objects
+    var destruct: Boolean = false,  // true - spawned object gets a destruct component, false - no destruct component spawned
+
     // internal state
     var nextSpawnIn: Int = 0
 )

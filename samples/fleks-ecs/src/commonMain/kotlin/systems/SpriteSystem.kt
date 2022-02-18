@@ -18,7 +18,7 @@ import aseImage
  *
  */
 class SpriteSystem : IteratingSystem(
-    allOf = AllOf(arrayOf(Sprite::class, Position::class)),
+    allOfComponents = arrayOf(Sprite::class, Position::class),
     interval = EachFrame
 //    interval = Fixed(500f)  // for testing every 500 millisecond
 ) {
