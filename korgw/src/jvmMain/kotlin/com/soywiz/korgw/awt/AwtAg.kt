@@ -17,7 +17,7 @@ class AwtAg(override val nativeComponent: Any, private val checkGl: Boolean, log
     private var baseLazyGlWithLog: LogKmlGlProxy? = null
     private var lazyGl: KmlGlFastProxy? = null
 
-    override var devicePixelRatio: Double = 1.0
+    override val devicePixelRatio: Double
         get() {
             // transform
             // https://stackoverflow.com/questions/20767708/how-do-you-detect-a-retina-display-in-java
