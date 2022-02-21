@@ -3,7 +3,7 @@ package com.soywiz.korim.font
 import com.soywiz.kmem.toIntRound
 import com.soywiz.korio.util.*
 import com.soywiz.korma.geom.Rectangle
-import kotlin.math.roundToInt
+import kotlin.math.*
 
 data class FontMetrics(
     /** size of the font metric */
@@ -23,10 +23,14 @@ data class FontMetrics(
     /** maximum number of width */
     var maxWidth: Double = 0.0
 ) {
+    val rtop get() = max(ascent, top)
+    val rbottom get() = min(descent, bottom)
+
     /* 'E' height */
     val emHeight get() = ascent - descent
     /* 'É' + 'j' + linegap */
-    val lineHeight get() = top - bottom
+    //val lineHeight get() = top - bottom
+    val lineHeight get() = rtop - rbottom
 
     fun copyFromNewSize(other: FontMetrics, size: Double) = this.copyFromScaled(other, size / other.size)
 
@@ -110,13 +114,13 @@ data class TextMetrics(
     val width: Double get() = bounds.width
     val height: Double get() = bounds.height
 
-    val drawLeft get() = -left
-    val drawTop get() = firstLineBounds.height + firstLineBounds.top
+    val drawLeft: Double get() = -left
+    val drawTop: Double get() = firstLineBounds.height + firstLineBounds.top
 
-    val ascent get() = fontMetrics.ascent
-    val descent get() = fontMetrics.descent
-    val lineHeight get() = fontMetrics.lineHeight
-    val allLineHeight get() = lineHeight * nlines
+    val ascent: Double get() = fontMetrics.ascent
+    val descent: Double get() = fontMetrics.descent
+    val lineHeight: Double get() = fontMetrics.lineHeight
+    val allLineHeight: Double get() = lineHeight * nlines
 
     fun round(): TextMetrics {
         bounds.round()
