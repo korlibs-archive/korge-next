@@ -208,10 +208,10 @@ class Views constructor(
 
     var supportTogglingDebug = true
 	var debugViews = false
-	var debugFontExtraScale = 1.0
-	val debugHandlers = FastArrayList<Views.(RenderContext, Double) -> Unit>()
+	var debugFontExtraScale by renderContext::debugExtraFontScale
+	val debugHandlers = FastArrayList<Views.(RenderContext) -> Unit>()
 
-    fun addDebugRenderer(block: Views.(RenderContext, Double) -> Unit) {
+    fun addDebugRenderer(block: Views.(RenderContext) -> Unit) {
         debugHandlers.add(block)
     }
 
@@ -320,7 +320,7 @@ class Views constructor(
 
 		if (debugViews) {
 			debugHandlers.fastForEach { debugHandler ->
-				this.debugHandler(renderContext, debugFontExtraScale)
+				this.debugHandler(renderContext)
 			}
 		}
 

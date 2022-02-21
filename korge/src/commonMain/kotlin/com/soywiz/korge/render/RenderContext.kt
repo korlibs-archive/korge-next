@@ -46,6 +46,7 @@ class RenderContext constructor(
     val views: Views? = bp as? Views?
 
     var debugAnnotateView: View? = null
+    var debugExtraFontScale : Double = 1.0
 
     var stencilIndex: Int = 0
 
