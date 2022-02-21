@@ -1,12 +1,14 @@
 package com.soywiz.korgw.awt
 
 import com.soywiz.kgl.*
-import com.soywiz.korag.*
-import com.soywiz.korgw.osx.*
-import com.soywiz.korgw.win32.*
-import com.soywiz.korgw.x11.*
-import com.soywiz.korio.util.*
-import java.awt.*
+import com.soywiz.korag.AGOpengl
+import com.soywiz.korgw.osx.MacKmlGL
+import com.soywiz.korgw.win32.Win32KmlGl
+import com.soywiz.korgw.x11.X11KmlGl
+import com.soywiz.korio.util.OS
+import java.awt.Component
+import java.awt.GraphicsEnvironment
+import java.awt.Toolkit
 
 class AwtAg(override val nativeComponent: Any, private val checkGl: Boolean, logGl: Boolean, val cacheGl: Boolean = false) : AGOpengl() {
     override val gles: Boolean = true
@@ -17,10 +19,19 @@ class AwtAg(override val nativeComponent: Any, private val checkGl: Boolean, log
 
     override var devicePixelRatio: Double = 1.0
         get() {
+            // transform
             // https://stackoverflow.com/questions/20767708/how-do-you-detect-a-retina-display-in-java
             val config = (nativeComponent as? Component)?.graphicsConfiguration
                 ?: GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration
-            return config.defaultTransform.scaleX
+            val scale = config.defaultTransform.scaleX
+
+            // maybe this is not just windows specific :
+            // https://stackoverflow.com/questions/32586883/windows-scaling
+            // somehow this value is not update when you change the scaling in the windows settings while the jvm is running :(
+            val res = Toolkit.getDefaultToolkit().screenResolution
+            val fontScale = res / 96.0
+
+            return (scale * fontScale)
         }
 
     var logGl: Boolean = logGl
