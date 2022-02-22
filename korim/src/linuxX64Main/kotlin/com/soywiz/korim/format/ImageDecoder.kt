@@ -44,6 +44,6 @@ actual val nativeImageFormatProvider: NativeImageFormatProvider = object : BaseN
                 }
             )
         }.wrapNativeExt(props)
-    )
+    }
 }
 
