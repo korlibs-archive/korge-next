@@ -27,10 +27,15 @@ abstract class NativeImageFormatProvider {
 
     protected fun NativeImage.result() = NativeImageResult(this)
 
-    suspend fun decode(vfs: Vfs, path: String, premultiplied: Boolean = true): NativeImage = decodeInternal(vfs, path, ImageDecodingProps.DEFAULT(premultiplied)).image
-    suspend fun decode(data: ByteArray, premultiplied: Boolean = true): NativeImage = decodeInternal(data, ImageDecodingProps.DEFAULT(premultiplied)).image
-    suspend fun decode(file: FinalVfsFile, premultiplied: Boolean = true): Bitmap = decodeInternal(file.vfs, file.path, ImageDecodingProps.DEFAULT(premultiplied)).image
-    suspend fun decode(file: VfsFile, premultiplied: Boolean = true): Bitmap = decode(file.getUnderlyingUnscapedFile(), premultiplied)
+    suspend fun decode(vfs: Vfs, path: String, props: ImageDecodingProps): NativeImage = decodeInternal(vfs, path, props).image
+    suspend fun decode(data: ByteArray, props: ImageDecodingProps): NativeImage = decodeInternal(data, props).image
+    suspend fun decode(file: FinalVfsFile, props: ImageDecodingProps): Bitmap = decodeInternal(file.vfs, file.path, props).image
+    suspend fun decode(file: VfsFile, props: ImageDecodingProps): Bitmap = decode(file.getUnderlyingUnscapedFile(), props)
+
+    suspend fun decode(vfs: Vfs, path: String, premultiplied: Boolean = true): NativeImage = decode(vfs, path, ImageDecodingProps.DEFAULT(premultiplied))
+    suspend fun decode(data: ByteArray, premultiplied: Boolean = true): NativeImage = decode(data, ImageDecodingProps.DEFAULT(premultiplied))
+    suspend fun decode(file: FinalVfsFile, premultiplied: Boolean = true): Bitmap = decode(file, ImageDecodingProps.DEFAULT(premultiplied))
+    suspend fun decode(file: VfsFile, premultiplied: Boolean = true): Bitmap = decode(file, ImageDecodingProps.DEFAULT(premultiplied))
 
     abstract suspend fun display(bitmap: Bitmap, kind: Int): Unit
     abstract fun create(width: Int, height: Int, premultiplied: Boolean? = null): NativeImage
