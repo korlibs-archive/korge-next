@@ -17,8 +17,15 @@ class AwtAg(override val nativeComponent: Any, private val checkGl: Boolean, log
     private var baseLazyGlWithLog: LogKmlGlProxy? = null
     private var lazyGl: KmlGlFastProxy? = null
 
-    override val devicePixelRatio: Double
-        get() {
+    companion object {
+        const val defaultPixelsPerLogicalInch = 96.0
+    }
+
+    override val devicePixelRatio: Double by lazy(LazyThreadSafetyMode.PUBLICATION)
+        {
+            if (GraphicsEnvironment.isHeadless()) {
+                return@lazy 1.0
+            }
             // transform
             // https://stackoverflow.com/questions/20767708/how-do-you-detect-a-retina-display-in-java
             val config = (nativeComponent as? Component)?.graphicsConfiguration
@@ -28,10 +35,9 @@ class AwtAg(override val nativeComponent: Any, private val checkGl: Boolean, log
             // maybe this is not just windows specific :
             // https://stackoverflow.com/questions/32586883/windows-scaling
             // somehow this value is not update when you change the scaling in the windows settings while the jvm is running :(
-            val res = Toolkit.getDefaultToolkit().screenResolution
-            val fontScale = res / 96.0
+            val pixelsPerLogicalInchRatio = Toolkit.getDefaultToolkit().screenResolution / defaultPixelsPerLogicalInch
 
-            return (scale * fontScale)
+            return@lazy (scale * pixelsPerLogicalInchRatio)
         }
 
     var logGl: Boolean = logGl
