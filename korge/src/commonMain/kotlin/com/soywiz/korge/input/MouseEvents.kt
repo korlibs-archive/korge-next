@@ -15,6 +15,7 @@ import com.soywiz.korge.internal.*
 import com.soywiz.korge.scene.*
 import com.soywiz.korgw.*
 import com.soywiz.korio.lang.*
+import kotlin.math.max
 import kotlin.native.concurrent.ThreadLocal
 import kotlin.reflect.*
 
@@ -62,6 +63,11 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
                     val scale = ctx.ag.computedPixelRatio * ctx.debugExtraFontScale
                     //val scale = 2.0
 
+                    val space = max(1 * scale, 2.0)
+                    //println(scale)
+
+
+
                     var yy = 60.toDouble() * scale
                     val lineHeight = 8.toDouble() * scale
                     val mouseHit = mouseHitTest(views)
@@ -79,14 +85,15 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
                             )
                             renderContext.drawText(
                                 debugBmpFont,
-                                lineHeight.toDouble(),
-                                mouseHit.toString() + " : " + views.nativeMouseX + "," + views.nativeMouseY,
+                                lineHeight,
+                                "$mouseHit : ${views.nativeMouseX},${views.nativeMouseY}",
                                 x = 0,
                                 y = yy.toInt(),
                                 filtering = false
                             )
                         }
                         yy += lineHeight
+                        yy += space
                     }
 
                     val mouseHitResultUsed = input.mouseHitResultUsed
@@ -107,6 +114,7 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
                                 renderContext.drawText(debugBmpFont, lineHeight.toDouble(), vview.toString(), x = 0, y = yy.toInt())
                                 vview = vview?.parent
                                 yy += lineHeight
+                                yy += space
                             }
                         }
                     }
