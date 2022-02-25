@@ -43,8 +43,6 @@ abstract class AGOpengl : AG() {
     open val webgl: Boolean get() = false
     open val webgl2: Boolean get() = false
 
-    override val devicePixelRatio: Double = 1.0
-
     override fun contextLost() {
         Console.info("AG.contextLost()", this, gl, gl.root)
         contextVersion++

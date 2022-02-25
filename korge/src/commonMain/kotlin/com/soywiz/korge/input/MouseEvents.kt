@@ -59,7 +59,7 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
         fun installDebugExtensionOnce(views: Views) {
             views.mouseDebugHandlerOnce {
                 views.debugHandlers += { ctx ->
-                    val scale = ctx.ag.devicePixelRatio * ctx.debugExtraFontScale
+                    val scale = ctx.ag.computedPixelRatio * ctx.debugExtraFontScale
                     //val scale = 2.0
 
                     var yy = 60.toDouble() * scale
@@ -70,8 +70,8 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
                         renderContext.useBatcher { batch ->
                             batch.drawQuad(
                                 ctx.getTex(Bitmaps.white),
-                                x = bounds.x.toInt().toFloat(),
-                                y = bounds.y.toInt().toFloat(),
+                                x = bounds.x.toFloat(),
+                                y = bounds.y.toFloat(),
                                 width = bounds.width.toFloat(),
                                 height = bounds.height.toFloat(),
                                 colorMul = RGBA(0xFF, 0, 0, 0x3F),

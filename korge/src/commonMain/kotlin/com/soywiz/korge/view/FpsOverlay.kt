@@ -43,7 +43,7 @@ internal fun ViewsContainer.installFpsDebugOverlay() {
     }
 
     views.addDebugRenderer { ctx ->
-        val scale = ctx.ag.devicePixelRatio * ctx.debugExtraFontScale
+        val scale = ctx.ag.computedPixelRatio * ctx.debugExtraFontScale
 
         val fontSize = 8.0 * scale
         val currentTime = PerformanceCounter.reference
