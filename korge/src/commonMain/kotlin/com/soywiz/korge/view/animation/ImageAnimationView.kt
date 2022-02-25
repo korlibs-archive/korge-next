@@ -128,12 +128,11 @@ open class ImageAnimationView<T: SmoothedBmpSlice>(
             if (running) {
                 nextFrameIn -= it
                 if (nextFrameIn <= 0.0.milliseconds) {
+                    setFrame(nextFrameIndex)
                     // Check if animation should be played only once
                     if (dir == 0) {
                         running = false
                         onPlayFinished?.invoke()
-                    } else {
-                        setFrame(nextFrameIndex)
                     }
                 }
             }

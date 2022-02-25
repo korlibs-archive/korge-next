@@ -10,8 +10,8 @@ class SpawnerSystem : IteratingSystem(
 //    interval = Fixed(500f)  // for testing every 500 millisecond
 ) {
 
-    private val positions: ComponentMapper<Position> = Inject.componentMapper()
-    private val spawners: ComponentMapper<Spawner> = Inject.componentMapper()
+    private val positions = Inject.componentMapper<Position>()
+    private val spawners = Inject.componentMapper<Spawner>()
 
     override fun onInit() {
     }
@@ -84,7 +84,7 @@ class SpawnerSystem : IteratingSystem(
                 if (spawner.destruct) {
                     add<Destruct> {
                         spawnExplosion = true
-                        explosionParticleRange = 20.0
+                        explosionParticleRange = 10.0
                         explosionParticleAcceleration = 200.0
                     }
                 }

@@ -3,9 +3,7 @@ package systems
 import com.github.quillraven.fleks.Entity
 import com.github.quillraven.fleks.Inject
 import com.github.quillraven.fleks.IteratingSystem
-import components.Destruct
-import components.Position
-import components.Sprite
+import components.*
 import utils.random
 
 /**
@@ -29,7 +27,7 @@ class DestructSystem : IteratingSystem(
                     add<Position> {  // Position of explosion object
                         // set initial position of explosion object to collision position
                         x = pos.x
-                        y = pos.y - 10.0  // TODO remove hard coded value
+                        y = pos.y - (destruct.explosionParticleRange * 0.5)
                         if (destruct.explosionParticleRange != 0.0) {
                             x += (-destruct.explosionParticleRange..destruct.explosionParticleRange).random()
                             y += (-destruct.explosionParticleRange..destruct.explosionParticleRange).random()
@@ -45,6 +43,10 @@ class DestructSystem : IteratingSystem(
                         animation = "FireTrail"  // "FireTrail" - "TestNum"
                         isPlaying = true
                     }
+                    add<Rigidbody> {
+                        mass = 2.0
+                    }
+                    add<Impulse> {}
                 }
             }
             // now destroy entity

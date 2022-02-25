@@ -53,7 +53,8 @@ class SpriteSystem : IteratingSystem(
 
     class SpriteListener : ComponentListener<Sprite> {
 
-        private val layerContainer: Container = Inject.dependency("layer0")
+        private val world = Inject.dependency<World>()
+        private val layerContainer = Inject.dependency<Container>("layer0")
 
         override fun onComponentAdded(entity: Entity, component: Sprite) {
             // Set animation object
@@ -62,6 +63,10 @@ class SpriteSystem : IteratingSystem(
                 aseImage?.animationsByName?.getOrElse(component.animation) { aseImage?.defaultAnimation }
 //        component.imageAnimView.onDestroyLayer = { image -> imageBitmapTransparentPool.free(image) }
             component.imageAnimView.onPlayFinished = { component.lifeCycle = LifeCycle.DESTROY }
+//            component.imageAnimView.onPlayFinished = {
+//                component.imageAnimView.removeFromParent()
+//                world.remove(entity)
+//            }
             component.imageAnimView.addTo(layerContainer)
             // Set play status
             component.imageAnimView.direction = when {

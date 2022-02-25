@@ -27,13 +27,12 @@ class MoveSystem : IteratingSystem(
         if (rigidbodies.contains(entity)) {
             // Entity has a rigidbody - that means the movement will be calculated depending on it
             val rigidbody = rigidbodies[entity]
-//            pos.x += pos.a
+//            pos.xAcceleration * deltaTime
             // TODO implement movement with rigidbody
-
-        } else {
-            // Do movement without rigidbody which means that the object will not react to gravity, friction and damping
-            pos.x += pos.xAcceleration * deltaTime
-            pos.y += pos.yAcceleration * deltaTime
+            pos.yAcceleration += rigidbody.mass * 9.81
         }
+
+        pos.x += pos.xAcceleration * deltaTime
+        pos.y += pos.yAcceleration * deltaTime
     }
 }

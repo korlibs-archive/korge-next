@@ -2,6 +2,7 @@ package systems
 
 import com.github.quillraven.fleks.*
 import components.Destruct
+import components.Impulse
 import components.Position
 
 class CollisionSystem : IteratingSystem(
@@ -12,6 +13,7 @@ class CollisionSystem : IteratingSystem(
 
     private val positions  = Inject.componentMapper<Position>()
     private val destructs = Inject.componentMapper<Destruct>()
+    private val impulses = Inject.componentMapper<Impulse>()
 
     override fun onInit() {
     }
@@ -23,12 +25,17 @@ class CollisionSystem : IteratingSystem(
         // To make collision detection easy we check here just the Y position if it is below 200 which means
         // that the object is colliding - In real games here is a more sophisticated collision check necessary ;-)
         if (pos.y > 200.0) {
-            // Check if entity has a destruct component
+            // Check if entity has a destruct or impulse component
             if (destructs.contains(entity)) {
-                // yes - then delegate "destruction" of the entity to the DestructSystem - it will destroy the entity after some other task are done
+                // Delegate "destruction" of the entity to the DestructSystem - it will destroy the entity after some other task are done
                 destructs[entity].triggerDestruction = true
+            } else if (impulses.contains(entity)) {
+                // Do not destruct entity but let it bounce on the surface
+                pos.xAcceleration = pos.xAcceleration * 0.7
+                pos.yAcceleration = -pos.yAcceleration * 0.9
+                pos.y = 199.0
             } else {
-                // no - else the entity gets destroyed immediately
+                // Entity gets destroyed immediately
                 world.remove(entity)
             }
         }
