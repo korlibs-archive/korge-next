@@ -114,6 +114,7 @@ object Korge {
         bgcolor: RGBA? = Colors.BLACK,
         debug: Boolean = false,
         debugFontExtraScale: Double = 1.0,
+        debugFontColor: RGBA = Colors.WHITE,
         fullscreen: Boolean? = null,
         args: Array<String> = arrayOf(),
         gameWindow: GameWindow? = null,
@@ -188,6 +189,7 @@ object Korge {
                 })
             views.debugViews = debug
             views.debugFontExtraScale = debugFontExtraScale
+            views.debugFontColor = debugFontColor
             views.virtualWidth = virtualWidth
             views.virtualHeight = virtualHeight
             views.scaleAnchor = scaleAnchor

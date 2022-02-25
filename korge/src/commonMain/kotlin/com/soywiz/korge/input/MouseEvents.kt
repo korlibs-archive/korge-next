@@ -89,7 +89,8 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
                                 "$mouseHit : ${views.nativeMouseX},${views.nativeMouseY}",
                                 x = 0,
                                 y = yy.toInt(),
-                                filtering = false
+                                filtering = false,
+                                colMul = ctx.debugExtraFontColor
                             )
                         }
                         yy += lineHeight
@@ -111,8 +112,16 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
                             )
                             var vview = mouseHitResultUsed
                             while (vview != null) {
-                                renderContext.drawText(debugBmpFont, lineHeight.toDouble(), vview.toString(), x = 0, y = yy.toInt())
-                                vview = vview?.parent
+                                renderContext.drawText(
+                                    debugBmpFont,
+                                    lineHeight,
+                                    vview.toString(),
+                                    x = 0,
+                                    y = yy.toInt(),
+                                    filtering = false,
+                                    colMul = ctx.debugExtraFontColor
+                                )
+                                vview = vview.parent
                                 yy += lineHeight
                                 yy += space
                             }

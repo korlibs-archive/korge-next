@@ -47,6 +47,7 @@ class RenderContext constructor(
 
     var debugAnnotateView: View? = null
     var debugExtraFontScale : Double = 1.0
+    var debugExtraFontColor : RGBA = Colors.WHITE
 
     var stencilIndex: Int = 0
 
