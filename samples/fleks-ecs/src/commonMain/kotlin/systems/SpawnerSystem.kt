@@ -84,8 +84,8 @@ class SpawnerSystem : IteratingSystem(
                 if (spawner.destruct) {
                     add<Destruct> {
                         spawnExplosion = true
-                        explosionParticleRange = 10.0
-                        explosionParticleAcceleration = 200.0
+                        explosionParticleRange = 15.0
+                        explosionParticleAcceleration = 300.0
                     }
                 }
             }

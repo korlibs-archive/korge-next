@@ -21,8 +21,8 @@ class DestructSystem : IteratingSystem(
         val destruct = destructs[entity]
         if (destruct.triggerDestruction) {
             val pos = positions[entity]
-            // The spawning of exposion objects is hardcoded here to 10 objects - that should be put into some component later
-            for (i in 0 until 20) {
+            // The spawning of exposion objects is hardcoded here to 40 objects - that should be put into some component later
+            for (i in 0 until 40) {
                 world.entity {
                     add<Position> {  // Position of explosion object
                         // set initial position of explosion object to collision position

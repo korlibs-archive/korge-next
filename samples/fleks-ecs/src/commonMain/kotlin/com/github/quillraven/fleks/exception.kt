@@ -35,8 +35,5 @@ class FleksSystemComponentInjectException(injectType: String) :
 class FleksNoSuchEntityComponentException(entity: Entity, component: String) :
     FleksException("Entity '$entity' has no component of type '$component'.")
 
-class FleksComponentListenerAlreadyAddedException(listener: String) :
-    FleksException("ComponentListener '$listener' is already part of the '${WorldConfiguration::class.simpleName}'.")
-
 class FleksUnusedInjectablesException(unused: List<KClass<*>>) :
     FleksException("There are unused injectables of following types: ${unused.map { it.simpleName }}")
