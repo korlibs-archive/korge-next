@@ -107,26 +107,28 @@ open class HtmlNativeImage(val texSourceBase: TexImageSource, width: Int, height
 }
 
 object HtmlNativeImageFormatProvider : NativeImageFormatProvider() {
-	override suspend fun decode(data: ByteArray, premultiplied: Boolean): NativeImage = HtmlNativeImage(BrowserImage.decodeToCanvas(data, premultiplied))
+    override suspend fun decodeInternal(data: ByteArray, props: ImageDecodingProps): NativeImageResult {
+        return NativeImageResult(HtmlNativeImage(BrowserImage.decodeToCanvas(data, props.premultiplied)))
+    }
 
-	override suspend fun decode(vfs: Vfs, path: String, premultiplied: Boolean): NativeImage {
-		//println("HtmlNativeImageFormatProvider.decode($vfs, '$path')")
-		return when (vfs) {
-			is LocalVfs -> {
-				//println("LOCAL: HtmlNativeImageFormatProvider: $vfs, $path")
-				HtmlNativeImage(BrowserImage.loadImage(path))
-			}
-			is UrlVfs -> {
-				val jsUrl = vfs.getFullUrl(path)
-				//println("URL: HtmlNativeImageFormatProvider: $vfs, $path : $jsUrl")
-				HtmlNativeImage(BrowserImage.loadImage(jsUrl, premultiplied))
-			}
-			else -> {
-				//println("OTHER: HtmlNativeImageFormatProvider: $vfs, $path")
-				HtmlNativeImage(BrowserImage.decodeToCanvas(vfs[path].readAll(), premultiplied))
-			}
-		}
-	}
+    override suspend fun decodeInternal(vfs: Vfs, path: String, props: ImageDecodingProps): NativeImageResult {
+        //println("HtmlNativeImageFormatProvider.decode($vfs, '$path')")
+        return NativeImageResult(when (vfs) {
+            is LocalVfs -> {
+                //println("LOCAL: HtmlNativeImageFormatProvider: $vfs, $path")
+                HtmlNativeImage(BrowserImage.loadImage(path))
+            }
+            is UrlVfs -> {
+                val jsUrl = vfs.getFullUrl(path)
+                //println("URL: HtmlNativeImageFormatProvider: $vfs, $path : $jsUrl")
+                HtmlNativeImage(BrowserImage.loadImage(jsUrl, props.premultiplied))
+            }
+            else -> {
+                //println("OTHER: HtmlNativeImageFormatProvider: $vfs, $path")
+                HtmlNativeImage(BrowserImage.decodeToCanvas(vfs[path].readAll(), props.premultiplied))
+            }
+        })
+    }
 
 	override fun create(width: Int, height: Int, premultiplied: Boolean?): NativeImage {
 		return HtmlNativeImage(HtmlCanvas.createCanvas(width, height))
@@ -365,6 +367,16 @@ class CanvasContext2dRenderer(private val canvas: HTMLCanvasElementLike) : Rende
 		}
 	}
 
+    fun doVisit(path: VectorPath) {
+        path.visitCmds(
+            moveTo = { x, y -> ctx.moveTo(x, y) },
+            lineTo = { x, y -> ctx.lineTo(x, y) },
+            quadTo = { cx, cy, ax, ay -> ctx.quadraticCurveTo(cx, cy, ax, ay) },
+            cubicTo = { cx1, cy1, cx2, cy2, ax, ay -> ctx.bezierCurveTo(cx1, cy1, cx2, cy2, ax, ay) },
+            close = { ctx.closePath() }
+        )
+    }
+
 	override fun render(state: Context2d.State, fill: Boolean) {
 		if (state.path.isEmpty()) return
 
@@ -373,15 +385,17 @@ class CanvasContext2dRenderer(private val canvas: HTMLCanvasElementLike) : Rende
         //println(" fillStyle=${ctx.fillStyle}, transform=${state.transform}")
 		keep {
 			setState(state, fill, doSetFont = false)
+
+            val clip = state.clip
+            if (clip != null) {
+                ctx.beginPath()
+                doVisit(clip)
+                ctx.clip(clip.winding.toCanvasFillRule())
+            }
+
 			ctx.beginPath()
 
-			state.path.visitCmds(
-				moveTo = { x, y -> ctx.moveTo(x, y) },
-				lineTo = { x, y -> ctx.lineTo(x, y) },
-				quadTo = { cx, cy, ax, ay -> ctx.quadraticCurveTo(cx, cy, ax, ay) },
-				cubicTo = { cx1, cy1, cx2, cy2, ax, ay -> ctx.bezierCurveTo(cx1, cy1, cx2, cy2, ax, ay) },
-				close = { ctx.closePath() }
-			)
+            doVisit(state.path)
 
             val m = state.transform
             ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty)

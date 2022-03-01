@@ -1,5 +1,6 @@
 package com.soywiz.korag
 
+import com.soywiz.korag.annotation.KoragExperimental
 import com.soywiz.korag.shader.*
 
 fun ProgramWithDefault(
@@ -9,6 +10,7 @@ fun ProgramWithDefault(
 ): Program = Program(vertex, fragment, name)
 
 object DefaultShaders {
+    // from korge
 	val u_Tex = Uniform("u_Tex", VarType.TextureUnit)
 
 	val u_ProjMat = Uniform("u_ProjMat", VarType.Mat4)

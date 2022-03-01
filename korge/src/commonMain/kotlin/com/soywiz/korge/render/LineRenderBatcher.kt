@@ -12,9 +12,11 @@ import com.soywiz.korio.async.*
 import com.soywiz.korma.geom.*
 import com.soywiz.korma.geom.shape.*
 import com.soywiz.korma.geom.vector.*
+import kotlin.native.concurrent.ThreadLocal
 
 /** Creates/gets a [LineRenderBatcher] associated to [this] [RenderContext] */
 @Deprecated("USe useDebugLineRenderContext instead")
+@ThreadLocal
 val RenderContext.debugLineRenderContext: LineRenderBatcher by Extra.PropertyThis<RenderContext, LineRenderBatcher> { LineRenderBatcher(this) }
 
 @Suppress("DEPRECATION")
@@ -162,8 +164,8 @@ class LineRenderBatcher(
     internal val currentMatrix: Matrix = Matrix()
 
     fun <T> drawWithGlobalMatrix(matrix: Matrix, block: () -> T): T {
-        return currentMatrix.keep {
-            currentMatrix.copyFrom(matrix)
+        return currentMatrix.keepMatrix {
+            it.copyFrom(matrix)
             block()
         }
     }

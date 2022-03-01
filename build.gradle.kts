@@ -44,7 +44,6 @@ val kotlinVersion: String by project
 val realKotlinVersion = (System.getenv("FORCED_KOTLIN_VERSION") ?: kotlinVersion)
 val coroutinesVersion: String by project
 val nodeVersion: String by project
-val kryptoVersion: String by project
 val jnaVersion: String by project
 val androidBuildGradleVersion: String by project
 val kotlinSerializationVersion: String by project
@@ -418,6 +417,7 @@ subprojects {
                     val iosWatchosTvosCommon by lazy { createPairSourceSet("iosWatchosTvosCommon", nativePosixApple) }
                     val iosWatchosCommon by lazy { createPairSourceSet("iosWatchosCommon", nativePosixApple) }
                     val iosTvosCommon by lazy { createPairSourceSet("iosTvosCommon", nativePosixApple) }
+                    val tvosCommon by lazy { createPairSourceSet("tvosCommon", nativePosixApple) }
                     val macosIosTvosCommon by lazy { createPairSourceSet("macosIosTvosCommon", nativePosixApple) }
                     val macosIosWatchosCommon by lazy { createPairSourceSet("macosIosWatchosCommon", nativePosixApple) }
                     val iosCommon by lazy { createPairSourceSet("iosCommon", iosWatchosTvosCommon) }
@@ -474,6 +474,7 @@ subprojects {
                                 native.dependsOn(iosWatchosTvosCommon)
                                 native.dependsOn(iosTvosCommon)
                                 native.dependsOn(macosIosTvosCommon)
+                                native.dependsOn(tvosCommon)
                             }
                         }
                     }
@@ -952,7 +953,7 @@ object BuildVersions {
     const val COROUTINES = "$coroutinesVersion"
     const val ANDROID_BUILD = "$androidBuildGradleVersion"
     const val KOTLIN_SERIALIZATION = "$kotlinSerializationVersion"
-    const val KRYPTO = "$kryptoVersion"
+    const val KRYPTO = "$projectVersion"
     const val KLOCK = "$projectVersion"
     const val KDS = "$projectVersion"
     const val KMEM = "$projectVersion"
@@ -1019,6 +1020,18 @@ subprojects {
             val publishMacosArm64Local by creating(Task::class) {
                 if (findByName(publishKotlinMultiplatformPublicationToMavenLocal) != null) {
                     dependsOn("publishMacosArm64PublicationToMavenLocal")
+                    dependsOn(publishKotlinMultiplatformPublicationToMavenLocal)
+                }
+            }
+            val publishIosX64Local by creating(Task::class) {
+                if (findByName(publishKotlinMultiplatformPublicationToMavenLocal) != null) {
+                    dependsOn("publishIosX64PublicationToMavenLocal")
+                    dependsOn(publishKotlinMultiplatformPublicationToMavenLocal)
+                }
+            }
+            val publishIosArm64Local by creating(Task::class) {
+                if (findByName(publishKotlinMultiplatformPublicationToMavenLocal) != null) {
+                    dependsOn("publishIosArm64PublicationToMavenLocal")
                     dependsOn(publishKotlinMultiplatformPublicationToMavenLocal)
                 }
             }

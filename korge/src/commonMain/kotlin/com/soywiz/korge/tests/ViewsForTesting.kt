@@ -4,6 +4,7 @@ import com.soywiz.kds.*
 import com.soywiz.kds.iterators.*
 import com.soywiz.klock.*
 import com.soywiz.klock.milliseconds
+import com.soywiz.korag.*
 import com.soywiz.korag.log.*
 import com.soywiz.korev.*
 import com.soywiz.korge.*
@@ -48,18 +49,24 @@ open class ViewsForTesting(
     }
 
 	val gameWindow = TestGameWindow(windowSize, dispatcher)
-    val ag = object : LogAG(windowSize.width, windowSize.height) {
-        override val devicePixelRatio: Double get() = this@ViewsForTesting.devicePixelRatio
-        override fun log(str: String, kind: Kind) {
-            if (this@ViewsForTesting.log && filterLogDraw(str, kind)) {
-                super.log(str, kind)
+    val ag: AG by lazy { createAg() }
+
+    open fun createAg(): AG {
+        return object : LogAG(windowSize.width, windowSize.height) {
+            override val devicePixelRatio: Double get() = this@ViewsForTesting.devicePixelRatio
+            override fun log(str: String, kind: Kind) {
+                if (this@ViewsForTesting.log && filterLogDraw(str, kind)) {
+                    super.log(str, kind)
+                }
             }
+            override fun toString(): String = "ViewsForTesting.LogAG"
         }
     }
-	val viewsLog = ViewsLog(gameWindow, ag = ag, gameWindow = gameWindow, timeProvider = timeProvider).also { viewsLog ->
+
+	val viewsLog by lazy { ViewsLog(gameWindow, ag = ag, gameWindow = gameWindow, timeProvider = timeProvider).also { viewsLog ->
         viewsLog.views.virtualWidth = virtualSize.width
         viewsLog.views.virtualHeight = virtualSize.height
-    }
+    } }
 	val injector get() = viewsLog.injector
     val logAgOrNull get() = ag as? LogAG?
     val logAg get() = logAgOrNull ?: error("Must call ViewsForTesting(log = true) to access logAg")
@@ -71,8 +78,8 @@ open class ViewsForTesting(
 	val mouse get() = input.mouse
 
     fun resizeGameWindow(width: Int, height: Int, scaleMode: ScaleMode = views.scaleMode, scaleAnchor: Anchor = views.scaleAnchor) {
-        logAg?.backWidth = width
-        logAg?.backHeight = height
+        logAgOrNull?.backWidth = width
+        logAgOrNull?.backHeight = height
         dummyAg?.backWidth = width
         dummyAg?.backHeight = height
         gameWindow.width = width

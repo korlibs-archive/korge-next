@@ -4,6 +4,7 @@ import com.soywiz.kds.*
 import com.soywiz.kgl.KmlGl
 import com.soywiz.klogger.*
 import com.soywiz.kmem.*
+import com.soywiz.korag.annotation.KoragExperimental
 import com.soywiz.korag.shader.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
@@ -13,7 +14,6 @@ import com.soywiz.korio.util.*
 import com.soywiz.korma.geom.*
 import com.soywiz.korma.math.*
 import kotlin.coroutines.*
-import kotlinx.coroutines.*
 
 interface AGFactory {
     val supportsNativeFrame: Boolean
@@ -34,6 +34,12 @@ interface AGContainer {
     //}
 
     fun repaint(): Unit
+}
+
+@KoragExperimental
+enum class AGTarget {
+    DISPLAY,
+    OFFSCREEN
 }
 
 interface AGWindow : AGContainer {
@@ -77,8 +83,8 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     open fun repaint() {
     }
 
-    open fun resized(width: Int, height: Int) {
-        mainRenderBuffer.setSize(0, 0, width, height, width, height)
+    fun resized(width: Int, height: Int) {
+        resized(0, 0, width, height, width, height)
     }
 
     open fun resized(x: Int, y: Int, width: Int, height: Int, fullWidth: Int, fullHeight: Int) {
@@ -689,13 +695,18 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         fun scissor(scissor: RectangleInt?)
     }
 
+    object RenderBufferConsts {
+        const val DEFAULT_INITIAL_WIDTH = 128
+        const val DEFAULT_INITIAL_HEIGHT = 128
+    }
+
     open class BaseRenderBufferImpl : BaseRenderBuffer {
         override var x = 0
         override var y = 0
-        override var width = 128
-        override var height = 128
-        override var fullWidth = 128
-        override var fullHeight = 128
+        override var width = RenderBufferConsts.DEFAULT_INITIAL_WIDTH
+        override var height = RenderBufferConsts.DEFAULT_INITIAL_HEIGHT
+        override var fullWidth = RenderBufferConsts.DEFAULT_INITIAL_WIDTH
+        override var fullHeight = RenderBufferConsts.DEFAULT_INITIAL_HEIGHT
         private val _scissor = RectangleInt()
         override var scissor: RectangleInt? = null
 
@@ -713,7 +724,15 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         }
     }
 
-    val mainRenderBuffer: BaseRenderBuffer by lazy { createMainRenderBuffer() }
+    @KoragExperimental
+    var agTarget = AGTarget.DISPLAY
+
+    val mainRenderBuffer: BaseRenderBuffer by lazy {
+        when (agTarget) {
+            AGTarget.DISPLAY -> createMainRenderBuffer()
+            AGTarget.OFFSCREEN -> createRenderBuffer()
+        }
+    }
 
     open fun createMainRenderBuffer(): BaseRenderBuffer = BaseRenderBufferImpl()
 
@@ -731,11 +750,14 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
                 return _tex!!
             }
 
-        protected var dirty = false
+        protected var dirty = true
 
         override fun setSize(x: Int, y: Int, width: Int, height: Int, fullWidth: Int, fullHeight: Int) {
-            if(this.width != width || this.height != height ||
-                this.fullWidth != fullWidth || this.fullHeight != fullHeight) {
+            if (
+                this.x != x ||this.y != y ||
+                this.width != width || this.height != height ||
+                this.fullWidth != fullWidth || this.fullHeight != fullHeight
+            ) {
                 super.setSize(x, y, width, height, fullWidth, fullHeight)
                 dirty = true
             }
@@ -756,7 +778,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         flipInternal()
     }
 
-    protected open fun flipInternal() = Unit
+    open fun flipInternal() = Unit
 
     open fun startFrame() {
     }
@@ -770,8 +792,10 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         clearStencil: Boolean = true
     ) = Unit
 
-    @PublishedApi
-    internal var currentRenderBuffer: BaseRenderBuffer? = null
+    //@PublishedApi
+    @KoragExperimental
+    var currentRenderBuffer: BaseRenderBuffer? = null
+        private set
 
     val renderingToTexture get() = currentRenderBuffer !== mainRenderBuffer && currentRenderBuffer !== null
 
@@ -798,33 +822,43 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     open fun fixWidthForRenderToTexture(width: Int): Int = width.nextMultipleOf(64)
     open fun fixHeightForRenderToTexture(height: Int): Int = height.nextMultipleOf(64)
 
-    inline fun renderToTexture(width: Int, height: Int, render: (rb: RenderBuffer) -> Unit, use: (tex: Texture, texWidth: Int, texHeight: Int) -> Unit) {
+    @KoragExperimental
+    fun unsafeAllocateFrameRenderBuffer(width: Int, height: Int): RenderBuffer {
         val realWidth = fixWidthForRenderToTexture(width)
         val realHeight = fixHeightForRenderToTexture(height)
         val rb = renderBuffers.alloc()
         frameRenderBuffers += rb
+        rb.setSize(0, 0, realWidth, realHeight, realWidth, realHeight)
+        //println("unsafeAllocateFrameRenderBuffer($width, $height), real($realWidth, $realHeight), $rb")
+        return rb
+    }
 
+    @KoragExperimental
+    fun unsafeFreeFrameRenderBuffer(rb: RenderBuffer) {
+        frameRenderBuffers -= rb
+        renderBuffers.free(rb)
+    }
+
+    @OptIn(KoragExperimental::class)
+    inline fun renderToTexture(width: Int, height: Int, render: (rb: RenderBuffer) -> Unit, use: (tex: Texture, texWidth: Int, texHeight: Int) -> Unit) {
+        val rb = unsafeAllocateFrameRenderBuffer(width, height)
         try {
-            rb.setSize(0, 0, realWidth, realHeight, realWidth, realHeight)
             setRenderBufferTemporally(rb) {
                 clear(Colors.TRANSPARENT_BLACK) // transparent
                 render(rb)
             }
-
             use(rb.tex, rb.width, rb.height)
         } finally {
-            frameRenderBuffers -= rb
-            renderBuffers.free(rb)
+            unsafeFreeFrameRenderBuffer(rb)
         }
     }
 
     inline fun renderToBitmap(bmp: Bitmap32, render: () -> Unit) {
-        renderToTexture(bmp.width, bmp.height, {
+        renderToTexture(bmp.width, bmp.height, render = {
             render()
+            //println("renderToBitmap.readColor: $currentRenderBuffer")
             readColor(bmp)
-        }, { _, _, _ ->
-
-        })
+        }, { _, _, _ -> })
     }
 
     fun setRenderBuffer(renderBuffer: BaseRenderBuffer?): BaseRenderBuffer? {
@@ -837,7 +871,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
 
     open fun readColor(bitmap: Bitmap32): Unit = TODO()
     open fun readDepth(width: Int, height: Int, out: FloatArray): Unit = TODO()
-    open fun readDepth(out: FloatArray2): Unit = readDepth(out.width, out.height, out.data)
+    fun readDepth(out: FloatArray2): Unit = readDepth(out.width, out.height, out.data)
     open fun readColorTexture(texture: Texture, width: Int = backWidth, height: Int = backHeight): Unit = TODO()
     fun readColor() = Bitmap32(backWidth, backHeight).apply { readColor(this) }
     fun readDepth() = FloatArray2(backWidth, backHeight) { 0f }.apply { readDepth(this) }
@@ -870,7 +904,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
 
         fun draw(tex: Texture, left: Float, top: Float, right: Float, bottom: Float) {
             //tex.upload(Bitmap32(32, 32) { x, y -> Colors.RED })
-            uniforms[DefaultShaders.u_Tex] = TextureUnit(tex)
+            //uniforms[DefaultShaders.u_Tex] = TextureUnit(tex)
 
             val texLeft = -1f
             val texRight = +1f

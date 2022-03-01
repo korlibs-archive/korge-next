@@ -169,11 +169,20 @@ class AsyncInjector(val parent: AsyncInjector? = null, val level: Int = 0) {
     suspend internal fun <T> created(instance: T): T {
         if (instance is AsyncDependency) instance.init()
         if (instance is InjectorAsyncDependency) instance.init(this)
+        if (instance is AsyncDestructor) deinitList.add(instance)
         return instance
+    }
+
+    private val deinitList = arrayListOf<AsyncDestructor>()
+
+    fun addDeinit(value: AsyncDestructor) {
+        deinitList.add(value)
     }
 
     suspend fun deinit() {
         for (pair in providersByClass) pair.value.deinit()
+        for (deinit in deinitList) deinit.deinit()
+        deinitList.clear()
     }
 }
 

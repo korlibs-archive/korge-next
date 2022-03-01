@@ -11,10 +11,12 @@ import platform.gdiplus.*
 import platform.windows.*
 import kotlin.native.concurrent.*
 
+@ThreadLocal
 actual val nativeImageFormatProvider: NativeImageFormatProvider = object : BaseNativeImageFormatProvider() {
     override fun createBitmapNativeImage(bmp: Bitmap) = GdiNativeImage(bmp.toBMP32())
 
-    override suspend fun decode(data: ByteArray, premultiplied: Boolean): NativeImage {
+    override suspend fun decodeInternal(data: ByteArray, props: ImageDecodingProps): NativeImageResult {
+        val premultiplied = props.premultiplied
         data class Info(val data: ByteArray, val premultiplied: Boolean)
         initGdiPlusOnce()
         return wrapNative(
@@ -77,7 +79,7 @@ actual val nativeImageFormatProvider: NativeImageFormatProvider = object : BaseN
                     }
                 )
             } ?: throw IOException("Can't load image from ByteArray"),
-            premultiplied
+            props
         )
     }
 }

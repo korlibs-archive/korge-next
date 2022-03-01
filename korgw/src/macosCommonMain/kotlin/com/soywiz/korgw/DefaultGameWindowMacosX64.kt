@@ -6,7 +6,7 @@ import com.soywiz.korag.*
 import com.soywiz.korev.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.format.PNG
-import com.soywiz.korim.format.cg.toCgFloat
+import com.soywiz.korim.format.cg.*
 import com.soywiz.korio.file.*
 import com.soywiz.korio.file.std.*
 import com.soywiz.korio.lang.*
@@ -223,7 +223,7 @@ class MyNSOpenGLView(
     override fun setMarkedText(string: Any?, selectedRange: CValue<NSRange>) = Unit//.also { println("setMarkedText: '$string', $selectedRange") }
     // @TODO: We should set the rectangle of the text input so IME places completion box at the right place
     override fun firstRectForCharacterRange(range: CValue<NSRange>): CValue<NSRect> = NSMakeRect(
-        0.0.toCgFloat(), 0.0.toCgFloat(), 0.0.toCgFloat(), 0.0.toCgFloat()
+        0.0.cg, 0.0.cg, 0.0.cg, 0.0.cg
         //(this.bounds.left + inputRect.x).toCgFloat(),
         //(this.bounds.top + inputRect.y).toCgFloat(),
         //(inputRect.width).toCgFloat(),
@@ -401,7 +401,15 @@ class MyDefaultGameWindow : GameWindow(), DoRenderizable {
         //println("doRender[4]")
     }
 
-    override val ag: AG = AGNative()
+    open class MacAGNative(val window: NSWindow, override val gles: Boolean = false) : AGNative(gles) {
+        override var devicePixelRatio: Double = 1.0
+            get() {
+                //return NSScreen.mainScreen?.backingScaleFactor?.toDouble() ?: field
+                return window.backingScaleFactor
+            }
+    }
+
+    override val ag: AG = MacAGNative(window, gles = false)
 
     //override val width: Int get() = window.frame.width.toInt()
     //override val height: Int get() = window.frame.height.toInt()
@@ -451,7 +459,7 @@ class MyDefaultGameWindow : GameWindow(), DoRenderizable {
         //)
 
         //window.setFrame(rect, true, false)
-        window.setContentSize(NSMakeSize(width.toCgFloat(), height.toCgFloat()))
+        window.setContentSize(NSMakeSize(width.cg, height.cg))
         window.center()
         //window.setFrameTopLeftPoint()
     }
@@ -638,9 +646,11 @@ class WinController : NSObject() {
     }
 }
 
+@kotlin.native.concurrent.ThreadLocal
+val doMacTrace by lazy { Environment["MAC_TRACE"] == "true" }
 
 fun macTrace(str: String) {
-    println(str)
+    if (doMacTrace) println(str)
 }
 
 val CValue<NSPoint>.x get() = this.useContents { x }

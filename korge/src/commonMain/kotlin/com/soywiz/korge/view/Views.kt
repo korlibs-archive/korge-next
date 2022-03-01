@@ -313,6 +313,7 @@ class Views constructor(
         ag.startFrame()
 		if (clearEachFrame) ag.clear(clearColor, stencil = 0, depth = 1f, clearColor = true, clearStencil = true, clearDepth = true)
         onBeforeRender(renderContext)
+        renderContext.flush()
 		stage.render(renderContext)
         renderContext.flush()
         stage.renderDebug(renderContext)
@@ -506,8 +507,8 @@ class ViewsLog constructor(
     }
 }
 
-fun Views.texture(bmp: Bitmap, mipmaps: Boolean = false): Texture = Texture(Texture.Base(ag.createTexture(bmp, mipmaps), bmp.width, bmp.height))
-fun Views.texture(bmp: BitmapSlice<Bitmap>, mipmaps: Boolean = false): Texture = Texture(Texture.Base(ag.createTexture(bmp, mipmaps), bmp.width, bmp.height))
+fun Views.texture(bmp: Bitmap, mipmaps: Boolean = false): Texture = Texture(TextureBase(ag.createTexture(bmp, mipmaps), bmp.width, bmp.height))
+fun Views.texture(bmp: BitmapSlice<Bitmap>, mipmaps: Boolean = false): Texture = Texture(TextureBase(ag.createTexture(bmp, mipmaps), bmp.width, bmp.height))
 fun Bitmap.texture(views: Views, mipmaps: Boolean = false) = views.texture(this, mipmaps)
 fun Views.texture(width: Int, height: Int, mipmaps: Boolean = false) = texture(Bitmap32(width, height), mipmaps)
 suspend fun Views.texture(bmp: ByteArray, mipmaps: Boolean = false): Texture = texture(nativeImageFormatProvider.decode(bmp), mipmaps)

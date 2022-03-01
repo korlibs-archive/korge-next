@@ -15,6 +15,7 @@ import com.soywiz.korge.internal.*
 import com.soywiz.korge.scene.*
 import com.soywiz.korgw.*
 import com.soywiz.korio.lang.*
+import kotlin.native.concurrent.ThreadLocal
 import kotlin.reflect.*
 
 @OptIn(KorgeInternal::class)
@@ -69,8 +70,8 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
                         renderContext.useBatcher { batch ->
                             batch.drawQuad(
                                 ctx.getTex(Bitmaps.white),
-                                x = bounds.x.toFloat(),
-                                y = bounds.y.toFloat(),
+                                x = bounds.x.toInt().toFloat(),
+                                y = bounds.y.toInt().toFloat(),
                                 width = bounds.width.toFloat(),
                                 height = bounds.height.toFloat(),
                                 colorMul = RGBA(0xFF, 0, 0, 0x3F),
@@ -81,7 +82,8 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
                                 lineHeight.toDouble(),
                                 mouseHit.toString() + " : " + views.nativeMouseX + "," + views.nativeMouseY,
                                 x = 0,
-                                y = yy.toInt()
+                                y = yy.toInt(),
+                                filtering = false
                             )
                         }
                         yy += lineHeight
@@ -404,6 +406,7 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
 
 //var View.mouseEnabled by Extra.Property { true }
 
+@ThreadLocal // @TODO: Is this required?
 val View.mouse by Extra.PropertyThis<View, MouseEvents> { this.getOrCreateComponentMouse<MouseEvents> { MouseEvents(this) } }
 inline fun <T> View.mouse(callback: MouseEvents.() -> T): T = mouse.run(callback)
 
@@ -464,7 +467,9 @@ fun MouseEvents.multiClick(count: Int, callback: (MouseEvents) -> Unit): Closeab
     }
 }
 
+@ThreadLocal // @TODO: Is this required?
 var View.cursor: GameWindow.ICursor? by extraProperty { null }
+
 //    get() = mouse.cursor
 //    set(value) { mouse.cursor = value }
 

@@ -89,6 +89,9 @@ class RenderContext constructor(
         flushers(Unit)
 	}
 
+    @PublishedApi
+    internal val renderToTextureScissors = Pool { AG.Scissor() }
+
     /**
      * Temporarily sets the render buffer to a temporal texture of the size [width] and [height] that can be used later in the [use] method.
      * First the texture is created, then [render] method is called once the render buffer is set to the texture,
@@ -100,15 +103,17 @@ class RenderContext constructor(
 		flush()
 		ag.renderToTexture(width, height, render = {
 			val oldScissors = batch.scissor
-			batch.scissor = null
-			try {
-				render(it)
-				flush()
-			} finally {
-				batch.scissor = oldScissors
-			}
+            renderToTextureScissors.alloc { scissor ->
+                batch.scissor = scissor.setTo(0, 0, width, height)
+                try {
+                    render(it)
+                    flush()
+                } finally {
+                    batch.scissor = oldScissors
+                }
+            }
 		}, use = { tex, texWidth, texHeight ->
-			use(Texture(tex, texWidth, texHeight))
+            use(Texture(tex, texWidth, texHeight).slice(0, 0, width, height))
 			flush()
 		})
 	}
@@ -140,13 +145,14 @@ class RenderContext constructor(
      * Textures are managed (allocated and de-allocated) automatically by the engine as required.
      * The texture coords matches the region in the [BmpSlice].
      */
-	fun getTex(bmp: BmpSlice): Texture = agBitmapTextureManager.getTexture(bmp)
+    fun getTex(bmp: BmpSlice): Texture = agBitmapTextureManager.getTexture(bmp)
+	fun getTex(bmp: BitmapCoords): TextureCoords = agBitmapTextureManager.getTexture(bmp)
 
     /**
      * Allocates a [Texture.Base] from a [Bitmap]. A Texture.Base doesn't have region information.
      * It is just the whole texture/bitmap.
      */
-    fun getTex(bmp: Bitmap): Texture.Base = agBitmapTextureManager.getTextureBase(bmp)
+    fun getTex(bmp: Bitmap): TextureBase = agBitmapTextureManager.getTextureBase(bmp)
 
     inline fun <T> useBatcher(batcher: T, block: (T) -> Unit) {
         if (currentBatcher !== batcher) {

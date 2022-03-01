@@ -7,6 +7,7 @@ import com.soywiz.klock.*
 import com.soywiz.klock.min
 import com.soywiz.klogger.*
 import com.soywiz.kmem.*
+import com.soywiz.korag.annotation.KoragExperimental
 import com.soywiz.korag.internal.setFloats
 import com.soywiz.korag.shader.Program
 import com.soywiz.korag.shader.ProgramConfig
@@ -320,6 +321,7 @@ abstract class AGOpengl : AG() {
                 }
             }
         }
+
         var textureUnit = 0
         //for ((uniform, value) in uniforms) {
         for (n in 0 until uniforms.uniforms.size) {
@@ -606,21 +608,22 @@ abstract class AGOpengl : AG() {
                     //println("GL_SHADING_LANGUAGE_VERSION: $glslVersionInt : $glslVersionString")
 
                     val guessedGlSlVersion = glSlVersion ?: gl.versionInt
-                    val usedGlSlVersion = GlslGenerator.FORCE_GLSL_VERSION?.toIntOrNull() ?: when (guessedGlSlVersion) {
-                        460 -> 460
-                        in 300..450 -> 100
-                        else -> guessedGlSlVersion
-                    }
+                    val usedGlSlVersion = GlslGenerator.FORCE_GLSL_VERSION?.toIntOrNull()
+                        ?: when (guessedGlSlVersion) {
+                            460 -> 460
+                            in 300..450 -> 100
+                            else -> guessedGlSlVersion
+                        }
 
                     if (GlslGenerator.DEBUG_GLSL) {
                         Console.trace("GLSL version: requested=$glSlVersion, guessed=$guessedGlSlVersion, forced=${GlslGenerator.FORCE_GLSL_VERSION}. used=$usedGlSlVersion")
                     }
 
                     fragmentShaderId = createShaderCompat(gl.FRAGMENT_SHADER) { compatibility ->
-                        program.fragment.toNewGlslStringResult(GlslConfig(gles = gles, version = usedGlSlVersion, compatibility = compatibility, android = android, programConfig = programConfig)).result
+                        program.fragment.toNewGlslString(GlslConfig(gles = gles, version = usedGlSlVersion, compatibility = compatibility, android = android, programConfig = programConfig))
                     }
                     vertexShaderId = createShaderCompat(gl.VERTEX_SHADER) { compatibility ->
-                        program.vertex.toNewGlslStringResult(GlslConfig(gles = gles, version = usedGlSlVersion, compatibility = compatibility, android = android, programConfig = programConfig)).result
+                        program.vertex.toNewGlslString(GlslConfig(gles = gles, version = usedGlSlVersion, compatibility = compatibility, android = android, programConfig = programConfig))
                     }
                     gl.attachShader(id, fragmentShaderId)
                     gl.attachShader(id, vertexShaderId)
@@ -865,6 +868,7 @@ abstract class AGOpengl : AG() {
                     if (bmp.forcedTexId != -1) {
                         this.forcedTexId = bmp.forcedTexId
                         if (bmp.forcedTexTarget != -1) this.forcedTexTarget = bmp.forcedTexTarget
+                        gl.bindTexture(forcedTexTarget, forcedTexId) // @TODO: Check. Why do we need to bind it now?
                         return
                     }
                     prepareUploadNativeTexture(bmp)
@@ -964,6 +968,8 @@ abstract class AGOpengl : AG() {
             gl.texParameteri(forcedTexTarget, gl.TEXTURE_MIN_FILTER, min)
             gl.texParameteri(forcedTexTarget, gl.TEXTURE_MAG_FILTER, mag)
         }
+
+        override fun toString(): String = "AGOpengl.GlTexture($tex)"
     }
 
     override fun readColor(bitmap: Bitmap32) {

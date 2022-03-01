@@ -27,6 +27,44 @@ import com.soywiz.korma.random.*
 import kotlinx.coroutines.*
 import kotlin.random.*
 
+suspend fun main() = Korge(bgcolor = Colors.DARKCYAN.mix(Colors.BLACK, 0.8), clipBorders = false
+    //, debugAg = true
+) {
+    //mainRenderText()
+    //mainTextMetrics()
+    //mainBitmapTexId()
+    mainFiltersSample()
+    //mainKorviSample()
+
+    /*
+    val atlas = MutableAtlasUnit(4096)
+    image(resourcesVfs["Portrait_3.jpg"].readBitmapSlice(atlas = atlas)).scale(0.2)
+    image(resourcesVfs["Portrait_3.jpg"].readBitmapSliceWithOrientation(atlas = atlas)).scale(0.2).xy(300, 0)
+    image(atlas.bitmap).scale(0.2).xy(600, 0)
+    */
+
+
+    //rotatedTexture()
+    //mainUITreeView()
+    //mainUIImageTester()
+    //mainEditor()
+    //mainTrimmedAtlas()
+    //mainRotateCircle()
+    //mainImageTrace()
+    //mainEmoji()
+    //Bunnymark().apply { bunnymarkMain() }
+    //bezierSample()
+    //particlesMain()
+    //terminalEmulatorMain()
+    //mainBVH()
+    //mainCircles()
+    //mainVampire()
+    //mainCompression()
+    //println("HELLO WORLD!")
+    //withContext(Dispatchers.Unconfined) {
+}
+
+
 //suspend fun main() {
 //    for (n in 0 until 1000) {
 //        val sw = Stopwatch().start()
@@ -50,24 +88,15 @@ import kotlin.random.*
 //    }
 //}
 
-suspend fun main() = Korge(bgcolor = Colors.DARKCYAN.mix(Colors.BLACK, 0.8), clipBorders = false) {
-    mainUITreeView()
-    //mainUIImageTester()
-    //mainEditor()
-    //mainTrimmedAtlas()
-    //mainRotateCircle()
-    //mainImageTrace()
-    //mainEmoji()
-    //Bunnymark().apply { bunnymarkMain() }
-    //bezierSample()
-    //particlesMain()
-    //terminalEmulatorMain()
-    //mainBVH()
-    //mainCircles()
-    //mainVampire()
-    //mainCompression()
-    //println("HELLO WORLD!")
-    //withContext(Dispatchers.Unconfined) {
+suspend fun Stage.rotatedTexture() {
+    //val tex = resourcesVfs["korim.png"].readBitmapSlice().rotateRight()
+    //val tex = resourcesVfs["korim.png"].readBitmapSlice().flipY()
+    //val tex = resourcesVfs["korim.png"].readBitmapSlice().transformed(Matrix().scale(.5f, .5f)).sliceWithSize(0, 0, 10, 10)
+    //val tex = resourcesVfs["korim.png"].readBitmapSlice().transformed(Matrix().scale(.5f, .5f))
+    val tex = resourcesVfs["korim.png"].readBitmapSlice().transformed(Matrix().skew(30.degrees, 0.degrees)).flippedX().rotatedRight()
+    println("tex=$tex")
+    println("size=${tex.width},${tex.height}")
+    image(tex)
 }
 
 suspend fun Stage.mainTrimmedAtlas() {

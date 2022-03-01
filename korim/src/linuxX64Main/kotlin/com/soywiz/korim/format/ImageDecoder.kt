@@ -7,11 +7,13 @@ import kotlinx.cinterop.*
 import platform.posix.*
 import kotlin.native.concurrent.*
 
+@ThreadLocal
 actual val nativeImageFormatProvider: NativeImageFormatProvider = object : BaseNativeImageFormatProvider() {
-    override suspend fun decode(data: ByteArray, premultiplied: Boolean): NativeImage = wrapNative(
+    override suspend fun decodeInternal(data: ByteArray, props: ImageDecodingProps): NativeImageResult {
+        val premultiplied = props.premultiplied
         //ImageIOWorker.execute(
         //            TransferMode.SAFE,
-        executeInImageIOWorker { worker ->
+        return executeInImageIOWorker { worker ->
             worker.execute(
                 TransferMode.SAFE,
                 { if (data.isFrozen) data else data.copyOf().freeze() },
@@ -41,8 +43,7 @@ actual val nativeImageFormatProvider: NativeImageFormatProvider = object : BaseN
                     } ?: throw IOException("Failed to decode image using stbi_load_from_memory")
                 }
             )
-        }
-        , premultiplied
-    )
+        }.wrapNativeExt(props)
+    }
 }
 

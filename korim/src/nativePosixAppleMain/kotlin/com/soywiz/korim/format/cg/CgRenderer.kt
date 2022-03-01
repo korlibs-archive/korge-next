@@ -39,16 +39,13 @@ fun transferBitmap32CGContext(bmp: Bitmap32, ctx: CGContextRef?, toBitmap: Boole
     }
 }
 
-open class CoreGraphicsNativeImage(bmp: Bitmap32) : BitmapNativeImage(bmp)
-
-/*
 class CoreGraphicsNativeImage(bitmap: Bitmap32) : BitmapNativeImage(bitmap) {
-    override fun toNonNativeBmp(): Bitmap = bitmap.clone()
-
+    override fun toBMP32(): Bitmap32 = bitmap.clone()
     override fun getContext2d(antialiasing: Boolean): Context2d = Context2d(CoreGraphicsRenderer(bitmap, antialiasing))
 }
 
-private inline fun <T> cgKeepState(ctx: CGContextRef?, callback: () -> T): T {
+@PublishedApi
+internal inline fun <T> cgKeepState(ctx: CGContextRef?, callback: () -> T): T {
     CGContextSaveGState(ctx)
     try {
         return callback()
@@ -63,47 +60,43 @@ class CoreGraphicsRenderer(val bmp: Bitmap32, val antialiasing: Boolean) : com.s
 
     fun Matrix.toCGAffineTransform() = CGAffineTransformMake(a.cg, b.cg, c.cg, d.cg, tx.cg, ty.cg)
 
-    override fun getBounds(font: Font, fontSize: Double, text: String, out: TextMetrics) {
-        super.getBounds(font, fontSize, text, out)
-    }
-
     private fun cgDrawBitmap(bmp: Bitmap32, ctx: CGContextRef?, colorSpace: CPointer<CGColorSpace>?, tiled: Boolean = false) {
         val imageCtx = CGBitmapContextCreate(
             null, bmp.width.convert(), bmp.height.convert(),
             8.convert(), 0.convert(), colorSpace,
             CGImageAlphaInfo.kCGImageAlphaPremultipliedLast.value
         )
-        transferBitmap32CGContext(bmp, imageCtx, toBitmap = false)
-        val image = CGBitmapContextCreateImage(imageCtx)
+        try {
+            transferBitmap32CGContext(bmp, imageCtx, toBitmap = false)
+            val image = CGBitmapContextCreateImage(imageCtx)
+            try {
+                val rect = CGRectMake(0.cg, 0.cg, bmp.width.cg, bmp.height.cg)
 
-
-        if (tiled) {
-            CGContextDrawTiledImage(
-                ctx,
-                CGRectMake(0.cg, 0.cg, CGBitmapContextGetWidth(ctx).toInt().cg, CGBitmapContextGetHeight(ctx).toInt().cg),
-                image
-            )
-        } else {
-            CGContextDrawImage(
-                ctx,
-                CGRectMake(0.cg, 0.cg, bmp.width.cg, bmp.height.cg),
-                image
-            )
+                if (tiled) {
+                    CGContextDrawTiledImage(ctx, rect, image)
+                } else {
+                    //println("CGContextDrawImage: $ctx, ${bmp.size}")
+                    CGContextDrawImage(ctx, rect, image)
+                }
+                //println("MACOS: imageCtx=$imageCtx, image=$image")
+            } finally {
+                CGImageRelease(image)
+            }
+        } finally {
+            CGContextRelease(imageCtx)
         }
-        //println("MACOS: imageCtx=$imageCtx, image=$image")
-        CGImageRelease(image)
-        CGContextRelease(imageCtx)
     }
 
-    override fun flushCommands() {
+    override fun flushCommands(commands: List<RenderCommand>) {
         if (bmp.data.size == 0) return
+        bmp.flipY() // @TODO: This shouldn't be required, can we do an affine transform somewhere?
         Releases { releases ->
             autoreleasepool {
                 bmp.data.ints.usePinned { dataPin ->
                     //val colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB)
                     val colorSpace = CGColorSpaceCreateDeviceRGB()
                     try {
-                        val ctx = CGBitmapContextCreate(
+                        val ctx: CPointer<CGContext>? = CGBitmapContextCreate(
                             dataPin.addressOf(0), bmp.width.convert(), bmp.height.convert(),
                             8.convert(), (bmp.width * 4).convert(), colorSpace,
                             CGImageAlphaInfo.kCGImageAlphaPremultipliedLast.value
@@ -117,22 +110,42 @@ class CoreGraphicsRenderer(val bmp: Bitmap32, val antialiasing: Boolean) : com.s
                             //    cgDrawBitmap(bmp, ctx, colorSpace)
                             //}
 
-                            // @TODO: Check if command is a text command
+                            fun visitCgContext(ctx: CPointer<CGContext>?, path: GraphicsPath) {
+                                path.visitCmds(
+                                    moveTo = { x, y -> CGContextMoveToPoint(ctx, x.cg, y.cg) },
+                                    lineTo = { x, y -> CGContextAddLineToPoint(ctx, x.cg, y.cg) },
+                                    quadTo = { cx, cy, ax, ay -> CGContextAddQuadCurveToPoint(ctx, cx.cg, cy.cg, ax.cg, ay.cg) },
+                                    cubicTo = { cx1, cy1, cx2, cy2, ax, ay -> CGContextAddCurveToPoint(ctx, cx1.cg, cy1.cg, cx2.cg, cy2.cg, ax.cg, ay.cg) },
+                                    close = { CGContextClosePath(ctx) }
+                                )
+                            }
+
                             for (command in commands) {
                                 val state = command.state
                                 val fill = command.fill
+
+                                //println("command=$command")
 
                                 cgKeepState(ctx) {
                                     CGContextSetAllowsAntialiasing(ctx, antialiasing)
                                     CGContextSetAlpha(ctx, state.globalAlpha.cg)
                                     //CGContextConcatCTM(ctx, state.transform.toCGAffineTransform()) // Points already transformed
-                                    state.path.visitCmds(
-                                        moveTo = { x, y -> CGContextMoveToPoint(ctx, x.cg, y.cg) },
-                                        lineTo = { x, y -> CGContextAddLineToPoint(ctx, x.cg, y.cg) },
-                                        quadTo = { cx, cy, ax, ay -> CGContextAddQuadCurveToPoint(ctx, cx.cg, cy.cg, ax.cg, ay.cg) },
-                                        cubicTo = { cx1, cy1, cx2, cy2, ax, ay -> CGContextAddCurveToPoint(ctx, cx1.cg, cy1.cg, cx2.cg, cy2.cg, ax.cg, ay.cg) },
-                                        close = { CGContextClosePath(ctx) }
-                                    )
+
+                                    // PATH
+                                    visitCgContext(ctx, state.path)
+
+                                    // CLIP
+                                    val clip = state.clip
+                                    if (clip != null) {
+                                        when (clip.winding) {
+                                            Winding.EVEN_ODD -> CGContextEOClip(ctx)
+                                            else -> CGContextClip(ctx)
+                                        }
+                                        CGContextBeginPath(ctx)
+                                        visitCgContext(ctx, clip)
+                                    }
+
+
                                     if (!fill) {
                                         CGContextSetLineWidth(ctx, state.lineWidth.cg)
                                         CGContextSetMiterLimit(ctx, state.miterLimit.cg)
@@ -150,62 +163,60 @@ class CoreGraphicsRenderer(val bmp: Bitmap32, val antialiasing: Boolean) : com.s
                                                 LineCap.SQUARE -> CGLineCap.kCGLineCapSquare
                                             }
                                         )
+                                        CGContextReplacePathWithStrokedPath(ctx)
                                     }
                                     memScoped {
                                         val style = if (fill) state.fillStyle else state.strokeStyle
                                         when (style) {
                                             is NonePaint -> Unit
                                             is ColorPaint -> {
-                                                if (fill) {
-                                                    CGContextSetFillColorWithColor(
-                                                        ctx,
-                                                        style.color.toCgColor(releases, colorSpace)
-                                                    )
-                                                    CGContextFillPath(ctx)
-                                                } else {
-                                                    CGContextSetStrokeColorWithColor(
-                                                        ctx,
-                                                        style.color.toCgColor(releases, colorSpace)
-                                                    )
-                                                    CGContextStrokePath(ctx)
-                                                }
+                                                CGContextSetFillColorWithColor(
+                                                    ctx,
+                                                    style.color.toCgColor(releases, colorSpace)
+                                                )
+                                                CGContextFillPath(ctx)
                                             }
                                             is GradientPaint -> {
-                                                if (fill) {
-                                                    val nelements = style.colors.size
-                                                    val colors = CFArrayCreate(null, null, 0, null)
-                                                    val locations = allocArray<CGFloatVar>(nelements)
-                                                    for (n in 0 until nelements) {
-                                                        val color = RGBA(style.colors[n])
-                                                        val stop = style.stops[n]
-                                                        CFArrayAppendValue(colors, color.toCgColor(releases, colorSpace))
-                                                        locations[n] = stop.cg
-                                                    }
-                                                    val options =
-                                                        kCGGradientDrawsBeforeStartLocation or kCGGradientDrawsAfterEndLocation
+                                                val nelements = style.colors.size
+                                                val colors = CFArrayCreateMutable(null, nelements.toLong(), null)
+                                                val locations = allocArray<CGFloatVar>(nelements)
+                                                for (n in 0 until nelements) {
+                                                    val color = RGBA(style.colors[n])
+                                                    val stop = style.stops[n]
+                                                    CFArrayAppendValue(colors, color.toCgColor(releases, colorSpace))
+                                                    locations[n] = stop.cg
+                                                }
+                                                val options =
+                                                    kCGGradientDrawsBeforeStartLocation or kCGGradientDrawsAfterEndLocation
 
-                                                    CGContextClip(ctx)
-                                                    val m = state.transform
-                                                    val gradient = CGGradientCreateWithColors(colorSpace, colors, locations)
-                                                    val start = CGPointMake(style.x0(m).cg, style.y0(m).cg)
-                                                    val end = CGPointMake(style.x1(m).cg, style.y1(m).cg)
+                                                CGContextClip(ctx)
+                                                val m = state.transform
+                                                val gradient = CGGradientCreateWithColors(colorSpace, colors, locations)
+                                                val start = CGPointMake(style.x0(m).cg, style.y0(m).cg)
+                                                val end = CGPointMake(style.x1(m).cg, style.y1(m).cg)
+                                                cgKeepState(ctx) {
+                                                    CGContextConcatCTM(ctx, state.transform.toCGAffineTransform())
+                                                    CGContextConcatCTM(ctx, style.transform.toCGAffineTransform())
                                                     when (style.kind) {
                                                         GradientKind.LINEAR -> {
                                                             CGContextDrawLinearGradient(ctx, gradient, start, end, options)
                                                         }
                                                         GradientKind.RADIAL -> {
                                                             CGContextDrawRadialGradient(ctx, gradient, start, style.r0(m).cg, end, style.r1(m).cg, options)
-                                                            CGGradientRelease(gradient)
                                                         }
                                                     }
-                                                    CGGradientRelease(gradient)
                                                 }
+                                                CGGradientRelease(gradient)
                                             }
                                             is BitmapPaint -> {
                                                 CGContextClip(ctx)
                                                 cgKeepState(ctx) {
                                                     CGContextConcatCTM(ctx, state.transform.toCGAffineTransform())
-                                                    cgDrawBitmap(bmp, ctx, colorSpace, tiled = style.repeat)
+                                                    CGContextConcatCTM(ctx, style.transform.toCGAffineTransform())
+                                                    val fillBmp = style.bmp32
+                                                    fillBmp.flipY() // @TODO: This shouldn't be required, can we do an affine transform somewhere?
+                                                    cgDrawBitmap(fillBmp, ctx, colorSpace, tiled = style.repeat)
+                                                    fillBmp.flipY() // @TODO: This shouldn't be required, can we do an affine transform somewhere?
                                                 }
                                                 //println("Not implemented style $style fill=$fill")
                                             }
@@ -227,6 +238,7 @@ class CoreGraphicsRenderer(val bmp: Bitmap32, val antialiasing: Boolean) : com.s
                 }
             }
         }
+        bmp.flipY() // @TODO: This shouldn't be required, can we do an affine transform somewhere?
     }
 }
 
@@ -234,6 +246,7 @@ class CoreGraphicsRenderer(val bmp: Bitmap32, val antialiasing: Boolean) : com.s
 
 internal class Releases {
     val colors = arrayListOf<CGColorRef?>()
+    val arena = Arena()
 
     companion object {
         inline operator fun invoke(callback: (Releases) -> Unit) {
@@ -250,13 +263,15 @@ internal class Releases {
         for (color in colors) {
             CGColorRelease(color)
         }
+        arena.clear()
     }
 }
 
-internal fun RGBA.toCgColor(releases: Releases, space: CGColorSpaceRef?) = memScoped {
+internal fun RGBA.toCgColor(releases: Releases, space: CGColorSpaceRef?): CPointer<CGColor>? = memScoped {
     // Not available on iOS
     //CGColorCreateGenericRGB(color.rd.cg, color.gd.cg, color.bd.cg, color.ad.cg)
     val data = allocArray<CGFloatVar>(4)
+    //val data = releases.arena.allocArray<CGFloatVar>(4)
     data[0] = this@toCgColor.rd.cg
     data[1] = this@toCgColor.gd.cg
     data[2] = this@toCgColor.bd.cg
@@ -265,4 +280,3 @@ internal fun RGBA.toCgColor(releases: Releases, space: CGColorSpaceRef?) = memSc
     releases.colors.add(color)
     color
 }
-*/
