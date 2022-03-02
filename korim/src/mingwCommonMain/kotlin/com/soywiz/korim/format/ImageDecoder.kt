@@ -61,13 +61,13 @@ actual val nativeImageFormatProvider: NativeImageFormatProvider = object : BaseN
                             val bmpHeight = bmpData.Height.toInt()
                             val out = IntArray((bmpWidth * bmpHeight).toInt())
                             out.usePinned { outp ->
-                                val o = outp.addressOf(0)
+                                val o = outp.addressOf(0).reinterpret<IntVar>()
                                 for (y in 0 until bmpHeight) {
-                                    val optr = (o.reinterpret<IntVar>() + bmpWidth * y)!!
+                                    val optr = (o + bmpWidth * y)!!
                                     val iptr = (bmpData.Scan0.toLong() + (bmpData.Stride * y)).toCPointer<IntVar>()!!
                                     memcpy(optr, iptr, (bmpData.Width * 4.convert()).convert())
-                                    for (x in 0 until bmpWidth) optr[x] = argbToAbgr(optr[x])
                                 }
+                                for (x in 0 until (bmpWidth * bmpHeight)) o[x] = argbToAbgr(o[x])
                             }
 
                             GdipBitmapUnlockBits(pimage[0], bmpData.ptr)
@@ -88,11 +88,10 @@ actual val nativeImageFormatProvider: NativeImageFormatProvider = object : BaseN
 // val g: Int get() = (value ushr 8) and 0xFF
 // val b: Int get() = (value ushr 16) and 0xFF
 // val a: Int get() = (value ushr 24) and 0xFF
-private fun argbToAbgr(col: Int): Int {
-    return (col and 0xFF00FF00.toInt()) or // GREEN + ALPHA are in place
-        ((col and 0xFF) shl 16) or // Swap R
-        ((col shr 16) and 0xFF) // Swap B
-}
+inline private fun argbToAbgr(col: Int): Int =
+    (col and 0xFF00FF00.toInt()) or // GREEN + ALPHA are in place
+    ((col and 0xFF) shl 16) or // Swap R
+    ((col shr 16) and 0xFF) // Swap B
 
 private var initializedGdiPlus = korAtomic(false)
 internal fun initGdiPlusOnce() {
