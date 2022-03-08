@@ -93,7 +93,7 @@ open class KorgeProcessedResourcesTask @Inject constructor(
     private val config: KorgeProcessedResourcesTaskConfig,
     //private val fs: FileSystemOperations,
 ) : DefaultTask() {
-    @get:InputDirectory lateinit var processedResourcesFolder: File
+    @get:OutputDirectory lateinit var processedResourcesFolder: File
     // https://docs.gradle.org/7.4/userguide/configuration_cache.html#config_cache:requirements:use_project_during_execution
     @get:InputFiles @get:Classpath lateinit var folders: List<File>
 
