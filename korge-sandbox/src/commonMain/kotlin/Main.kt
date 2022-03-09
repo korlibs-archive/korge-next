@@ -34,6 +34,7 @@ suspend fun main() = Korge(bgcolor = Colors.DARKCYAN.mix(Colors.BLACK, 0.8), cli
 ) {
     mainColorTransformFilter()
     //mainExifTest()
+    //mainFilterScale()
     //mainVectorRendering()
     //mainRenderText()
     //mainTextMetrics()
