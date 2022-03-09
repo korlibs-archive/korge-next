@@ -11,25 +11,22 @@ class MoveSystem : IteratingSystem(
     allOfComponents = arrayOf(Position::class),  // Position component absolutely needed for movement of entity objects
     anyOfComponents = arrayOf(Position::class, Rigidbody::class),  // Rigidbody not necessarily needed for movement
     interval = EachFrame
-//    interval = Fixed(500f)  // for testing every 500 millisecond
 ) {
 
     private val positions = Inject.componentMapper<Position>()
     private val rigidbodies = Inject.componentMapper<Rigidbody>()
 
-    override fun onInit() {
-    }
+    override fun onInit() {}
 
     override fun onTickEntity(entity: Entity) {
-//        println("[Entity: ${entity.id}] MoveSystem onTickEntity")
         val pos = positions[entity]
 
         if (rigidbodies.contains(entity)) {
             // Entity has a rigidbody - that means the movement will be calculated depending on it
             val rigidbody = rigidbodies[entity]
-//            pos.xAcceleration * deltaTime
-            // TODO implement movement with rigidbody
+            // Currently we just add gravity to the entity
             pos.yAcceleration += rigidbody.mass * 9.81
+            // TODO implement more sophisticated movement with rigidbody taking damping and friction into account
         }
 
         pos.x += pos.xAcceleration * deltaTime

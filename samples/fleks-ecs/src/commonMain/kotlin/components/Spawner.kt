@@ -1,8 +1,11 @@
 package components
 
+/**
+ * This component makes an entity a spawner. That means the entity will spawn new entities as configured below.
+ */
 data class Spawner(
     // config
-    var numberOfObjects: Int = 1,
+    var numberOfObjects: Int = 1,  // The spawner will generate this number of object when triggered (by interval)
     var interval: Int = 0,  // 0 - disabled, 1 - every frame, 2 - every second frame, 3 - every third frame,...
     var timeVariation: Int = 0,  // 0 - no variation, 1 - one frame variation, 2 - two frames variation, ...
     // Spawner details for spawned objects (spawned objects do also spawn objects itself)

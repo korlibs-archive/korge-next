@@ -6,67 +6,50 @@ import com.github.quillraven.fleks.*
 import com.soywiz.korge.view.Container
 import com.soywiz.korge.view.addTo
 import com.soywiz.korim.format.ImageAnimation
-
 import components.*
 import components.Sprite
-import components.Sprite.LifeCycle
-import aseImage
+import assets.Assets
 
 /**
- * This System takes care of displaying sprites (image-animation objects) on the screen. It takes the configuration from
+ * This System takes care of displaying sprites (image-animation objects) on the screen. It takes the image configuration from
  * [Sprite] component to setup graphics from Assets and create an ImageAnimationView object for displaying in the Container.
  *
  */
 class SpriteSystem : IteratingSystem(
     allOfComponents = arrayOf(Sprite::class, Position::class),
     interval = EachFrame
-//    interval = Fixed(500f)  // for testing every 500 millisecond
 ) {
 
-    private val positions: ComponentMapper<Position> = Inject.componentMapper()
-    private val sprites: ComponentMapper<Sprite> = Inject.componentMapper()
+    private val positions = Inject.componentMapper<Position>()
+    private val sprites = Inject.componentMapper<Sprite>()
 
     override fun onInit() {
     }
 
     override fun onTickEntity(entity: Entity) {
-//        println("[Entity: ${entity.id}] SpriteSystem onTickEntity")
 
         val sprite = sprites[entity]
         val pos = positions[entity]
-        when (sprite.lifeCycle) {
-            LifeCycle.INIT -> {
-                sprite.lifeCycle = LifeCycle.ACTIVE
-            }
-            LifeCycle.ACTIVE -> {
-                // sync view position
-                sprite.imageAnimView.x = pos.x
-                sprite.imageAnimView.y = pos.y
-            }
-            LifeCycle.DESTROY -> {
-                // Object is going to be recycled
-                world.remove(entity)
-            }
-            else -> {}
-        }
+        // sync view position
+        sprite.imageAnimView.x = pos.x
+        sprite.imageAnimView.y = pos.y
     }
 
     class SpriteListener : ComponentListener<Sprite> {
 
         private val world = Inject.dependency<World>()
         private val layerContainer = Inject.dependency<Container>("layer0")
+        private val assets = Inject.dependency<Assets>()
 
         override fun onComponentAdded(entity: Entity, component: Sprite) {
             // Set animation object
-            component.imageAnimView.animation =
-                // TODO get this from Assets object with "imageData" string
-                aseImage?.animationsByName?.getOrElse(component.animation) { aseImage?.defaultAnimation }
-//        component.imageAnimView.onDestroyLayer = { image -> imageBitmapTransparentPool.free(image) }
-            component.imageAnimView.onPlayFinished = { component.lifeCycle = LifeCycle.DESTROY }
-//            component.imageAnimView.onPlayFinished = {
-//                component.imageAnimView.removeFromParent()
-//                world.remove(entity)
-//            }
+            val asset = assets.getImage(component.imageData)
+            component.imageAnimView.animation = asset.animationsByName.getOrElse(component.animation) { asset.defaultAnimation }
+            component.imageAnimView.onPlayFinished = {
+                // when animation finished playing trigger destruction of entity
+                // TODO handle destruction with "Destruct" component
+                world.remove(entity)
+            }
             component.imageAnimView.addTo(layerContainer)
             // Set play status
             component.imageAnimView.direction = when {
@@ -76,16 +59,9 @@ class SpriteSystem : IteratingSystem(
                 else -> ImageAnimation.Direction.FORWARD
             }
             if (component.isPlaying) { component.imageAnimView.play() }
-            component.lifeCycle = LifeCycle.ACTIVE
-
-//        println("Component $component")
-//        println("  added to Entity '${entity.id}'!")
         }
 
         override fun onComponentRemoved(entity: Entity, component: Sprite) {
-//        println("Component $component")
-//        println("  removed from Entity '${entity.id}'!")
-
             component.imageAnimView.removeFromParent()
         }
     }

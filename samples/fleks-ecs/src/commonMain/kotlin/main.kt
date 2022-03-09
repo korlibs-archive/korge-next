@@ -4,18 +4,13 @@ import com.soywiz.korge.scene.sceneContainer
 import com.soywiz.korge.view.Container
 import com.soywiz.korge.view.container
 import com.soywiz.korge.view.addUpdater
-import com.soywiz.korim.atlas.MutableAtlasUnit
 import com.soywiz.korim.color.Colors
-import com.soywiz.klock.Stopwatch
-import com.soywiz.korim.format.ASE
-import com.soywiz.korim.format.ImageData
-import com.soywiz.korim.format.readImageData
-import com.soywiz.korio.file.std.resourcesVfs
-
 import com.github.quillraven.fleks.*
+import assets.Assets
 import systems.*
 import systems.SpriteSystem.SpriteListener
 import components.*
+import entities.createMeteoriteSpawner
 
 const val scaleFactor = 3
 
@@ -29,37 +24,43 @@ suspend fun main() = Korge(width = 384 * scaleFactor, height = 216 * scaleFactor
     rootSceneContainer.changeTo<ExampleScene>()
 }
 
-var aseImage: ImageData? = null
-
 class ExampleScene : Scene() {
 
-    private val atlas = MutableAtlasUnit(1024, 1024)
+    private val assets = Assets()
 
     override suspend fun Container.sceneInit() {
-        val sw = Stopwatch().start()
-        aseImage = resourcesVfs["sprites.ase"].readImageData(ASE, atlas = atlas)
-        println("loaded resources in ${sw.elapsed}")
+
+        // Configure and load the asset objects
+        val config = Assets.Config(
+            images = listOf(
+                Pair("meteorite", "sprites.ase")
+            )
+        )
+        assets.load(config)
     }
 
     override suspend fun Container.sceneMain() {
         container {
             scale = scaleFactor.toDouble()
 
-            // TODO build a views container for handling layers for the ImageAnimationSystem of Fleks ECS
+            // Here are the container views which contain the generated entity objects with visible component "Sprite" attached to it
+            //
+            // TODO Build a more flexible views container system for handling layers for the SpriteSystem of Fleks ECS
             val layer0 = container()
-            val layer1 = container()
+            // val layer1 = container() // Add more layers when needed - This will be on top of layer0
 
             // This is the world object of the entity component system (ECS)
             // It contains all ECS related system and component configuration
             val world = World {
                 entityCapacity = 512
 
-                // Register all needed systems
+                // Register all needed systems of the entity component system
+                // The order of systems here also define the order in which the systems are called inside Fleks ECS
                 system(::MoveSystem)
                 system(::SpawnerSystem)
-                system(::SpriteSystem)
                 system(::CollisionSystem)
                 system(::DestructSystem)
+                system(::SpriteSystem)   // Drawing images on screen should be last otherwise the position might be (0, 0) because it was not set before
 
                 // Register all needed components and its listeners (if needed)
                 component(::Position)
@@ -70,47 +71,15 @@ class ExampleScene : Scene() {
                 component(::Impulse)
 
                 // Register external objects which are used by systems and component listeners
-                inject("layer0", layer0)
-//              inject("layer1", layer1)  TODO add more layers for explosion objects to be on top
+                inject(assets)  // Assets are used by the SpriteSystem / SpriteListener to get the image data for drawing
+                inject("layer0", layer0)  // Currently we use only one layer to draw all objects to - this is also used in SpriteListener to add the image to the layer container
+                // inject("layer1", layer1)  // Add more layers when needed e.g. for explosion objects to be on top, etc.
             }
 
-            // This is the config for the spawner entity which sits on top of the screen and which
-            // spawns the meteorite objects.
-            // - The spawner get a "Position" component which set the position of it 10 pixels
-            //   above the visible area.
-            // - Secondly it gets a "Spawner" component. That tells the system that the spawned
-            //   meteorite objects itself are spawning objects. These are the visible fire trails.
-            world.entity {
-                add<Position> {  // Position of spawner
-                    x = 100.0
-                    y = -10.0
-                }
-                add<Spawner> {  // Config for spawner object
-                    numberOfObjects = 1  // The spawner will generate one object per second
-                    interval = 60        // every 60 frames which means once per second
-                    timeVariation = 0
-                    // Spawner details for spawned objects (spawned objects do also spawn objects itself)
-                    spawnerNumberOfObjects = 5 // Enable spawning feature for spawned object
-                    spawnerInterval = 1
-                    spawnerPositionVariationX = 5.0
-                    spawnerPositionVariationY = 5.0
-                    spawnerPositionAccelerationX = -30.0
-                    spawnerPositionAccelerationY = -100.0
-                    spawnerPositionAccelerationVariation = 15.0
-                    spawnerSpriteImageData = "sprite"  // "" - Disable sprite graphic for spawned object
-                    spawnerSpriteAnimation = "FireTrail"  // "FireTrail" - "TestNum"
-                    spawnerSpriteIsPlaying = true
-                    // Set position details for spawned objects
-                    positionVariationX = 100.0
-                    positionVariationY = 0.0
-                    positionAccelerationX = 90.0
-                    positionAccelerationY = 200.0
-                    positionAccelerationVariation = 10.0
-                    // Destruct info for spawned objects
-                    destruct = true
-                }
-            }
+            // Create an entity object which will spawn meteorites on top of the visual screen area
+            world.createMeteoriteSpawner()
 
+            // Run the update of the Fleks ECS - this will periodically call all update functions of the systems (e.g. onTick(), onTickEntity(), etc.)
             addUpdater { dt ->
                 world.update(dt.seconds.toFloat())
             }

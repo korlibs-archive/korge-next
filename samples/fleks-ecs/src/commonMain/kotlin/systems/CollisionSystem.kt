@@ -19,13 +19,13 @@ class CollisionSystem : IteratingSystem(
     }
 
     override fun onTickEntity(entity: Entity) {
-//        println("[Entity: ${entity.id}] MoveSystem onTickEntity")
         val pos = positions[entity]
 
         // To make collision detection easy we check here just the Y position if it is below 200 which means
         // that the object is colliding - In real games here is a more sophisticated collision check necessary ;-)
         if (pos.y > 200.0) {
-            // Check if entity has a destruct or impulse component
+            pos.y = 200.0
+            // Check if entity has a Destruct or Impulse component
             if (destructs.contains(entity)) {
                 // Delegate "destruction" of the entity to the DestructSystem - it will destroy the entity after some other task are done
                 destructs[entity].triggerDestruction = true
@@ -33,7 +33,6 @@ class CollisionSystem : IteratingSystem(
                 // Do not destruct entity but let it bounce on the surface
                 pos.xAcceleration = pos.xAcceleration * 0.7
                 pos.yAcceleration = -pos.yAcceleration * 0.9
-                pos.y = 199.0
             } else {
                 // Entity gets destroyed immediately
                 world.remove(entity)

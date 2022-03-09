@@ -45,6 +45,7 @@ include(":korau")
 include(":korgw")
 include(":korvi")
 include(":korge")
+include(":korge-fleks")
 
 if (System.getenv("DISABLED_EXTRA_KORGE_LIBS") != "true") {
     include(":luak")
