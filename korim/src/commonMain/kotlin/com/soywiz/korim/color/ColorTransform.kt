@@ -37,22 +37,27 @@ data class ColorTransform(
     override fun interpolateWith(ratio: Double, other: ColorTransform): ColorTransform =
         ColorTransform().setToInterpolated(ratio, this, other)
 
-    private var dirty = true
+    private var dirtyColorMul = true
+    private var dirtyColorAdd = true
 
     private var _colorMul: RGBA = Colors.WHITE
     private var _colorAdd: ColorAdd = ColorAdd(0)
 
-    private fun computeColors() {
-        if (dirty) {
-            dirty = false
-            _colorMul = RGBA.float(_mR.toFloat(), _mG.toFloat(), _mB.toFloat(), _mA.toFloat())
-            _colorAdd = ColorAdd(_aR, _aG, _aB, _aA)
-        }
+    private fun computeColorMul() {
+        if (!dirtyColorMul) return
+        dirtyColorMul = false
+        _colorMul = RGBA.float(_mR.toFloat(), _mG.toFloat(), _mB.toFloat(), _mA.toFloat())
+    }
+
+    private fun computeColorAdd() {
+        if (!dirtyColorAdd) return
+        dirtyColorAdd = false
+        _colorAdd = ColorAdd(_aR, _aG, _aB, _aA)
     }
 
     var colorMul: RGBA
         get() {
-            computeColors()
+            computeColorMul()
             return _colorMul
         }
         set(v) {
@@ -65,14 +70,14 @@ data class ColorTransform(
                 _mG = mG
                 _mB = mB
                 _mA = mA
-                dirty = true
+                dirtyColorMul = true
             }
         }
 
     var colorAdd: ColorAdd
         get() {
             //println("%08X".format(computeColors()._colorAdd))
-            computeColors()
+            computeColorAdd()
             return _colorAdd
         }
         set(v) {
@@ -85,24 +90,24 @@ data class ColorTransform(
                 _aG = aG
                 _aB = aB
                 _aA = aA
-                dirty = true
+                dirtyColorAdd = true
             }
         }
 
-    var mR: Double get() = _mR; set(v) { _mR = v; dirty = true }
-    var mG: Double get() = _mG; set(v) { _mG = v; dirty = true }
-    var mB: Double get() = _mB; set(v) { _mB = v; dirty = true }
-    var mA: Double get() = _mA; set(v) { _mA = v; dirty = true }
+    var mR: Double get() = _mR; set(v) { _mR = v; dirtyColorMul = true }
+    var mG: Double get() = _mG; set(v) { _mG = v; dirtyColorMul = true }
+    var mB: Double get() = _mB; set(v) { _mB = v; dirtyColorMul = true }
+    var mA: Double get() = _mA; set(v) { _mA = v; dirtyColorMul = true }
 
-    var mRf: Float get() = _mR.toFloat(); set(v) { _mR = v.toDouble(); dirty = true }
-    var mGf: Float get() = _mG.toFloat(); set(v) { _mG = v.toDouble(); dirty = true }
-    var mBf: Float get() = _mB.toFloat(); set(v) { _mB = v.toDouble(); dirty = true }
-    var mAf: Float get() = _mA.toFloat(); set(v) { _mA = v.toDouble(); dirty = true }
+    var mRf: Float get() = _mR.toFloat(); set(v) { _mR = v.toDouble(); dirtyColorMul = true }
+    var mGf: Float get() = _mG.toFloat(); set(v) { _mG = v.toDouble(); dirtyColorMul = true }
+    var mBf: Float get() = _mB.toFloat(); set(v) { _mB = v.toDouble(); dirtyColorMul = true }
+    var mAf: Float get() = _mA.toFloat(); set(v) { _mA = v.toDouble(); dirtyColorMul = true }
 
-    var aR: Int get() = _aR; set(v) { _aR = v; dirty = true }
-    var aG: Int get() = _aG; set(v) { _aG = v; dirty = true }
-    var aB: Int get() = _aB; set(v) { _aB = v; dirty = true }
-    var aA: Int get() = _aA; set(v) { _aA = v; dirty = true }
+    var aR: Int get() = _aR; set(v) { _aR = v; dirtyColorAdd = true }
+    var aG: Int get() = _aG; set(v) { _aG = v; dirtyColorAdd = true }
+    var aB: Int get() = _aB; set(v) { _aB = v; dirtyColorAdd = true }
+    var aA: Int get() = _aA; set(v) { _aA = v; dirtyColorAdd = true }
 
     var alphaMultiplier: Double
         get() = mA
@@ -162,7 +167,7 @@ data class ColorTransform(
         this._mG = mG
         this._mB = mB
         this._mA = mA
-        dirty = true
+        dirtyColorMul = true
 
         return this
     }
@@ -177,7 +182,7 @@ data class ColorTransform(
         this._aG = aG
         this._aB = aB
         this._aA = aA
-        dirty = true
+        dirtyColorAdd = true
 
         return this
     }
@@ -191,19 +196,7 @@ data class ColorTransform(
         aG: Int = 0,
         aB: Int = 0,
         aA: Int = 0
-    ): ColorTransform {
-        this._mR = mR
-        this._mG = mG
-        this._mB = mB
-        this._mA = mA
-        this._aR = aR
-        this._aG = aG
-        this._aB = aB
-        this._aA = aA
-        dirty = true
-
-        return this
-    }
+    ): ColorTransform = setMultiplyTo(mR, mG, mB, mA).setAddTo(aR, aG, aB, aA)
 
     fun copyFrom(t: ColorTransform): ColorTransform {
         this._mR = t._mR
@@ -216,7 +209,8 @@ data class ColorTransform(
         this._aB = t._aB
         this._aA = t._aA
 
-        this.dirty = t.dirty
+        this.dirtyColorMul = t.dirtyColorMul
+        this.dirtyColorAdd = t.dirtyColorAdd
         this._colorAdd = t._colorAdd
         this._colorMul = t._colorMul
 
