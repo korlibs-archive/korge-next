@@ -256,12 +256,32 @@ data class ColorTransform(
 
 inline class ColorAdd(val value: Int) {
     // Alias
-    val rgba get() = value
+    val rgba: Int get() = value
 
-    val r get() = ColorAdd_unpackComponent((value ushr 0) and 0xFF)
-    val g get() = ColorAdd_unpackComponent((value ushr 8) and 0xFF)
-    val b get() = ColorAdd_unpackComponent((value ushr 16) and 0xFF)
-    val a get() = ColorAdd_unpackComponent((value ushr 24) and 0xFF)
+    /** [-255, +255] */
+    val r: Int get() = ColorAdd_unpackComponent((value ushr 0) and 0xFF)
+    /** [-255, +255] */
+    val g: Int get() = ColorAdd_unpackComponent((value ushr 8) and 0xFF)
+    /** [-255, +255] */
+    val b: Int get() = ColorAdd_unpackComponent((value ushr 16) and 0xFF)
+    /** [-255, +255] */
+    val a: Int get() = ColorAdd_unpackComponent((value ushr 24) and 0xFF)
+
+    /** [-1f, +1f] */
+    val rf: Float get() = r.toFloat() / 0xFF
+    /** [-1f, +1f] */
+    val gf: Float get() = g.toFloat() / 0xFF
+    /** [-1f, +1f] */
+    val bf: Float get() = b.toFloat() / 0xFF
+    /** [-1f, +1f] */
+    val af: Float get() = a.toFloat() / 0xFF
+
+    fun readFloat(out: FloatArray, index: Int = 0) {
+        out[index + 0] = rf
+        out[index + 1] = gf
+        out[index + 2] = bf
+        out[index + 3] = af
+    }
 
     fun withR(r: Int) = ColorAdd(r, g, b, a)
     fun withG(g: Int) = ColorAdd(r, g, b, a)
@@ -274,7 +294,19 @@ inline class ColorAdd(val value: Int) {
 
     companion object {
         inline val NEUTRAL get() = ColorAdd_NEUTRAL
-        inline operator fun invoke(r: Int, g: Int, b: Int, a: Int) = ColorAdd(ColorAdd_pack(r, g, b, a))
+        inline operator fun invoke(r: Int, g: Int, b: Int, a: Int): ColorAdd = ColorAdd(ColorAdd_pack(r, g, b, a))
+        fun fromFloat(array: FloatArray, index: Int = 0): ColorAdd = fromFloat(
+            array[index + 0],
+            array[index + 1],
+            array[index + 2],
+            array[index + 3],
+        )
+        fun fromFloat(rf: Float, gf: Float, bf: Float, af: Float): ColorAdd = ColorAdd(
+            (rf * 255).toInt(),
+            (gf * 255).toInt(),
+            (bf * 255).toInt(),
+            (af * 255).toInt(),
+        )
     }
 }
 
@@ -285,7 +317,7 @@ inline class ColorAdd(val value: Int) {
 
 fun RGBA.toColorAdd() = ColorAdd(r, g, b, a)
 
-inline fun ColorTransform(multiply: RGBA, add: ColorAdd = ColorAdd(0, 0, 0, 0)) =
+inline fun ColorTransform(multiply: RGBA = Colors.WHITE, add: ColorAdd = ColorAdd(0, 0, 0, 0)) =
     ColorTransform(multiply.rf, multiply.gf, multiply.bf, multiply.af, add.r, add.g, add.b, add.a)
 
 @Suppress("NOTHING_TO_INLINE")
