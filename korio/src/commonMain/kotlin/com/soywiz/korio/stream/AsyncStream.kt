@@ -691,8 +691,10 @@ suspend fun AsyncInputStream.copyTo(target: AsyncOutputStream, chunkSize: Int = 
 		return base.ilength.toLong()
 	}
 
+    val rchunkSize = if (this is AsyncGetLengthStream) min(this.getLength(), chunkSize.toLong()).toInt() else chunkSize
+
     var totalCount = 0L
-    this.consume(autoclose = false, temp = ByteArray(chunkSize)) { data, offset, size ->
+    this.consume(autoclose = false, temp = ByteArray(rchunkSize)) { data, offset, size ->
         //println("write. offset=$offset, size=$size")
         target.write(data, offset, size)
         totalCount += size
