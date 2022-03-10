@@ -331,6 +331,8 @@ open class HttpPortable(
                                             })
                                         }
 
+                                        override val _output: AsyncOutputStream = client
+
                                         override suspend fun _write(data: ByteArray, offset: Int, size: Int) {
                                             client.write(data, offset, size)
                                         }
