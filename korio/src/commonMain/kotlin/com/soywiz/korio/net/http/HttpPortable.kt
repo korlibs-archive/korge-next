@@ -126,6 +126,8 @@ open class HttpPortable(
                             //val fline = cb.readBufferedUntil('\n'.toByte()).toString(UTF8).trim()
                             val fline =
                                 cb.readUntil('\n'.code.toByte(), limit = LimitRequestFieldSize).toString(UTF8).trim()
+                            if (fline.isEmpty()) break // Do not fail, just skip
+
                             //println("fline: $fline")
                             val match = HeaderRegex.matchEntire(fline)
                                 ?: throw Http.InvalidRequestException("Not a valid http request '$fline'")
