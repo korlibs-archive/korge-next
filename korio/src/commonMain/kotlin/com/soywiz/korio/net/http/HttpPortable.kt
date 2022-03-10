@@ -128,7 +128,7 @@ open class HttpPortable(
                                 cb.readUntil('\n'.code.toByte(), limit = LimitRequestFieldSize).toString(UTF8).trim()
                             //println("fline: $fline")
                             val match = HeaderRegex.matchEntire(fline)
-                                ?: throw Http.InvalidRequestException("Not a valid request '$fline'")
+                                ?: throw Http.InvalidRequestException("Not a valid http request '$fline'")
                             val method = match.groupValues[1]
                             val url = match.groupValues[2]
                             val httpVersion = match.groupValues[3]
