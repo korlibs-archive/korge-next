@@ -326,27 +326,30 @@ class AsyncBufferedInputStream(val base: AsyncInputStream, val bufferSize: Int =
 	}
 
 	override suspend fun read(buffer: ByteArray, offset: Int, len: Int): Int {
-		require()
+        if (buf.availableRead < len) require()
 		return buf.read(buffer, offset, len)
 	}
 
 	override suspend fun read(): Int {
-		require()
+		if (buf.availableRead < 1) require()
 		return buf.readByte()
 	}
 
 	suspend fun readUntil(end: Byte, including: Boolean = true, limit: Int = 0x1000): ByteArray {
 		val out = ByteArrayBuilder()
-		while (true) {
+		loop@while (true) {
 			require()
-			val byteInt = buf.readByte()
-			if (byteInt < 0) break
-			val byte = byteInt.toByte()
-			//println("chunk: $chunk, ${chunk.size}")
-			if (including || byte != end) {
-				out.append(byte)
-			}
-			if (byte == end || out.size >= limit) break
+            if (buf.availableRead == 0) break@loop
+            while (buf.availableRead > 0) {
+                val byteInt = buf.readByte()
+                if (byteInt < 0) break@loop
+                val byte = byteInt.toByte()
+                //println("chunk: $chunk, ${chunk.size}")
+                if (including || byte != end) {
+                    out.append(byte)
+                }
+                if (byte == end || out.size >= limit) break@loop
+            }
 		}
 		return out.toByteArray()
 	}
