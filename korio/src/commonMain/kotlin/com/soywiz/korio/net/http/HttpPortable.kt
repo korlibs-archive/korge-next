@@ -142,8 +142,8 @@ open class HttpPortable(
                                 headerList += parts.getOrElse(0) { "" }.trim() to parts.getOrElse(1) { "" }.trim()
                             }
                             val headers = Http.Headers(headerList)
-                            val keepAlive = headers["connection"]?.lowercase() == "keep-alive"
-                            val upgradeWebsocket = headers["upgrade"]?.lowercase() == "websocket"
+                            val keepAlive = headers["connection"].equals("keep-alive", ignoreCase = true)
+                            val upgradeWebsocket = headers["upgrade"].equals("websocket", ignoreCase = true)
                             val contentLength = headers[Http.Headers.ContentLength]?.toLongOrNull()
 
                             //println("REQ: $method, $url, $headerList")
