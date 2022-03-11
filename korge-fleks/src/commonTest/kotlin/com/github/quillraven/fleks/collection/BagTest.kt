@@ -1,5 +1,6 @@
 package com.github.quillraven.fleks.collection
 
+import com.soywiz.korio.async.*
 import kotlin.test.*
 
 internal class BagTest {
@@ -84,7 +85,7 @@ internal class BagTest {
     }
 
     @Test
-    fun cannotGetStringValueOfInvalidOutOfBoundsIndex() {
+    fun cannotGetStringValueOfInvalidOutOfBoundsIndex() = suspendTestNoJs {
         val bag = bag<String>(2)
 
         assertFailsWith<IndexOutOfBoundsException> { bag[2] }
@@ -150,7 +151,7 @@ internal class BagTest {
     }
 
     @Test
-    fun addValueUnsafeWithInsufficientCapacity() {
+    fun addValueUnsafeWithInsufficientCapacity() = suspendTestNoJs {
         val bag = IntBag(0)
 
         assertFailsWith<IndexOutOfBoundsException> { bag.unsafeAdd(42) }
@@ -168,7 +169,7 @@ internal class BagTest {
     }
 
     @Test
-    fun cannotGetValueOfOutOfBoundsIndex() {
+    fun cannotGetValueOfOutOfBoundsIndex() = suspendTestNoJs {
         val bag = IntBag(2)
 
         assertFailsWith<IndexOutOfBoundsException> { bag[2] }

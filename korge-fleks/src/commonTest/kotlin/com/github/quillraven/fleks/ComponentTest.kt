@@ -1,5 +1,6 @@
 package com.github.quillraven.fleks
 
+import com.soywiz.korio.async.*
 import kotlin.test.*
 
 private data class ComponentTestComponent(var x: Int = 0)
@@ -101,7 +102,7 @@ internal class ComponentTest {
     }
 
     @Test
-    fun cannotRemoveNonExistingEntityFromMapperWithInsufficientCapacity() {
+    fun cannotRemoveNonExistingEntityFromMapperWithInsufficientCapacity() = suspendTestNoJs {
         val cmpService = ComponentService(componentFactory)
         val mapper = cmpService.mapper<ComponentTestComponent>()
         val entity = Entity(10_000)

@@ -1,5 +1,5 @@
 description = "Multiplatform Game Engine written in Kotlin"
 
-//dependencies {
-//    add("commonMainApi", project(":korge"))
-//}
+dependencies {
+    add("commonMainApi", project(":korio"))
+}
