@@ -1,6 +1,7 @@
 package com.soywiz.korge.view
 
 import com.soywiz.kds.iterators.*
+import com.soywiz.korag.annotation.*
 import com.soywiz.korev.*
 import com.soywiz.korge.debug.*
 import com.soywiz.korge.render.*
@@ -27,6 +28,7 @@ class Stage(override val views: Views) : Container()
     override val stage: Stage = this
     override val resources get() = views.resources
 
+    @KoragExperimental
     fun <T> runBlockingNoJs(block: suspend () -> T): T =
         gameWindow.runBlockingNoJs(this.coroutineContext, block)
 

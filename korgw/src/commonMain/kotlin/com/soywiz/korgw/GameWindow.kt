@@ -5,6 +5,7 @@ import com.soywiz.kds.lock.*
 import com.soywiz.klock.*
 import com.soywiz.kmem.setBits
 import com.soywiz.korag.*
+import com.soywiz.korag.annotation.*
 import com.soywiz.korag.log.*
 import com.soywiz.korev.*
 import com.soywiz.korgw.internal.*
@@ -113,6 +114,7 @@ open class GameWindowCoroutineDispatcher : CoroutineDispatcher(), Delay, Closeab
     var tasksTime = 0.milliseconds
 
     /** On JS this cannot work, because it requires the real event loop to be reached */
+    @KoragExperimental
     open fun <T> runBlockingNoJs(coroutineContext: CoroutineContext, block: suspend () -> T): T {
         var completed = false
         var finalException: Throwable? = null
@@ -324,11 +326,13 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, CoroutineConte
     protected val gamePadUpdateEvent = GamePadUpdateEvent()
     protected val gamePadConnectionEvent = GamePadConnectionEvent()
 
+    @KoragExperimental
     suspend fun <T> runBlockingNoJs(block: suspend () -> T): T {
         return runBlockingNoJs(coroutineContext, block)
     }
 
     /** On JS this cannot work, because it requires the real event loop to be reached */
+    @KoragExperimental
     open fun <T> runBlockingNoJs(coroutineContext: CoroutineContext, block: suspend () -> T): T {
         return coroutineDispatcher.runBlockingNoJs(coroutineContext, block)
     }
