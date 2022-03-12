@@ -112,6 +112,30 @@ open class GameWindowCoroutineDispatcher : CoroutineDispatcher(), Delay, Closeab
     var timedTasksTime = 0.milliseconds
     var tasksTime = 0.milliseconds
 
+    /** On JS this cannot work, because it requires the real event loop to be reached */
+    open fun <T> unsafeRunBlocking(coroutineContext: CoroutineContext, block: suspend () -> T): T {
+        var completed = false
+        var finalException: Throwable? = null
+        var finalResult: T? = null
+
+        block.startCoroutine(object : Continuation<T> {
+            override val context: CoroutineContext get() = coroutineContext
+            override fun resumeWith(result: Result<T>) {
+                finalResult = result.getOrNull()
+                finalException = result.exceptionOrNull()
+                completed = true
+            }
+        })
+        while (!completed) {
+            executePending(16.milliseconds)
+            blockingSleep(1.milliseconds)
+        }
+        if (finalException != null) {
+            throw finalException!!
+        }
+        return finalResult as T
+    }
+
     fun executePending(availableTime: TimeSpan) {
         try {
             val startTime = now()
@@ -299,6 +323,11 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, CoroutineConte
     protected val dropFileEvent = DropFileEvent()
     protected val gamePadUpdateEvent = GamePadUpdateEvent()
     protected val gamePadConnectionEvent = GamePadConnectionEvent()
+
+    /** On JS this cannot work, because it requires the real event loop to be reached */
+    open fun <T> unsafeRunBlocking(coroutineContext: CoroutineContext, block: suspend () -> T): T {
+        return coroutineDispatcher.unsafeRunBlocking(coroutineContext, block)
+    }
 
     fun onRenderEvent(block: (RenderEvent) -> Unit) {
         addEventListener<RenderEvent>(block)
