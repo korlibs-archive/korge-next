@@ -113,7 +113,7 @@ open class GameWindowCoroutineDispatcher : CoroutineDispatcher(), Delay, Closeab
     var tasksTime = 0.milliseconds
 
     /** On JS this cannot work, because it requires the real event loop to be reached */
-    open fun <T> unsafeRunBlocking(coroutineContext: CoroutineContext, block: suspend () -> T): T {
+    open fun <T> runBlockingNoJs(coroutineContext: CoroutineContext, block: suspend () -> T): T {
         var completed = false
         var finalException: Throwable? = null
         var finalResult: T? = null
@@ -324,9 +324,13 @@ open class GameWindow : EventDispatcher.Mixin(), DialogInterface, CoroutineConte
     protected val gamePadUpdateEvent = GamePadUpdateEvent()
     protected val gamePadConnectionEvent = GamePadConnectionEvent()
 
+    suspend fun <T> runBlockingNoJs(block: suspend () -> T): T {
+        return runBlockingNoJs(coroutineContext, block)
+    }
+
     /** On JS this cannot work, because it requires the real event loop to be reached */
-    open fun <T> unsafeRunBlocking(coroutineContext: CoroutineContext, block: suspend () -> T): T {
-        return coroutineDispatcher.unsafeRunBlocking(coroutineContext, block)
+    open fun <T> runBlockingNoJs(coroutineContext: CoroutineContext, block: suspend () -> T): T {
+        return coroutineDispatcher.runBlockingNoJs(coroutineContext, block)
     }
 
     fun onRenderEvent(block: (RenderEvent) -> Unit) {

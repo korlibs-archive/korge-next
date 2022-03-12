@@ -27,6 +27,9 @@ class Stage(override val views: Views) : Container()
     override val stage: Stage = this
     override val resources get() = views.resources
 
+    fun <T> runBlockingNoJs(block: suspend () -> T): T =
+        gameWindow.runBlockingNoJs(this.coroutineContext, block)
+
     /** Mouse coordinates relative to the [Stage] singleton */
     val mouseXY: Point = Point(0.0, 0.0)
         get() {
