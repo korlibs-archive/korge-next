@@ -183,7 +183,7 @@ data class PatternDateFormat @JvmOverloads constructor(
                         }
                     }
                 }
-                "a" -> if (utc.hours < 12) "am" else "pm"
+                "a" -> realLocale.h12Marker[if (utc.hours < 12) 0 else 1]
                 else -> when {
                     name.startsWith('\'') -> name.substring(1, name.length - 1)
                     else -> name
