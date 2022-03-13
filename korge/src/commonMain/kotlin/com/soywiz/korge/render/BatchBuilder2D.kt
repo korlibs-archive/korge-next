@@ -8,7 +8,6 @@ import com.soywiz.klogger.*
 import com.soywiz.kmem.*
 import com.soywiz.korag.*
 import com.soywiz.korag.shader.*
-import com.soywiz.korge.annotations.KorgeExperimental
 import com.soywiz.korge.internal.*
 import com.soywiz.korge.view.*
 import com.soywiz.korim.bitmap.*
@@ -144,9 +143,6 @@ class BatchBuilder2D constructor(
 
 	private val projMat = Matrix3D()
 
-    @KorgeExperimental
-    private val texTransformMat = Matrix3D()
-
     @KorgeInternal
 	val viewMat = Matrix3D()
     @KorgeInternal
@@ -245,6 +241,9 @@ class BatchBuilder2D constructor(
 		colorMul: RGBA, colorAdd: ColorAdd,
         texIndex: Int = currentTexIndex
 	) {
+        //println("drawQuadFast[${ag.currentRenderBuffer}, renderingToTexture=${ag.renderingToTexture}]: ($x0,$y0)-($x2,$y2) tex=$tex")
+        //println("viewMat=$viewMat, projMat=$projMat")
+
         ensure(6, 4)
         addQuadIndices()
         var vp = vertexPos
@@ -636,7 +635,13 @@ class BatchBuilder2D constructor(
         )
 	}
 
-	companion object {
+    enum class AddType(val index: Int) {
+        NO_ADD(0),
+        POST_ADD(1),
+        PRE_ADD(2);
+    }
+
+    companion object {
         val DEFAULT_BATCH_QUADS = 4096
         val MAX_BATCH_QUADS = 16383
 
@@ -681,42 +686,46 @@ class BatchBuilder2D constructor(
 
 		init { logger.trace { "BatchBuilder2D.Companion[3]" } }
 
-        private fun getShaderProgramIndex(premultiplied: Boolean, preadd: Boolean): Int {
-            return 0.insert(premultiplied, 0).insert(preadd, 1)
+        private fun getShaderProgramIndex(premultiplied: Boolean, add: AddType): Int = 0
+            .insert(premultiplied, 0)
+            .insert(add.index, 1, 2)
+
+        private val _PROGRAMS: Array<Program?> = arrayOfNulls(64)
+
+        private fun getOrCreateStandardProgram(premultiplied: Boolean, preaddType: AddType): Program {
+            val index = getShaderProgramIndex(premultiplied, preaddType)
+            if (_PROGRAMS[index] == null) _PROGRAMS[index] = _createProgramUncached(premultiplied, preaddType)
+            return _PROGRAMS[index]!!
         }
 
-        private val FRAGMENTS = Array(4) { index ->
-            val premultiplied = index.extractBool(0)
-            val preadd = index.extractBool(1)
-            buildTextureLookupFragment(premultiplied = premultiplied, preadd = preadd)
-        }
-
-        @KorgeInternal
-        val FRAGMENT_PRE = FRAGMENTS[getShaderProgramIndex(premultiplied = true, preadd = false)]
-
-        @KorgeInternal
-        val FRAGMENT_NOPRE = FRAGMENTS[getShaderProgramIndex(premultiplied = false, preadd = false)]
-
-        private val PROGRAMS = Array(4) { index ->
-            val premultiplied = index.extractBool(0)
-            val preadd = index.extractBool(1)
-            Program(
+        private fun _createProgramUncached(premultiplied: Boolean, addType: AddType): Program {
+            val fragment = buildTextureLookupFragment(premultiplied = premultiplied, add = addType)
+            val premultString = if (premultiplied) "Premultiplied" else "NoPremultiplied"
+            val addString = when (addType) {
+                AddType.NO_ADD -> ".NoAdd"
+                AddType.PRE_ADD -> ".PreAdd"
+                AddType.POST_ADD -> ".PostAdd"
+            }
+            return Program(
                 vertex = VERTEX,
-                fragment = FRAGMENTS[index],
-                name = "BatchBuilder2D.${if (premultiplied) "Premultiplied" else "NoPremultiplied"}.Tinted${if (preadd) ".Preadd" else ""}"
+                fragment = fragment,
+                name = "BatchBuilder2D.${premultString}.Tinted${addString}"
             )
         }
 
-        @KorgeInternal
-		val PROGRAM_PRE = PROGRAMS[getShaderProgramIndex(true, false)]
+        private val defaultAddType = AddType.NO_ADD
+        //private val defaultAddType = AddType.PRE_ADD
 
         @KorgeInternal
-		val PROGRAM_NOPRE = PROGRAMS[getShaderProgramIndex(false, false)]
+		val PROGRAM_PRE = getOrCreateStandardProgram(true, defaultAddType)
+
+        @KorgeInternal
+		val PROGRAM_NOPRE = getOrCreateStandardProgram(false, defaultAddType)
 
 		init { logger.trace { "BatchBuilder2D.Companion[4]" } }
 
         @KorgeInternal
-        fun getTextureLookupProgram(premultiplied: Boolean, preadd: Boolean = false) = PROGRAMS[getShaderProgramIndex(premultiplied, preadd)]
+        fun getTextureLookupProgram(premultiplied: Boolean, add: AddType = AddType.POST_ADD) = getOrCreateStandardProgram(premultiplied, add)
 
 		//val PROGRAM_NORMAL = Program(
 		//	vertex = VERTEX,
@@ -729,13 +738,11 @@ class BatchBuilder2D constructor(
 		//	name = "BatchBuilder2D.Tinted"
 		//)
 
-        fun getTextureLookupFragment(premultiplied: Boolean, preadd: Boolean = false) = FRAGMENTS[getShaderProgramIndex(premultiplied, preadd)]
-
         /**
          * Builds a [FragmentShader] for textured and colored drawing that works matching if the texture is [premultiplied]
          */
         @KorgeInternal
-		fun buildTextureLookupFragment(premultiplied: Boolean, preadd: Boolean = false) = FragmentShader {
+		private fun buildTextureLookupFragment(premultiplied: Boolean, add: AddType) = FragmentShader {
 			DefaultShaders.apply {
                 IF_ELSE_BINARY_LOOKUP(v_TexIndex, 0, BB_MAX_TEXTURES - 1) { n ->
                     SET(out, texture2D(u_TexN[n], v_Tex["xy"]))
@@ -751,10 +758,16 @@ class BatchBuilder2D constructor(
 
 				// @TODO: Kotlin.JS bug?
 				//SET(out, (out["rgba"] * v_ColMul["rgba"]) + ((v_ColAdd["rgba"] - vec4(.5f, .5f, .5f, .5f)) * 2f))
-                if (preadd) {
-                    SET(out, (clamp(out["rgba"] + ((BatchBuilder2D.v_ColAdd["rgba"] - vec4(.5f.lit, .5f.lit, .5f.lit, .5f.lit)) * 2f.lit), 0f.lit, 1f.lit) * BatchBuilder2D.v_ColMul["rgba"]))
-                } else {
-                    SET(out, (out["rgba"] * v_ColMul["rgba"]) + ((v_ColAdd["rgba"] - vec4(.5f.lit, .5f.lit, .5f.lit, .5f.lit)) * 2f.lit))
+                when (add) {
+                    AddType.NO_ADD -> {
+                        SET(out, out["rgba"] * v_ColMul["rgba"])
+                    }
+                    AddType.POST_ADD -> {
+                        SET(out, (clamp(out["rgba"] + ((v_ColAdd["rgba"] - vec4(.5f.lit, .5f.lit, .5f.lit, .5f.lit)) * 2f.lit), 0f.lit, 1f.lit) * v_ColMul["rgba"]))
+                    }
+                    AddType.PRE_ADD -> {
+                        SET(out, (out["rgba"] * v_ColMul["rgba"]) + ((v_ColAdd["rgba"] - vec4(.5f.lit, .5f.lit, .5f.lit, .5f.lit)) * 2f.lit))
+                    }
                 }
 
 				//SET(out, t_Temp1)
@@ -787,10 +800,8 @@ class BatchBuilder2D constructor(
     )
 
     fun updateStandardUniforms() {
+        //println("updateStandardUniforms: ag.currentSize(${ag.currentWidth}, ${ag.currentHeight}) : ${ag.currentRenderBuffer}")
         if (flipRenderTexture && ag.renderingToTexture) {
-            projMat.setToOrtho(tempRect.setBounds(0, ag.currentHeight, ag.currentWidth, 0), -1f, 1f)
-        // @TODO: Do we need this?
-        } else if (ag.flipRender) {
             projMat.setToOrtho(tempRect.setBounds(0, ag.currentHeight, ag.currentWidth, 0), -1f, 1f)
         } else {
             projMat.setToOrtho(tempRect.setBounds(0, 0, ag.currentWidth, ag.currentHeight), -1f, 1f)
@@ -821,6 +832,7 @@ class BatchBuilder2D constructor(
 			val realFactors = if (ag.renderingToTexture) factors.toRenderImageIntoFbo() else factors
 
 			//println("RENDER: $realFactors")
+            //println("DRAW: $uniforms")
 
 			ag.drawV2(
                 vertexData = vertexData,

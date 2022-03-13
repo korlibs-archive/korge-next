@@ -1,7 +1,6 @@
 import com.soywiz.korlibs.modules.*
 import com.soywiz.korlibs.util.*
 import org.gradle.kotlin.dsl.kotlin
-import org.jetbrains.kotlin.gradle.plugin.*
 import java.io.File
 
 buildscript {
@@ -26,17 +25,14 @@ buildscript {
 }
 
 plugins {
-    val kotlinVersion: String by project
-    val realKotlinVersion = (System.getenv("FORCED_KOTLIN_VERSION") ?: kotlinVersion)
-
 	java
-    kotlin("multiplatform") //version realKotlinVersion
+    kotlin("multiplatform")
     signing
     `maven-publish`
 }
 
 //val headlessTests = true
-val headlessTests = System.getenv("CI") == "true" || System.getenv("HEADLESS_TESTS") == "true"
+val headlessTests = System.getenv("NON_HEADLESS_TESTS") != "true"
 val useMimalloc = true
 //val useMimalloc = false
 
@@ -71,43 +67,6 @@ allprojects {
 	}
 }
 
-val enableKotlinNative: String by project
-val doEnableKotlinNative get() = enableKotlinNative == "true"
-
-val enableKotlinAndroid: String by project
-val doEnableKotlinAndroid get() = enableKotlinAndroid == "true"
-
-val enableKotlinMobile:String by project
-val doEnableKotlinMobile get() = enableKotlinMobile == "true"
-
-val enableKotlinRaspberryPi: String by project
-val doEnableKotlinRaspberryPi get() = enableKotlinRaspberryPi == "true"
-
-val KotlinTarget.isLinuxX64 get() = this.name == "linuxX64"
-val KotlinTarget.isLinuxArm32Hfp get() = this.name == "linuxArm32Hfp" && doEnableKotlinRaspberryPi
-val KotlinTarget.isLinux get() = isLinuxX64 || isLinuxArm32Hfp
-val KotlinTarget.isWin get() = this.name == "mingwX64"
-val KotlinTarget.isMacosX64 get() = this.name == "macosX64"
-val KotlinTarget.isMacosArm64 get() = this.name == "macosArm64"
-val KotlinTarget.isMacos get() = isMacosX64 || isMacosArm64
-val KotlinTarget.isIosArm64 get() = this.name == "iosArm64"
-val KotlinTarget.isIosX64 get() = this.name == "iosX64"
-val KotlinTarget.isIosSimulatorArm64 get() = this.name == "iosSimulatorArm64"
-val KotlinTarget.isIos get() = isIosArm64 || isIosX64 || isIosSimulatorArm64
-val KotlinTarget.isWatchosX86 get() = this.name == "watchosX86"
-val KotlinTarget.isWatchosArm32 get() = this.name == "watchosArm32"
-val KotlinTarget.isWatchosArm64 get() = this.name == "watchosArm64"
-val KotlinTarget.isWatchos get() = isWatchosX86 || isWatchosArm32 || isWatchosArm64
-val KotlinTarget.isTvosX64 get() = this.name == "tvosX64"
-val KotlinTarget.isTvosArm64 get() = this.name == "tvosArm64"
-val KotlinTarget.isTvos get() = isTvosX64 || isTvosArm64
-val KotlinTarget.isDesktop get() = isWin || isLinux || isMacos
-
-val isWindows get() = org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_WINDOWS)
-val isMacos get() = org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_MAC)
-val isArm get() = listOf("arm", "arm64", "aarch64").any { org.apache.tools.ant.taskdefs.condition.Os.isArch(it) }
-val isLinux get() = !isWindows && !isMacos
-
 fun guessAndroidSdkPath(): String? {
     val userHome = System.getProperty("user.home")
     return listOfNotNull(
@@ -136,22 +95,6 @@ kotlin {
     jvm { }
 }
 
-fun org.jetbrains.kotlin.gradle.dsl.KotlinTargetContainerWithPresetFunctions.nativeTargets(): List<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
-    return when {
-        isWindows -> listOfNotNull(mingwX64())
-        isMacos -> listOf(macosX64(), macosArm64())
-        else -> listOfNotNull(
-            linuxX64(),
-            mingwX64(),
-            macosX64(), macosArm64(),
-            if (doEnableKotlinRaspberryPi) linuxArm32Hfp() else null
-        )
-    }
-}
-
-fun org.jetbrains.kotlin.gradle.dsl.KotlinTargetContainerWithPresetFunctions.mobileTargets(): List<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
-    return listOf(iosArm64(), iosX64(), iosSimulatorArm64())
-}
 
 //apply(from = "${rootProject.rootDir}/build.idea.gradle")
 
@@ -190,7 +133,7 @@ subprojects {
             project.hasBuildGradle()
 
     if (doConfigure) {
-        val isSample = project.path.startsWith(":samples")
+        val isSample = project.path.startsWith(":samples") || project.path.contains(":korge-sandbox")
         val hasAndroid = doEnableKotlinAndroid && hasAndroidSdk
         //val hasAndroid = !isSample && true
         val mustPublish = !isSample
@@ -308,8 +251,8 @@ subprojects {
             }
 
             val desktopAndMobileTargets = ArrayList<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>().apply {
-                if (doEnableKotlinNative) addAll(nativeTargets())
-                if (doEnableKotlinMobile) addAll(mobileTargets())
+                if (doEnableKotlinNative) addAll(nativeTargets(project))
+                if (doEnableKotlinMobile) addAll(mobileTargets(project))
             }.toList()
 
             for (target in desktopAndMobileTargets) {
@@ -343,7 +286,8 @@ subprojects {
                     }
                 }
 
-                fun createPairSourceSet(name: String, vararg dependencies: PairSourceSet, block: org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet.(test: Boolean) -> Unit = { }): PairSourceSet {
+                //fun createPairSourceSet(name: String, vararg dependencies: PairSourceSet, block: org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet.(test: Boolean) -> Unit = { }): PairSourceSet {
+                fun createPairSourceSet(name: String, dependency: PairSourceSet? = null, block: org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet.(test: Boolean) -> Unit = { }): PairSourceSet { val dependencies = listOfNotNull(dependency)
                     //println("${project.name}: CREATED SOURCE SET: \"${name}Main\"")
                     val main = maybeCreate("${name}Main").apply { block(false) }
                     val test = maybeCreate("${name}Test").apply { block(true) }
@@ -366,14 +310,11 @@ subprojects {
                 }
 
                 val concurrent = createPairSourceSet("concurrent", common)
-                val nonNativeCommon = createPairSourceSet("nonNativeCommon", common)
-                val nonJs = createPairSourceSet("nonJs", common)
-                val nonJvm = createPairSourceSet("nonJvm", common)
-                val jvmAndroid = createPairSourceSet("jvmAndroid", common)
+                val jvmAndroid = createPairSourceSet("jvmAndroid", concurrent)
 
                 // Default source set for JVM-specific sources and dependencies:
                 // JVM-specific tests and their dependencies:
-                val jvm = createPairSourceSet("jvm", concurrent, nonNativeCommon, nonJs, jvmAndroid) { test ->
+                val jvm = createPairSourceSet("jvm", jvmAndroid) { test ->
                     dependencies {
                         if (test) {
                             implementation(kotlin("test-junit"))
@@ -384,7 +325,7 @@ subprojects {
                 }
 
                 if (hasAndroid) {
-                    val android = createPairSourceSet("android", concurrent, nonNativeCommon, nonJs, jvmAndroid) { test ->
+                    val android = createPairSourceSet("android", jvmAndroid) { test ->
                         dependencies {
                             if (test) {
                                 //implementation(kotlin("test"))
@@ -398,7 +339,7 @@ subprojects {
                     }
                 }
 
-                val js = createPairSourceSet("js", common, nonNativeCommon, nonJvm) { test ->
+                val js = createPairSourceSet("js", common) { test ->
                     dependencies {
                         if (test) {
                             implementation(kotlin("test-js"))
@@ -409,76 +350,72 @@ subprojects {
                 }
 
                 if (doEnableKotlinNative) {
-                    val nativeCommon by lazy { createPairSourceSet("nativeCommon", concurrent) }
-                    val nativeDesktop by lazy { createPairSourceSet("nativeDesktop", nativeCommon) }
-                    val nativePosix by lazy { createPairSourceSet("nativePosix", nativeCommon) }
-                    val nativePosixNonApple by lazy { createPairSourceSet("nativePosixNonApple", nativePosix) }
-                    val nativePosixApple by lazy { createPairSourceSet("nativePosixApple", nativePosix) }
-                    val iosWatchosTvosCommon by lazy { createPairSourceSet("iosWatchosTvosCommon", nativePosixApple) }
-                    val iosWatchosCommon by lazy { createPairSourceSet("iosWatchosCommon", nativePosixApple) }
-                    val iosTvosCommon by lazy { createPairSourceSet("iosTvosCommon", nativePosixApple) }
-                    val tvosCommon by lazy { createPairSourceSet("tvosCommon", nativePosixApple) }
-                    val macosIosTvosCommon by lazy { createPairSourceSet("macosIosTvosCommon", nativePosixApple) }
-                    val macosIosWatchosCommon by lazy { createPairSourceSet("macosIosWatchosCommon", nativePosixApple) }
-                    val iosCommon by lazy { createPairSourceSet("iosCommon", iosWatchosTvosCommon) }
+                    val native by lazy { createPairSourceSet("native", concurrent) }
+                    val posix by lazy { createPairSourceSet("posix", native) }
+                    val darwin by lazy { createPairSourceSet("darwin", posix) }
 
-                    val macosCommon by lazy { createPairSourceSet("macosCommon", nativePosixApple) }
-                    val linuxCommon by lazy { createPairSourceSet("linuxCommon", nativePosixNonApple) }
-                    val mingwCommon by lazy { createPairSourceSet("mingwCommon", nativeDesktop) }
+                    val linux by lazy { createPairSourceSet("linux", posix) }
+                    val macos by lazy { createPairSourceSet("macos", darwin) }
+                    val mingw by lazy { createPairSourceSet("mingw", native) }
 
-                    val nativeTargets = nativeTargets()
+                    val nativeTargets = nativeTargets(project)
 
                     for (target in nativeTargets) {
-                        val native = createPairSourceSet(target.name, common, nativeCommon, nonJvm, nonJs)
-                        if (target.isDesktop) {
-                            native.dependsOn(nativeDesktop)
-                        }
-                        if (target.isLinux || target.isMacos) {
-                            native.dependsOn(nativePosix)
-                        }
-                        if (target.isLinux) {
-                            native.dependsOn(nativePosixNonApple)
-                            native.dependsOn(linuxCommon)
-                        }
-                        if (target.isWin) {
-                            native.dependsOn(mingwCommon)
-                        }
-                        if (target.isMacos) {
-                            native.dependsOn(nativePosixApple)
-                            native.dependsOn(macosIosTvosCommon)
-                            native.dependsOn(macosIosWatchosCommon)
-                            native.dependsOn(macosCommon)
+                        val native = createPairSourceSet(target.name)
+                        when {
+                            target.isWin -> native.dependsOn(mingw)
+                            target.isMacos -> native.dependsOn(macos)
+                            target.isLinux -> native.dependsOn(linux)
                         }
                     }
 
-                    if (doEnableKotlinMobile) {
-                        for (target in mobileTargets()) {
-                            val native = createPairSourceSet(target.name, common, nativeCommon, nonJvm, nonJs)
-                            if (target.isIos) {
-                                native.dependsOn(nativePosixApple)
-                                native.dependsOn(iosCommon)
-                                native.dependsOn(iosWatchosTvosCommon)
-                                native.dependsOn(iosWatchosCommon)
-                                native.dependsOn(iosTvosCommon)
-                                native.dependsOn(macosIosTvosCommon)
-                                native.dependsOn(macosIosWatchosCommon)
-                            }
-                            if (target.isWatchos) {
-                                native.dependsOn(nativePosixApple)
-                                native.dependsOn(iosWatchosCommon)
-                                native.dependsOn(iosWatchosTvosCommon)
-                                native.dependsOn(macosIosWatchosCommon)
-                            }
-                            if (target.isTvos) {
-                                native.dependsOn(nativePosixApple)
-                                native.dependsOn(iosWatchosTvosCommon)
-                                native.dependsOn(iosTvosCommon)
-                                native.dependsOn(macosIosTvosCommon)
-                                native.dependsOn(tvosCommon)
-                            }
+                    val darwinMobile by lazy { createPairSourceSet("darwinMobile", darwin) }
+                    val iosTvos by lazy { createPairSourceSet("iosTvos", darwinMobile) }
+                    val watchos by lazy { createPairSourceSet("watchos", darwinMobile) }
+                    val tvos by lazy { createPairSourceSet("tvos", iosTvos) }
+                    val ios by lazy { createPairSourceSet("ios", iosTvos) }
+
+                    for (target in mobileTargets(project)) {
+                        val native = createPairSourceSet(target.name)
+                        when {
+                            target.isIos -> native.dependsOn(ios)
+                            target.isWatchos -> native.dependsOn(watchos)
+                            target.isTvos -> native.dependsOn(tvos)
                         }
                     }
 
+                    for (baseName in listOf(
+                        "nativeInteropMain",
+                        "posixInteropMain",
+                        "darwinInteropMain",
+                        "linuxInteropMain",
+                    )) {
+                        val nativeInteropMainFolder = file("src/$baseName/kotlin")
+                        if (nativeInteropMainFolder.isDirectory) {
+                            val currentNativeTarget = currentPlatformNativeTarget(project)
+                            // @TODO: Copy instead of use the same source folder
+                            for (target in allNativeTargets(project)) {
+                                if (baseName.contains("posix", ignoreCase = true) && !target.isPosix) continue
+                                if (baseName.contains("darwin", ignoreCase = true) && !target.isApple) continue
+                                if (baseName.contains("linux", ignoreCase = true) && !target.isLinux) continue
+
+                                val sourceSet = this@sourceSets.maybeCreate("${target.name}Main")
+                                val folder = when {
+                                    target == currentNativeTarget -> nativeInteropMainFolder
+                                    else -> {
+                                        file("build/${baseName}Copy${target.name}").also { outFolder ->
+                                            outFolder.mkdirs()
+                                            sync {
+                                                from(nativeInteropMainFolder)
+                                                into(outFolder)
+                                            }
+                                        }
+                                    }
+                                }
+                                sourceSet.kotlin.srcDir(folder)
+                            }
+                        }
+                    }
 
                     // Copy test resources
                     afterEvaluate {
@@ -635,31 +572,6 @@ nonSamples {
                             appendNode("url").setValue(project.property("project.scm.url"))
                         }
 
-                        // Workaround for kotlin-native cinterops without gradle metadata
-                        //if (korlibs.cinterops.isNotEmpty()) {
-                        //    val dependenciesList = (this.get("dependencies") as NodeList)
-                        //    if (dependenciesList.isNotEmpty()) {
-                        //        (dependenciesList.first() as Node).apply {
-                        //            for (cinterop in korlibs.cinterops.filter { it.targets.contains(publication.name) }) {
-                        //                appendNode("dependency").apply {
-                        //                    appendNode("groupId").setValue("${project.group}")
-                        //                    appendNode("artifactId").setValue("${project.name}-${publication.name.toLowerCase()}")
-                        //                    appendNode("version").setValue("${project.version}")
-                        //                    appendNode("type").setValue("klib")
-                        //                    appendNode("classifier").setValue("cinterop-${cinterop.name}")
-                        //                    appendNode("scope").setValue("compile")
-                        //                    appendNode("exclusions").apply {
-                        //                        appendNode("exclusion").apply {
-                        //                            appendNode("artifactId").setValue("*")
-                        //                            appendNode("groupId").setValue("*")
-                        //                        }
-                        //                    }
-                        //                }
-                        //            }
-                        //        }
-                        //    }
-                        //}
-
                         // Changes runtime -> compile in Android's AAR publications
                         if (publication.pom.packaging == "aar") {
                             val nodes = this.getAt(groovy.xml.QName("dependencies")).getAt("dependency").getAt("scope")
@@ -711,7 +623,7 @@ samples {
         val jvmMainClasses by getting
         val runJvm by creating(KorgeJavaExec::class) {
             group = "run"
-            main = "MainKt"
+            mainClass.set("MainKt")
             if (!beforeJava9) jvmArgs("--add-opens=java.desktop/sun.java2d.opengl=ALL-UNNAMED")
         }
         val runJs by creating {
@@ -799,7 +711,7 @@ samples {
         }
 
         if (doEnableKotlinNative) {
-            for (target in nativeTargets()) {
+            for (target in nativeTargets(project)) {
                 target.apply {
                     binaries {
                         executable {
@@ -812,7 +724,7 @@ samples {
             val nativeDesktopFolder = File(project.buildDir, "platforms/nativeDesktop")
             //val nativeDesktopEntryPointSourceSet = kotlin.sourceSets.create("nativeDesktopEntryPoint")
             //nativeDesktopEntryPointSourceSet.kotlin.srcDir(nativeDesktopFolder)
-            sourceSets.getByName("nativeCommonMain") { kotlin.srcDir(nativeDesktopFolder) }
+            sourceSets.getByName("nativeMain") { kotlin.srcDir(nativeDesktopFolder) }
 
             val createEntryPointAdaptorNativeDesktop = tasks.create("createEntryPointAdaptorNativeDesktop") {
                 val mainEntrypointFile = File(nativeDesktopFolder, "entrypoint/main.kt")
@@ -836,7 +748,7 @@ samples {
                 }
             }
 
-            val nativeDesktopTargets = nativeTargets()
+            val nativeDesktopTargets = nativeTargets(project)
             val allNativeTargets = nativeDesktopTargets
 
             //for (target in nativeDesktopTargets) {
@@ -984,14 +896,30 @@ if (
     // exec { commandLine("sudo", "apt-get", "-y", "install", "libgtk-3-dev") }
 }
 
+/*
 allprojects {
     //println("GROUP: $group")
+    tasks.whenTaskAdded {
+        if ("DebugUnitTest" in name || "ReleaseUnitTest" in name) {
+            enabled = false
+            // MPP + Android unit testing is so broken we just disable it altogether,
+            // (discussion here https://kotlinlang.slack.com/archives/C3PQML5NU/p1572168720226200)
+        }
+    }
+    afterEvaluate {
+        // Remove log pollution until Android support in KMP improves.
+        project.extensions.findByType<org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension>()?.let { kmpExt ->
+            kmpExt.sourceSets.removeAll { it.name == "androidAndroidTestRelease" }
+        }
+    }
 }
+*/
 
 subprojects {
     afterEvaluate {
         tasks {
             val publishKotlinMultiplatformPublicationToMavenLocal = "publishKotlinMultiplatformPublicationToMavenLocal"
+            val publishKotlinMultiplatformPublicationToMavenRepository = "publishKotlinMultiplatformPublicationToMavenRepository"
 
             val publishJvmLocal by creating(Task::class) {
                 if (findByName(publishKotlinMultiplatformPublicationToMavenLocal) != null) {
@@ -1033,6 +961,50 @@ subprojects {
                 if (findByName(publishKotlinMultiplatformPublicationToMavenLocal) != null) {
                     dependsOn("publishIosArm64PublicationToMavenLocal")
                     dependsOn(publishKotlinMultiplatformPublicationToMavenLocal)
+                }
+            }
+            val publishMobileLocal by creating(Task::class) {
+                run {
+                    val taskName = "publishJvmPublicationToMavenLocal"
+                    if (findByName(taskName) != null) {
+                        dependsOn(taskName)
+                    }
+                }
+                if (findByName(publishKotlinMultiplatformPublicationToMavenLocal) != null) {
+                    dependsOn(publishKotlinMultiplatformPublicationToMavenLocal)
+                    dependsOn("publishAndroidPublicationToMavenLocal")
+                    dependsOn("publishIosArm64PublicationToMavenLocal")
+                    dependsOn("publishIosX64PublicationToMavenRepository")
+                }
+            }
+
+            val customMavenUser = rootProject.findProperty("KORLIBS_CUSTOM_MAVEN_USER")?.toString()
+            val customMavenPass = rootProject.findProperty("KORLIBS_CUSTOM_MAVEN_PASS")?.toString()
+            val customMavenUrl = rootProject.findProperty("KORLIBS_CUSTOM_MAVEN_URL")?.toString()
+            val customPublishEnabled = forcedVersion != null
+                && !customMavenUser.isNullOrBlank()
+                && !customMavenPass.isNullOrBlank()
+                && !customMavenUrl.isNullOrBlank()
+
+            val publishMobileRepo by creating(Task::class) {
+                doFirst {
+                    if (!customPublishEnabled) {
+                        error("To use publishMobileRepo, must set `FORCED_VERSION=...` environment variable, and in ~/.gradle/gradle.properties : KORLIBS_CUSTOM_MAVEN_USER, KORLIBS_CUSTOM_MAVEN_PASS & KORLIBS_CUSTOM_MAVEN_URL")
+                    }
+                }
+                if (customPublishEnabled) {
+                    run {
+                        val taskName = "publishJvmPublicationToMavenRepository"
+                        if (findByName(taskName) != null) {
+                            dependsOn(taskName)
+                        }
+                    }
+                    if (findByName(publishKotlinMultiplatformPublicationToMavenRepository) != null) {
+                        dependsOn(publishKotlinMultiplatformPublicationToMavenRepository)
+                        dependsOn("publishAndroidPublicationToMavenRepository")
+                        dependsOn("publishIosArm64PublicationToMavenRepository")
+                        dependsOn("publishIosX64PublicationToMavenRepository")
+                    }
                 }
             }
         }

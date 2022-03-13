@@ -39,7 +39,7 @@ fun Project.configureJvm() {
 		project.afterEvaluate {
 			val beforeJava9 = System.getProperty("java.version").startsWith("1.")
 		    if (!beforeJava9) task.jvmArgs(project.korge.javaAddOpens)
-			task.main = korge.realJvmMainClassName
+			task.mainClass.set(korge.realJvmMainClassName)
 		}
 	}
 
@@ -48,7 +48,7 @@ fun Project.configureJvm() {
 			project.addTask<KorgeJavaExec>("runJvm${entry.name.capitalize()}", group = GROUP_KORGE) { task ->
 				group = GROUP_KORGE_RUN
 				dependsOn("jvmMainClasses")
-				task.main = entry.jvmMainClassName
+				task.mainClass.set(entry.jvmMainClassName)
 			}
 		}
 	}
@@ -62,33 +62,33 @@ fun Project.configureJvm() {
 
 	addProguard()
 	configureJvmTest()
+
+    val jvmProcessResources = tasks.findByName("jvmProcessResources") as? Copy?
+    jvmProcessResources?.duplicatesStrategy = org.gradle.api.file.DuplicatesStrategy.INCLUDE
 }
 
-private val Project.jvmCompilation get() = kotlin.targets.getByName("jvm").compilations as NamedDomainObjectSet<*>
-private val Project.mainJvmCompilation get() = jvmCompilation.getByName("main") as org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmCompilation
+private val Project.jvmCompilation: NamedDomainObjectSet<*> get() = kotlin.targets.getByName("jvm").compilations as NamedDomainObjectSet<*>
+private val Project.mainJvmCompilation: KotlinJvmCompilation get() = jvmCompilation.getByName("main") as org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmCompilation
 
 open class KorgeJavaExec : JavaExec() {
-    private val mainJvmCompilation by lazy { project.mainJvmCompilation }
-
-    private val korgeClassPathGet: FileCollection get() = listOf(
-        mainJvmCompilation.runtimeDependencyFiles,
-        mainJvmCompilation.compileDependencyFiles,
-        mainJvmCompilation.output.allOutputs,
-        mainJvmCompilation.output.classesDirs,
-        project.files().from(project.getCompilationKorgeProcessedResourcesFolder(mainJvmCompilation))
-    ).reduceRight { l, r -> l + r }
-
     @get:InputFiles
-    val korgeClassPath by lazy {
-        korgeClassPathGet
+    val korgeClassPath: FileCollection = run {
+        val mainJvmCompilation = project.mainJvmCompilation
+        listOf(
+            mainJvmCompilation.runtimeDependencyFiles,
+            mainJvmCompilation.compileDependencyFiles,
+            mainJvmCompilation.output.allOutputs,
+            mainJvmCompilation.output.classesDirs,
+            project.files().from(project.getCompilationKorgeProcessedResourcesFolder(mainJvmCompilation))
+        ).reduceRight { l, r -> l + r }
     }
 
     override fun exec() {
         val firstThread = firstThread
             ?: (
-                System.getenv("KORGE_START_ON_FIRST_THREAD") == "true" ||
-                    System.getenv("KORGW_JVM_ENGINE") == "sdl" ||
-                    project.findProperty("korgw.jvm.engine") == "sdl"
+                System.getenv("KORGE_START_ON_FIRST_THREAD") == "true"
+                    || System.getenv("KORGW_JVM_ENGINE") == "sdl"
+                    //|| project.findProperty("korgw.jvm.engine") == "sdl"
                 )
 
         if (firstThread && isMacos) {
@@ -99,7 +99,7 @@ open class KorgeJavaExec : JavaExec() {
         }
         classpath = korgeClassPath
         for (classPath in korgeClassPath.toList()) {
-            project.logger.info("- $classPath")
+            logger.info("- $classPath")
         }
         super.exec()
     }
@@ -169,7 +169,7 @@ open class PatchedProGuardTask : ProGuardTask() {
 private fun Project.addProguard() {
 	// packageJvmFatJar
 	val packageJvmFatJar = project.addTask<org.gradle.jvm.tasks.Jar>("packageJvmFatJar", group = GROUP_KORGE) { task ->
-		task.baseName = "${project.name}-all"
+        task.archiveBaseName.set("${project.name}-all")
 		task.group = GROUP_KORGE_PACKAGE
 		task.exclude(
 			"com/sun/jna/aix-ppc/**",
@@ -250,8 +250,8 @@ private fun Project.addProguard() {
 			task.keep("class ${project.korge.realJvmMainClassName} { *; }")
 			task.keep("class org.jcodec.** { *; }")
 
-			if (runJvm.main?.isNotBlank() == true) {
-				task.keep("""public class ${runJvm.main} { public static void main(java.lang.String[]); }""")
+			if (runJvm.mainClass.get().isNotBlank()) {
+				task.keep("""public class ${runJvm.mainClass.get()} { public static void main(java.lang.String[]); }""")
 			}
 		}
 

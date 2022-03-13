@@ -1,5 +1,6 @@
 package com.soywiz.korio.net
 
+import com.soywiz.klogger.*
 import com.soywiz.korio.async.*
 import com.soywiz.korio.concurrent.atomic.*
 import com.soywiz.korio.lang.*
@@ -25,6 +26,8 @@ suspend fun createTcpClient(host: String, port: Int, secure: Boolean = false): A
 
 interface AsyncClient : AsyncInputStream, AsyncOutputStream, AsyncCloseable {
 	suspend fun connect(host: String, port: Int)
+    val address: AsyncAddress get() = AsyncAddress()
+
 	val connected: Boolean
 	override suspend fun read(buffer: ByteArray, offset: Int, len: Int): Int
 	override suspend fun write(buffer: ByteArray, offset: Int, len: Int)
@@ -55,6 +58,8 @@ class FakeAsyncClient(
 ) : AsyncClient {
     override var connected: Boolean = false
 
+    override val address: AsyncAddress get() = AsyncAddress()
+
     override suspend fun connect(host: String, port: Int) {
         onConnect(host to port)
         connected = true
@@ -68,6 +73,8 @@ class FakeAsyncClient(
         onClose(Unit)
     }
 }
+
+data class AsyncAddress(val address: String = "0.0.0.0", val port: Int = 0)
 
 interface AsyncServer: AsyncCloseable {
 	val requestPort: Int
@@ -87,9 +94,23 @@ interface AsyncServer: AsyncCloseable {
 	suspend fun listen(handler: suspend (AsyncClient) -> Unit): Closeable {
 		val job = async(coroutineContext) {
             while (true) {
-                val client = accept()
-                launchImmediately(coroutineContext) {
-                    handler(client)
+                try {
+                    val client = accept()
+                    launchImmediately(coroutineContext) {
+                        supervisorScope {
+                            try {
+                                handler(client)
+                            } catch (e: IOException) {
+                                // DO Nothing
+                            } catch (e: Throwable) {
+                                Console.error("Failed in AsyncServer.listen.handler")
+                                e.printStackTrace()
+                            }
+                        }
+                    }
+                } catch (e: Throwable) {
+                    Console.error("Failed in AsyncServer.listen.accept")
+                    e.printStackTrace()
                 }
             }
 		}

@@ -25,6 +25,8 @@ import kotlin.jvm.JvmOverloads
 import kotlin.math.*
 import kotlin.native.concurrent.*
 
+open class SimpleAGOpengl<TKmlGl : KmlGl>(override val gl: TKmlGl, override val nativeComponent: Any = Unit) : AGOpengl()
+
 abstract class AGOpengl : AG() {
     class ShaderException(val str: String, val error: String, val errorInt: Int, val gl: KmlGl) :
         RuntimeException("Error Compiling Shader : ${errorInt.hex} : '$error' : source='$str', gl.versionInt=${gl.versionInt}, gl.versionString='${gl.versionString}', gl=$gl")
@@ -340,7 +342,7 @@ abstract class AGOpengl : AG() {
                     if (uniformType == VarType.TextureUnit) {
                         val tex = (unit.texture.fastCastTo<GlTexture?>())
                         tex?.bindEnsuring()
-                        tex?.setFilter(unit.linear)
+                        tex?.setFilter(unit.linear, unit.trilinear ?: unit.linear)
                     } else {
                         val tex = unit.texture.fastCastTo<TextureGeneric>()
                         tex.initialiseIfNeeded()
@@ -685,10 +687,12 @@ abstract class AGOpengl : AG() {
         //gl.disable(gl.SCISSOR_TEST)
         if (clearColor) {
             bits = bits or gl.COLOR_BUFFER_BIT
+            gl.colorMask(true, true, true, true)
             gl.clearColor(color.rf, color.gf, color.bf, color.af)
         }
         if (clearDepth) {
             bits = bits or gl.DEPTH_BUFFER_BIT
+            gl.depthMask(true)
             gl.clearDepthf(depth)
         }
         if (clearStencil) {
@@ -828,6 +832,8 @@ abstract class AGOpengl : AG() {
                 return texIds.getInt(0)
             }
 
+        override val nativeTexId: Int get() = tex
+
         fun createBufferForBitmap(bmp: Bitmap?): FBuffer? = when (bmp) {
             null -> null
             is NativeImage -> unsupported("Should not call createBufferForBitmap with a NativeImage")
@@ -945,9 +951,18 @@ abstract class AGOpengl : AG() {
             }
         }
 
-        fun setFilter(linear: Boolean) {
+        fun setFilter(linear: Boolean, trilinear: Boolean = linear) {
             val minFilter = if (this.mipmaps) {
-                if (linear) gl.LINEAR_MIPMAP_NEAREST else gl.NEAREST_MIPMAP_NEAREST
+                when {
+                    linear -> when {
+                        trilinear -> gl.LINEAR_MIPMAP_LINEAR
+                        else -> gl.LINEAR_MIPMAP_NEAREST
+                    }
+                    else -> when {
+                        trilinear -> gl.NEAREST_MIPMAP_LINEAR
+                        else -> gl.NEAREST_MIPMAP_NEAREST
+                    }
+                }
             } else {
                 if (linear) gl.LINEAR else gl.NEAREST
             }
@@ -966,6 +981,8 @@ abstract class AGOpengl : AG() {
             gl.texParameteri(forcedTexTarget, gl.TEXTURE_MIN_FILTER, min)
             gl.texParameteri(forcedTexTarget, gl.TEXTURE_MAG_FILTER, mag)
         }
+
+        override fun toString(): String = "AGOpengl.GlTexture($tex)"
     }
 
     override fun readColor(bitmap: Bitmap32) {
