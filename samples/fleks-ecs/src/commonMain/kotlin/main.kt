@@ -72,7 +72,7 @@ class ExampleScene : Scene() {
 
                 // Register external objects which are used by systems and component listeners
                 inject(assets)  // Assets are used by the SpriteSystem / SpriteListener to get the image data for drawing
-                inject("layer0", layer0)  // Currently we use only one layer to draw all objects to - this is also used in SpriteListener to add the image to the layer container
+                inject("layer0", layer0)  // Currently, we use only one layer to draw all objects to - this is also used in SpriteListener to add the image to the layer container
                 // inject("layer1", layer1)  // Add more layers when needed e.g. for explosion objects to be on top, etc.
             }
 
