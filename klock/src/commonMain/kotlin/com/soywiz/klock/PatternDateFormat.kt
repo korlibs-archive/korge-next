@@ -62,7 +62,7 @@ data class PatternDateFormat @JvmOverloads constructor(
         }
     }.toList()
 
-    internal val regexChunks = chunks.map {
+    internal val regexChunks: List<String> = chunks.map {
         when (it) {
             "E", "EE", "EEE", "EEEE", "EEEEE", "EEEEEE" -> """(\w+)"""
             "z", "zzz" -> """([\w\s\-\+:]+)"""
@@ -107,7 +107,7 @@ data class PatternDateFormat @JvmOverloads constructor(
     /**
      * @return the regular expression string used for matching this format, able to be composed into another regex
      */
-    fun matchingRegexString() = regexChunks.mapIndexed { index, it ->
+    fun matchingRegexString(): String = regexChunks.mapIndexed { index, it ->
         if (options.optionalSupport) {
             val opens = openOffsets.getOrElse(index) { 0 }
             val closes = closeOffsets.getOrElse(index) { 0 }
