@@ -63,9 +63,18 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     open val maxTextureSize = Size(2048, 2048)
 
     open val devicePixelRatio: Double = 1.0
-    open val pixelsPerInch: Double get() = 96.0
+    open val pixelsPerLogicalInchRatio: Double = 1.0
+    open val pixelsPerInch: Double = defaultPixelsPerInch
+    // Use this in the debug handler, while allowing people to access raw devicePixelRatio without the noise of window scaling
+    // I really dont know if "/" or "*" or right but in my mathematical mind "pixelsPerLogicalInchRatio" must increase and not decrease the scale
+    // maybe it is pixelsPerLogicalInchRatio / devicePixelRatio ?
+    open val computedPixelRatio: Double get() = devicePixelRatio * pixelsPerLogicalInchRatio
 
     open fun beforeDoRender() {
+    }
+
+    companion object {
+        const val defaultPixelsPerInch : Double = 96.0
     }
 
     inline fun doRender(block: () -> Unit) {
@@ -238,17 +247,17 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
 
     //TODO: would it better if this was an interface ?
     open inner class Texture : Closeable {
-        var isFbo = false
-        open val premultiplied = true
-        var requestMipmaps = false
-        var mipmaps = false; protected set
+        var isFbo: Boolean = false
+        open val premultiplied: Boolean = true
+        var requestMipmaps: Boolean = false
+        var mipmaps: Boolean = false; protected set
         var source: BitmapSourceBase = SyncBitmapSource.NIL
         private var uploaded: Boolean = false
         private var generating: Boolean = false
         private var generated: Boolean = false
         private var tempBitmap: Bitmap? = null
         var ready: Boolean = false; private set
-        val texId = lastTextureId++
+        val texId: Int = lastTextureId++
         open val nativeTexId: Int get() = texId
 
         init {
@@ -275,11 +284,12 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
             return upload(bmp?.extract(), mipmaps)
         }
 
-        fun upload(source: BitmapSourceBase, mipmaps: Boolean = false): Texture = this.apply {
+        fun upload(source: BitmapSourceBase, mipmaps: Boolean = false): Texture {
             this.source = source
             uploadedSource()
             invalidate()
             this.requestMipmaps = mipmaps
+            return this
         }
 
         fun uploadAndBindEnsuring(bmp: Bitmap?, mipmaps: Boolean = false): Texture =
@@ -298,8 +308,9 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         open fun unbind() {
         }
 
-        fun manualUpload() = this.apply {
+        fun manualUpload(): Texture {
             uploaded = true
+            return this
         }
 
         fun bindEnsuring(): Texture {
@@ -363,11 +374,13 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
 
     data class TextureUnit(
         var texture: AG.Texture? = null,
-        var linear: Boolean = true
+        var linear: Boolean = true,
+        var trilinear: Boolean? = null,
     ) {
-        fun set(texture: AG.Texture?, linear: Boolean) {
+        fun set(texture: AG.Texture?, linear: Boolean, trilinear: Boolean? = null) {
             this.texture = texture
             this.linear = linear
+            this.trilinear = trilinear
         }
     }
 

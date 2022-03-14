@@ -423,12 +423,18 @@ abstract class View internal constructor(
         }
 
     /**
+     * Deprecated, since color generation was not consistent between targets,
+     * and added an extra overhead that might not be needed for all the games.
+     *
      * Additive part of the color transform.
      * This Int is a packed version of R,G,B,A one-component byte values determining additive color transform.
      * @NOTE: If you don't have this value computed, you can use [ColorTransform.aR] aB, aG and aA to control the
      * per component values. You should call the [View.invalidate] method after that.
      */
+    @Deprecated("Use ColorMatrixFilter instead")
     var colorAdd: ColorAdd
+        //get() = ColorAdd.NEUTRAL
+        //set(_) = Unit
         get() = _colorTransform.colorAdd;
         set(v) {
             if (v != _colorTransform.colorAdd) {
@@ -834,13 +840,22 @@ abstract class View internal constructor(
         renderFiltered(ctx, filter!!)
     }
 
+    /** Usually a value between [0.0, 1.0] */
+    var filterScale: Double = 1.0
+
     fun renderFiltered(ctx: RenderContext, filter: Filter) {
         val bounds = getLocalBoundsOptimizedAnchored()
 
         val borderEffect = filter.border
         ctx.matrixPool.alloc { tempMat2d ->
-            val texWidth = bounds.width.toInt() + borderEffect * 2
-            val texHeight = bounds.height.toInt() + borderEffect * 2
+            val tryFilterScale = filterScale
+            val texWidthNoBorder = (bounds.width * tryFilterScale).toInt().coerceAtLeast(1)
+            val texHeightNoBorder = (bounds.height * tryFilterScale).toInt().coerceAtLeast(1)
+
+            val realFilterScale = (texWidthNoBorder.toDouble() / bounds.width)
+
+            val texWidth = texWidthNoBorder + borderEffect * 2
+            val texHeight = texHeightNoBorder + borderEffect * 2
 
             val addx = -bounds.x + borderEffect
             val addy = -bounds.y + borderEffect
@@ -868,6 +883,7 @@ abstract class View internal constructor(
                 tempMat2d.copyFrom(globalMatrixInv)
                 //tempMat2d.copyFrom(globalMatrix)
                 tempMat2d.translate(addx, addy)
+                tempMat2d.scale(realFilterScale)
                 //println("globalMatrixInv:$globalMatrixInv, tempMat2d=$tempMat2d")
                 //println("texWidth=$texWidth, texHeight=$texHeight, $bounds, addx=$addx, addy=$addy, globalMatrix=$globalMatrix, globalMatrixInv:$globalMatrixInv, tempMat2d=$tempMat2d")
                 @Suppress("DEPRECATION")
@@ -877,6 +893,7 @@ abstract class View internal constructor(
             }) { texture ->
                 tempMat2d.copyFrom(globalMatrix)
                 tempMat2d.pretranslate(-addx, -addy)
+                tempMat2d.prescale(1.0 / realFilterScale)
                 filter.render(
                     ctx,
                     tempMat2d,
@@ -1446,6 +1463,7 @@ abstract class View internal constructor(
 
         if (filter != null) {
             container.uiCollapsibleSection("Filter") {
+                uiEditableValue(view::filterScale, min = 0.0, max = 1.0, clamp = true)
                 filter!!.buildDebugComponent(views, this)
             }
         }
@@ -1692,6 +1710,11 @@ fun <T : View> T.onNextFrame(updatable: T.(views: Views) -> Unit): UpdateCompone
             updatable(this@onNextFrame, views)
         }
     }.attach()
+}
+
+inline fun <T : View> T.filterScale(scale: Double): T {
+    filterScale = scale
+    return this
 }
 
 inline fun <T : View> T.filters(vararg filters: Filter): T {
@@ -2182,6 +2205,35 @@ fun View?.isDescendantOf(other: View, include: Boolean = true): Boolean {
         current = current.parent
     }
     return current == other
+}
+
+sealed class ScalingOption {
+    // Scales the view to fit within the provided `width` and `height`.
+    data class ByWidthAndHeight(val width: Double, val height: Double) : ScalingOption()
+    // Scale the view's width to match the provided `width`.
+    data class ByWidth(val width: Double) : ScalingOption()
+    // Scale the view's height to match the provided `height`.
+    data class ByHeight(val height: Double) : ScalingOption()
+}
+
+// Scales `this` view by the provided `scalingOption` while maintaining the aspect ratio.
+fun <T : View> T.scaleWhileMaintainingAspect(scalingOption: ScalingOption): T {
+    val scaleValue = when (scalingOption) {
+        is ScalingOption.ByHeight -> {
+            scalingOption.height / this.scaledHeight
+        }
+        is ScalingOption.ByWidth -> {
+            scalingOption.width / this.scaledWidth
+        }
+        is ScalingOption.ByWidthAndHeight -> {
+            val scaledByWidth = scalingOption.width / this.scaledWidth
+            val scaledByHeight = scalingOption.height / this.scaledHeight
+            kotlin.math.min(scaledByHeight, scaledByWidth)
+        }
+    }
+    this.scaledHeight = this.scaledHeight * scaleValue
+    this.scaledWidth = this.scaledWidth * scaleValue
+    return this
 }
 
 /*

@@ -25,6 +25,8 @@ import kotlin.jvm.JvmOverloads
 import kotlin.math.*
 import kotlin.native.concurrent.*
 
+open class SimpleAGOpengl<TKmlGl : KmlGl>(override val gl: TKmlGl, override val nativeComponent: Any = Unit) : AGOpengl()
+
 abstract class AGOpengl : AG() {
     class ShaderException(val str: String, val error: String, val errorInt: Int, val gl: KmlGl) :
         RuntimeException("Error Compiling Shader : ${errorInt.hex} : '$error' : source='$str', gl.versionInt=${gl.versionInt}, gl.versionString='${gl.versionString}', gl=$gl")
@@ -42,8 +44,6 @@ abstract class AGOpengl : AG() {
     open val android: Boolean = false
     open val webgl: Boolean get() = false
     open val webgl2: Boolean get() = false
-
-    override var devicePixelRatio: Double = 1.0
 
     override fun contextLost() {
         Console.info("AG.contextLost()", this, gl, gl.root)
@@ -342,7 +342,7 @@ abstract class AGOpengl : AG() {
                     if (uniformType == VarType.TextureUnit) {
                         val tex = (unit.texture.fastCastTo<GlTexture?>())
                         tex?.bindEnsuring()
-                        tex?.setFilter(unit.linear)
+                        tex?.setFilter(unit.linear, unit.trilinear ?: unit.linear)
                     } else {
                         val tex = unit.texture.fastCastTo<TextureGeneric>()
                         tex.initialiseIfNeeded()
@@ -687,10 +687,12 @@ abstract class AGOpengl : AG() {
         //gl.disable(gl.SCISSOR_TEST)
         if (clearColor) {
             bits = bits or gl.COLOR_BUFFER_BIT
+            gl.colorMask(true, true, true, true)
             gl.clearColor(color.rf, color.gf, color.bf, color.af)
         }
         if (clearDepth) {
             bits = bits or gl.DEPTH_BUFFER_BIT
+            gl.depthMask(true)
             gl.clearDepthf(depth)
         }
         if (clearStencil) {
@@ -949,9 +951,18 @@ abstract class AGOpengl : AG() {
             }
         }
 
-        fun setFilter(linear: Boolean) {
+        fun setFilter(linear: Boolean, trilinear: Boolean = linear) {
             val minFilter = if (this.mipmaps) {
-                if (linear) gl.LINEAR_MIPMAP_NEAREST else gl.NEAREST_MIPMAP_NEAREST
+                when {
+                    linear -> when {
+                        trilinear -> gl.LINEAR_MIPMAP_LINEAR
+                        else -> gl.LINEAR_MIPMAP_NEAREST
+                    }
+                    else -> when {
+                        trilinear -> gl.NEAREST_MIPMAP_LINEAR
+                        else -> gl.NEAREST_MIPMAP_NEAREST
+                    }
+                }
             } else {
                 if (linear) gl.LINEAR else gl.NEAREST
             }

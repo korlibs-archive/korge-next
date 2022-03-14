@@ -90,10 +90,10 @@ open class ImageAnimationView<T: SmoothedBmpSlice>(
 
     private fun setFirstFrame() {
         if (computedDirection == ImageAnimation.Direction.REVERSE || computedDirection == ImageAnimation.Direction.ONCE_REVERSE) {
-                setFrame(nframes - 1)
-            } else {
-                setFrame(0)
-            }
+            setFrame(nframes - 1)
+        } else {
+            setFrame(0)
+        }
     }
 
     private fun didSetAnimation() {
