@@ -45,7 +45,6 @@ include(":korau")
 include(":korgw")
 include(":korvi")
 include(":korge")
-include(":korge-fleks")
 
 if (System.getenv("DISABLED_EXTRA_KORGE_LIBS") != "true") {
     include(":luak")
@@ -55,12 +54,12 @@ if (System.getenv("DISABLED_EXTRA_KORGE_LIBS") != "true") {
     include(":korge-swf")
     include(":korge-box2d")
     include(":korge-gradle-plugin")
+    include(":korge-fleks")
 }
 
 //include(":tensork")
 //include(":samples:parallax-scrolling-aseprite")
 //include(":samples:tiled-background")
-//include(":samples:ase-animations")
 include(":samples:fleks-ecs")
 
 if (!inCI) {
