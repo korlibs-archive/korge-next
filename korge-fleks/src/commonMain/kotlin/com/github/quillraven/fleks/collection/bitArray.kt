@@ -142,9 +142,7 @@ class BitArray(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is BitArray) throw FleksBitArrayTypeException(
-            if (other != null) other::class.toString() else "null"
-        )
+        if (other !is BitArray) return false
 
         val otherBits = other.bits
 

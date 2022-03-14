@@ -150,8 +150,8 @@ internal class BitArrayTest {
         bits.set(3)
         val otherBits = 42
 
-        assertFailsWith<FleksBitArrayTypeException> {  val result = bits.equals(otherBits) }
-        assertFailsWith<FleksBitArrayTypeException> {  val result = bits.equals(null) }
+        assertEquals(false, bits.equals(otherBits))
+        assertEquals(false, bits.equals(null))
     }
 
     @Test
