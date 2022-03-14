@@ -134,10 +134,8 @@ suspend fun VfsFile.readBitmap(
             nativeImageFormatProvider.decode(this, props)
         } catch (e: Throwable) {
             if (e is CancellationException) throw e
-            if (e !is FileNotFoundException) {
-                Console.error("Couldn't read native image: $e")
-                e.printStackTrace()
-            }
+            if (e is FileNotFoundException) throw e
+            Console.error("Couldn't read native image (fallback to non-native decoders): $e")
             formats.decode(this.read(), props.copy(filename = this.baseName))
         }
     }

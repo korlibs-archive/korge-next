@@ -72,6 +72,7 @@ fun <T> Promise<T>.toDeferred(): Deferred<T> {
     return out
 }
 
-suspend fun <T> Promise<T>.await(): T = suspendCoroutine { c ->
+suspend fun <T> Promise<T>.await(): T = suspendCancellableCoroutine { c ->
     this.then({ c.resume(it) }, { c.resumeWithException(it) })
+    //c.invokeOnCancellation { c.cancel() }
 }
