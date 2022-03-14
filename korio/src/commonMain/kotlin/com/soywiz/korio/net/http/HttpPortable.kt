@@ -191,6 +191,7 @@ internal class HttpPortableServer(val factory: AsyncSocketFactory) : HttpServer(
                 }
             }
         } catch (e: Throwable) {
+            if (e is CancellationException) throw e
             // Do nothing
             errorHandler(e)
         }

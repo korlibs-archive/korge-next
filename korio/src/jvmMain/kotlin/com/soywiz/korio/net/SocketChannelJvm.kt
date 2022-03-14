@@ -11,6 +11,7 @@ import java.nio.channels.AsynchronousChannelGroup
 import java.nio.channels.AsynchronousServerSocketChannel
 import java.nio.channels.AsynchronousSocketChannel
 import java.nio.channels.CompletionHandler
+import kotlin.coroutines.cancellation.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -50,6 +51,7 @@ class JvmAsyncServerSocketChannel(override val requestPort: Int, override val ho
         try {
             ssc.close()
         } catch (e: Throwable) {
+            if (e is CancellationException) throw e
             e.printStackTrace()
         }
     }
