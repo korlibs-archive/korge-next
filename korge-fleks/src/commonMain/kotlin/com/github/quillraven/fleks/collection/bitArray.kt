@@ -1,5 +1,6 @@
 package com.github.quillraven.fleks.collection
 
+import com.github.quillraven.fleks.FleksBitArrayTypeException
 import kotlin.math.min
 
 /**
@@ -140,10 +141,11 @@ class BitArray(
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other == null) return false
         if (this === other) return true
+        if (other !is BitArray) throw FleksBitArrayTypeException(
+            if (other != null) other::class.toString() else "null"
+        )
 
-        other as BitArray
         val otherBits = other.bits
 
         val commonWords: Int = min(bits.size, otherBits.size)

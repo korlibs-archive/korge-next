@@ -37,3 +37,6 @@ class FleksNoSuchEntityComponentException(entity: Entity, component: String) :
 
 class FleksUnusedInjectablesException(unused: List<KClass<*>>) :
     FleksException("There are unused injectables of following types: ${unused.map { it.simpleName }}")
+
+class FleksBitArrayTypeException(type: String) :
+    FleksException("Cannot compare two BitArrays if the other is of type '$type'.")

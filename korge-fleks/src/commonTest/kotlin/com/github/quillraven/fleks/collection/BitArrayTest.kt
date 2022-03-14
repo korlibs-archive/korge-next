@@ -1,5 +1,6 @@
 package com.github.quillraven.fleks.collection
 
+import com.github.quillraven.fleks.FleksBitArrayTypeException
 import kotlin.test.*
 
 internal class BitArrayTest {
@@ -141,5 +142,41 @@ internal class BitArrayTest {
 
         assertEquals(3, numCalls)
         assertEquals(listOf(117, 5, 3), bitsCalled)
+    }
+
+    @Test
+    fun bitArrayEqualsToIncompatibleTypeObject() {
+        val bits = BitArray(42)
+        bits.set(3)
+        val otherBits = 42
+
+        assertFailsWith<FleksBitArrayTypeException> {  val result = bits.equals(otherBits) }
+        assertFailsWith<FleksBitArrayTypeException> {  val result = bits.equals(null) }
+    }
+
+    @Test
+    fun bitArrayEqualsToSameObject() {
+        val bits = BitArray(42)
+        bits.set(3)
+
+        assertEquals(true, bits == bits)
+    }
+
+    @Test
+    fun bitArrayEqualsToOtherBitArray() {
+        val bits = BitArray(42)
+        bits.set(4)
+        val otherBits = BitArray(44)
+        otherBits.set(4)
+        val bits42 = BitArray(42)
+        bits42.set(4)
+
+        assertEquals(true, bits == otherBits, "bitArray equals to another bitArray with different size")
+        assertEquals(true, bits == bits42, "bitArray equals to another bitArray with equal size")
+
+        otherBits.set(7)
+        bits42.set(7)
+        assertEquals(false, bits == otherBits, "bitArray equals not to another bitArray with different size")
+        assertEquals(false, bits == bits42, "bitArray equals not to another bitArray with equal size")
     }
 }
