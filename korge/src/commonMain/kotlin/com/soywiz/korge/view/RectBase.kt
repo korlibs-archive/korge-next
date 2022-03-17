@@ -50,7 +50,7 @@ open class RectBase(
 	val sRight get() = sLeft + bwidth
 	val sBottom get() = sTop + bheight
 
-    private val vertices = TexturedVertexArray(4, TexturedVertexArray.QUAD_INDICES)
+    protected val vertices = TexturedVertexArray(4, TexturedVertexArray.QUAD_INDICES)
 
 	override fun renderInternal(ctx: RenderContext) {
 		if (!visible) return
@@ -60,11 +60,15 @@ open class RectBase(
             computeVertices()
         }
         //println("$name: ${vertices.str(0)}, ${vertices.str(1)}, ${vertices.str(2)}, ${vertices.str(3)}")
+        drawVertices(ctx)
+        //super.renderInternal(ctx)
+	}
+
+    protected open fun drawVertices(ctx: RenderContext) {
         ctx.useBatcher { batch ->
             batch.drawVertices(vertices, ctx.getTex(baseBitmap).base, smoothing, renderBlendMode.factors)
         }
-        //super.renderInternal(ctx)
-	}
+    }
 
     open protected fun computeVertices() {
         vertices.quad(0, sLeft, sTop, bwidth, bheight, globalMatrix, baseBitmap, renderColorMul, renderColorAdd)

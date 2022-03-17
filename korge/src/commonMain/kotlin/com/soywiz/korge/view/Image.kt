@@ -1,5 +1,7 @@
 package com.soywiz.korge.view
 
+import com.soywiz.korag.*
+import com.soywiz.korag.shader.*
 import com.soywiz.korge.debug.*
 import com.soywiz.korge.render.*
 import com.soywiz.korim.bitmap.*
@@ -73,6 +75,27 @@ open class BaseImage(
         super.renderInternal(ctx)
     }
 
+    var repeatX: ImageRepeat = ImageRepeat.CLAMP_TO_EDGE
+    var repeatY: ImageRepeat = ImageRepeat.CLAMP_TO_EDGE
+
+    var repeat: ImageRepeat
+        get() = repeatX
+        set(value) {
+            repeatX = value
+            repeatY = value
+        }
+
+    var program: Program? = null
+
+    override fun drawVertices(ctx: RenderContext) {
+        ctx.useBatcher { batch ->
+            batch.drawVertices(
+                vertices, ctx.getTex(baseBitmap).base, smoothing, renderBlendMode.factors,
+                program = program, repeatX = repeatX, repeatY = repeatY
+            )
+        }
+    }
+
     /*
     override val bwidth: Double get() = baseBitmap.width.toDouble()
     override val bheight: Double get() = baseBitmap.height.toDouble()
@@ -103,8 +126,16 @@ open class BaseImage(
     override fun createInstance(): View = BaseImage(bitmap, anchorX, anchorY, hitShape, smoothing)
 
     override fun toString(): String = super.toString() + ":bitmap=$bitmap"
-
 }
+
+typealias ImageRepeat = AG.TextureRepeat
+/*
+enum class ImageRepeat(val ag: AG.TextureRepeat) {
+    CLAMP_TO_EDGE(AG.TextureRepeat.CLAMP_TO_EDGE),
+    REPEAT(AG.TextureRepeat.REPEAT),
+    MIRRORED_REPEAT(AG.TextureRepeat.MIRRORED_REPEAT),
+}
+*/
 
 interface SmoothedBmpSlice {
     var bitmap: BaseBmpSlice

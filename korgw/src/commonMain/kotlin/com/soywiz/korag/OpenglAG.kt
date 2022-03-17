@@ -4,10 +4,8 @@ import com.soywiz.kds.*
 import com.soywiz.kds.iterators.*
 import com.soywiz.kgl.*
 import com.soywiz.klock.*
-import com.soywiz.klock.min
 import com.soywiz.klogger.*
 import com.soywiz.kmem.*
-import com.soywiz.korag.annotation.KoragExperimental
 import com.soywiz.korag.internal.setFloats
 import com.soywiz.korag.shader.Program
 import com.soywiz.korag.shader.ProgramConfig
@@ -19,7 +17,6 @@ import com.soywiz.korim.color.RGBA
 import com.soywiz.korim.vector.BitmapVector
 import com.soywiz.korio.lang.*
 import com.soywiz.korma.geom.*
-import com.soywiz.korma.math.*
 import com.soywiz.krypto.encoding.*
 import kotlin.jvm.JvmOverloads
 import kotlin.math.*
@@ -342,6 +339,7 @@ abstract class AGOpengl : AG() {
                     if (uniformType == VarType.TextureUnit) {
                         val tex = (unit.texture.fastCastTo<GlTexture?>())
                         tex?.bindEnsuring()
+                        tex?.setWrap(unit.repeatX, unit.repeatY)
                         tex?.setFilter(unit.linear, unit.trilinear ?: unit.linear)
                     } else {
                         val tex = unit.texture.fastCastTo<TextureGeneric>()
@@ -349,6 +347,8 @@ abstract class AGOpengl : AG() {
                         tex.bindEnsuring()
                     }
                     gl.uniform1i(location, textureUnit)
+                    //val texBinding = gl.getIntegerv(gl.TEXTURE_BINDING_2D)
+                    //println("OpenglAG.draw: textureUnit=$textureUnit, textureBinding=$texBinding, instances=$instances, vertexCount=$vertexCount")
                     textureUnit++
                 }
                 VarType.Mat2, VarType.Mat3, VarType.Mat4 -> {
@@ -905,8 +905,8 @@ abstract class AGOpengl : AG() {
                 //println(" - mipmaps")
                 this.mipmaps = true
                 bind()
-                setFilter(true)
-                setWrapST()
+                //setFilter(true)
+                //setWrapST()
                 //println("actualSyncUpload,generateMipmap.SOURCE: ${source.width},${source.height}, source=$source, bmp=$bmp, requestMipmaps=$requestMipmaps")
                 //printStackTrace()
                 gl.generateMipmap(forcedTexTarget)
@@ -968,13 +968,18 @@ abstract class AGOpengl : AG() {
             }
             val magFilter = if (linear) gl.LINEAR else gl.NEAREST
 
-            setWrapST()
             setMinMag(minFilter, magFilter)
         }
 
-        private fun setWrapST() {
-            gl.texParameteri(forcedTexTarget, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-            gl.texParameteri(forcedTexTarget, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+        fun TextureRepeat.toGl(gl: KmlGl): Int = when (this) {
+            TextureRepeat.CLAMP_TO_EDGE -> gl.CLAMP_TO_EDGE
+            TextureRepeat.REPEAT -> gl.REPEAT
+            TextureRepeat.MIRRORED_REPEAT -> gl.MIRRORED_REPEAT
+        }
+
+        fun setWrap(repeatX: TextureRepeat, repeatY: TextureRepeat = repeatX) {
+            gl.texParameteri(forcedTexTarget, gl.TEXTURE_WRAP_S, repeatX.toGl(gl))
+            gl.texParameteri(forcedTexTarget, gl.TEXTURE_WRAP_T, repeatY.toGl(gl))
         }
 
         private fun setMinMag(min: Int, mag: Int) {

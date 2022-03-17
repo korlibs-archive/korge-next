@@ -1,5 +1,6 @@
 package com.soywiz.korim.bitmap
 
+import com.soywiz.korma.geom.*
 import kotlin.test.*
 
 class BitmapSliceTest {
@@ -44,4 +45,42 @@ class BitmapSliceTest {
         assertEquals("128x64", bmp.sizeString)
         assertEquals("64x128", bmp2.sizeString)
     }
+
+    /*
+    @Test
+    fun testTransform() {
+        val bmp = Bitmap32(108, 192).slice()
+        val affine = Matrix(0.0, 1.0, -1.0, 0.0, 0.0, 0.0)
+        val transform = Matrix3D.fromRows(
+            0f, 1f, 0f, -1f,
+            -1f, 0f, 0f, 1f,
+            0f, 0f, 1f, 0f,
+            0f, 0f, 0f, 1f,
+        )
+        //val coords = UntransformedSizeBmpCoordsWithInstance(bmp.tran∂sformed(transform))
+        val coords1 = UntransformedSizeBmpCoordsWithInstance(bmp)
+        val coords2 = UntransformedSizeBmpCoordsWithInstance(bmp.transformed(affine))
+        val coords3 = UntransformedSizeBmpCoordsWithInstance(bmp.transformed(transform))
+        val coords4 = UntransformedSizeBmpCoordsWithInstance(bmp.transformed(affine.toMatrix3D()))
+        //val coords5 = UntransformedSizeBmpCoordsWithInstance(bmp.transformed(affine.toMatrix3D()).normalized())
+        println("coords1=$coords1")
+        println("coords2=$coords2")
+        println("coords3=$coords3")
+        println("coords4=$coords4")
+        //println("coords5=$coords5")
+    }
+    */
+
+    /*
+videoFrame.transform: CGAffineTransform(a: 0.0, b: 1.0, c: -1.0, d: 0.0, tx: 0.0, ty: 0.0)
+VIDEO FRAME: UntransformedSizeBmpCoords(width=1080, height=1920, baseCoords=BmpCoordsWithInstance(base=NativeImage(1080, 1920), tl_x=-1.0, tl_y=1.0, tr_x=-1.0, tr_y=0.0, br_x=0.0, br_y=0.0, bl_x=0.0, bl_y=1.0, name=null))
+  :: NativeImage(1080, 1920)
+  :: Matrix3D(
+  [ 0, 1, 0, -1 ],
+  [ -1, 0, 0, 1 ],
+  [ 0, 0, 1, 0 ],
+  [ 0, 0, 0, 1 ],
+)
+"[PLAYER STATE]paused"
+     */
 }
