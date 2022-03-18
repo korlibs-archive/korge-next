@@ -691,17 +691,6 @@ class BatchBuilder2D constructor(
 			DefaultShaders.apply {
                 SET(v_Tex, a_Tex)
 
-                //val test = FUNC("test", VarType.Float1, "x" to VarType.Float1) {
-                //    val x = ARG("x", VarType.Float1)
-                //    RETURN(x + 1f.lit)
-                //}
-                //SET(v_Tex.x, test(1f.lit))
-
-                // GL_REPEAT WRAPPING
-                //SET(v_Tex, v_Tex mod 1.0000001f.lit)
-                //SET(v_Tex.x, TERNARY(v_Tex.x eq 1f.lit, 1f.lit, v_Tex.x mod 1f.lit))
-                //SET(v_Tex.y, TERNARY(v_Tex.y eq 1f.lit, 1f.lit, v_Tex.y mod 1f.lit))
-
                 SET(v_TexIndex, a_TexIndex)
 				SET(v_ColMul, a_ColMul)
 				SET(v_ColAdd, a_ColAdd)
