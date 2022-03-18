@@ -906,7 +906,7 @@ abstract class AGOpengl : AG() {
                 this.mipmaps = true
                 bind()
                 //setFilter(true)
-                //setWrapST()
+                //setWrap()
                 //println("actualSyncUpload,generateMipmap.SOURCE: ${source.width},${source.height}, source=$source, bmp=$bmp, requestMipmaps=$requestMipmaps")
                 //printStackTrace()
                 gl.generateMipmap(forcedTexTarget)
