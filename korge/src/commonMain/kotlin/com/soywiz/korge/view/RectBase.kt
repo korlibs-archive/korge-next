@@ -1,5 +1,7 @@
 package com.soywiz.korge.view
 
+import com.soywiz.korag.*
+import com.soywiz.korag.shader.*
 import com.soywiz.korge.debug.*
 import com.soywiz.korge.internal.*
 import com.soywiz.korge.render.*
@@ -64,13 +66,27 @@ open class RectBase(
         //super.renderInternal(ctx)
 	}
 
+    var program: Program? = null
+    private var _programUniforms: AG.UniformValues? = null
+    var programUniforms: AG.UniformValues
+        set(value) { _programUniforms = value }
+        get()  {
+            if (_programUniforms == null) _programUniforms = AG.UniformValues()
+            return _programUniforms!!
+        }
+
     protected open fun drawVertices(ctx: RenderContext) {
         ctx.useBatcher { batch ->
-            batch.drawVertices(vertices, ctx.getTex(baseBitmap).base, smoothing, renderBlendMode.factors)
+            batch.setTemporalUniforms(_programUniforms) {
+                batch.drawVertices(
+                    vertices, ctx.getTex(baseBitmap).base, smoothing, renderBlendMode.factors,
+                    program = program
+                )
+            }
         }
     }
 
-    open protected fun computeVertices() {
+    protected open fun computeVertices() {
         vertices.quad(0, sLeft, sTop, bwidth, bheight, globalMatrix, baseBitmap, renderColorMul, renderColorAdd)
     }
 

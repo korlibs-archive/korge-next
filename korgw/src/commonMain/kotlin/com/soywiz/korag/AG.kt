@@ -980,6 +980,9 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
 
         val size get() = _uniforms.size
 
+        fun isEmpty(): Boolean = size == 0
+        fun isNotEmpty(): Boolean = size != 0
+
         constructor(vararg pairs: Pair<Uniform, Any>) : this() {
             for (pair in pairs) put(pair.first, pair.second)
         }

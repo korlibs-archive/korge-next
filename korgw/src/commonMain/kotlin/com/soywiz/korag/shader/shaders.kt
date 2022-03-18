@@ -269,10 +269,15 @@ inline fun FragmentShader.appending(block: Program.Builder.() -> Unit): Fragment
     return FragmentShader(Program.Builder(ShaderType.FRAGMENT).WITH(this).also(block)._buildFuncs())
 }
 
-inline fun Program.withUpdatedVertex(extraName: String, block: Program.Builder.() -> Unit): Program =
+inline fun Program.replacingVertex(extraName: String, block: Program.Builder.() -> Unit): Program =
+    this.copy(vertex = VertexShader(block), name = "$name-$extraName")
+inline fun Program.replacingFragment(extraName: String, block: Program.Builder.() -> Unit): Program =
+    this.copy(fragment = FragmentShader(block), name = "$name-$extraName")
+
+inline fun Program.appendingVertex(extraName: String, block: Program.Builder.() -> Unit): Program =
     this.copy(vertex = this.vertex.appending(block), name = "$name-$extraName")
 
-inline fun Program.withUpdatedFragment(extraName: String, block: Program.Builder.() -> Unit): Program =
+inline fun Program.appendingFragment(extraName: String, block: Program.Builder.() -> Unit): Program =
     this.copy(fragment = this.fragment.appending(block), name = "$name-$extraName")
 
 data class Program(val vertex: VertexShader, val fragment: FragmentShader, val name: String = "program") : Closeable {
@@ -333,15 +338,17 @@ data class Program(val vertex: VertexShader, val fragment: FragmentShader, val n
 
 	// http://mew.cx/glsl_quickref.pdf
 	open class Builder(
-        val outputFuncs: ArrayList<FuncDecl> = arrayListOf()
+        @PublishedApi
+        internal val outputFuncs: ArrayList<FuncDecl> = arrayListOf()
     ) : VarTypeAccessor {
+        @PublishedApi
+        internal val outputStms: ArrayList<Stm> = arrayListOf<Stm>()
+
         constructor(parent: Builder) : this(parent.outputFuncs)
 
         // Drop ShaderType since it is not used
         @Deprecated("")
         constructor(type: ShaderType) : this()
-
-		val outputStms = arrayListOf<Stm>()
 
         //fun createChildBuilder(): Builder = Builder(type)
         fun createChildBuilder(): Builder = Builder(this)
@@ -729,13 +736,13 @@ fun VertexShader(stm: Program.Stm, glsl: String) = VertexShader(mapOf(NAME_GLSL 
 @Deprecated("Use FragmentShaderRawGlSl instead")
 fun FragmentShader(stm: Program.Stm, glsl: String) = FragmentShader(mapOf(NAME_GLSL to glsl), stm)
 
-fun VertexShader(callback: Program.Builder.() -> Unit): VertexShader {
+inline fun VertexShader(callback: Program.Builder.() -> Unit): VertexShader {
 	val builder = Program.Builder(ShaderType.VERTEX)
 	builder.callback()
 	return VertexShader(builder._buildFuncs())
 }
 
-fun FragmentShader(callback: Program.Builder.() -> Unit): FragmentShader {
+inline fun FragmentShader(callback: Program.Builder.() -> Unit): FragmentShader {
 	val builder = Program.Builder(ShaderType.FRAGMENT)
 	builder.callback()
 	return FragmentShader(builder._buildFuncs())

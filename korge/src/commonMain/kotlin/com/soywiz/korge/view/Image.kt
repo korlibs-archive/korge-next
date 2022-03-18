@@ -75,17 +75,6 @@ open class BaseImage(
         super.renderInternal(ctx)
     }
 
-    var program: Program? = null
-
-    override fun drawVertices(ctx: RenderContext) {
-        ctx.useBatcher { batch ->
-            batch.drawVertices(
-                vertices, ctx.getTex(baseBitmap).base, smoothing, renderBlendMode.factors,
-                program = program
-            )
-        }
-    }
-
     /*
     override val bwidth: Double get() = baseBitmap.width.toDouble()
     override val bheight: Double get() = baseBitmap.height.toDouble()

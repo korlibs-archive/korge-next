@@ -845,11 +845,9 @@ class BatchBuilder2D constructor(
         }
     }
 
-    fun getIsPremultiplied(texture: AG.Texture?): Boolean =
-        texture?.premultiplied == true
-
-    fun getDefaultProgramForTexture(texture: AG.Texture?): Program =
-        if (getIsPremultiplied(texture)) PROGRAM_PRE else PROGRAM_NOPRE
+    fun getIsPremultiplied(texture: AG.Texture?): Boolean = texture?.premultiplied == true
+    fun getDefaultProgram(premultiplied: Boolean): Program = if (premultiplied) PROGRAM_PRE else PROGRAM_NOPRE
+    fun getDefaultProgramForTexture(texture: AG.Texture?): Program = getDefaultProgram(getIsPremultiplied(texture))
 
     /** When there are vertices pending, this performs a [AG.draw] call flushing all the buffered geometry pending to draw */
 	fun flush(uploadVertices: Boolean = true, uploadIndices: Boolean = true) {
@@ -952,15 +950,19 @@ class BatchBuilder2D constructor(
     /**
      * Executes [callback] while setting temporarily a set of [uniforms]
      */
-	inline fun setTemporalUniforms(uniforms: AG.UniformValues, callback: () -> Unit) {
-		flush()
-		tempOldUniforms.setTo(this.uniforms)
-		this.uniforms.put(uniforms)
+	inline fun setTemporalUniforms(uniforms: AG.UniformValues?, callback: () -> Unit) {
+        if (uniforms != null && uniforms.isNotEmpty()) {
+            flush()
+            tempOldUniforms.setTo(this.uniforms)
+            this.uniforms.put(uniforms)
+        }
 		try {
 			callback()
 		} finally {
-			flush()
-			this.uniforms.setTo(tempOldUniforms)
+            if (uniforms != null && uniforms.isNotEmpty()) {
+                flush()
+                this.uniforms.setTo(tempOldUniforms)
+            }
 		}
 	}
 }
