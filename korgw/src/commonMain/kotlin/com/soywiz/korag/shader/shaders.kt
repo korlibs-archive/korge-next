@@ -257,17 +257,23 @@ data class ProgramConfig(
     }
 }
 
-inline fun VertexShader.updated(block: Program.Builder.() -> Unit): VertexShader =
-    VertexShader(Program.Builder(ShaderType.VERTEX).WITH(this).also(block)._buildFuncs())
+inline fun VertexShader.appending(block: Program.Builder.() -> Unit): VertexShader {
+    // @TODO: Raw shaders don't support appending
+    if (this.isRaw) return this
+    return VertexShader(Program.Builder(ShaderType.VERTEX).WITH(this).also(block)._buildFuncs())
+}
 
-inline fun FragmentShader.updated(block: Program.Builder.() -> Unit): FragmentShader =
-    FragmentShader(Program.Builder(ShaderType.FRAGMENT).WITH(this).also(block)._buildFuncs())
+inline fun FragmentShader.appending(block: Program.Builder.() -> Unit): FragmentShader {
+    // @TODO: Raw shaders don't support appending
+    if (this.isRaw) return this
+    return FragmentShader(Program.Builder(ShaderType.FRAGMENT).WITH(this).also(block)._buildFuncs())
+}
 
 inline fun Program.withUpdatedVertex(extraName: String, block: Program.Builder.() -> Unit): Program =
-    this.copy(vertex = this.vertex.updated(block), name = "$name-$extraName")
+    this.copy(vertex = this.vertex.appending(block), name = "$name-$extraName")
 
 inline fun Program.withUpdatedFragment(extraName: String, block: Program.Builder.() -> Unit): Program =
-    this.copy(fragment = this.fragment.updated(block), name = "$name-$extraName")
+    this.copy(fragment = this.fragment.appending(block), name = "$name-$extraName")
 
 data class Program(val vertex: VertexShader, val fragment: FragmentShader, val name: String = "program") : Closeable {
 	val uniforms = vertex.uniforms + fragment.uniforms
@@ -722,22 +728,6 @@ fun VertexShader(stm: Program.Stm, glsl: String) = VertexShader(mapOf(NAME_GLSL 
 @KoragExperimental
 @Deprecated("Use FragmentShaderRawGlSl instead")
 fun FragmentShader(stm: Program.Stm, glsl: String) = FragmentShader(mapOf(NAME_GLSL to glsl), stm)
-
-fun FragmentShader.appending(callback: Program.Builder.() -> Unit): FragmentShader {
-    if (this.isRaw) {
-        // @TODO: Raw shaders don't support appending
-        return this
-    }
-
-	return FragmentShader(
-        Program.Stm.Stms(
-            listOf(
-                this.stm,
-                FragmentShader(callback).stm
-            )
-        )
-    )
-}
 
 fun VertexShader(callback: Program.Builder.() -> Unit): VertexShader {
 	val builder = Program.Builder(ShaderType.VERTEX)

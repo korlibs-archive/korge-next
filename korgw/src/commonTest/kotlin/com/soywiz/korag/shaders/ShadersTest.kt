@@ -105,7 +105,7 @@ class ShadersTest {
                 RETURN(ARG("x", Float1) + ARG("y", Float1) * 2.lit)
             }
             out setTo vec4(1.lit, 0.lit, 0.lit, demo(0.lit, 1.lit))
-        }.updated {
+        }.appending {
             // Latest function with this name is used
             FUNC("demo", Float1, "x" to Float1, "y" to Float1) {
                 val x = ARG("x", Float1)
