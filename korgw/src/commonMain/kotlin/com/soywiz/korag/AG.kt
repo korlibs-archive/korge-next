@@ -372,24 +372,15 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         }
     }
 
-    enum class TextureRepeat { CLAMP_TO_EDGE, REPEAT, MIRRORED_REPEAT }
-
     data class TextureUnit constructor(
         var texture: AG.Texture? = null,
         var linear: Boolean = true,
         var trilinear: Boolean? = null,
     ) {
-        var repeatX: TextureRepeat = TextureRepeat.CLAMP_TO_EDGE
-        var repeatY: TextureRepeat = TextureRepeat.CLAMP_TO_EDGE
-
         fun set(texture: AG.Texture?, linear: Boolean, trilinear: Boolean? = null) {
             this.texture = texture
             this.linear = linear
             this.trilinear = trilinear
-        }
-        fun setRepeat(repeatX: TextureRepeat = TextureRepeat.CLAMP_TO_EDGE, repeatY: TextureRepeat = repeatX) {
-            this.repeatX = repeatX
-            this.repeatY = repeatY
         }
     }
 

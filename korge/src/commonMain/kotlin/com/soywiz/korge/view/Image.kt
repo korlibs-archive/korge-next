@@ -75,23 +75,13 @@ open class BaseImage(
         super.renderInternal(ctx)
     }
 
-    var repeatX: ImageRepeat = ImageRepeat.CLAMP_TO_EDGE
-    var repeatY: ImageRepeat = ImageRepeat.CLAMP_TO_EDGE
-
-    var repeat: ImageRepeat
-        get() = repeatX
-        set(value) {
-            repeatX = value
-            repeatY = value
-        }
-
     var program: Program? = null
 
     override fun drawVertices(ctx: RenderContext) {
         ctx.useBatcher { batch ->
             batch.drawVertices(
                 vertices, ctx.getTex(baseBitmap).base, smoothing, renderBlendMode.factors,
-                program = program, repeatX = repeatX, repeatY = repeatY
+                program = program
             )
         }
     }
@@ -127,15 +117,6 @@ open class BaseImage(
 
     override fun toString(): String = super.toString() + ":bitmap=$bitmap"
 }
-
-typealias ImageRepeat = AG.TextureRepeat
-/*
-enum class ImageRepeat(val ag: AG.TextureRepeat) {
-    CLAMP_TO_EDGE(AG.TextureRepeat.CLAMP_TO_EDGE),
-    REPEAT(AG.TextureRepeat.REPEAT),
-    MIRRORED_REPEAT(AG.TextureRepeat.MIRRORED_REPEAT),
-}
-*/
 
 interface SmoothedBmpSlice {
     var bitmap: BaseBmpSlice

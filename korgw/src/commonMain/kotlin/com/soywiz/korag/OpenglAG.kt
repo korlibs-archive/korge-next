@@ -339,7 +339,7 @@ abstract class AGOpengl : AG() {
                     if (uniformType == VarType.TextureUnit) {
                         val tex = (unit.texture.fastCastTo<GlTexture?>())
                         tex?.bindEnsuring()
-                        tex?.setWrap(unit.repeatX, unit.repeatY)
+                        tex?.setWrap()
                         tex?.setFilter(unit.linear, unit.trilinear ?: unit.linear)
                     } else {
                         val tex = unit.texture.fastCastTo<TextureGeneric>()
@@ -971,15 +971,9 @@ abstract class AGOpengl : AG() {
             setMinMag(minFilter, magFilter)
         }
 
-        fun TextureRepeat.toGl(gl: KmlGl): Int = when (this) {
-            TextureRepeat.CLAMP_TO_EDGE -> gl.CLAMP_TO_EDGE
-            TextureRepeat.REPEAT -> gl.REPEAT
-            TextureRepeat.MIRRORED_REPEAT -> gl.MIRRORED_REPEAT
-        }
-
-        fun setWrap(repeatX: TextureRepeat, repeatY: TextureRepeat = repeatX) {
-            gl.texParameteri(forcedTexTarget, gl.TEXTURE_WRAP_S, repeatX.toGl(gl))
-            gl.texParameteri(forcedTexTarget, gl.TEXTURE_WRAP_T, repeatY.toGl(gl))
+        fun setWrap() {
+            gl.texParameteri(forcedTexTarget, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+            gl.texParameteri(forcedTexTarget, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
         }
 
         private fun setMinMag(min: Int, mag: Int) {

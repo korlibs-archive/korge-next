@@ -97,8 +97,6 @@ class BatchBuilder2D constructor(
     //@PublishedApi internal var currentTex1: AG.Texture? = null
 
     @PublishedApi internal var currentSmoothing: Boolean = false
-    @PublishedApi internal var currentRepeatX: AG.TextureRepeat = AG.TextureRepeat.CLAMP_TO_EDGE
-    @PublishedApi internal var currentRepeatY: AG.TextureRepeat = AG.TextureRepeat.CLAMP_TO_EDGE
 
     @PublishedApi internal var currentBlendFactors: AG.Blending = BlendMode.NORMAL.factors
     @PublishedApi internal var currentProgram: Program? = null
@@ -407,9 +405,8 @@ class BatchBuilder2D constructor(
     inline fun drawVertices(
         array: TexturedVertexArray, tex: TextureBase, smoothing: Boolean, blendFactors: AG.Blending,
         vcount: Int = array.vcount, icount: Int = array.isize, program: Program? = null, matrix: Matrix? = null,
-        repeatX: AG.TextureRepeat = AG.TextureRepeat.CLAMP_TO_EDGE, repeatY: AG.TextureRepeat = AG.TextureRepeat.CLAMP_TO_EDGE
     ) {
-        setStateFast(tex.base, smoothing, blendFactors, program, repeatX, repeatY)
+        setStateFast(tex.base, smoothing, blendFactors, program)
         drawVertices(array, matrix, vcount, icount)
 	}
 
@@ -427,9 +424,8 @@ class BatchBuilder2D constructor(
      */
 	fun setStateFast(
         tex: TextureBase, smoothing: Boolean, blendFactors: AG.Blending, program: Program?,
-        repeatX: AG.TextureRepeat, repeatY: AG.TextureRepeat,
     ) {
-        setStateFast(tex.base, smoothing, blendFactors, program, repeatX, repeatY)
+        setStateFast(tex.base, smoothing, blendFactors, program)
     }
 
     /**
@@ -437,17 +433,14 @@ class BatchBuilder2D constructor(
      */
     inline fun setStateFast(
         tex: AG.Texture?, smoothing: Boolean, blendFactors: AG.Blending, program: Program?,
-        repeatX: AG.TextureRepeat, repeatY: AG.TextureRepeat,
     ) {
-        val isCurrentStateFast = isCurrentStateFast(tex, smoothing, blendFactors, program, repeatX, repeatY)
+        val isCurrentStateFast = isCurrentStateFast(tex, smoothing, blendFactors, program)
         //println("isCurrentStateFast=$isCurrentStateFast, tex=$tex, currentTex=$currentTex, currentTex2=$currentTex2")
         if (isCurrentStateFast) return
         flush()
         currentTexIndex = 0
         currentTexN[0] = tex
         currentSmoothing = smoothing
-        currentRepeatX = repeatX
-        currentRepeatY = repeatY
         currentBlendFactors = if (tex != null && tex.isFbo) blendFactors.toRenderFboIntoBack() else blendFactors
         currentProgram = program
     }
@@ -469,7 +462,6 @@ class BatchBuilder2D constructor(
 
     @PublishedApi internal fun isCurrentStateFast(
         tex: AG.Texture?, smoothing: Boolean, blendFactors: AG.Blending, program: Program?,
-        repeatX: AG.TextureRepeat, repeatY: AG.TextureRepeat,
     ): Boolean {
         var hasTex = hasTex(tex)
         if (currentTexN[0] !== null && !hasTex) {
@@ -493,16 +485,14 @@ class BatchBuilder2D constructor(
             && (currentSmoothing == smoothing)
             && (currentBlendFactors === blendFactors)
             && (currentProgram === program)
-            && (currentRepeatX === repeatX)
-            && (currentRepeatY === repeatY)
     }
 
-    fun setStateFast(tex: Bitmap, smoothing: Boolean, blendFactors: AG.Blending, program: Program?, repeatX: AG.TextureRepeat = AG.TextureRepeat.CLAMP_TO_EDGE, repeatY: AG.TextureRepeat = AG.TextureRepeat.CLAMP_TO_EDGE) {
-        setStateFast(texManager.getTextureBase(tex), smoothing, blendFactors, program, repeatX, repeatY)
+    fun setStateFast(tex: Bitmap, smoothing: Boolean, blendFactors: AG.Blending, program: Program?) {
+        setStateFast(texManager.getTextureBase(tex), smoothing, blendFactors, program)
     }
 
-    fun setStateFast(tex: BmpSlice, smoothing: Boolean, blendFactors: AG.Blending, program: Program?, repeatX: AG.TextureRepeat = AG.TextureRepeat.CLAMP_TO_EDGE, repeatY: AG.TextureRepeat = AG.TextureRepeat.CLAMP_TO_EDGE) {
-        setStateFast(texManager.getTexture(tex).base, smoothing, blendFactors, program, repeatX, repeatY)
+    fun setStateFast(tex: BmpSlice, smoothing: Boolean, blendFactors: AG.Blending, program: Program?) {
+        setStateFast(texManager.getTexture(tex).base, smoothing, blendFactors, program)
     }
 
     /**
@@ -545,10 +535,8 @@ class BatchBuilder2D constructor(
 		colorAdd: ColorAdd = ColorAdd.NEUTRAL,
 		blendFactors: AG.Blending = BlendMode.NORMAL.factors,
 		program: Program? = null,
-        repeatX: AG.TextureRepeat = AG.TextureRepeat.CLAMP_TO_EDGE,
-        repeatY: AG.TextureRepeat = AG.TextureRepeat.CLAMP_TO_EDGE
 	) {
-		setStateFast(tex.base, filtering, blendFactors, program, repeatX, repeatY)
+		setStateFast(tex.base, filtering, blendFactors, program)
         val texIndex: Int = currentTexIndex
 
 		ensure(indices = 6 * 9, vertices = 4 * 4)
@@ -623,9 +611,7 @@ class BatchBuilder2D constructor(
         colorAdd: ColorAdd = ColorAdd.NEUTRAL,
         blendFactors: AG.Blending = BlendMode.NORMAL.factors,
         program: Program? = null,
-        repeatX: AG.TextureRepeat = AG.TextureRepeat.CLAMP_TO_EDGE,
-        repeatY: AG.TextureRepeat = AG.TextureRepeat.CLAMP_TO_EDGE
-    ): Unit = drawQuad(tex, x, y, width, height, m, filtering, colorMul, colorAdd, blendFactors, program, repeatX, repeatY, Unit)
+    ): Unit = drawQuad(tex, x, y, width, height, m, filtering, colorMul, colorAdd, blendFactors, program, Unit)
 
     /**
      * Draws a textured [tex] quad at [x], [y] and size [width]x[height].
@@ -646,15 +632,13 @@ class BatchBuilder2D constructor(
 		colorAdd: ColorAdd = ColorAdd.NEUTRAL,
 		blendFactors: AG.Blending = BlendMode.NORMAL.factors,
 		program: Program? = null,
-        repeatX: AG.TextureRepeat = AG.TextureRepeat.CLAMP_TO_EDGE,
-        repeatY: AG.TextureRepeat = AG.TextureRepeat.CLAMP_TO_EDGE,
         unit: Unit = Unit,
 	) {
         val x0 = x
         val x1 = (x + width)
         val y0 = y
         val y1 = (y + height)
-        setStateFast(tex.base, filtering, blendFactors, program, repeatX, repeatY)
+        setStateFast(tex.base, filtering, blendFactors, program)
         drawQuadFast(
             m.transformXf(x0, y0), m.transformYf(x0, y0),
             m.transformXf(x1, y0), m.transformYf(x1, y0),
@@ -858,7 +842,6 @@ class BatchBuilder2D constructor(
         for (n in 0 until maxTextures) {
             val textureUnit = textureUnitN[n]
             textureUnit.set(currentTexN[n], currentSmoothing)
-            textureUnit.setRepeat(currentRepeatX, currentRepeatY)
         }
     }
 
