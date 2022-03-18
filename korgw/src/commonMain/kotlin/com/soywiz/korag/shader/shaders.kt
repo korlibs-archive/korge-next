@@ -257,11 +257,17 @@ data class ProgramConfig(
     }
 }
 
-fun Program.withUpdatedVertex(extraName: String, block: Program.Builder.() -> Unit): Program =
-    this.copy(vertex = VertexShader(Program.Builder(ShaderType.VERTEX).WITH(this.vertex).also(block)._build()), name = "$name-$extraName")
+inline fun VertexShader.updated(block: Program.Builder.() -> Unit): VertexShader =
+    VertexShader(Program.Builder(ShaderType.VERTEX).WITH(this).also(block)._buildFuncs())
 
-fun Program.withUpdatedFragment(extraName: String, block: Program.Builder.() -> Unit): Program =
-    this.copy(fragment = FragmentShader(Program.Builder(ShaderType.FRAGMENT).WITH(this.fragment).also(block)._build()), name = "$name-$extraName")
+inline fun FragmentShader.updated(block: Program.Builder.() -> Unit): FragmentShader =
+    FragmentShader(Program.Builder(ShaderType.FRAGMENT).WITH(this).also(block)._buildFuncs())
+
+inline fun Program.withUpdatedVertex(extraName: String, block: Program.Builder.() -> Unit): Program =
+    this.copy(vertex = this.vertex.updated(block), name = "$name-$extraName")
+
+inline fun Program.withUpdatedFragment(extraName: String, block: Program.Builder.() -> Unit): Program =
+    this.copy(fragment = this.fragment.updated(block), name = "$name-$extraName")
 
 data class Program(val vertex: VertexShader, val fragment: FragmentShader, val name: String = "program") : Closeable {
 	val uniforms = vertex.uniforms + fragment.uniforms
@@ -336,6 +342,7 @@ data class Program(val vertex: VertexShader, val fragment: FragmentShader, val n
         fun createChildFuncBuilder(): FuncBuilder = FuncBuilder(this)
         fun _build(): Stm = Stm.Stms(outputStms.toList())
         fun _funcs(): List<FuncDecl> = outputFuncs.toList()
+        fun _buildFuncs(): Pair<Stm, List<FuncDecl>> = _build() to _funcs()
 
 		//inner class BuildIf(val stmIf: Stm.If) {
 		//	fun ELSEIF(cond: Operand, callback: Builder.() -> Unit): BuildIf {
@@ -412,7 +419,12 @@ data class Program(val vertex: VertexShader, val fragment: FragmentShader, val n
         }
 
         fun PUT(shader: Shader) {
-            outputStms.add(shader.stm)
+            if (shader.stm is Stm.Stms) {
+                outputStms.addAll(shader.stm.stms)
+            } else {
+                outputStms.add(shader.stm)
+            }
+            outputFuncs.addAll(shader.funcs)
         }
 		fun SET(target: Operand, expr: Operand) { outputStms += Stm.Set(target, expr) }
 		fun DISCARD() { outputStms += Stm.Discard() }
@@ -690,8 +702,12 @@ open class Shader(val type: ShaderType, val stm: Program.Stm, val funcs: List<Fu
     override fun hashCode(): Int = cachedHashCode
 }
 
-class VertexShader(stm: Program.Stm, funcs: List<FuncDecl> = listOf()) : Shader(ShaderType.VERTEX, stm, funcs)
-class FragmentShader(stm: Program.Stm, funcs: List<FuncDecl> = listOf()) : Shader(ShaderType.FRAGMENT, stm, funcs)
+class VertexShader(stm: Program.Stm, funcs: List<FuncDecl> = listOf()) : Shader(ShaderType.VERTEX, stm, funcs) {
+    constructor(info: Pair<Program.Stm, List<FuncDecl>>) : this(info.first, info.second)
+}
+class FragmentShader(stm: Program.Stm, funcs: List<FuncDecl> = listOf()) : Shader(ShaderType.FRAGMENT, stm, funcs) {
+    constructor(info: Pair<Program.Stm, List<FuncDecl>>) : this(info.first, info.second)
+}
 
 @KoragExperimental
 fun VertexShader(rawStrings: Map<String, String>, stm: Program.Stm? = null) = VertexShader(Program.Stm.Raw(rawStrings, stm))
@@ -726,13 +742,13 @@ fun FragmentShader.appending(callback: Program.Builder.() -> Unit): FragmentShad
 fun VertexShader(callback: Program.Builder.() -> Unit): VertexShader {
 	val builder = Program.Builder(ShaderType.VERTEX)
 	builder.callback()
-	return VertexShader(builder._build(), builder._funcs())
+	return VertexShader(builder._buildFuncs())
 }
 
 fun FragmentShader(callback: Program.Builder.() -> Unit): FragmentShader {
 	val builder = Program.Builder(ShaderType.FRAGMENT)
 	builder.callback()
-	return FragmentShader(builder._build(), builder._funcs())
+	return FragmentShader(builder._buildFuncs())
 }
 
 class VertexLayout(attr: List<Attribute>, private val layoutSize: Int?) {

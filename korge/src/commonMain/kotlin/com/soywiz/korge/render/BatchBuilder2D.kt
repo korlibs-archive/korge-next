@@ -785,8 +785,15 @@ class BatchBuilder2D constructor(
         @KorgeInternal
 		private fun buildTextureLookupFragment(premultiplied: Boolean, add: AddType) = FragmentShader {
 			DefaultShaders.apply {
+                // THIS CAN BE OVERRIDED. Check `testGlslFragmentGenerationNewCustomFuncUpdated` for an example
+                val stexture2D = FUNC("stexture2D", Float4, "sampler" to Sampler2D, "coord" to Float2) {
+                    val sampler = ARG("sampler", Sampler2D)
+                    val coord = ARG("coord", Float2)
+                    RETURN(texture2D(sampler, fract(coord)))
+                }
+
                 IF_ELSE_BINARY_LOOKUP(v_TexIndex, 0, BB_MAX_TEXTURES - 1) { n ->
-                    SET(out, texture2D(u_TexN[n], fract(v_Tex["xy"])))
+                    SET(out, stexture2D(u_TexN[n], v_Tex["xy"]))
                 }
                 //for (n in 0 until BB_MAX_TEXTURES) {
                 //    IF(v_TexIndex eq (n.toFloat()).lit) {
@@ -855,8 +862,11 @@ class BatchBuilder2D constructor(
         }
     }
 
+    fun getIsPremultiplied(texture: AG.Texture?): Boolean =
+        texture?.premultiplied == true
+
     fun getDefaultProgramForTexture(texture: AG.Texture?): Program =
-        if (texture?.premultiplied == true) PROGRAM_PRE else PROGRAM_NOPRE
+        if (getIsPremultiplied(texture)) PROGRAM_PRE else PROGRAM_NOPRE
 
     /** When there are vertices pending, this performs a [AG.draw] call flushing all the buffered geometry pending to draw */
 	fun flush(uploadVertices: Boolean = true, uploadIndices: Boolean = true) {
