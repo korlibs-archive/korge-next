@@ -1,13 +1,11 @@
 package com.soywiz.korim.bitmap
 
 import com.soywiz.kds.*
-import com.soywiz.kmem.*
 import com.soywiz.kmem.clamp
 import com.soywiz.korim.color.*
 import com.soywiz.korio.lang.Closeable
 import com.soywiz.korio.resources.*
 import com.soywiz.korma.geom.*
-import com.soywiz.korma.math.*
 
 interface BmpCoords {
     val tl_x: Float
@@ -177,22 +175,6 @@ fun <T : ISizeInt> BmpCoordsWithT<T>.transformed(m: Matrix3D): BmpCoordsWithInst
     val v4 = m.transform(bl_x, bl_y, 0f, 1f)
     return copy(base, v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v4.x, v4.y)
 }
-
-/*
-/** Tries to put coordinates in the range [0, 1], so clamping wrapping works */
-fun <T : ISizeInt> BmpCoordsWithT<T>.normalized(): BmpCoordsWithInstance<T> {
-    fun computeOffset(min: Float, max: Float) = if (min < 0f) -min else if (max > 1f) -(max - 1) else 0f
-    val offsetX = computeOffset(min(tl_x, tr_x, bl_x, br_x), max(tl_x, tr_x, bl_x, br_x))
-    val offsetY = computeOffset(min(tl_y, tr_y, bl_y, br_y), max(tl_y, tr_y, bl_y, br_y))
-    return copy(
-        base,
-        tl_x = tl_x + offsetX, tl_y = tl_y + offsetY,
-        tr_x = tr_x + offsetX, tr_y = tr_y + offsetY,
-        br_x = br_x + offsetX, br_y = br_y + offsetY,
-        bl_x = bl_x + offsetX, bl_y = bl_y + offsetY,
-    )
-}
-*/
 
 fun <T : ISizeInt> BmpCoordsWithT<T>.named(name: String?): BmpCoordsWithInstance<T> = copy(name = name)
 
