@@ -76,7 +76,7 @@ fun guessAndroidSdkPath(): String? {
         "$userHome/Android/Sdk",
         "$userHome/AndroidSDK",  // location of sdkmanager on linux
         "/usr/lib/android-sdk",  // location on debian based linux (sudo apt install android-sdk)
-        "/Library/Android/sdk/"  // some other flavor of linux
+        "/Library/Android/sdk"   // some other flavor of linux
     ).firstOrNull { File(it).exists() }
 }
 
