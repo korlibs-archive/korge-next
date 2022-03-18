@@ -69,7 +69,6 @@ allprojects {
 
 fun guessAndroidSdkPath(): String? {
     val userHome = System.getProperty("user.home")
-    val userName = System.getProperty("user.name")
     return listOfNotNull(
         System.getenv("ANDROID_HOME"),
         "$userHome/AppData/Local/Android/sdk",
@@ -77,8 +76,7 @@ fun guessAndroidSdkPath(): String? {
         "$userHome/Android/Sdk",
         "$userHome/AndroidSDK",  // location of sdkmanager on linux
         "/usr/lib/android-sdk",  // location on debian based linux (sudo apt install android-sdk)
-        "/Library/Android/sdk/", // some other flavor of linux
-        "/Users/$userName/Library/Android/sdk"
+        "/Library/Android/sdk/"  // some other flavor of linux
     ).firstOrNull { File(it).exists() }
 }
 
