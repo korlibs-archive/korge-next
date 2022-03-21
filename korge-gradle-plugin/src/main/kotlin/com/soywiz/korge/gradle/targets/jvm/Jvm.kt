@@ -121,6 +121,15 @@ private fun Project.configureJvmTest() {
 	val jvmTest = (tasks.findByName("jvmTest") as Test)
     jvmTest.classpath += project.files().from(project.getCompilationKorgeProcessedResourcesFolder(mainJvmCompilation))
 	jvmTest.jvmArgs = (jvmTest.jvmArgs ?: listOf()) + listOf("-Djava.awt.headless=true")
+
+    val jvmTestFix = tasks.create("jvmTestFix", Test::class.java) {
+        it.group = "verification"
+        it.environment("UPDATE_TEST_REF", "true")
+        it.testClassesDirs = jvmTest.testClassesDirs
+        it.classpath = jvmTest.classpath
+        it.bootstrapClasspath = jvmTest.bootstrapClasspath
+        it.systemProperty("java.awt.headless", "true")
+    }
 }
 
 open class PatchedProGuardTask : ProGuardTask() {
