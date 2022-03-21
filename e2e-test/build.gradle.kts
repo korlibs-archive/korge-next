@@ -19,6 +19,12 @@ buildscript {
 
 apply<KorgeGradlePlugin>()
 
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
 korge {
     id = "com.sample.demo"
 
@@ -79,3 +85,45 @@ tasks {
     }
 }
 
+val usage = Attribute.of("org.gradle.usage", Usage::class.java)
+
+dependencies {
+    attributesSchema {
+        attribute(usage)
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+afterEvaluate {
+    dependencies {
+        add("jvmTestImplementation", "org.jetbrains.kotlin:kotlin-test-junit")
+        configurations {
+            maybeCreate("jvmTestImplementation").exclude("org.jetbrains.kotlin:kotlin-test-derived-platform")
+        }
+    }
+}
+
+tasks.findByName("compileTestKotlinJvm")?.doFirst {
+    dependencies {
+        println(attributesSchema.attributes)
+
+    }
+}
+
+configurations.all {
+    afterEvaluate {
+        if (isCanBeResolved) {
+            attributes {
+                attribute(usage, project.objects.named(Usage::class.java, "java-runtime"))
+            }
+        }
+    }
+}
+
+/*
+org.jetbrains.kotlin:kotlin-test-framework-junit:
+ */
