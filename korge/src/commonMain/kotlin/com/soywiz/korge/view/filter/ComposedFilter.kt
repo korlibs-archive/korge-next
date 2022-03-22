@@ -1,5 +1,6 @@
 package com.soywiz.korge.view.filter
 
+import com.soywiz.kds.*
 import com.soywiz.kds.iterators.*
 import com.soywiz.kmem.*
 import com.soywiz.korge.render.*
@@ -11,9 +12,9 @@ import com.soywiz.korui.*
 /**
  * Allows to create a single [Filter] that will render several [filters] in order.
  */
-open class ComposedFilter private constructor(val filters: MutableList<Filter>, unit: Unit = Unit) : Filter {
+open class ComposedFilter private constructor(val filters: FastArrayList<Filter>, unit: Unit = Unit) : Filter {
     constructor() : this(mutableListOf())
-    constructor(filters: List<Filter>) : this(if (filters is MutableList<Filter>) filters else filters.toMutableList())
+    constructor(filters: List<Filter>) : this(if (filters is FastArrayList<Filter>) filters else FastArrayList(filters))
 	constructor(vararg filters: Filter) : this(filters.toList())
 
     override val allFilters: List<Filter> get() = filters.flatMap { it.allFilters }

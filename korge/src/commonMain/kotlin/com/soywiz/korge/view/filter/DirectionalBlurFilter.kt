@@ -29,13 +29,17 @@ class DirectionalBlurFilter(var angle: Angle = 0.degrees, var radius: Double = 4
             //run {
                 SET(out, vec4(0f.lit, 0f.lit, 0f.lit, 0f.lit))
                 SET(loopLen, int(ceil(u_radius)))
+                //FOR_0_UNTIL_FIXED_BREAK(loopLen / 2.lit, maxLen = 256) { x ->
                 FOR_0_UNTIL_FIXED_BREAK(loopLen, maxLen = 256) { x ->
                     val xfloat = createTemp(Float1)
                     SET(xfloat, float(x))
                     SET(gaussianResult, u_constant1 * exp((-xfloat * xfloat) * u_constant2))
-                    SET(out, out + (texture2D(DefaultShaders.u_Tex, fragmentCoords01 + (u_direction * xfloat) * u_StdTexDerivates) * gaussianResult))
+                    val addTemp = createTemp(Float2)
+                    SET(addTemp, (u_direction * xfloat) * u_StdTexDerivates)
+                    //SET(addTemp, (u_direction * xfloat) * u_StdTexDerivates * 2f.lit + (u_StdTexDerivates * .5f.lit))
+                    SET(out, out + (texture2D(DefaultShaders.u_Tex, fragmentCoords01 + addTemp) * gaussianResult))
                     IF(x ne 0.lit) {
-                        SET(out, out + (texture2D(DefaultShaders.u_Tex, fragmentCoords01 - (u_direction * xfloat) * u_StdTexDerivates) * gaussianResult))
+                        SET(out, out + (texture2D(DefaultShaders.u_Tex, fragmentCoords01 - addTemp) * gaussianResult))
                     }
                 }
             }
