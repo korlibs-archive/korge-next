@@ -4,6 +4,7 @@ import com.soywiz.korge.debug.*
 import com.soywiz.korge.view.*
 import com.soywiz.korma.geom.*
 import com.soywiz.korui.*
+import kotlin.math.*
 
 class BlurFilter(radius: Double, expandBorder: Boolean = true) : ComposedFilter() {
     companion object {
@@ -24,6 +25,8 @@ class BlurFilter(radius: Double, expandBorder: Boolean = true) : ComposedFilter(
             horizontal.radius = radius
             vertical.radius = radius
         }
+    override val recommendedFilterScale: Double get() = if (radius <= 2.0) 1.0 else 1.0 / log2(radius * 0.5)
+    //override val recommendedFilterScale: Double get() = 1.0
 
     override val isIdentity: Boolean get() = radius == 0.0
 

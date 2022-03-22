@@ -853,7 +853,8 @@ abstract class View internal constructor(
         val bounds = getLocalBoundsOptimizedAnchored(includeFilters = false)
 
         ctx.matrixPool.alloc { tempMat2d ->
-            val tryFilterScale = filterScale
+            val tryFilterScale = kotlin.math.min(filterScale, filter.recommendedFilterScale).clamp(0.03125, 1.0)
+            //println("tryFilterScale=$tryFilterScale")
             val texWidthNoBorder = (bounds.width * tryFilterScale).toInt().coerceAtLeast(1)
             val texHeightNoBorder = (bounds.height * tryFilterScale).toInt().coerceAtLeast(1)
 

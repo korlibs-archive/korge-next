@@ -26,7 +26,8 @@ suspend fun Stage.mainBlur() {
     val blur1 = BlurFilter(initialBlur)
     //val blur1 = DirectionalBlurFilter(angle = 0.degrees, radius = 32.0)
     //val blur1 = DirectionalBlurFilter(angle = 90.degrees, radius = 32.0)
-    val blur2 = OldBlurFilter(initialBlur)
+    //val blur2 = OldBlurFilter(initialBlur)
+    val blur2 = BlurFilter(initialBlur)
 
     val image0b = image(bitmap).xy(700, 100).filters(blur0b)
     val image0a = image(bitmap).xy(700, 400).filters(blur0a)

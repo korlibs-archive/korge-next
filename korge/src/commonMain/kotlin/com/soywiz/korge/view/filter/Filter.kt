@@ -44,6 +44,8 @@ interface Filter : KorgeDebugNode {
     @Deprecated("")
     val border: Int get() = 0
 
+    val recommendedFilterScale: Double get() = 1.0
+
     fun computeBorder(out: MutableMarginInt, texWidth: Int, texHeight: Int) {
         out.setTo(border)
     }
