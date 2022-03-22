@@ -21,7 +21,7 @@ class OldBlurFilter(radius: Double = 4.0) : Filter {
     var radius: Double = radius
         set(value) { field = value.clamp(0.0, 32.0) }
     //override val border: Int get() = composed.border
-    override fun computeBorder(out: MutableMarginInt) = composed.computeBorder(out)
+    override fun computeBorder(out: MutableMarginInt, texWidth: Int, texHeight: Int) = composed.computeBorder(out, texWidth, texHeight)
 
     override fun render(
         ctx: RenderContext,

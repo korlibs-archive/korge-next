@@ -5,13 +5,19 @@ import com.soywiz.korge.view.*
 import com.soywiz.korma.geom.*
 import com.soywiz.korui.*
 
-class BlurFilter(radius: Double) : ComposedFilter() {
+class BlurFilter(radius: Double, expandBorder: Boolean = true) : ComposedFilter() {
     companion object {
         @Deprecated("", ReplaceWith("BlurFilter(radius = initialRadius)"))
         operator fun invoke(initialRadius: Double = 4.0, dummy: Unit = Unit): BlurFilter = BlurFilter(radius = initialRadius)
     }
-    private val horizontal = DirectionalBlurFilter(angle = 0.degrees, radius).also { filters.add(it) }
-    private val vertical = DirectionalBlurFilter(angle = 90.degrees, radius).also { filters.add(it) }
+    private val horizontal = DirectionalBlurFilter(angle = 0.degrees, radius, expandBorder).also { filters.add(it) }
+    private val vertical = DirectionalBlurFilter(angle = 90.degrees, radius, expandBorder).also { filters.add(it) }
+    var expandBorder: Boolean
+        get() = horizontal.expandBorder
+        set(value) {
+            horizontal.expandBorder = value
+            vertical.expandBorder = value
+        }
     var radius: Double = radius
         set(value) {
             field = value

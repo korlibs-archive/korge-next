@@ -18,13 +18,13 @@ open class ComposedFilter private constructor(val filters: MutableList<Filter>, 
 
     override val allFilters: List<Filter> get() = filters.flatMap { it.allFilters }
 
-    override fun computeBorder(out: MutableMarginInt) {
+    override fun computeBorder(out: MutableMarginInt, texWidth: Int, texHeight: Int) {
         var sumLeft = 0
         var sumTop = 0
         var sumRight = 0
         var sumBottom = 0
         filters.fastForEach {
-            it.computeBorder(out)
+            it.computeBorder(out, texWidth, texHeight)
             sumLeft += out.left
             sumRight += out.right
             sumTop += out.top
