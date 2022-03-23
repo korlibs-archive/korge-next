@@ -48,15 +48,8 @@ class NativeSocket private constructor(internal val sockfd: Int, endpoint: Endpo
 		companion object {
 			fun fromHost(host: String): IP {
 				val hname = gethostbyname(host)
-				val inetaddr = hname!!.pointed.h_addr_list!![0]!!
-				return IP(
-					ubyteArrayOf(
-						inetaddr[0].toUByte(),
-						inetaddr[1].toUByte(),
-						inetaddr[2].toUByte(),
-						inetaddr[3].toUByte()
-					)
-				)
+				val inetaddr: CPointer<UByteVar> = hname!!.pointed.h_addr_list!![0]!!.reinterpret()
+				return IP(ubyteArrayOf(inetaddr[0], inetaddr[1], inetaddr[2], inetaddr[3]))
 			}
 		}
 	}
