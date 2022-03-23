@@ -48,6 +48,7 @@ interface AGWindow : AGContainer {
 interface AGFeatures {
     val graphicExtensions: Set<String> get() = emptySet()
     val isInstancedSupported: Boolean get() = false
+    val isStorageMultisampleSupported: Boolean get() = false
     val isFloatTextureSupported: Boolean get() = false
 }
 

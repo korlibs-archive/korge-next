@@ -1044,6 +1044,7 @@ open class KmlGlFastProxy(var parent: KmlGl) : KmlGl() {
 
     // Instanced
     override val isInstancedSupported: Boolean get() = parent.isInstancedSupported
+    override val isStorageMultisampleSupported: Boolean get() = parent.isStorageMultisampleSupported
 
     override fun drawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int) = parent.drawArraysInstanced(mode, first, count, instancecount)
     override fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int) = parent.drawElementsInstanced(mode, count, type, indices, instancecount)

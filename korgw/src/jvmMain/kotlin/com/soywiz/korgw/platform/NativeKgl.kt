@@ -157,6 +157,9 @@ open class NativeKgl(val gl: INativeGL) : KmlGlWithExtensions() {
     override fun drawArraysInstanced(mode: Int, first: Int, count: Int, instancecount: Int): Unit = gl.glDrawArraysInstanced(mode, first, count, instancecount)
     override fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int): Unit = gl.glDrawElementsInstanced(mode, count, type, NativeLong(indices.toLong()), instancecount)
     override fun vertexAttribDivisor(index: Int, divisor: Int): Unit = gl.glVertexAttribDivisor(index, divisor)
+    override fun renderbufferStorageMultisample(target: Int, samples: Int, internalformat: Int, width: Int, height: Int) {
+        gl.glRenderbufferStorageMultisample(target, samples, internalformat, width, height)
+    }
 }
 
 private const val GL_NUM_EXTENSIONS = 0x821D

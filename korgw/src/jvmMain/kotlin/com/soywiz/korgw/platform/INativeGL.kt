@@ -183,6 +183,7 @@ interface INativeGL {
     fun glDrawArraysInstanced(mode: GLenum, first: GLint, count: GLsizei, instancecount: GLsizei)
     fun glDrawElementsInstanced(mode: GLenum, count: GLsizei, type: GLenum, indices: IntSize, instancecount: GLsizei)
     fun glVertexAttribDivisor(index: GLuint, divisor: GLuint)
+    fun glRenderbufferStorageMultisample(target: GLenum, samples: GLint, internalformat: GLenum, width: GLsizei, height: GLsizei)
 
     companion object {
         const val DEPTH_BUFFER_BIT: Int = 0x0100
