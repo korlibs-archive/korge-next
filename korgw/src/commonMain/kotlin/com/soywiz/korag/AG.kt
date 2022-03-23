@@ -814,10 +814,16 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         clearStencil: Boolean = true
     ) = Unit
 
+    fun clearStencil(stencil: Int = 0) = clear(clearColor = false, clearDepth = false, clearStencil = true, stencil = stencil)
+    fun clearDepth(depth: Float = 1f) = clear(clearColor = false, clearDepth = true, clearStencil = false, depth = depth)
+    fun clearColor(color: RGBA = Colors.TRANSPARENT_BLACK) = clear(clearColor = true, clearDepth = false, clearStencil = false, color = color)
+
     //@PublishedApi
     @KoragExperimental
     var currentRenderBuffer: BaseRenderBuffer? = null
         private set
+
+    val currentRenderBufferOrMain: BaseRenderBuffer get() = currentRenderBuffer ?: mainRenderBuffer
 
     val renderingToTexture get() = currentRenderBuffer !== mainRenderBuffer && currentRenderBuffer !== null
 
@@ -896,6 +902,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
 
     open fun readColor(bitmap: Bitmap32): Unit = TODO()
     open fun readDepth(width: Int, height: Int, out: FloatArray): Unit = TODO()
+    open fun readStencil(bitmap: Bitmap8): Unit = TODO()
     fun readDepth(out: FloatArray2): Unit = readDepth(out.width, out.height, out.data)
     open fun readColorTexture(texture: Texture, width: Int = backWidth, height: Int = backHeight): Unit = TODO()
     fun readColor() = Bitmap32(backWidth, backHeight).apply { readColor(this) }

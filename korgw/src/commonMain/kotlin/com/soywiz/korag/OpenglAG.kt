@@ -120,12 +120,13 @@ abstract class AGOpengl : AG() {
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
                 gl.bindTexture(gl.TEXTURE_2D, 0)
                 gl.bindRenderbuffer(gl.RENDERBUFFER, depth.getInt(0))
-                gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height)
+                gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_STENCIL, width, height)
+                //gl.renderbufferStorageMultisample()
             }
 
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer.getInt(0))
             gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ftex.tex, 0)
-            gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth.getInt(0))
+            gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, depth.getInt(0))
         }
 
         override fun close() {
@@ -1006,6 +1007,20 @@ abstract class AGOpengl : AG() {
             buffer.getAlignedArrayFloat32(0, out, 0, area)
         }
     }
+
+    override fun readStencil(bitmap: Bitmap8) {
+        fbuffer(bitmap.area * 1) { buffer ->
+            gl.readPixels(
+                0, 0, bitmap.width, bitmap.height,
+                gl.STENCIL_INDEX, gl.UNSIGNED_BYTE, buffer
+            )
+            buffer.getArrayInt8(0, bitmap.data, 0, bitmap.area)
+            //println("readColor.HASH:" + bitmap.computeHash())
+        }
+    }
+
+
+
 
     override fun readColorTexture(texture: Texture, width: Int, height: Int) {
         gl.apply {
