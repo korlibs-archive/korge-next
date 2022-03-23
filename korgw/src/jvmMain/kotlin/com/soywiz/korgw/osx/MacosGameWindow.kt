@@ -10,7 +10,6 @@ import com.soywiz.korev.KeyEvent
 import com.soywiz.korev.MouseButton
 import com.soywiz.korev.MouseEvent
 import com.soywiz.korgw.*
-import com.soywiz.korgw.platform.BaseOpenglContext
 import com.soywiz.korgw.platform.INativeGL
 import com.soywiz.korgw.platform.NativeKgl
 import com.soywiz.korgw.platform.NativeLoad
@@ -21,8 +20,7 @@ import com.soywiz.korio.file.VfsFile
 import com.soywiz.korio.net.URL
 import com.soywiz.korio.util.OS
 import com.soywiz.korio.util.Once
-import com.sun.jna.Callback
-import com.sun.jna.Library
+import com.sun.jna.*
 import java.nio.ByteBuffer
 import kotlin.coroutines.*
 import kotlin.system.*
@@ -45,75 +43,6 @@ interface MacGL : INativeGL, Library {
 }
 
 private fun ByteArray.toNSData(): Long = NSClass("NSData").alloc().msgSend("initWithBytes:length:", ByteBuffer.wrap(this), this.size)
-
-class MacosGLContext(var contentView: Long, val window: Long, val quality: GameWindow.Quality) : BaseOpenglContext {
-    companion object {
-        const val NSOpenGLPFAMultisample = 59
-        const val NSOpenGLPFASampleBuffers = 55
-        const val NSOpenGLPFASamples = 56
-        const val NSOpenGLPFADoubleBuffer = 5
-        const val NSOpenGLPFAColorSize = 8
-        const val NSOpenGLPFAAlphaSize = 11
-        const val NSOpenGLPFADepthSize = 12
-        const val NSOpenGLPFAStencilSize = 13
-        const val NSOpenGLPFAAccumSize = 14
-    }
-
-    val attrs: IntArray by lazy {
-        val antialias = (this.quality != GameWindow.Quality.PERFORMANCE)
-        val antialiasArray = if (antialias) intArrayOf(
-            NSOpenGLPFAMultisample,
-            NSOpenGLPFASampleBuffers, 1,
-            NSOpenGLPFASamples, 4
-        ) else intArrayOf()
-        intArrayOf(
-            *antialiasArray,
-            //NSOpenGLPFAOpenGLProfile,
-            //NSOpenGLProfileVersion4_1Core,
-            NSOpenGLPFADoubleBuffer,
-            NSOpenGLPFAColorSize, 24,
-            NSOpenGLPFAAlphaSize, 8,
-            NSOpenGLPFADepthSize, 24,
-            NSOpenGLPFAStencilSize, 8,
-            NSOpenGLPFAAccumSize, 0,
-            0
-        )
-    }
-
-    val pixelFormat = NSClass("NSOpenGLPixelFormat").alloc().msgSend("initWithAttributes:", attrs)
-    val openGLContext = NSClass("NSOpenGLContext").alloc().msgSend("initWithFormat:shareContext:", pixelFormat, null)
-
-    init {
-        //println("pixelFormat: $pixelFormat")
-        //println("openGLContext: $openGLContext")
-        setView(contentView)
-    }
-
-    override val scaleFactor: Double get() = if (window != 0L) window.msgSendCGFloat("backingScaleFactor").toDouble() else 1.0
-
-    override fun makeCurrent() {
-        openGLContext.msgSend("makeCurrentContext")
-    }
-
-    override fun swapBuffers() {
-        GL.glFlush()
-        openGLContext.msgSend("flushBuffer")
-    }
-
-    fun clearDrawable() {
-        openGLContext.msgSend("clearDrawable")
-    }
-
-    fun setView(contentView: Long) {
-        openGLContext.msgSend("setView:", contentView)
-    }
-
-    fun setParameters() {
-        val dims = intArrayOf(720, 480)
-        GL.CGLSetParameter(openGLContext, 304, dims)
-        GL.CGLEnable(openGLContext, 304)
-    }
-}
 
 internal val isOSXMainThread get() = OS.isMac && (NSClass("NSThread").msgSend("isMainThread") != 0L)
 
@@ -175,14 +104,9 @@ class MacGameWindow(val checkGl: Boolean, val logGl: Boolean) : GameWindow() {
         val buttonNumber = sender.msgSend("buttonNumber")
         val clickCount = sender.msgSend("clickCount")
 
-        val rect = MyNSRect()
-        contentView.msgSend_stret(rect, "frame")
-
-        val rect2 = MyNSRect()
-        window.msgSend_stret(rect2, "frame")
-
-        val rect3 = MyNSRect()
-        window.msgSend_stret(rect3, "contentRectForFrameRect:", rect2)
+        val rect = contentView.msgSendNSRect("frame")
+        val rect2 = window.msgSendNSRect("frame")
+        val rect3 = window.msgSendNSRect("contentRectForFrameRect:", rect2)
 
         glCtx?.setParameters()
 
