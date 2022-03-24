@@ -1,6 +1,7 @@
 import com.soywiz.kmem.*
 import com.soywiz.korag.*
 import com.soywiz.korag.shader.*
+import com.soywiz.korau.sound.*
 import com.soywiz.korge.render.*
 import com.soywiz.korge.view.*
 import com.soywiz.korge.view.BlendMode
@@ -20,6 +21,7 @@ import com.soywiz.korma.geom.vector.*
 suspend fun Stage.mainGpuVectorRendering() {
     val korgeBitmap = resourcesVfs["korge.png"].readBitmap()
     val tigerSvg = resourcesVfs["Ghostscript_Tiger.svg"].readSVG()
+    //AudioData(44100, AudioSamples(1, 1024)).toSound().play()
 
     fun Context2d.buildGraphics() {
         keep {
@@ -184,7 +186,7 @@ class GpuShapeView(var shape: Shape) : View() {
             vertices.upload(data)
             ctx.batch.updateStandardUniforms()
 
-            ctx.batch.beforeFlush(ctx.batch)
+            ctx.batch.simulateBatchStats(points.size + 2)
 
             val scissor: AG.Scissor? = AG.Scissor().setTo(
                 //bounds
@@ -272,7 +274,7 @@ class GpuShapeView(var shape: Shape) : View() {
                     }
                 }
                 batch.setTemporalUniforms(uniforms) {
-                    ctx.batch.beforeFlush(ctx.batch)
+                    ctx.batch.simulateBatchStats(4)
                     ctx.ag.draw(
                         vertices = vertices,
                         program = program,
@@ -285,7 +287,7 @@ class GpuShapeView(var shape: Shape) : View() {
                             compareMode = AG.CompareMode.NOT_EQUAL,
                             writeMask = 0,
                         ),
-                        blending = BlendMode.NONE.factors,
+                        blending = BlendMode.NORMAL.factors,
                         colorMask = AG.ColorMaskState(true, true, true, true),
                     )
                 }

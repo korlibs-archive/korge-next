@@ -205,7 +205,7 @@ object DirectGL : INativeGL {
             if (nativeOpenGLLibraryPath == null) error("Can't get OpenGL library")
             traceTime("OpenGL Native.register") {
                 // @TODO: Can we provide a custom loader? like a dysym, to use the glGetProcAddress? If so, we will be able to use this on Windows too
-                Native.register(nativeOpenGLLibraryPath)
+                Native.register(DirectGL::class.java, NativeLibrary.getInstance(nativeOpenGLLibraryPath, mutableMapOf<String, Any?>()))
             }
             loaded = true
         } catch (e: Throwable) {

@@ -85,6 +85,7 @@ class BatchBuilder2D constructor(
 
     var vertexCount: Int
         get() = _vertexCount
+        //set(value) { _vertexCount = value }
         internal set(value) { _vertexCount = value }
 
     @PublishedApi internal var vertexPos = 0
@@ -879,6 +880,16 @@ class BatchBuilder2D constructor(
         currentTexIndex = 0
         //resetCachedState()
 	}
+
+    fun simulateBatchStats(vertexCount: Int) {
+        val oldVertexCount = this.vertexCount
+        this.vertexCount = vertexCount
+        try {
+            beforeFlush(this)
+        } finally {
+            this.vertexCount = oldVertexCount
+        }
+    }
 
     /**
      * Executes [callback] while setting temporarily the view matrix to [matrix]
