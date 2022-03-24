@@ -119,10 +119,11 @@ interface Shape : BoundsDrawable {
 	fun containsPoint(x: Double, y: Double): Boolean = bounds.contains(x, y)
 }
 
-fun Shape.getBounds(out: Rectangle = Rectangle()) = out.apply {
-	val bb = BoundsBuilder()
+fun Shape.getBounds(out: Rectangle = Rectangle(), bb: BoundsBuilder = BoundsBuilder()): Rectangle {
+	bb.reset()
 	addBounds(bb)
 	bb.getBounds(out)
+    return out
 }
 
 fun Shape.toSvg(scale: Double = 1.0): Xml = SvgBuilder(this.getBounds(), scale).apply { buildSvg(this) }.toXml()
