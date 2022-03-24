@@ -16,7 +16,7 @@ annotation class NativeName(val name: String) {
 
 typealias NSRectPtr = Pointer
 
-inline fun <reified T : Library> NativeLoad(name: String) = Native.load(name, T::class.java, NativeName.OPTIONS) as T
+inline fun <reified T : Library> NativeLoad(name: String): T = Native.load(name, T::class.java, NativeName.OPTIONS) as T
 
 internal interface GL : Library {
     fun glViewport(x: Int, y: Int, width: Int, height: Int)

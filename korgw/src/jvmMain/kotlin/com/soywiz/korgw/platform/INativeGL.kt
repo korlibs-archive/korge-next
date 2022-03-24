@@ -1,8 +1,13 @@
 package com.soywiz.korgw.platform
 
-import com.soywiz.kmem.FBuffer
+import com.soywiz.kgl.*
+import com.soywiz.kmem.*
+import com.soywiz.korim.awt.*
 import com.soywiz.korim.bitmap.NativeImage
-import com.sun.jna.NativeLong
+import com.soywiz.korio.lang.*
+import com.soywiz.korio.time.*
+import com.soywiz.korio.util.*
+import com.sun.jna.*
 import java.nio.ByteBuffer
 import java.nio.FloatBuffer
 import java.nio.IntBuffer
@@ -33,6 +38,346 @@ typealias IntSize = NativeLong
 typealias VoidPtr = ByteBuffer
 typealias IntPtr = IntBuffer
 typealias FloatPtr = FloatBuffer
+
+internal object GL {
+    @JvmStatic external fun glActiveTexture(texture: GLenum)
+    @JvmStatic external fun glAttachShader(program: GLuint, shader: GLuint)
+    @JvmStatic external fun glBindAttribLocation(program: GLuint, index: GLuint, name: String)
+    @JvmStatic external fun glBindBuffer(target: GLenum, buffer: GLuint)
+    @JvmStatic external fun glBindFramebuffer(target: GLenum, framebuffer: GLuint)
+    @JvmStatic external fun glBindRenderbuffer(target: GLenum, renderbuffer: GLuint)
+    @JvmStatic external fun glBindTexture(target: GLenum, texture: GLuint)
+    @JvmStatic external fun glBlendColor(red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat)
+    @JvmStatic external fun glBlendEquation(mode: GLenum)
+    @JvmStatic external fun glBlendEquationSeparate(modeRGB: GLenum, modeAlpha: GLenum)
+    @JvmStatic external fun glBlendFunc(sfactor: GLenum, dfactor: GLenum)
+    @JvmStatic external fun glBlendFuncSeparate(sfactorRGB: GLenum, dfactorRGB: GLenum, sfactorAlpha: GLenum, dfactorAlpha: GLenum)
+    @JvmStatic external fun glBufferData(target: GLenum, size: GLsizeiptr, data: VoidPtr, usage: GLenum)
+    @JvmStatic external fun glBufferSubData(target: GLenum, offset: GLintptr, size: GLsizeiptr, data: VoidPtr)
+    @JvmStatic external fun glCheckFramebufferStatus(target: GLenum): GLenum
+    @JvmStatic external fun glClear(mask: GLbitfield)
+    @JvmStatic external fun glClearColor(red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat)
+    @JvmStatic external fun glClearDepth(d: GLdouble)
+    @JvmStatic external fun glClearStencil(s: GLint)
+    @JvmStatic external fun glColorMask(red: GLboolean, green: GLboolean, blue: GLboolean, alpha: GLboolean)
+    @JvmStatic external fun glCompileShader(shader: GLuint)
+    @JvmStatic external fun glCompressedTexImage2D(target: GLenum, level: GLint, internalformat: GLenum, width: GLsizei, height: GLsizei, border: GLint, imageSize: GLsizei, data: VoidPtr)
+    @JvmStatic external fun glCompressedTexSubImage2D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, imageSize: GLsizei, data: VoidPtr)
+    @JvmStatic external fun glCopyTexImage2D(target: GLenum, level: GLint, internalformat: GLenum, x: GLint, y: GLint, width: GLsizei, height: GLsizei, border: GLint)
+    @JvmStatic external fun glCopyTexSubImage2D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, x: GLint, y: GLint, width: GLsizei, height: GLsizei)
+    @JvmStatic external fun glCreateProgram(): GLuint
+    @JvmStatic external fun glCreateShader(type: GLenum): GLuint
+    @JvmStatic external fun glCullFace(mode: GLenum)
+    @JvmStatic external fun glDeleteBuffers(n: GLsizei, items: IntPtr)
+    @JvmStatic external fun glDeleteFramebuffers(n: GLsizei, items: IntPtr)
+    @JvmStatic external fun glDeleteProgram(program: GLuint)
+    @JvmStatic external fun glDeleteRenderbuffers(n: GLsizei, items: IntPtr)
+    @JvmStatic external fun glDeleteShader(shader: GLuint)
+    @JvmStatic external fun glDeleteTextures(n: GLsizei, items: IntPtr)
+    @JvmStatic external fun glDepthFunc(func: GLenum)
+    @JvmStatic external fun glDepthMask(flag: GLboolean)
+    @JvmStatic external fun glDepthRange(n: GLdouble, f: GLdouble)
+    @JvmStatic external fun glDetachShader(program: GLuint, shader: GLuint)
+    @JvmStatic external fun glDisable(cap: GLenum)
+    @JvmStatic external fun glDisableVertexAttribArray(index: GLuint)
+    @JvmStatic external fun glDrawArrays(mode: GLenum, first: GLint, count: GLsizei)
+    @JvmStatic external fun glDrawElements(mode: GLenum, count: GLsizei, type: GLenum, indices: IntSize)
+    @JvmStatic external fun glEnable(cap: GLenum)
+    @JvmStatic external fun glEnableVertexAttribArray(index: GLuint)
+    @JvmStatic external fun glFinish()
+    @JvmStatic external fun glFlush()
+    @JvmStatic external fun glFramebufferRenderbuffer(target: GLenum, attachment: GLenum, renderbuffertarget: GLenum, renderbuffer: GLuint)
+    @JvmStatic external fun glFramebufferTexture2D(target: GLenum, attachment: GLenum, textarget: GLenum, texture: GLuint, level: GLint)
+    @JvmStatic external fun glFrontFace(mode: GLenum)
+    @JvmStatic external fun glGenBuffers(n: GLsizei, buffers: IntPtr)
+    @JvmStatic external fun glGenerateMipmap(target: GLenum)
+    @JvmStatic external fun glGenFramebuffers(n: GLsizei, framebuffers: IntPtr)
+    @JvmStatic external fun glGenRenderbuffers(n: GLsizei, renderbuffers: IntPtr)
+    @JvmStatic external fun glGenTextures(n: GLsizei, textures: IntPtr)
+    @JvmStatic external fun glGetActiveAttrib(program: GLuint, index: GLuint, bufSize: GLsizei, length: IntPtr, size: IntPtr, type: IntPtr, name: VoidPtr)
+    @JvmStatic external fun glGetActiveUniform(program: GLuint, index: GLuint, bufSize: GLsizei, length: IntPtr, size: IntPtr, type: IntPtr, name: VoidPtr)
+    @JvmStatic external fun glGetAttachedShaders(program: GLuint, maxCount: GLsizei, count: IntPtr, shaders: IntPtr)
+    @JvmStatic external fun glGetAttribLocation(program: GLuint, name: String): Int
+    @JvmStatic external fun glGetUniformLocation(program: GLuint, name: String): Int
+    @JvmStatic external fun glGetBooleanv(pname: GLenum, data: VoidPtr)
+    @JvmStatic external fun glGetBufferParameteriv(target: GLenum, pname: GLenum, params: IntPtr)
+    @JvmStatic external fun glGetError(): GLenum
+    @JvmStatic external fun glGetFloatv(pname: GLenum, data: FloatPtr)
+    @JvmStatic external fun glGetFramebufferAttachmentParameteriv(target: GLenum, attachment: GLenum, pname: GLenum, params: IntPtr)
+    @JvmStatic external fun glGetIntegerv(pname: GLenum, data: IntPtr)
+    @JvmStatic external fun glGetProgramInfoLog(program: GLuint, bufSize: GLsizei, length: IntPtr, infoLog: VoidPtr)
+    @JvmStatic external fun glGetRenderbufferParameteriv(target: GLenum, pname: GLenum, params: IntPtr)
+    @JvmStatic external fun glGetProgramiv(program: GLuint, pname: GLenum, params: IntPtr)
+    @JvmStatic external fun glGetShaderiv(shader: GLuint, pname: GLenum, params: IntPtr)
+    @JvmStatic external fun glGetShaderInfoLog(shader: GLuint, bufSize: GLsizei, length: IntPtr, infoLog: VoidPtr)
+    @JvmStatic external fun glGetShaderPrecisionFormat(shadertype: GLenum, precisiontype: GLenum, range: IntPtr, precision: IntPtr)
+    @JvmStatic external fun glGetShaderSource(shader: GLuint, bufSize: GLsizei, length: IntPtr, source: VoidPtr)
+    @JvmStatic external fun glGetString(name: GLenum): String?
+    @JvmStatic external fun glGetStringi(name: GLenum, i: GLuint): String?
+    @JvmStatic external fun glGetTexParameterfv(target: GLenum, pname: GLenum, params: FloatPtr)
+    @JvmStatic external fun glGetTexParameteriv(target: GLenum, pname: GLenum, params: IntPtr)
+    @JvmStatic external fun glGetUniformfv(program: GLuint, location: GLint, params: FloatPtr)
+    @JvmStatic external fun glGetUniformiv(program: GLuint, location: GLint, params: IntPtr)
+    @JvmStatic external fun glGetVertexAttribfv(index: GLuint, pname: GLenum, params: FloatPtr)
+    @JvmStatic external fun glGetVertexAttribiv(index: GLuint, pname: GLenum, params: IntPtr)
+    //@JvmStatic external fun glGetVertexAttribPointerv(index: GLuint, pname: GLenum, pointer: FBuffer)
+    @JvmStatic external fun glHint(target: GLenum, mode: GLenum)
+    @JvmStatic external fun glIsBuffer(buffer: GLuint): GLboolean
+    @JvmStatic external fun glIsEnabled(cap: GLenum): GLboolean
+    @JvmStatic external fun glIsFramebuffer(framebuffer: GLuint): GLboolean
+    @JvmStatic external fun glIsProgram(program: GLuint): GLboolean
+    @JvmStatic external fun glIsRenderbuffer(renderbuffer: GLuint): GLboolean
+    @JvmStatic external fun glIsShader(shader: GLuint): GLboolean
+    @JvmStatic external fun glIsTexture(texture: GLuint): GLboolean
+    @JvmStatic external fun glLineWidth(width: GLfloat)
+    @JvmStatic external fun glLinkProgram(program: GLuint)
+    @JvmStatic external fun glPixelStorei(pname: GLenum, param: GLint)
+    @JvmStatic external fun glPolygonOffset(factor: GLfloat, units: GLfloat)
+    @JvmStatic external fun glReadPixels(x: GLint, y: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: VoidPtr)
+    @JvmStatic external fun glReleaseShaderCompiler()
+    @JvmStatic external fun glRenderbufferStorage(target: GLenum, internalformat: GLenum, width: GLsizei, height: GLsizei)
+    @JvmStatic external fun glSampleCoverage(value: GLfloat, invert: GLboolean)
+    @JvmStatic external fun glScissor(x: GLint, y: GLint, width: GLsizei, height: GLsizei)
+    @JvmStatic external fun glShaderBinary(count: GLsizei, shaders: IntPtr, binaryformat: GLenum, binary: VoidPtr, length: GLsizei)
+    //@JvmStatic external fun glShaderSource(shader: GLuint, count: GLsizei, string: Array<String>, length: IntArray?)
+    @JvmStatic external fun glStencilFunc(func: GLenum, ref: GLint, mask: GLuint)
+    @JvmStatic external fun glStencilFuncSeparate(face: GLenum, func: GLenum, ref: GLint, mask: GLuint)
+    @JvmStatic external fun glStencilMask(mask: GLuint)
+    @JvmStatic external fun glStencilMaskSeparate(face: GLenum, mask: GLuint)
+    @JvmStatic external fun glStencilOp(fail: GLenum, zfail: GLenum, zpass: GLenum)
+    @JvmStatic external fun glStencilOpSeparate(face: GLenum, sfail: GLenum, dpfail: GLenum, dppass: GLenum)
+    @JvmStatic external fun glTexImage2D(target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, height: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: VoidPtr?)
+    @JvmStatic external fun glTexParameterf(target: GLenum, pname: GLenum, param: GLfloat)
+    @JvmStatic external fun glTexParameterfv(target: GLenum, pname: GLenum, params: FloatPtr)
+    @JvmStatic external fun glTexParameteri(target: GLenum, pname: GLenum, param: GLint)
+    @JvmStatic external fun glTexParameteriv(target: GLenum, pname: GLenum, params: IntPtr)
+    @JvmStatic external fun glTexSubImage2D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: VoidPtr)
+    @JvmStatic external fun glUniform1f(location: GLint, v0: GLfloat)
+    @JvmStatic external fun glUniform1fv(location: GLint, count: GLsizei, value: FloatPtr)
+    @JvmStatic external fun glUniform1i(location: GLint, v0: GLint)
+    @JvmStatic external fun glUniform1iv(location: GLint, count: GLsizei, value: IntPtr)
+    @JvmStatic external fun glUniform2f(location: GLint, v0: GLfloat, v1: GLfloat)
+    @JvmStatic external fun glUniform2fv(location: GLint, count: GLsizei, value: FloatPtr)
+    @JvmStatic external fun glUniform2i(location: GLint, v0: GLint, v1: GLint)
+    @JvmStatic external fun glUniform2iv(location: GLint, count: GLsizei, value: IntPtr)
+    @JvmStatic external fun glUniform3f(location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat)
+    @JvmStatic external fun glUniform3fv(location: GLint, count: GLsizei, value: FloatPtr)
+    @JvmStatic external fun glUniform3i(location: GLint, v0: GLint, v1: GLint, v2: GLint)
+    @JvmStatic external fun glUniform3iv(location: GLint, count: GLsizei, value: IntPtr)
+    @JvmStatic external fun glUniform4f(location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat, v3: GLfloat)
+    @JvmStatic external fun glUniform4fv(location: GLint, count: GLsizei, value: FloatPtr)
+    @JvmStatic external fun glUniform4i(location: GLint, v0: GLint, v1: GLint, v2: GLint, v3: GLint)
+    @JvmStatic external fun glUniform4iv(location: GLint, count: GLsizei, value: IntPtr)
+    @JvmStatic external fun glUniformMatrix2fv(location: GLint, count: GLsizei, transpose: GLboolean, value: FloatPtr)
+    @JvmStatic external fun glUniformMatrix3fv(location: GLint, count: GLsizei, transpose: GLboolean, value: FloatPtr)
+    @JvmStatic external fun glUniformMatrix4fv(location: GLint, count: GLsizei, transpose: GLboolean, value: FloatPtr)
+    @JvmStatic external fun glUseProgram(program: GLuint)
+    @JvmStatic external fun glValidateProgram(program: GLuint)
+    @JvmStatic external fun glVertexAttrib1f(index: GLuint, x: GLfloat)
+    @JvmStatic external fun glVertexAttrib1fv(index: GLuint, v: FloatPtr)
+    @JvmStatic external fun glVertexAttrib2f(index: GLuint, x: GLfloat, y: GLfloat)
+    @JvmStatic external fun glVertexAttrib2fv(index: GLuint, v: FloatPtr)
+    @JvmStatic external fun glVertexAttrib3f(index: GLuint, x: GLfloat, y: GLfloat, z: GLfloat)
+    @JvmStatic external fun glVertexAttrib3fv(index: GLuint, v: FloatPtr)
+    @JvmStatic external fun glVertexAttrib4f(index: GLuint, x: GLfloat, y: GLfloat, z: GLfloat, w: GLfloat)
+    @JvmStatic external fun glVertexAttrib4fv(index: GLuint, v: FloatPtr)
+    @JvmStatic external fun glVertexAttribPointer(index: GLuint, size: GLint, type: GLenum, normalized: GLboolean, stride: GLsizei, pointer: IntSize)
+    @JvmStatic external fun glViewport(x: GLint, y: GLint, width: GLsizei, height: GLsizei)
+    @JvmStatic external fun glDrawArraysInstanced(mode: GLenum, first: GLint, count: GLsizei, instancecount: GLsizei)
+    @JvmStatic external fun glDrawElementsInstanced(mode: GLenum, count: GLsizei, type: GLenum, indices: IntSize, instancecount: GLsizei)
+    @JvmStatic external fun glVertexAttribDivisor(index: GLuint, divisor: GLuint)
+    @JvmStatic external fun glRenderbufferStorageMultisample(target: GLenum, samples: GLint, internalformat: GLenum, width: GLsizei, height: GLsizei)
+
+    internal var loaded = false
+
+    init {
+        try {
+            if (nativeOpenGLLibraryPath == null) error("Can't get OpenGL library")
+            traceTime("OpenGL Native.register") {
+                // @TODO: Can we provide a custom loader? like a dysym, to use the glGetProcAddress? If so, we will be able to use this on Windows too
+                Native.register(nativeOpenGLLibraryPath)
+            }
+            loaded = true
+        } catch (e: Throwable) {
+            com.soywiz.klogger.Console.error("Failed to initialize OpenAL: arch=$arch, OS.rawName=${OS.rawName}, nativeOpenGLLibraryPath=$nativeOpenGLLibraryPath, message=${e.message}")
+            //e.printStackTrace()
+        }
+    }
+}
+
+private val arch by lazy { System.getProperty("os.arch").toLowerCase() }
+
+val nativeOpenGLLibraryPath: String? by lazy {
+    Environment["OPENGL_LIB_PATH"]?.let { path ->
+        return@lazy path
+    }
+    when {
+        OS.isMac -> {
+            //getNativeFileLocalPath("natives/macosx64/libopenal.dylib")
+            "OpenGL" // Mac already includes the OpenAL library
+        }
+        OS.isWindows -> {
+            "OpenGL32"
+        }
+        else -> {
+            println("  - Unknown/Unsupported OS")
+            null
+        }
+    }
+}
+
+open class DirectINativeGL(val fallback: INativeGL) : INativeGL {
+    override fun glActiveTexture(texture: GLenum) = GL.glActiveTexture(texture)
+    override fun glAttachShader(program: GLuint, shader: GLuint) = GL.glAttachShader(program, shader)
+    override fun glBindAttribLocation(program: GLuint, index: GLuint, name: String) = GL.glBindAttribLocation(program, index, name)
+    override fun glBindBuffer(target: GLenum, buffer: GLuint) = GL.glBindBuffer(target, buffer)
+    override fun glBindFramebuffer(target: GLenum, framebuffer: GLuint) = GL.glBindFramebuffer(target, framebuffer)
+    override fun glBindRenderbuffer(target: GLenum, renderbuffer: GLuint) = GL.glBindRenderbuffer(target, renderbuffer)
+    override fun glBindTexture(target: GLenum, texture: GLuint) = GL.glBindTexture(target, texture)
+    override fun glBlendColor(red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat) = GL.glBlendColor(red, green, blue, alpha)
+    override fun glBlendEquation(mode: GLenum) = GL.glBlendEquation(mode)
+    override fun glBlendEquationSeparate(modeRGB: GLenum, modeAlpha: GLenum) = GL.glBlendEquationSeparate(modeRGB, modeAlpha)
+    override fun glBlendFunc(sfactor: GLenum, dfactor: GLenum) = GL.glBlendFunc(sfactor, dfactor)
+    override fun glBlendFuncSeparate(sfactorRGB: GLenum, dfactorRGB: GLenum, sfactorAlpha: GLenum, dfactorAlpha: GLenum) = GL.glBlendFuncSeparate(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha)
+    override fun glBufferData(target: GLenum, size: GLsizeiptr, data: VoidPtr, usage: GLenum) = GL.glBufferData(target, size, data, usage)
+    override fun glBufferSubData(target: GLenum, offset: GLintptr, size: GLsizeiptr, data: VoidPtr) = GL.glBufferSubData(target, offset, size, data)
+    override fun glCheckFramebufferStatus(target: GLenum): GLenum = GL.glCheckFramebufferStatus(target)
+    override fun glClear(mask: GLbitfield) = GL.glClear(mask)
+    override fun glClearColor(red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat) = GL.glClearColor(red, green, blue, alpha)
+    override fun glClearDepth(d: GLdouble) = GL.glClearDepth(d)
+    override fun glClearStencil(s: GLint) = GL.glClearStencil(s)
+    override fun glColorMask(red: GLboolean, green: GLboolean, blue: GLboolean, alpha: GLboolean) = GL.glColorMask(red, green, blue, alpha)
+    override fun glCompileShader(shader: GLuint) = GL.glCompileShader(shader)
+    override fun glCompressedTexImage2D(target: GLenum, level: GLint, internalformat: GLenum, width: GLsizei, height: GLsizei, border: GLint, imageSize: GLsizei, data: VoidPtr) = GL.glCompressedTexImage2D(target, level, internalformat, width, height, border, imageSize, data)
+    override fun glCompressedTexSubImage2D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, imageSize: GLsizei, data: VoidPtr) = GL.glCompressedTexSubImage2D(target, level, xoffset, yoffset, width, height, format, imageSize, data)
+    override fun glCopyTexImage2D(target: GLenum, level: GLint, internalformat: GLenum, x: GLint, y: GLint, width: GLsizei, height: GLsizei, border: GLint) = GL.glCopyTexImage2D(target, level, internalformat, x, y, width, height, border)
+    override fun glCopyTexSubImage2D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, x: GLint, y: GLint, width: GLsizei, height: GLsizei) = GL.glCopyTexSubImage2D(target, level, xoffset, yoffset, x, y, width, height)
+    override fun glCreateProgram(): GLuint = GL.glCreateProgram()
+    override fun glCreateShader(type: GLenum): GLuint = GL.glCreateShader(type)
+    override fun glCullFace(mode: GLenum) = GL.glCullFace(mode)
+    override fun glDeleteBuffers(n: GLsizei, items: IntPtr) = GL.glDeleteBuffers(n, items)
+    override fun glDeleteFramebuffers(n: GLsizei, items: IntPtr) = GL.glDeleteFramebuffers(n, items)
+    override fun glDeleteProgram(program: GLuint) = GL.glDeleteProgram(program)
+    override fun glDeleteRenderbuffers(n: GLsizei, items: IntPtr) = GL.glDeleteRenderbuffers(n, items)
+    override fun glDeleteShader(shader: GLuint) = GL.glDeleteShader(shader)
+    override fun glDeleteTextures(n: GLsizei, items: IntPtr) = GL.glDeleteTextures(n, items)
+    override fun glDepthFunc(func: GLenum) = GL.glDepthFunc(func)
+    override fun glDepthMask(flag: GLboolean) = GL.glDepthMask(flag)
+    override fun glDepthRange(n: GLdouble, f: GLdouble) = GL.glDepthRange(n, f)
+    override fun glDetachShader(program: GLuint, shader: GLuint) = GL.glDetachShader(program, shader)
+    override fun glDisable(cap: GLenum) = GL.glDisable(cap)
+    override fun glDisableVertexAttribArray(index: GLuint) = GL.glDisableVertexAttribArray(index)
+    override fun glDrawArrays(mode: GLenum, first: GLint, count: GLsizei) = GL.glDrawArrays(mode, first, count)
+    override fun glDrawElements(mode: GLenum, count: GLsizei, type: GLenum, indices: IntSize) = GL.glDrawElements(mode, count, type, indices)
+    override fun glEnable(cap: GLenum) = GL.glEnable(cap)
+    override fun glEnableVertexAttribArray(index: GLuint) = GL.glEnableVertexAttribArray(index)
+    override fun glFinish() = GL.glFinish()
+    override fun glFlush() = GL.glFlush()
+    override fun glFramebufferRenderbuffer(target: GLenum, attachment: GLenum, renderbuffertarget: GLenum, renderbuffer: GLuint) = GL.glFramebufferRenderbuffer(target, attachment, renderbuffertarget, renderbuffer)
+    override fun glFramebufferTexture2D(target: GLenum, attachment: GLenum, textarget: GLenum, texture: GLuint, level: GLint) = GL.glFramebufferTexture2D(target, attachment, textarget, texture, level)
+    override fun glFrontFace(mode: GLenum) = GL.glFrontFace(mode)
+    override fun glGenBuffers(n: GLsizei, buffers: IntPtr) = GL.glGenBuffers(n, buffers)
+    override fun glGenerateMipmap(target: GLenum) = GL.glGenerateMipmap(target)
+    override fun glGenFramebuffers(n: GLsizei, framebuffers: IntPtr) = GL.glGenFramebuffers(n, framebuffers)
+    override fun glGenRenderbuffers(n: GLsizei, renderbuffers: IntPtr) = GL.glGenRenderbuffers(n, renderbuffers)
+    override fun glGenTextures(n: GLsizei, textures: IntPtr) = GL.glGenTextures(n, textures)
+    override fun glGetActiveAttrib(program: GLuint, index: GLuint, bufSize: GLsizei, length: IntPtr, size: IntPtr, type: IntPtr, name: VoidPtr) = GL.glGetActiveAttrib(program, index, bufSize, length, size, type, name)
+    override fun glGetActiveUniform(program: GLuint, index: GLuint, bufSize: GLsizei, length: IntPtr, size: IntPtr, type: IntPtr, name: VoidPtr) = GL.glGetActiveUniform(program, index, bufSize, length, size, type, name)
+    override fun glGetAttachedShaders(program: GLuint, maxCount: GLsizei, count: IntPtr, shaders: IntPtr) = GL.glGetAttachedShaders(program, maxCount, count, shaders)
+    override fun glGetAttribLocation(program: GLuint, name: String): Int = GL.glGetAttribLocation(program, name)
+    override fun glGetUniformLocation(program: GLuint, name: String): Int = GL.glGetUniformLocation(program, name)
+    override fun glGetBooleanv(pname: GLenum, data: VoidPtr) = GL.glGetBooleanv(pname, data)
+    override fun glGetBufferParameteriv(target: GLenum, pname: GLenum, params: IntPtr) = GL.glGetBufferParameteriv(target, pname, params)
+    override fun glGetError(): GLenum = GL.glGetError()
+    override fun glGetFloatv(pname: GLenum, data: FloatPtr) = GL.glGetFloatv(pname, data)
+    override fun glGetFramebufferAttachmentParameteriv(target: GLenum, attachment: GLenum, pname: GLenum, params: IntPtr) = GL.glGetFramebufferAttachmentParameteriv(target, attachment, pname, params)
+    override fun glGetIntegerv(pname: GLenum, data: IntPtr) = GL.glGetIntegerv(pname, data)
+    override fun glGetProgramInfoLog(program: GLuint, bufSize: GLsizei, length: IntPtr, infoLog: VoidPtr) = GL.glGetProgramInfoLog(program, bufSize, length, infoLog)
+    override fun glGetRenderbufferParameteriv(target: GLenum, pname: GLenum, params: IntPtr) = GL.glGetRenderbufferParameteriv(target, pname, params)
+    override fun glGetProgramiv(program: GLuint, pname: GLenum, params: IntPtr) = GL.glGetProgramiv(program, pname, params)
+    override fun glGetShaderiv(shader: GLuint, pname: GLenum, params: IntPtr) = GL.glGetShaderiv(shader, pname, params)
+    override fun glGetShaderInfoLog(shader: GLuint, bufSize: GLsizei, length: IntPtr, infoLog: VoidPtr) = GL.glGetShaderInfoLog(shader, bufSize, length, infoLog)
+    override fun glGetShaderPrecisionFormat(shadertype: GLenum, precisiontype: GLenum, range: IntPtr, precision: IntPtr) = GL.glGetShaderPrecisionFormat(shadertype, precisiontype, range, precision)
+    override fun glGetShaderSource(shader: GLuint, bufSize: GLsizei, length: IntPtr, source: VoidPtr) = GL.glGetShaderSource(shader, bufSize, length, source)
+    override fun glGetString(name: GLenum): String? = GL.glGetString(name)
+    override fun glGetStringi(name: GLenum, i: GLuint): String? = GL.glGetStringi(name, i)
+    override fun glGetTexParameterfv(target: GLenum, pname: GLenum, params: FloatPtr) = GL.glGetTexParameterfv(target, pname, params)
+    override fun glGetTexParameteriv(target: GLenum, pname: GLenum, params: IntPtr) = GL.glGetTexParameteriv(target, pname, params)
+    override fun glGetUniformfv(program: GLuint, location: GLint, params: FloatPtr) = GL.glGetUniformfv(program, location, params)
+    override fun glGetUniformiv(program: GLuint, location: GLint, params: IntPtr) = GL.glGetUniformiv(program, location, params)
+    override fun glGetVertexAttribfv(index: GLuint, pname: GLenum, params: FloatPtr) = GL.glGetVertexAttribfv(index, pname, params)
+    override fun glGetVertexAttribiv(index: GLuint, pname: GLenum, params: IntPtr) = GL.glGetVertexAttribiv(index, pname, params)
+    override fun glHint(target: GLenum, mode: GLenum) = GL.glHint(target, mode)
+    override fun glIsBuffer(buffer: GLuint): GLboolean = GL.glIsBuffer(buffer)
+    override fun glIsEnabled(cap: GLenum): GLboolean = GL.glIsEnabled(cap)
+    override fun glIsFramebuffer(framebuffer: GLuint): GLboolean = GL.glIsFramebuffer(framebuffer)
+    override fun glIsProgram(program: GLuint): GLboolean = GL.glIsProgram(program)
+    override fun glIsRenderbuffer(renderbuffer: GLuint): GLboolean = GL.glIsRenderbuffer(renderbuffer)
+    override fun glIsShader(shader: GLuint): GLboolean = GL.glIsShader(shader)
+    override fun glIsTexture(texture: GLuint): GLboolean = GL.glIsTexture(texture)
+    override fun glLineWidth(width: GLfloat) = GL.glLineWidth(width)
+    override fun glLinkProgram(program: GLuint) = GL.glLinkProgram(program)
+    override fun glPixelStorei(pname: GLenum, param: GLint) = GL.glPixelStorei(pname, param)
+    override fun glPolygonOffset(factor: GLfloat, units: GLfloat) = GL.glPolygonOffset(factor, units)
+    override fun glReadPixels(x: GLint, y: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: VoidPtr) = GL.glReadPixels(x, y, width, height, format, type, pixels)
+    override fun glReleaseShaderCompiler() = GL.glReleaseShaderCompiler()
+    override fun glRenderbufferStorage(target: GLenum, internalformat: GLenum, width: GLsizei, height: GLsizei) = GL.glRenderbufferStorage(target, internalformat, width, height)
+    override fun glSampleCoverage(value: GLfloat, invert: GLboolean) = GL.glSampleCoverage(value, invert)
+    override fun glScissor(x: GLint, y: GLint, width: GLsizei, height: GLsizei) = GL.glScissor(x, y, width, height)
+    override fun glShaderBinary(count: GLsizei, shaders: IntPtr, binaryformat: GLenum, binary: VoidPtr, length: GLsizei) = GL.glShaderBinary(count, shaders, binaryformat, binary, length)
+    override fun glShaderSource(shader: GLuint, count: GLsizei, string: Array<String>, length: IntArray?): Unit {
+        fallback.glShaderSource(shader, count, string, length)
+    }
+    override fun glStencilFunc(func: GLenum, ref: GLint, mask: GLuint) = GL.glStencilFunc(func, ref, mask)
+    override fun glStencilFuncSeparate(face: GLenum, func: GLenum, ref: GLint, mask: GLuint) = GL.glStencilFuncSeparate(face, func, ref, mask)
+    override fun glStencilMask(mask: GLuint) = GL.glStencilMask(mask)
+    override fun glStencilMaskSeparate(face: GLenum, mask: GLuint) = GL.glStencilMaskSeparate(face, mask)
+    override fun glStencilOp(fail: GLenum, zfail: GLenum, zpass: GLenum) = GL.glStencilOp(fail, zfail, zpass)
+    override fun glStencilOpSeparate(face: GLenum, sfail: GLenum, dpfail: GLenum, dppass: GLenum) = GL.glStencilOpSeparate(face, sfail, dpfail, dppass)
+    override fun glTexImage2D(target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, height: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: VoidPtr?) = GL.glTexImage2D(target, level, internalformat, width, height, border, format, type, pixels)
+    override fun glTexParameterf(target: GLenum, pname: GLenum, param: GLfloat) = GL.glTexParameterf(target, pname, param)
+    override fun glTexParameterfv(target: GLenum, pname: GLenum, params: FloatPtr) = GL.glTexParameterfv(target, pname, params)
+    override fun glTexParameteri(target: GLenum, pname: GLenum, param: GLint) = GL.glTexParameteri(target, pname, param)
+    override fun glTexParameteriv(target: GLenum, pname: GLenum, params: IntPtr) = GL.glTexParameteriv(target, pname, params)
+    override fun glTexSubImage2D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: VoidPtr) = GL.glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels)
+    override fun glUniform1f(location: GLint, v0: GLfloat) = GL.glUniform1f(location, v0)
+    override fun glUniform1fv(location: GLint, count: GLsizei, value: FloatPtr) = GL.glUniform1fv(location, count, value)
+    override fun glUniform1i(location: GLint, v0: GLint) = GL.glUniform1i(location, v0)
+    override fun glUniform1iv(location: GLint, count: GLsizei, value: IntPtr) = GL.glUniform1iv(location, count, value)
+    override fun glUniform2f(location: GLint, v0: GLfloat, v1: GLfloat) = GL.glUniform2f(location, v0, v1)
+    override fun glUniform2fv(location: GLint, count: GLsizei, value: FloatPtr) = GL.glUniform2fv(location, count, value)
+    override fun glUniform2i(location: GLint, v0: GLint, v1: GLint) = GL.glUniform2i(location, v0, v1)
+    override fun glUniform2iv(location: GLint, count: GLsizei, value: IntPtr) = GL.glUniform2iv(location, count, value)
+    override fun glUniform3f(location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat) = GL.glUniform3f(location, v0, v1, v2)
+    override fun glUniform3fv(location: GLint, count: GLsizei, value: FloatPtr) = GL.glUniform3fv(location, count, value)
+    override fun glUniform3i(location: GLint, v0: GLint, v1: GLint, v2: GLint) = GL.glUniform3i(location, v0, v1, v2)
+    override fun glUniform3iv(location: GLint, count: GLsizei, value: IntPtr) = GL.glUniform3iv(location, count, value)
+    override fun glUniform4f(location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat, v3: GLfloat) = GL.glUniform4f(location, v0, v1, v2, v3)
+    override fun glUniform4fv(location: GLint, count: GLsizei, value: FloatPtr) = GL.glUniform4fv(location, count, value)
+    override fun glUniform4i(location: GLint, v0: GLint, v1: GLint, v2: GLint, v3: GLint) = GL.glUniform4i(location, v0, v1, v2, v3)
+    override fun glUniform4iv(location: GLint, count: GLsizei, value: IntPtr) = GL.glUniform4iv(location, count, value)
+    override fun glUniformMatrix2fv(location: GLint, count: GLsizei, transpose: GLboolean, value: FloatPtr) = GL.glUniformMatrix2fv(location, count, transpose, value)
+    override fun glUniformMatrix3fv(location: GLint, count: GLsizei, transpose: GLboolean, value: FloatPtr) = GL.glUniformMatrix3fv(location, count, transpose, value)
+    override fun glUniformMatrix4fv(location: GLint, count: GLsizei, transpose: GLboolean, value: FloatPtr) = GL.glUniformMatrix4fv(location, count, transpose, value)
+    override fun glUseProgram(program: GLuint) = GL.glUseProgram(program)
+    override fun glValidateProgram(program: GLuint) = GL.glValidateProgram(program)
+    override fun glVertexAttrib1f(index: GLuint, x: GLfloat) = GL.glVertexAttrib1f(index, x)
+    override fun glVertexAttrib1fv(index: GLuint, v: FloatPtr) = GL.glVertexAttrib1fv(index, v)
+    override fun glVertexAttrib2f(index: GLuint, x: GLfloat, y: GLfloat) = GL.glVertexAttrib2f(index, x, y)
+    override fun glVertexAttrib2fv(index: GLuint, v: FloatPtr) = GL.glVertexAttrib2fv(index, v)
+    override fun glVertexAttrib3f(index: GLuint, x: GLfloat, y: GLfloat, z: GLfloat) = GL.glVertexAttrib3f(index, x, y, z)
+    override fun glVertexAttrib3fv(index: GLuint, v: FloatPtr) = GL.glVertexAttrib3fv(index, v)
+    override fun glVertexAttrib4f(index: GLuint, x: GLfloat, y: GLfloat, z: GLfloat, w: GLfloat) = GL.glVertexAttrib4f(index, x, y, z, w)
+    override fun glVertexAttrib4fv(index: GLuint, v: FloatPtr) = GL.glVertexAttrib4fv(index, v)
+    override fun glVertexAttribPointer(index: GLuint, size: GLint, type: GLenum, normalized: GLboolean, stride: GLsizei, pointer: IntSize) = GL.glVertexAttribPointer(index, size, type, normalized, stride, pointer)
+    override fun glViewport(x: GLint, y: GLint, width: GLsizei, height: GLsizei) = GL.glViewport(x, y, width, height)
+
+    override fun glDrawArraysInstanced(mode: GLenum, first: GLint, count: GLsizei, instancecount: GLsizei): Unit = GL.glDrawArraysInstanced(mode, first, count, instancecount)
+    override fun glDrawElementsInstanced(mode: GLenum, count: GLsizei, type: GLenum, indices: IntSize, instancecount: GLsizei) = GL.glDrawElementsInstanced(mode, count, type, indices, instancecount)
+    override fun glVertexAttribDivisor(index: GLuint, divisor: GLuint) = GL.glVertexAttribDivisor(index, divisor)
+    override fun glRenderbufferStorageMultisample(target: GLenum, samples: GLint, internalformat: GLenum, width: GLsizei, height: GLsizei) = GL.glRenderbufferStorageMultisample(target, samples, internalformat, width, height)
+
+}
 
 interface INativeGL {
     fun glActiveTexture(texture: GLenum)
@@ -115,7 +460,7 @@ interface INativeGL {
     fun glGetUniformiv(program: GLuint, location: GLint, params: IntPtr)
     fun glGetVertexAttribfv(index: GLuint, pname: GLenum, params: FloatPtr)
     fun glGetVertexAttribiv(index: GLuint, pname: GLenum, params: IntPtr)
-    fun glGetVertexAttribPointerv(index: GLuint, pname: GLenum, pointer: FBuffer)
+    //fun glGetVertexAttribPointerv(index: GLuint, pname: GLenum, pointer: FBuffer)
     fun glHint(target: GLenum, mode: GLenum)
     fun glIsBuffer(buffer: GLuint): GLboolean
     fun glIsEnabled(cap: GLenum): GLboolean
@@ -142,7 +487,7 @@ interface INativeGL {
     fun glStencilOp(fail: GLenum, zfail: GLenum, zpass: GLenum)
     fun glStencilOpSeparate(face: GLenum, sfail: GLenum, dpfail: GLenum, dppass: GLenum)
     fun glTexImage2D(target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, height: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: VoidPtr?)
-    fun glTexImage2D(target: GLenum, level: GLint, internalformat: GLint, format: GLsizei, type: GLsizei, data: NativeImage)
+    //fun glTexImage2D(target: GLenum, level: GLint, internalformat: GLint, format: GLsizei, type: GLsizei, data: NativeImage)
     fun glTexParameterf(target: GLenum, pname: GLenum, param: GLfloat)
     fun glTexParameterfv(target: GLenum, pname: GLenum, params: FloatPtr)
     fun glTexParameteri(target: GLenum, pname: GLenum, param: GLint)
@@ -180,7 +525,7 @@ interface INativeGL {
     fun glVertexAttribPointer(index: GLuint, size: GLint, type: GLenum, normalized: GLboolean, stride: GLsizei, pointer: IntSize)
     fun glViewport(x: GLint, y: GLint, width: GLsizei, height: GLsizei)
 
-    fun glDrawArraysInstanced(mode: GLenum, first: GLint, count: GLsizei, instancecount: GLsizei)
+    fun glDrawArraysInstanced(mode: GLenum, first: GLint, count: GLsizei, instancecount: GLsizei): Unit
     fun glDrawElementsInstanced(mode: GLenum, count: GLsizei, type: GLenum, indices: IntSize, instancecount: GLsizei)
     fun glVertexAttribDivisor(index: GLuint, divisor: GLuint)
     fun glRenderbufferStorageMultisample(target: GLenum, samples: GLint, internalformat: GLenum, width: GLsizei, height: GLsizei)

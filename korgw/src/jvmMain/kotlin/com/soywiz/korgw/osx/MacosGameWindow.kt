@@ -10,8 +10,8 @@ import com.soywiz.korev.KeyEvent
 import com.soywiz.korev.MouseButton
 import com.soywiz.korev.MouseEvent
 import com.soywiz.korgw.*
-import com.soywiz.korgw.platform.INativeGL
-import com.soywiz.korgw.platform.NativeKgl
+import com.soywiz.korgw.osx.GL
+import com.soywiz.korgw.platform.*
 import com.soywiz.korgw.platform.NativeLoad
 import com.soywiz.korim.bitmap.Bitmap
 import com.soywiz.korim.format.PNG
@@ -33,7 +33,9 @@ class MacAG(val window: Long, val checkGl: Boolean, val logGl:Boolean) : AGOpeng
     override val nativeComponent: Any = window
 }
 
-open class MacKmlGL : NativeKgl(MacGL)
+//open class MacKmlGL : NativeKgl(MacGL)
+open class MacKmlGL : NativeKgl(DirectINativeGL(MacGL))
+
 
 interface MacGL : INativeGL, Library {
     fun CGLSetParameter(vararg args: Any?)
