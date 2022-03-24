@@ -120,13 +120,29 @@ abstract class AGOpengl : AG() {
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
                 gl.bindTexture(gl.TEXTURE_2D, 0)
                 gl.bindRenderbuffer(gl.RENDERBUFFER, depth.getInt(0))
-                gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_STENCIL, width, height)
+                val internalFormat = when {
+                    hasStencil && hasDepth -> gl.DEPTH_STENCIL
+                    hasStencil -> gl.STENCIL_INDEX8
+                    hasDepth -> gl.DEPTH_COMPONENT
+                    else -> 0
+                }
+                if (internalFormat != 0) {
+                    gl.renderbufferStorage(gl.RENDERBUFFER, internalFormat, width, height)
+                }
                 //gl.renderbufferStorageMultisample()
             }
 
             gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer.getInt(0))
             gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ftex.tex, 0)
-            gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, depth.getInt(0))
+            val internalFormat = when {
+                hasStencil && hasDepth -> gl.DEPTH_STENCIL_ATTACHMENT
+                hasStencil -> gl.STENCIL_ATTACHMENT
+                hasDepth -> gl.DEPTH_ATTACHMENT
+                else -> 0
+            }
+            if (internalFormat != 0) {
+                gl.framebufferRenderbuffer(gl.FRAMEBUFFER, internalFormat, gl.RENDERBUFFER, depth.getInt(0))
+            }
         }
 
         override fun close() {
@@ -681,11 +697,12 @@ abstract class AGOpengl : AG() {
         stencil: Int,
         clearColor: Boolean,
         clearDepth: Boolean,
-        clearStencil: Boolean
+        clearStencil: Boolean,
+        scissor: AG.Scissor?,
     ) {
         //println("CLEAR: $color, $depth")
         var bits = 0
-        applyScissorState(null)
+        applyScissorState(scissor)
         //gl.disable(gl.SCISSOR_TEST)
         if (clearColor) {
             bits = bits or gl.COLOR_BUFFER_BIT
