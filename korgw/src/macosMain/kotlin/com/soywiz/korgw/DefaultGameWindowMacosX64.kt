@@ -618,7 +618,12 @@ fun displayCallback(
 ): CVReturn {
     initRuntimeIfNeeded()
     atomicDisplayLinkContext.value = displayLinkContext
-    NSOperationQueue.mainQueue.addOperationWithBlock(doDisplayCallbackRender)
+    // Wait for this in the case we take more time than the frame time to not collapse this
+    NSOperationQueue.mainQueue.addOperations(
+        listOf(NSBlockOperation().also { it.addExecutionBlock(doDisplayCallbackRender) }),
+        waitUntilFinished = true
+    )
+    //NSOperationQueue.mainQueue.addOperationWithBlock(doDisplayCallbackRender)
     return kCVReturnSuccess
 }
 
