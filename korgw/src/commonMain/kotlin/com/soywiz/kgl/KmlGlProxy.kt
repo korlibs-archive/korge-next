@@ -1050,6 +1050,16 @@ open class KmlGlFastProxy(var parent: KmlGl) : KmlGl() {
     override fun drawElementsInstanced(mode: Int, count: Int, type: Int, indices: Int, instancecount: Int) = parent.drawElementsInstanced(mode, count, type, indices, instancecount)
     override fun vertexAttribDivisor(index: Int, divisor: Int) = parent.vertexAttribDivisor(index, divisor)
 
+    override fun renderbufferStorageMultisample(
+        target: Int,
+        samples: Int,
+        internalformat: Int,
+        width: Int,
+        height: Int
+    ) {
+        parent.renderbufferStorageMultisample(target, samples, internalformat, width, height)
+    }
+
     override var info: ContextInfo
         get() = parent.info
         set(value) { parent.info = value }

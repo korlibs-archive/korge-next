@@ -127,7 +127,12 @@ abstract class AGOpengl : AG() {
                     else -> 0
                 }
                 if (internalFormat != 0) {
-                    gl.renderbufferStorage(gl.RENDERBUFFER, internalFormat, width, height)
+                    if (nsamples != 1) {
+                        //gl.renderbufferStorageMultisample(gl.RENDERBUFFER, nsamples, internalFormat, width, height)
+                        gl.renderbufferStorage(gl.RENDERBUFFER, internalFormat, width, height)
+                    } else {
+                        gl.renderbufferStorage(gl.RENDERBUFFER, internalFormat, width, height)
+                    }
                 }
                 //gl.renderbufferStorageMultisample()
             }

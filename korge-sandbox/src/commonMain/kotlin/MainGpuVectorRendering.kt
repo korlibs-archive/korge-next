@@ -133,12 +133,14 @@ class GpuShapeView(shape: Shape) : View() {
         shape.getBounds(out, bb)
     }
 
+    var msaaSamples: Int = 4
+
     override fun renderInternal(ctx: RenderContext) {
         ctx.flush()
         val currentRenderBuffer = ctx.ag.currentRenderBufferOrMain
         ctx.renderToTexture(currentRenderBuffer.width, currentRenderBuffer.height, {
             renderShape(ctx, shape)
-        }, hasStencil = true) { texture ->
+        }, hasStencil = true, msamples = msaaSamples) { texture ->
             ctx.useBatcher {
                 it.drawQuad(texture, x = 0f, y = 0f)
             }
