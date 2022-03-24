@@ -585,11 +585,11 @@ abstract class AGOpengl : AG() {
             IndexType.UINT -> gl.UNSIGNED_INT
         }
 
-    private val programs = HashMap<Program, HashMap<ProgramConfig, GlProgram>>()
+    private val programs = FastIdentityMap<Program, FastIdentityMap<ProgramConfig, GlProgram>>()
 
     @JvmOverloads
     fun getProgram(program: Program, config: ProgramConfig = ProgramConfig.DEFAULT): GlProgram {
-        return programs.getOrPut(program) { HashMap() }.getOrPut(config) { GlProgram(gl, program, config) }
+        return programs.getOrPut(program) { FastIdentityMap() }.getOrPut(config) { GlProgram(gl, program, config) }
     }
 
     inner class GlProgram(val gl: KmlGl, val program: Program, val programConfig: ProgramConfig) : Closeable {

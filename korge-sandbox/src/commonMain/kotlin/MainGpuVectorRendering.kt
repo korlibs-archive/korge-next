@@ -1,8 +1,8 @@
 import com.soywiz.kds.*
+import com.soywiz.klogger.*
 import com.soywiz.kmem.*
 import com.soywiz.korag.*
 import com.soywiz.korag.shader.*
-import com.soywiz.korau.sound.*
 import com.soywiz.korge.render.*
 import com.soywiz.korge.view.*
 import com.soywiz.korge.view.BlendMode
@@ -20,8 +20,11 @@ import com.soywiz.korma.geom.shape.*
 import com.soywiz.korma.geom.vector.*
 
 suspend fun Stage.mainGpuVectorRendering() {
+    Console.log("[1]")
     val korgeBitmap = resourcesVfs["korge.png"].readBitmap()
+    Console.log("[2]")
     val tigerSvg = resourcesVfs["Ghostscript_Tiger.svg"].readSVG()
+    Console.log("[3]")
     //AudioData(44100, AudioSamples(1, 1024)).toSound().play()
 
     fun Context2d.buildGraphics() {
@@ -93,35 +96,30 @@ class GpuShapeView(shape: Shape) : View() {
         val u_Color = Uniform("u_Color", VarType.Float4)
         val u_Transform = Uniform("u_Transform", VarType.Mat4)
         val LAYOUT = VertexLayout(DefaultShaders.a_Pos)
-        val VERTEX = VertexShaderDefault {
+        val LAYOUT_FILL = VertexLayout(DefaultShaders.a_Pos, DefaultShaders.a_Tex)
+        val VERTEX_FILL = VertexShaderDefault {
             SET(out, u_ProjMat * u_ViewMat * vec4(a_Pos, 0f.lit, 1f.lit))
-            SET(v_Tex, out["xy"])
+            SET(v_Tex, DefaultShaders.a_Tex)
         }
-        val VERTEX_01 = VertexShaderDefault {
-            //SET(v_Tex, a_Tex)
-            SET(out, vec4(a_Pos, 0f.lit, 1f.lit))
-        }
-        val PROGRAM = Program(
-            vertex = VERTEX,
-            fragment = FragmentShaderDefault {
-                //SET(out, vec4(1f.lit, 0f.lit, 0f.lit, .5f.lit))
-                SET(out, vec4(1f.lit, 0f.lit, 0f.lit, 1f.lit))
-            },
+        val PROGRAM_STENCIL = Program(
+            vertex = VertexShaderDefault { SET(out, u_ProjMat * u_ViewMat * vec4(a_Pos, 0f.lit, 1f.lit)) },
+            fragment = FragmentShaderDefault { SET(out, vec4(1f.lit, 0f.lit, 0f.lit, 1f.lit)) },
         )
         val PROGRAM_COLOR = Program(
-            vertex = VERTEX,
+            vertex = VERTEX_FILL,
             fragment = FragmentShaderDefault {
                 SET(out, u_Color)
             },
         )
         val PROGRAM_BITMAP = Program(
-            vertex = VERTEX,
+            vertex = VERTEX_FILL,
             fragment = FragmentShaderDefault {
+                // @TODO: we should convert 0..1 to texture slice coordinates
                 SET(out, texture2D(u_Tex, fract(vec2((vec4(v_Tex, 0f.lit, 1f.lit) * u_Transform)["xy"]))))
             },
         )
         val PROGRAM_LINEAR_GRADIENT = Program(
-            vertex = VERTEX,
+            vertex = VERTEX_FILL,
             fragment = FragmentShaderDefault {
                 SET(out, texture2D(u_Tex, (vec4(v_Tex.x, v_Tex.y, 0f.lit, 1f.lit) * u_Transform)["xy"]))
             },
@@ -210,7 +208,7 @@ class GpuShapeView(shape: Shape) : View() {
             //ctx.ag.clearStencil(0, scissor = null)
             ctx.ag.draw(
                 vertices = vertices,
-                program = PROGRAM,
+                program = PROGRAM_STENCIL,
                 type = AG.DrawType.TRIANGLE_FAN,
                 vertexLayout = LAYOUT,
                 vertexCount = points.size + 2,
@@ -238,21 +236,24 @@ class GpuShapeView(shape: Shape) : View() {
     private val gradientUniforms = AG.UniformValues()
     private val gradientBitmap = Bitmap32(256, 1)
 
+    private val colorF = FloatArray(4)
+
     private fun renderFill(ctx: RenderContext, paint: Paint, transform: Matrix, bounds: Rectangle) {
         if (paint is NonePaint) return
 
         ctx.dynamicVertexBufferPool { vertices ->
-            val data = FloatArray(4 * 2)
+            val data = FloatArray(4 * 4)
             var n = 0
-            val currentRenderBuffer = ctx.ag.currentRenderBufferOrMain
-            val x = bounds.left.toFloat()
-            val y = bounds.top.toFloat()
-            val w = bounds.right.toFloat()
-            val h = bounds.bottom.toFloat()
-            data[n++] = x; data[n++] = y
-            data[n++] = w; data[n++] = y
-            data[n++] = w; data[n++] = h
-            data[n++] = x; data[n++] = h
+            val x0 = bounds.left.toFloat()
+            val y0 = bounds.top.toFloat()
+            val x1 = bounds.right.toFloat()
+            val y1 = bounds.bottom.toFloat()
+            val w = x1 - x0
+            val h = y1 - y0
+            data[n++] = x0; data[n++] = y0; data[n++] = 0f; data[n++] = 0f
+            data[n++] = x1; data[n++] = y0; data[n++] = w; data[n++] = 0f
+            data[n++] = x1; data[n++] = y1; data[n++] = w; data[n++] = h
+            data[n++] = x0; data[n++] = y1; data[n++] = 0f; data[n++] = h
 
             vertices.upload(data)
             ctx.useBatcher { batch ->
@@ -262,21 +263,23 @@ class GpuShapeView(shape: Shape) : View() {
                 when (paint) {
                     is ColorPaint -> {
                         val color = paint
-                        colorUniforms[u_Color] = floatArrayOf(color.rf, color.gf, color.bf, color.af)
+                        color.writeFloat(colorF)
+                        colorUniforms[u_Color] = colorF
                         program = PROGRAM_COLOR
                         uniforms = colorUniforms
                     }
                     is BitmapPaint -> {
                         bitmapUniforms[DefaultShaders.u_Tex] = AG.TextureUnit(ctx.getTex(paint.bitmap).base)
                         val mat = (paint.transform * transform)
-                        bitmapUniforms[u_Transform] = mat.inverted().toMatrix3D()
+                        mat.scale(1.0 / paint.bitmap.width, 1.0 / paint.bitmap.height)
+                        bitmapUniforms[u_Transform] = mat.toMatrix3D()
                         program = PROGRAM_BITMAP
                         uniforms = bitmapUniforms
                     }
                     is GradientPaint -> {
                         paint.fillColors(gradientBitmap.dataPremult)
                         gradientUniforms[DefaultShaders.u_Tex] = AG.TextureUnit(ctx.getTex(gradientBitmap).base)
-                        val mat = paint.transform * transform * paint.gradientMatrix
+                        val mat = paint.transform * transform * paint.gradientMatrixInv
                         gradientUniforms[u_Transform] = mat.toMatrix3D()
                         program = PROGRAM_LINEAR_GRADIENT
                         uniforms = gradientUniforms
@@ -291,7 +294,7 @@ class GpuShapeView(shape: Shape) : View() {
                         vertices = vertices,
                         program = program,
                         type = AG.DrawType.TRIANGLE_FAN,
-                        vertexLayout = LAYOUT,
+                        vertexLayout = LAYOUT_FILL,
                         vertexCount = 4,
                         uniforms = ctx.batch.uniforms,
                         stencil = AG.StencilState(

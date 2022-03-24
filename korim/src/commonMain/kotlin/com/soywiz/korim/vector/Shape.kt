@@ -424,6 +424,8 @@ class TextShape(
 
     val primitiveShapes: Shape by lazy {
         buildShape {
+            this.transform(this@TextShape.transform)
+            this.clip(this@TextShape.clip)
             if (fill != null) font?.drawText(this, fontSize, text, fill, x, y, fill = true)
             if (stroke != null) font?.drawText(this, fontSize, text, stroke, x, y, fill = false)
         }

@@ -584,6 +584,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
 
     //open val supportInstancedDrawing: Boolean get() = false
 
+    @Deprecated("Use draw(Batch) or drawV2() instead")
     fun draw(
         vertices: Buffer,
         program: Program,
