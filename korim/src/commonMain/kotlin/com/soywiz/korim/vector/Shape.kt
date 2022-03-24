@@ -3,7 +3,7 @@ package com.soywiz.korim.vector
 import com.soywiz.kds.iterators.fastForEach
 import com.soywiz.korim.bitmap.toUri
 import com.soywiz.korim.color.RGBA
-import com.soywiz.korim.font.Font
+import com.soywiz.korim.font.*
 import com.soywiz.korim.paint.*
 import com.soywiz.korim.text.HorizontalAlign
 import com.soywiz.korim.text.VerticalAlign
@@ -420,6 +420,14 @@ class TextShape(
             if (stroke != null) c.strokeText(text, x, y)
         }
     }
+
+    val primitiveShapes: Shape by lazy {
+        buildShape {
+            if (fill != null) font?.drawText(this, fontSize, text, fill, x, y, fill = true)
+            if (stroke != null) font?.drawText(this, fontSize, text, stroke, x, y, fill = false)
+        }
+    }
+
     override fun buildSvg(svg: SvgBuilder) {
         svg.nodes += Xml.Tag(
             "text", mapOf(
