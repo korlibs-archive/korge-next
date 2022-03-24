@@ -1,3 +1,4 @@
+import com.soywiz.kds.*
 import com.soywiz.kmem.*
 import com.soywiz.korag.*
 import com.soywiz.korag.shader.*
@@ -25,7 +26,7 @@ suspend fun Stage.mainGpuVectorRendering() {
 
     fun Context2d.buildGraphics() {
         keep {
-            //draw(tigerSvg)
+            draw(tigerSvg)
             translate(100, 200)
             fill(Colors.BLUE) {
                 rect(-10, -10, 120, 120)
@@ -79,7 +80,15 @@ inline fun Container.gpuShapeView(buildContext2d: Context2d.() -> Unit) =
 inline fun Container.gpuShapeView(shape: Shape, callback: @ViewDslMarker GpuShapeView.() -> Unit = {}) =
     GpuShapeView(shape).addTo(this, callback)
 
-class GpuShapeView(var shape: Shape) : View() {
+class GpuShapeView(shape: Shape) : View() {
+    private val pointCache = FastIdentityMap<VectorPath, PointArrayList>()
+
+    var shape: Shape = shape
+        set(value) {
+            field = value
+            pointCache.clear()
+        }
+
     companion object {
         val u_Color = Uniform("u_Color", VarType.Float4)
         val u_Transform = Uniform("u_Transform", VarType.Mat4)
@@ -151,30 +160,31 @@ class GpuShapeView(var shape: Shape) : View() {
 
     private fun renderShape(ctx: RenderContext, shape: FillShape) {
         val path = shape.path
-        val points = PointArrayList()
         val m = globalMatrix
-        path.emitPoints2 { x, y, move ->
-            points.add(m.transformX(x, y), m.transformY(x, y))
+
+        val points = pointCache.getOrPut(path) {
+            val points = PointArrayList()
+            path.emitPoints2 { x, y, move ->
+                points.add(x, y)
+            }
+            points
         }
+
         val bb = BoundsBuilder()
         bb.reset()
 
         val data = FloatArray(points.size * 2 + 4)
         for (n in 0 until points.size + 1) {
-            data[(n + 1) * 2 + 0] = points.getX(n % points.size).toFloat()
-            data[(n + 1) * 2 + 1] = points.getY(n % points.size).toFloat()
+            val x = points.getX(n % points.size).toFloat()
+            val y = points.getY(n % points.size).toFloat()
+            val tx = m.transformXf(x, y)
+            val ty = m.transformYf(x, y)
+            data[(n + 1) * 2 + 0] = tx
+            data[(n + 1) * 2 + 1] = ty
+            bb.add(tx, ty)
         }
-        var sumX = 0.0
-        var sumY = 0.0
-        for (n in 0 until points.size) {
-            sumX += points.getX(n)
-            sumY += points.getY(n)
-        }
-        data[0] = (sumX / points.size).toFloat()
-        data[1] = (sumY / points.size).toFloat()
-        for (n in 0 until points.size + 2) {
-            bb.add(data[n * 2], data[n * 2 + 1])
-        }
+        data[0] = ((bb.xmax + bb.xmin) / 2).toFloat()
+        data[1] = ((bb.ymax + bb.ymin) / 2).toFloat()
 
         if (shape.path.winding != Winding.EVEN_ODD) {
             error("Currently only supported EVEN_ODD winding")
@@ -194,8 +204,8 @@ class GpuShapeView(var shape: Shape) : View() {
             )
             //val scissor: AG.Scissor? = null
 
-            //ctx.ag.clearStencil(0, scissor = scissor)
-            ctx.ag.clearStencil(0, scissor = null)
+            ctx.ag.clearStencil(0, scissor = scissor)
+            //ctx.ag.clearStencil(0, scissor = null)
             ctx.ag.draw(
                 vertices = vertices,
                 program = PROGRAM,
