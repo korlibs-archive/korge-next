@@ -86,43 +86,21 @@ class BitmapFiller : BaseFiller() {
 }
 
 class GradientFiller : BaseFiller() {
-    private val NCOLORS = 256
+    companion object {
+        const val NCOLORS = 256
+    }
     private val colors = RgbaPremultipliedArray(NCOLORS)
     private lateinit var fill: GradientPaint
     private val stateInv: Matrix = Matrix()
-
-    private fun stopN(n: Int): Int = (fill.stops[n] * NCOLORS).toInt()
 
     fun set(fill: GradientPaint, state: Context2d.State) = this.apply {
         this.fill = fill
         state.transform.inverted(this.stateInv)
 
-        when (fill.numberOfStops) {
-            0, 1 -> {
-                val color = if (fill.numberOfStops == 0) Colors.FUCHSIA else RGBA(fill.colors.first())
-                val pcolor = color.premultiplied
-                for (n in 0 until NCOLORS) colors[n] = pcolor
-            }
-            else -> {
-                for (n in 0 until stopN(0)) colors[n] = RGBA(fill.colors.first()).premultiplied
-                for (n in 0 until fill.numberOfStops - 1) {
-                    val stop0 = stopN(n + 0)
-                    val stop1 = stopN(n + 1)
-                    val color0 = RGBA(fill.colors.getAt(n + 0))
-                    val color1 = RGBA(fill.colors.getAt(n + 1))
-                    for (s in stop0 until stop1) {
-                        val ratio = (s - stop0).toDouble() / (stop1 - stop0).toDouble()
-                        colors[s] = RGBA.interpolate(color0, color1, ratio).premultiplied
-                    }
-                }
-                for (n in stopN(fill.numberOfStops - 1) until NCOLORS) colors.ints[n] = fill.colors.last()
-            }
-        }
+        fill.fillColors(colors)
     }
 
-    private fun color(ratio: Double): RGBAPremultiplied {
-        return colors[(ratio.clamp01() * (NCOLORS - 1)).toInt()]
-    }
+    private fun color(ratio: Double): RGBAPremultiplied = colors[(ratio.clamp01() * (NCOLORS - 1)).toInt()]
 
     // @TODO: Radial gradient
     // @TODO: This doesn't seems to work proprely

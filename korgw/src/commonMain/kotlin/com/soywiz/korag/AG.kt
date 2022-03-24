@@ -915,14 +915,14 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         val vertexLayout = VertexLayout(DefaultShaders.a_Pos, DefaultShaders.a_Tex)
         val verticesData = FBuffer(VERTEX_COUNT * vertexLayout.totalSize)
         val program = Program(VertexShader {
-            DefaultShaders.apply {
-                v_Tex setTo a_Tex
-                out setTo vec4(a_Pos, 0f.lit, 1f.lit)
+            DefaultShaders {
+                SET(v_Tex, a_Tex)
+                SET(out, vec4(a_Pos, 0f.lit, 1f.lit))
             }
         }, FragmentShader {
-            DefaultShaders.apply {
+            DefaultShaders {
                 //out setTo vec4(1f, 1f, 0f, 1f)
-                out setTo texture2D(u_Tex, v_Tex["xy"])
+                SET(out, texture2D(u_Tex, v_Tex["xy"]))
             }
         })
         val uniforms = UniformValues()

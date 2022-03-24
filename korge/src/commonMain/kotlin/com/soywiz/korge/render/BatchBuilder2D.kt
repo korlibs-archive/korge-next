@@ -932,25 +932,27 @@ class BatchBuilder2D constructor(
     }
 
     @PublishedApi
-	internal val tempOldUniforms = AG.UniformValues()
+	internal val tempOldUniformsList: Pool<AG.UniformValues> = Pool { AG.UniformValues() }
 
     /**
      * Executes [callback] while setting temporarily a set of [uniforms]
      */
 	inline fun setTemporalUniforms(uniforms: AG.UniformValues?, callback: () -> Unit) {
-        if (uniforms != null && uniforms.isNotEmpty()) {
-            flush()
-            tempOldUniforms.setTo(this.uniforms)
-            this.uniforms.put(uniforms)
-        }
-		try {
-			callback()
-		} finally {
+        tempOldUniformsList { tempOldUniforms ->
             if (uniforms != null && uniforms.isNotEmpty()) {
                 flush()
-                this.uniforms.setTo(tempOldUniforms)
+                tempOldUniforms.setTo(this.uniforms)
+                this.uniforms.put(uniforms)
             }
-		}
+            try {
+                callback()
+            } finally {
+                if (uniforms != null && uniforms.isNotEmpty()) {
+                    flush()
+                    this.uniforms.setTo(tempOldUniforms)
+                }
+            }
+        }
 	}
 }
 
