@@ -4,16 +4,120 @@
 
 package com.soywiz.kgl
 
-import X11Embed.*
 import com.soywiz.kmem.*
+import com.soywiz.kmem.dyn.*
 import kotlinx.cinterop.*
+
+//typealias Window = ULongVar
+
+// @TODO: Check Size
+typealias Window = ULong
+
+// @TODO: In some systems this is 64 or 32-bit
+typealias Atom = ULong
+typealias AtomVar = ULongVar
+typealias Status = Int
 
 typealias XVisualInfo = ULongVar // Only used as pointer
 typealias GLXDrawable = COpaquePointer
 typealias GLXContext = COpaquePointer
 typealias KeySym = Int
 typealias CString = CPointer<ByteVar>
-typealias CDisplayPointer = CPointer<Display>?
+typealias CDisplayPointer = COpaquePointer?
+typealias CEventPointer = COpaquePointer?
+
+inline class XEvent(val pointer: KPointer) {
+    var type: Int
+        get() = Companion.type.get(pointer)
+        set(value) = Companion.type.set(pointer, value)
+
+    companion object : XCommonEvent() {
+    }
+}
+
+inline class XExposedEvent(val pointer: KPointer) {
+    val type: Int get() = XEvent.type.get(pointer)
+    val count: Int get() = Companion.count.get(pointer)
+
+    companion object : XCommonEvent() {
+        val window = nativeLong()
+        val x = int()
+        val y = int()
+        val width = int()
+        val height = int()
+        val count = int()
+    }
+}
+
+inline class XInputEvent(val pointer: KPointer) {
+    val type: Int get() = XEvent.type.get(pointer)
+    val keycode: Int get() = Companion.keycode.get(pointer)
+    val button: Int get() = Companion.button.get(pointer)
+    val x: Int get() = Companion.x.get(pointer)
+    val y: Int get() = Companion.y.get(pointer)
+    companion object : XCommonEvent() {
+        val window = nativeLong()
+        val root = nativeLong()
+        val subwindow = nativeLong()
+        val time = nativeLong()
+        val x = int()
+        val y = int()
+        val x_root = int()
+        val y_root = int()
+        val state = int()
+
+        val keycode = int()
+        val button get() = keycode
+        val same_screen = bool()
+    }
+}
+
+inline class XClientEvent(val pointer: KPointer) {
+    var type: Int get() = Companion.type.get(pointer); set(value) = Companion.type.set(pointer, value)
+    var window: Long get() = Companion.window.get(pointer); set(value) = Companion.window.set(pointer, value)
+    var message_type: Long get() = Companion.message_type.get(pointer); set(value) = Companion.message_type.set(pointer, value)
+    var format: Int get() = Companion.format.get(pointer); set(value) = Companion.format.set(pointer, value)
+    var l0: Long get() = Companion.l[0].get(pointer); set(value) = Companion.l[0].set(pointer, value)
+    var l1: Long get() = Companion.l[1].get(pointer); set(value) = Companion.l[1].set(pointer, value)
+    var l2: Long get() = Companion.l[2].get(pointer); set(value) = Companion.l[2].set(pointer, value)
+    var l3: Long get() = Companion.l[3].get(pointer); set(value) = Companion.l[3].set(pointer, value)
+    var l4: Long get() = Companion.l[4].get(pointer); set(value) = Companion.l[4].set(pointer, value)
+
+    companion object : XCommonEvent() {
+        val window = nativeLong()
+        val message_type = nativeLong() // Atom
+        val format = int()
+        val l = Array(5) { long() }
+    }
+}
+
+inline class XConfigureEvent(val pointer: KPointer) {
+    val type: Int get() = XEvent.type.get(pointer)
+    val width: Int  get() = Companion.width.get(pointer)
+    val height: Int  get() = Companion.height.get(pointer)
+
+    companion object : XCommonEvent() {
+        val event = nativeLong()
+        val window = nativeLong()
+        val x = int()
+        val y = int()
+        val width = int()
+        val height = int()
+        val border_width = int()
+        val above = nativeLong()
+        val override_redirect = bool()
+    }
+}
+//class XKeyEvent(val pointer: KPointer)
+
+open class XCommonEvent : LayoutBuilder() {
+    // Shared
+    val type = int()
+    val serial = nativeLong()
+    val send_event = bool()
+    val display = pointer<Long>()
+}
+
 
 internal object GLLib : DynamicLibrary("libGL.so") {
     val glXGetProcAddress by func<(name: CPointer<ByteVar>) -> CPointer<out CPointed>?>()
@@ -31,3 +135,133 @@ internal actual fun glGetProcAddressAnyOrNull(name: String): COpaquePointer? = m
 
 actual class KmlGlNative actual constructor() : NativeBaseKmlGl() {
 }
+
+/*
+package = X11Embed
+---
+typedef int Bool;
+typedef int Status;
+#define True 1
+#define False 0
+
+typedef unsigned long Time;
+
+typedef unsigned long XID;
+typedef XID Window;
+typedef unsigned long Atom;
+
+typedef struct {
+} Display;
+
+typedef struct {
+} Screen;
+
+typedef struct {
+	int type;
+	unsigned long serial;
+	Bool send_event;
+	Display *display;
+	Window window;
+} XAnyEvent;
+
+typedef struct {
+	int type;
+	unsigned long serial;
+	Bool send_event;
+	Display *display;
+	Window window;
+	Window root;
+	Window subwindow;
+	Time time;
+	int x, y;
+	int x_root, y_root;
+	unsigned int state;
+	unsigned int keycode;
+	Bool same_screen;
+} XKeyEvent;
+
+typedef struct {
+	int type;
+	unsigned long serial;
+	Bool send_event;
+	Display *display;
+	Window window;
+	Atom message_type;
+	int format;
+	union {
+		char b[20];
+		short s[10];
+		long l[5];
+		} data;
+} XClientMessageEvent;
+
+typedef struct {
+	int type;
+	unsigned long serial;
+	Bool send_event;
+	Display *display;
+	Window window;
+	int x, y;
+	int width, height;
+	int count;
+} XExposeEvent;
+
+typedef struct {
+	int type; // 0 - 4
+	unsigned long serial; // 8-16
+	Bool send_event; // 16
+	Display *display; // 24
+	Window event; // 32
+	Window window; // 40
+	int x, y; // 48, 52
+	int width, height; // 56
+	int border_width;
+	Window above;
+	Bool override_redirect;
+} XConfigureEvent;
+
+typedef struct {
+	int type;
+	unsigned long serial;
+	Bool send_event;
+	Display *display;
+	Window window;
+	Window root;
+	Window subwindow;
+	Time time;
+	int x, y;
+	int x_root, y_root;
+	unsigned int state;
+	char is_hint;
+	Bool same_screen;
+} XMotionEvent;
+
+typedef struct {
+	int type;
+	unsigned long serial;
+	Bool send_event;
+	Display *display;
+	Window window;
+	Window root;
+	Window subwindow;
+	Time time;
+	int x, y;
+	int x_root, y_root;
+	unsigned int state;
+	unsigned int button;
+	Bool same_screen;
+} XButtonEvent;
+
+typedef union _XEvent {
+    int type;
+	XAnyEvent xany;
+    XClientMessageEvent xclient;
+	XExposeEvent xexpose;
+	XConfigureEvent xconfigure;
+	XKeyEvent xkey;
+	XMotionEvent xmotion;
+	XButtonEvent xbutton;
+	long pad[24];
+} XEvent;
+
+ */

@@ -5,16 +5,7 @@ typedef int Status;
 #define True 1
 #define False 0
 
-# ifdef LONG64
-typedef unsigned long CARD64;
-typedef unsigned int CARD32;
-# else
-typedef unsigned long long CARD64;
-typedef unsigned long CARD32;
-# endif
-
 typedef unsigned long Time;
-
 
 typedef unsigned long XID;
 typedef XID Window;

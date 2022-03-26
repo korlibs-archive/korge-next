@@ -1,4 +1,5 @@
 package com.soywiz.korgw.osx
+import com.soywiz.kmem.dyn.*
 import com.sun.jna.*
 
 //inline class ID(val id: Long)
@@ -158,13 +159,16 @@ fun Long.msgSendNSRect(sel: String, vararg args: Any?): NSRectRes {
     if (isArm64) {
         return ObjectiveC.objc_msgSendNSRect(this, sel(sel), *args)
     } else {
-        val rect = MyNSRect()
         val out = NSRectRes()
-        this.msgSend_stret(rect, sel, *args)
-        out.x = rect.x
-        out.y = rect.y
-        out.width = rect.width
-        out.height = rect.height
+        kmemScoped {
+            val pointer = this.allocBytes(MyNSRect(null).size)
+            val rect = MyNSRect(pointer)
+            this@msgSendNSRect.msgSend_stret(rect, sel, *args)
+            out.x = rect.x
+            out.y = rect.y
+            out.width = rect.width
+            out.height = rect.height
+        }
         return out
     }
 }

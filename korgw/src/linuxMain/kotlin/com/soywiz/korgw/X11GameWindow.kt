@@ -1,6 +1,5 @@
 package com.soywiz.korgw
 
-import X11Embed.*
 import com.soywiz.kgl.*
 import com.soywiz.kmem.DynamicLibrary
 import com.soywiz.kmem.startAddressOf
@@ -33,14 +32,12 @@ internal object X11 : DynamicLibrary("libX11.so") {
     val XSetWMProtocols by func<(d: CDisplayPointer, w: Window, array: CPointer<AtomVar>, count: Int) -> Unit>()
     val XPending by func<(d: CDisplayPointer) -> Int>()
     val XCreateSimpleWindow by func<(d: CDisplayPointer, parent: Window, x: Int, y: Int, width: UInt, height: UInt, border_width: UInt, border: Int, background: Int) -> Window>()
-    val XNextEvent by func<(d: CDisplayPointer, event: CPointer<XEvent>) -> Unit>()
-    val XSendEvent by func<(d: CDisplayPointer, w: Window, propagate: Int, event_mask: Int, event_send: CPointer<XEvent>) -> Status>()
-    val XLookupKeysym by func<(event: CPointer<XKeyEvent>, index: Int) -> KeySym>()
+    val XNextEvent by func<(d: CDisplayPointer, event: CEventPointer) -> Unit>()
+    val XSendEvent by func<(d: CDisplayPointer, w: Window, propagate: Int, event_mask: Int, event_send: CEventPointer) -> Status>()
+    val XLookupKeysym by func<(event: CEventPointer, index: Int) -> KeySym>()
     val XChangeProperty by func<(display: CDisplayPointer, w: Window, property: Atom, type: Atom, format: Int, mode: Int, data: CPointer<ByteVar>, nelements: Int) -> Unit>()
     val XDeleteProperty by func<(display: CDisplayPointer, w: Window, property: Atom) -> Unit>()
-
 }
-
 
 //actual fun CreateDefaultGameWindow(): GameWindow = glutGameWindow
 actual fun CreateDefaultGameWindow(): GameWindow {
@@ -54,7 +51,7 @@ actual fun CreateDefaultGameWindow(): GameWindow {
 }
 
 // https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_swap_control.txt
-private val swapIntervalEXT by GLFuncNull<(CPointer<Display>?, GLXDrawable, Int) -> Unit>("swapIntervalEXT")
+private val swapIntervalEXT by GLFuncNull<(CDisplayPointer, GLXDrawable, Int) -> Unit>("swapIntervalEXT")
 
 //class X11Ag(val window: X11GameWindow, override val gl: KmlGl = LogKmlGlProxy(X11KmlGl())) : AGOpengl() {
 class X11Ag(val window: X11GameWindow, override val gl: KmlGl = com.soywiz.kgl.KmlGlNative()) : AGOpengl() {
@@ -64,9 +61,9 @@ class X11Ag(val window: X11GameWindow, override val gl: KmlGl = com.soywiz.kgl.K
 }
 
 // https://www.khronos.org/opengl/wiki/Tutorial:_OpenGL_3.0_Context_Creation_(GLX)
-class X11OpenglContext(val d: CPointer<Display>?, val w: Window, val doubleBuffered: Boolean = true) {
+class X11OpenglContext(val d: CDisplayPointer, val w: Window, val doubleBuffered: Boolean = true) {
     companion object {
-        fun chooseVisuals(d: CPointer<Display>?, scr: Int = X11.XDefaultScreen(d)): CPointer<XVisualInfo>? {
+        fun chooseVisuals(d: CDisplayPointer, scr: Int = X11.XDefaultScreen(d)): CPointer<XVisualInfo>? {
             val GLX_END = 0
             val attrsList = listOf(
                 intArrayOf(GLX_RGBA, GLX_DOUBLEBUFFER, GLX_DEPTH_SIZE, 24, GLX_STENCIL_SIZE, 8, GLX_END),
@@ -119,7 +116,9 @@ class X11OpenglContext(val d: CPointer<Display>?, val w: Window, val doubleBuffe
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)
-class X11GameWindow : EventLoopGameWindow(), DialogInterface by NativeZenityDialogs() {
+class X11GameWindow : EventLoopGameWindow() {
+    override val dialogInterface = NativeZenityDialogs()
+
     //init { println("X11GameWindow") }
     override val ag: X11Ag by lazy { X11Ag(this) }
     override var width: Int = 200; private set
@@ -151,7 +150,7 @@ class X11GameWindow : EventLoopGameWindow(), DialogInterface by NativeZenityDial
         this.height = height
     }
 
-    var d: CPointer<Display>? = null
+    var d: CDisplayPointer = null
     val NilWin: Window = 0UL
     var root: Window = 0UL
     var w: Window = 0UL
@@ -226,23 +225,23 @@ class X11GameWindow : EventLoopGameWindow(), DialogInterface by NativeZenityDial
 
                 val isWindowMapped = true
                 if (isWindowMapped) {
-                    val e = alloc<XEvent>()
-                    e.xany.type = ClientMessage
-                    e.xclient.message_type = _NET_WM_STATE
-                    e.xclient.format = 32
-                    e.xclient.window = w
-                    e.xclient.data.l[0] = (if (fullscreen) _NET_WM_STATE_ADD else _NET_WM_STATE_REMOVE).convert()
-                    e.xclient.data.l[1] = _NET_WM_STATE_FULLSCREEN.convert()
-                    e.xclient.data.l[3] = 0.convert()
+                    val eData = allocArray<ByteVar>(192)
+                    val e = XClientEvent(eData.rawValue)
+                    e.type = ClientMessage
+                    e.message_type = _NET_WM_STATE.convert()
+                    e.format = 32
+                    e.window = w.convert()
+                    e.l0 = (if (fullscreen) _NET_WM_STATE_ADD else _NET_WM_STATE_REMOVE).convert()
+                    e.l1 = _NET_WM_STATE_FULLSCREEN.convert()
+                    e.l3 = 0.convert()
 
                     X11.XSendEvent(
                         d,
                         X11.XDefaultRootWindow(d),
                         0.convert(),
                         SubstructureNotifyMask or SubstructureRedirectMask,
-                        e.ptr
+                        eData
                     )
-
                 } else {
                     val atoms = allocArray<AtomVar>(3)
                     var count = 0
@@ -347,17 +346,19 @@ class X11GameWindow : EventLoopGameWindow(), DialogInterface by NativeZenityDial
 
     override fun doHandleEvents() = memScoped {
         //println("doHandleEvents")
-        val e = alloc<XEvent>()
+        val eData = allocArray<ByteVar>(192)
+
+        val e = XEvent(eData.rawValue)
         loop@ while (running) {
             //println("---")
             if (X11.XPending(d) == 0) return
-            X11.XNextEvent(d, e.ptr)
+            X11.XNextEvent(d, eData)
             //println("EVENT: ${e.type}")
             when (e.type) {
-                Expose -> if (e.xexpose.count == 0) render(doUpdate = false)
-                ClientMessage, DestroyNotify -> close()
+                Expose -> if (XExposedEvent(e.pointer).count == 0) render(doUpdate = false)
+                ClientMessage, DestroyNotify -> close(0)
                 ConfigureNotify -> {
-                    val conf = e.xconfigure
+                    val conf = XConfigureEvent(e.pointer)
                     width = conf.width
                     height = conf.height
                     //dispatchReshapeEvent(conf.x, conf.y, conf.width, conf.height)
@@ -368,25 +369,25 @@ class X11GameWindow : EventLoopGameWindow(), DialogInterface by NativeZenityDial
                     //println("RESIZED! ${conf.width} ${conf.height}")
                 }
                 KeyPress, KeyRelease -> {
+                    val e = XInputEvent(e.pointer)
                     val pressing = e.type == KeyPress
                     val ev =
                         if (pressing) com.soywiz.korev.KeyEvent.Type.DOWN else com.soywiz.korev.KeyEvent.Type.UP
-                    val keyCode = e.xkey.keycode.toInt()
-                    val kkey = XK_KeyMap[X11.XLookupKeysym(e.xkey.ptr, 0).toInt()] ?: Key.UNKNOWN
+                    val keyCode = e.keycode.toInt()
+                    val kkey = XK_KeyMap[X11.XLookupKeysym(eData, 0).toInt()] ?: Key.UNKNOWN
                     //println("KEY: $ev, ${keyCode.toChar()}, $kkey, $keyCode, keySym=$kkey")
                     dispatchKeyEvent(ev, 0, keyCode.toInt().toChar(), kkey, keyCode.toInt().convert())
                     //break@loop
                 }
                 MotionNotify, ButtonPress, ButtonRelease -> {
-                    val mot = e.xmotion
-                    val but = e.xbutton
+                    val e = XInputEvent(e.pointer)
                     val ev = when (e.type) {
                         MotionNotify -> MouseEvent.Type.MOVE
                         ButtonPress -> MouseEvent.Type.DOWN
                         ButtonRelease -> MouseEvent.Type.UP
                         else -> MouseEvent.Type.MOVE
                     }
-                    val button = when (but.button.toInt()) {
+                    val button = when (e.button.toInt()) {
                         1 -> MouseButton.LEFT
                         2 -> MouseButton.MIDDLE
                         3 -> MouseButton.RIGHT
@@ -401,7 +402,7 @@ class X11GameWindow : EventLoopGameWindow(), DialogInterface by NativeZenityDial
                     //println(mot.size)
                     //println("MOUSE ${ev} ${mot.x} ${mot.y} ${mot.button}")
 
-                    dispatchSimpleMouseEvent(ev, 0, mot.x, mot.y, button, simulateClickOnUp = false)
+                    dispatchSimpleMouseEvent(ev, 0, e.x, e.y, button, simulateClickOnUp = false)
                 }
                 else -> {
                     //println("OTHER EVENT ${e.type}")

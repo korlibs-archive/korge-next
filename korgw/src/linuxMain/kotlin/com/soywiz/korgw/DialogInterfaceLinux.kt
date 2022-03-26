@@ -1,18 +1,16 @@
 package com.soywiz.korgw
 
-import com.soywiz.korio.lang.Charsets
-import com.soywiz.korio.lang.toString
-import com.soywiz.korio.stream.MemorySyncStream
-import com.soywiz.korio.stream.toByteArray
+import com.soywiz.korio.lang.*
+import com.soywiz.korio.stream.*
 import kotlinx.cinterop.*
-import platform.posix.fread
-import platform.posix.pclose
-import platform.posix.popen
+import platform.posix.*
 
-private fun escapeshellarg(str: String) = "'" + str.replace("'", "\\'") + "'"
+actual fun createDialogInterfaceForComponent(nativeComponent: Any?): DialogInterface = NativeZenityDialogs()
 
-// @TODO: Move this to Korio exec/execToString
+// @TODO: Move this to Korio exec/execToString & make it asynchronous
 class NativeZenityDialogs : ZenityDialogs() {
+    private fun escapeshellarg(str: String) = "'" + str.replace("'", "\\'") + "'"
+
     override suspend fun exec(vararg args: String): String = memScoped {
         val command = "/bin/sh -c '" + args.joinToString(" ") { escapeshellarg(it) }.replace("'", "\"'\"") + "' 2>&1"
         println("COMMAND: $command")
