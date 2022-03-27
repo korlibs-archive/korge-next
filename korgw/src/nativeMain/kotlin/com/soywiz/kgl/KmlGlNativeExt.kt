@@ -27,7 +27,8 @@ abstract class NativeBaseKmlGl : KmlGlWithExtensions() {
     override fun checkFramebufferStatus(target: Int): Int = tempBufferAddress { glCheckFramebufferStatusExt(target.convert()).convert() }
     override fun clear(mask: Int): Unit = tempBufferAddress { glClearExt(mask.convert()) }
     override fun clearColor(red: Float, green: Float, blue: Float, alpha: Float): Unit = tempBufferAddress { glClearColorExt(red, green, blue, alpha) }
-    override fun clearDepthf(d: Float): Unit = tempBufferAddress { glClearDepthfExt(d) }
+    //override fun clearDepthf(d: Float): Unit = tempBufferAddress { glClearDepthfExt(d) }
+    override fun clearDepthf(d: Float): Unit = tempBufferAddress { glClearDepthExt(d.toDouble()) }
     override fun clearStencil(s: Int): Unit = tempBufferAddress { glClearStencilExt(s.convert()) }
     override fun colorMask(red: Boolean, green: Boolean, blue: Boolean, alpha: Boolean): Unit = tempBufferAddress { glColorMaskExt(red.toInt().convert(), green.toInt().convert(), blue.toInt().convert(), alpha.toInt().convert()) }
     override fun compileShader(shader: Int): Unit = tempBufferAddress { glCompileShaderExt(shader.convert()) }
@@ -46,7 +47,9 @@ abstract class NativeBaseKmlGl : KmlGlWithExtensions() {
     override fun deleteTextures(n: Int, items: FBuffer): Unit = tempBufferAddress { glDeleteTexturesExt(n.convert(), items.unsafeAddress().reinterpret()) }
     override fun depthFunc(func: Int): Unit = tempBufferAddress { glDepthFuncExt(func.convert()) }
     override fun depthMask(flag: Boolean): Unit = tempBufferAddress { glDepthMaskExt(flag.toInt().convert()) }
-    override fun depthRangef(n: Float, f: Float): Unit = tempBufferAddress { glDepthRangefExt(n, f) }
+    override fun depthRangef(n: Float, f: Float): Unit = tempBufferAddress {
+        glDepthRangeExt(n.toDouble(), f.toDouble())
+    }
     override fun detachShader(program: Int, shader: Int): Unit = tempBufferAddress { glDetachShaderExt(program.convert(), shader.convert()) }
     override fun disable(cap: Int): Unit = tempBufferAddress { glDisableExt(cap.convert()) }
     override fun disableVertexAttribArray(index: Int): Unit = tempBufferAddress { glDisableVertexAttribArrayExt(index.convert()) }
@@ -211,8 +214,13 @@ abstract class NativeBaseKmlGl : KmlGlWithExtensions() {
         val glGetIntegervExt by GLFunc<(GLenum, GLintPtr) -> GLvoid>()
         val glGetBooleanvExt by GLFunc<(GLenum, GLbooleanPtr) -> GLvoid>()
         val glGenTexturesExt by GLFunc<(GLsizei, GLuintPtr) -> GLvoid>()
+
+        val glDepthRangeExt by GLFunc<(GLdouble, GLdouble) -> GLvoid>()
         val glDepthRangefExt by GLFunc<(GLfloat, GLfloat) -> GLvoid>()
+
+        val glClearDepthExt by GLFunc<(GLdouble) -> GLvoid>()
         val glClearDepthfExt by GLFunc<(GLfloat) -> GLvoid>()
+
         val glDrawArraysExt by GLFunc<(GLenum, GLint, GLsizei) -> GLvoid>()
         val glDrawElementsExt by GLFunc<(GLenum, GLsizei, GLenum, GLvoidPtr) -> GLvoid>()
         val glFrontFaceExt by GLFunc<(GLenum) -> GLvoid>()

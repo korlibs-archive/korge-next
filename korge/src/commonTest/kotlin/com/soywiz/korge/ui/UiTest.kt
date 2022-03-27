@@ -16,8 +16,6 @@ import kotlin.test.*
 class UiTest : ViewsForTesting() {
     @Test
     fun test() = viewsTest {
-        val nativeProcess = NativeProcess(views)
-
         //uiSkin(OtherUISkin()) {
         uiSkin = UISkin {
             textFont = resourcesVfs["uifont.fnt"].readBitmapFont()
@@ -35,7 +33,7 @@ class UiTest : ViewsForTesting() {
             position(128, 128 + 32)
             onClick {
                 println("CLICKED!")
-                nativeProcess.close()
+                gameWindow.close(0)
             }
             enable()
         }
@@ -73,12 +71,5 @@ class UiTest : ViewsForTesting() {
             position(64, 32)
             current = 0.5
         }
-
-    }
-
-    private class NativeProcess(views: Views) : NativeProcessBase(views) {
-    }
-
-    private open class NativeProcessBase(val views: Views) : DialogInterface by views.gameWindow {
     }
 }

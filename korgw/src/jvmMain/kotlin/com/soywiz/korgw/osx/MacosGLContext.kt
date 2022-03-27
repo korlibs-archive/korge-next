@@ -6,10 +6,8 @@ import com.soywiz.korgw.*
 import com.soywiz.korgw.platform.*
 import com.soywiz.korio.dynamic.*
 import com.soywiz.korma.geom.*
-import com.sun.jna.*
 import java.awt.*
 import java.security.*
-import java.util.*
 import javax.swing.SwingUtilities
 
 class MacosGLContext(
