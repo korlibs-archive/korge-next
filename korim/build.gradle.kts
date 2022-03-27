@@ -1,6 +1,6 @@
 import com.soywiz.korlibs.modules.*
 
-description = "Korim: Kotlin cORoutines IMaging utilities for JVM, JS, Native and Common"
+description = "Korim: Kotlin cORoutines Imaging utilities for JVM, JS, Native and Common"
 
 if (doEnableKotlinNative) {
     kotlin {
