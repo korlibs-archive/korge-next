@@ -136,12 +136,14 @@ data class GradientPaint(
         rotate(-Angle.between(x0, y0, x1, y1))
     }
 
-    val gradientMatrix = Matrix().apply {
-        copyFrom(untransformedGradientMatrix)
-        postmultiply(transform)
-    }
+    //val gradientMatrixInv = gradientMatrix.inverted()
+    val transformInv = transform.inverted()
 
-    val gradientMatrixInv = gradientMatrix.inverted()
+    val gradientMatrix = Matrix().apply {
+        identity()
+        premultiply(untransformedGradientMatrix)
+        premultiply(transformInv)
+    }
 
     private val r0r1_2 = 2 * r0 * r1
     private val r0pow2 = r0.pow2
@@ -151,23 +153,40 @@ data class GradientPaint(
     private val x0_x1 = x0 - x1
     private val radial_scale = 1.0 / ((r0 - r1).pow2 - (x0 - x1).pow2 - (y0 - y1).pow2)
 
-    fun getRatioAt(x: Double, y: Double): Double = cycle.apply(when (kind) {
-        GradientKind.SWEEP -> {
-            Point.angle(x0, y0, x, y) / 360.degrees
-        }
-        GradientKind.RADIAL -> {
-            //1.0 - (-r1 * (r0 - r1) + (x0 - x1) * (x1 - x) + (y0 - y1) * (y1 - y) - sqrt(r1.pow2 * ((x0 - x).pow2 + (y0 - y).pow2) - 2 * r0 * r1 * ((x0 - x) * (x1 - x) + (y0 - y) * (y1 - y)) + r0.pow2 * ((x1 - x).pow2 + (y1 - y).pow2) - (x1 * y0 - x * y0 - x0 * y1 + x * y1 + x0 * y - x1 * y).pow2)) / ((r0 - r1).pow2 - (x0 - x1).pow2 - (y0 - y1).pow2)
-            1.0 - (-r1 * r0_r1 + x0_x1 * (x1 - x) + y0_y1 * (y1 - y) - sqrt(r1pow2 * ((x0 - x).pow2 + (y0 - y).pow2) - r0r1_2 * ((x0 - x) * (x1 - x) + (y0 - y) * (y1 - y)) + r0pow2 * ((x1 - x).pow2 + (y1 - y).pow2) - (x1 * y0 - x * y0 - x0 * y1 + x * y1 + x0 * y - x1 * y).pow2)) * radial_scale
-        }
-        else -> {
-            //println("gradientMatrix.transformX($x, $y): ${gradientMatrix.transformX(x, y)}")
-            gradientMatrix.transformX(x, y)
-        }
-    })
+    fun getRatioAt(px: Double, py: Double): Double {
+        //val x = px
+        //val y = py
+        return cycle.apply(when (kind) {
+            GradientKind.SWEEP -> {
+                val x = transformInv.transformX(px, py)
+                val y = transformInv.transformY(px, py)
+                Point.angle(x0, y0, x, y) / 360.degrees
+            }
+            GradientKind.RADIAL -> {
+                val x = transformInv.transformX(px, py)
+                val y = transformInv.transformY(px, py)
+                //val x = px
+                //val y = py
+                //1.0 - (-r1 * (r0 - r1) + (x0 - x1) * (x1 - x) + (y0 - y1) * (y1 - y) - sqrt(r1.pow2 * ((x0 - x).pow2 + (y0 - y).pow2) - 2 * r0 * r1 * ((x0 - x) * (x1 - x) + (y0 - y) * (y1 - y)) + r0.pow2 * ((x1 - x).pow2 + (y1 - y).pow2) - (x1 * y0 - x * y0 - x0 * y1 + x * y1 + x0 * y - x1 * y).pow2)) / ((r0 - r1).pow2 - (x0 - x1).pow2 - (y0 - y1).pow2)
+                1.0 - (-r1 * r0_r1 + x0_x1 * (x1 - x) + y0_y1 * (y1 - y) - sqrt(r1pow2 * ((x0 - x).pow2 + (y0 - y).pow2) - r0r1_2 * ((x0 - x) * (x1 - x) + (y0 - y) * (y1 - y)) + r0pow2 * ((x1 - x).pow2 + (y1 - y).pow2) - (x1 * y0 - x * y0 - x0 * y1 + x * y1 + x0 * y - x1 * y).pow2)) * radial_scale
+            }
+            else -> {
+                //println("gradientMatrix.transformX($x, $y): ${gradientMatrix.transformX(x, y)}")
+                gradientMatrix.transformX(px, py)
+            }
+        })
+    }
 
-    val Double.pow2 get() = this * this
+    val Float.pow2: Float get() = this * this
+    val Double.pow2: Double get() = this * this
 
-    fun getRatioAt(x: Double, y: Double, m: Matrix): Double = getRatioAt(m.transformX(x, y), m.transformY(x, y))
+    fun getRatioAt(x: Double, y: Double, m: Matrix): Double {
+        //val tx = gradientMatrix.transformX(x, y)
+        //val ty = gradientMatrix.transformY(x, y)
+        //return m.transformX(tx, ty)
+        return getRatioAt(m.transformX(x, y), m.transformY(x, y))
+        //return getRatioAt(x, y)
+    }
 
     fun applyMatrix(m: Matrix): GradientPaint = GradientPaint(
         kind,
@@ -221,3 +240,16 @@ class BitmapPaint(
     //override fun transformed(m: Matrix) = BitmapPaint(bitmap, Matrix().multiply(this.transform, m))
     override fun toString(): String = "BitmapPaint($bitmap, cycle=($cycleX, $cycleY), smooth=$smooth, transform=$transform)"
 }
+
+/*
+const canvasLinear = document.getElementById('canvasLinear');
+const ctx = canvasLinear.getContext('2d');
+const fillStyle = ctx.createRadialGradient(150,150,30, 130,180,70);
+fillStyle.addColorStop(0, 'red');
+fillStyle.addColorStop(0.5, 'green');
+fillStyle.addColorStop(1, 'blue');
+ctx.fillStyle = fillStyle;
+ctx.translate(100, 20)
+ctx.scale(2, 2)
+ctx.fillRect(100, 100, 100, 100);
+*/
