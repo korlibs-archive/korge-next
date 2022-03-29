@@ -15,7 +15,6 @@ import com.soywiz.korma.interpolation.interpolate
 import com.soywiz.krypto.encoding.*
 
 inline class RGBA(val value: Int) : Comparable<RGBA>, Interpolable<RGBA>, Paint {
-    override fun transformed(m: Matrix): Paint = this
     override fun clone(): Paint = this
     val color: RGBA get() = this
 

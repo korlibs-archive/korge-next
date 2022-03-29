@@ -11,12 +11,10 @@ import kotlin.apply
 import kotlin.math.*
 
 interface Paint {
-    fun transformed(m: Matrix): Paint
     fun clone(): Paint
 }
 
 object NonePaint : Paint {
-    override fun transformed(m: Matrix) = this
     override fun clone(): Paint = this
 }
 
@@ -189,7 +187,6 @@ data class GradientPaint(
 
     fun applyMatrix(m: Matrix): GradientPaint = copy(transform = transform * m)
 
-    override fun transformed(m: Matrix) = applyMatrix(m)
     override fun clone(): Paint = copy(transform = transform.clone())
 
     override fun toString(): String = when (kind) {
@@ -221,7 +218,6 @@ data class BitmapPaint(
     val repeat: Boolean get() = repeatX || repeatY
 
     val bmp32 = bitmap.toBMP32()
-    override fun transformed(m: Matrix) = copy(transform = Matrix().multiply(m, this.transform))
     override fun clone(): Paint = copy(transform = transform.clone())
 
     //override fun transformed(m: Matrix) = BitmapPaint(bitmap, Matrix().multiply(this.transform, m))
