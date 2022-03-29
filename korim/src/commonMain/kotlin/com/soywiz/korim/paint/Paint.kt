@@ -187,21 +187,7 @@ data class GradientPaint(
         //return getRatioAt(x, y)
     }
 
-    fun applyMatrix(m: Matrix): GradientPaint = GradientPaint(
-        kind,
-        m.transformX(x0, y0),
-        m.transformY(x0, y0),
-        r0 * m.transformX(1.0, 0.0),
-        m.transformX(x1, y1),
-        m.transformY(x1, y1),
-        r1 * m.transformX(1.0, 0.0),
-        DoubleArrayList(stops),
-        IntArrayList(colors),
-        cycle,
-        Matrix(),
-        interpolationMethod,
-        units
-    )
+    fun applyMatrix(m: Matrix): GradientPaint = copy(transform = transform * m)
 
     override fun transformed(m: Matrix) = applyMatrix(m)
     override fun clone(): Paint = copy(transform = transform.clone())
