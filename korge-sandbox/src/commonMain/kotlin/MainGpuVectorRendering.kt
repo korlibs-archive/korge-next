@@ -1,13 +1,7 @@
-import com.soywiz.kds.*
 import com.soywiz.klock.*
 import com.soywiz.klogger.*
-import com.soywiz.kmem.*
-import com.soywiz.korag.*
-import com.soywiz.korag.shader.*
 import com.soywiz.korge.annotations.*
-import com.soywiz.korge.render.*
 import com.soywiz.korge.view.*
-import com.soywiz.korge.view.BlendMode
 import com.soywiz.korge.view.vector.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
@@ -17,13 +11,29 @@ import com.soywiz.korim.paint.*
 import com.soywiz.korim.text.*
 import com.soywiz.korim.vector.*
 import com.soywiz.korim.vector.format.*
+import com.soywiz.korim.vector.format.SVG
 import com.soywiz.korio.file.std.*
 import com.soywiz.korma.geom.*
-import com.soywiz.korma.geom.shape.*
 import com.soywiz.korma.geom.vector.*
 
 @OptIn(KorgeExperimental::class)
 suspend fun Stage.mainGpuVectorRendering() {
+    //gpuShapeView {
+    //    val paint = createLinearGradient(200, 200, 400, 400).add(0.0, Colors.BLUE).add(1.0, Colors.WHITE)
+    //    //val paint = Colors.RED
+    //    stroke(paint, lineWidth = 10.0, lineCap = LineCap.ROUND) {
+    //        moveTo(100, 100)
+    //        lineTo(400, 400)
+    //        lineTo(200, 500)
+    //        lineTo(100, 100)
+    //        //close()
+    //    }
+    //}
+    //    //.xy(40, 0)
+    //    //.scale(1.1)
+    //    //.rotation(15.degrees)
+    //return
+
     Console.log("[1]")
     val korgeBitmap = resourcesVfs["korge.png"].readBitmap()//.mipmaps()
     Console.log("[2]")
@@ -36,15 +46,20 @@ suspend fun Stage.mainGpuVectorRendering() {
     val PAINT_TIGER = true
     val PAINT_SHAPES = true
     val PAINT_BITMAP = true
+    //val PAINT_BITMAP = false
     val PAINT_TEXT = true
     val PAINT_LINEAR_GRADIENT = true
     val PAINT_RADIAL_GRADIENT = true
+
+    val tigerShape = tigerSvg.toShape()
+    val tigerRender = tigerSvg
+    //val tigerRender = tigerShape
 
     fun Context2d.buildGraphics(kind: String) {
         if (PAINT_TIGER) {
             keep {
                 scale(0.5)
-                draw(tigerSvg)
+                draw(tigerRender)
             }
         }
         if (PAINT_SHAPES) {
@@ -120,6 +135,10 @@ suspend fun Stage.mainGpuVectorRendering() {
     }
 
     buildShape { buildGraphics("only shape") }
+    for (n in 0 until 2) {
+        NativeImage(512, 512).context2d { buildGraphics("KOTLIN") }
+        Bitmap32(512, 512).context2d { buildGraphics("KOTLIN") }
+    }
 
     measureTime({
         buildShape { buildGraphics("only shape") }
@@ -140,9 +159,12 @@ suspend fun Stage.mainGpuVectorRendering() {
     }) {
         println("CONTEXT2D NATIVE: $it")
     }
+
     measureTime({
         image(Bitmap32(512, 512).context2d { buildGraphics("KOTLIN") }).xy(550, 370)
     }) {
         println("CONTEXT2D BITMAP: $it")
     }
+
+    //while (true) Bitmap32(512, 512).context2d { buildGraphics("KOTLIN") }
 }
