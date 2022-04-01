@@ -133,9 +133,9 @@ data class Point(
         inline operator fun invoke(angle: Angle, length: Double = 1.0): Point = fromPolar(angle, length)
 
         /** Constructs a point from polar coordinates determined by an [angle] and a [length]. Angle 0 is pointing to the right, and the direction is counter-clock-wise */
-        fun fromPolar(x: Double, y: Double, angle: Angle, length: Double = 1.0): Point = Point(x + angle.cosine * length, y + angle.sine * length)
-        fun fromPolar(angle: Angle, length: Double = 1.0): Point = fromPolar(0.0, 0.0, angle, length)
-        fun fromPolar(base: IPoint, angle: Angle, length: Double = 1.0): Point = fromPolar(base.x, base.y, angle, length)
+        fun fromPolar(x: Double, y: Double, angle: Angle, length: Double = 1.0, out: Point = Point()): Point = out.setTo(x + angle.cosine * length, y + angle.sine * length)
+        fun fromPolar(angle: Angle, length: Double = 1.0, out: Point = Point()): Point = fromPolar(0.0, 0.0, angle, length, out)
+        fun fromPolar(base: IPoint, angle: Angle, length: Double = 1.0, out: Point = Point()): Point = fromPolar(base.x, base.y, angle, length, out)
 
         fun middle(a: IPoint, b: IPoint, out: Point = Point()): Point = out.setTo((a.x + b.x) * 0.5, (a.y + b.y) * 0.5)
         fun angleArc(a: IPoint, b: IPoint): Angle = Angle.fromRadians(acos((a.dot(b)) / (a.length * b.length)))

@@ -333,22 +333,28 @@ inline fun VectorPath.emitPoints2(
         moveTo = { x, y ->
             ix = x
             iy = y
-            emit(x, y, true).also { lx = x }.also { ly = y }
+            emit(x, y, true)
+            lx = x
+            ly = y
         },
         lineTo = { x, y ->
-            emit(x, y, false).also { lx = x }.also { ly = y }
+            emit(x, y, false)
+            lx = x
+            ly = y
             joint(false)
         },
         quadTo = { x0, y0, x1, y1 ->
             val sum = Point.distance(lx, ly, x0, y0) + Point.distance(x0, y0, x1, y1)
             approximateCurve(sum.toInt(), { ratio, get -> Bezier.quadCalc(lx, ly, x0, y0, x1, y1, ratio) { x, y -> get(x, y) } }) { x, y -> emit(x, y, false) }
-            run { lx = x1 }.also { ly = y1 }
+            lx = x1
+            ly = y1
             joint(false)
         },
         cubicTo = { x0, y0, x1, y1, x2, y2 ->
             val sum = Point.distance(lx, ly, x0, y0) + Point.distance(x0, y0, x1, y1) + Point.distance(x1, y1, x2, y2)
             approximateCurve(sum.toInt(), { ratio, get -> Bezier.cubicCalc(lx, ly, x0, y0, x1, y1, x2, y2, ratio) { x, y -> get(x, y) }}) { x, y -> emit(x, y, false) }
-            run { lx = x2 }.also { ly = y2 }
+            lx = x2
+            ly = y2
             joint(false)
         },
         close = {
