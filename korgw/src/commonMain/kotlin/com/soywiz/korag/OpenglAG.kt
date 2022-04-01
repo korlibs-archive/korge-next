@@ -152,6 +152,7 @@ abstract class AGOpengl : AG() {
         }
 
         override fun close() {
+            super.close()
             gl.deleteFramebuffers(1, framebuffer)
             gl.deleteRenderbuffers(1, depth)
             framebuffer.setInt(0, 0)
