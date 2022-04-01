@@ -3,7 +3,7 @@ package com.soywiz.korma.geom
 import com.soywiz.kds.*
 import kotlin.math.*
 
-interface IPointArrayList {
+interface IPointArrayList : Extra {
     val size: Int
     fun getX(index: Int): Double
     fun getY(index: Int): Double
@@ -50,7 +50,7 @@ fun IPointArrayList.contains(x: Double, y: Double): Boolean {
     return false
 }
 
-class PointArrayList(capacity: Int = 7) : IPointArrayList {
+open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.Mixin() {
     private val xList = DoubleArrayList(capacity)
     private val yList = DoubleArrayList(capacity)
     override val size get() = xList.size

@@ -8,8 +8,9 @@ class PointPool(val size: Int) {
     internal var offset = 0
 
     @PublishedApi
-    internal fun alloc() = points[offset++]
+    internal fun alloc(): Point = points[offset++]
 
+    fun MPoint(): Point = alloc()
     fun Point(x: Double, y: Double): IPoint = alloc().setTo(x, y)
     fun Point(x: Float, y: Float): IPoint = Point(x.toDouble(), y.toDouble())
     fun Point(x: Int, y: Int): IPoint = Point(x.toDouble(), y.toDouble())

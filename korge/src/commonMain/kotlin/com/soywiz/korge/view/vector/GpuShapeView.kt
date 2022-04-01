@@ -105,15 +105,18 @@ class GpuShapeView(shape: Shape) : View() {
         val points = FloatArrayList()
         val distValues = FloatArrayList()
 
+        val m = globalMatrix
+        val mt = m.toTransform()
+
         //val lineWidth = 0.2
         //val lineWidth = 20.0
-        val fLineWidth = max(lineWidth.toFloat(), 1.5f)
-        val m = globalMatrix
+        val fLineWidth = max((lineWidth).toFloat(), 1.5f)
 
-        for (ppath in strokePath.toPathList()) {
+        for (ppath in strokePath.toPathList(emitClosePoint = true)) {
+            //ppath.closed
             for (n in 1 until ppath.size) pointsScope {
-                val a = ppath[n - 1]
-                val b = ppath[n]
+                val a = m.transform(ppath[n - 1], MPoint())
+                val b = m.transform(ppath[n], MPoint())
                 val angle = Angle.between(a, b)
                 val angle0 = angle - 90.degrees
                 val angle1 = angle + 90.degrees
@@ -121,10 +124,10 @@ class GpuShapeView(shape: Shape) : View() {
                 val a1 = Point(a, angle1, length = fLineWidth)
                 val b0 = Point(b, angle0, length = fLineWidth)
                 val b1 = Point(b, angle1, length = fLineWidth)
-                points.add(a1, m); distValues.add(-fLineWidth)
-                points.add(a0, m); distValues.add(fLineWidth)
-                points.add(b1, m); distValues.add(-fLineWidth)
-                points.add(b0, m); distValues.add(fLineWidth)
+                points.add(a1); distValues.add(-fLineWidth)
+                points.add(a0); distValues.add(fLineWidth)
+                points.add(b1); distValues.add(-fLineWidth)
+                points.add(b0); distValues.add(fLineWidth)
                 vertexCount += 4
             }
         }

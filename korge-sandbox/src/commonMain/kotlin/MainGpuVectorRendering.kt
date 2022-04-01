@@ -18,20 +18,20 @@ import com.soywiz.korma.geom.vector.*
 
 @OptIn(KorgeExperimental::class)
 suspend fun Stage.mainGpuVectorRendering() {
-    //gpuShapeView {
-    //    val paint = createLinearGradient(200, 200, 400, 400).add(0.0, Colors.BLUE).add(1.0, Colors.WHITE)
-    //    //val paint = Colors.RED
-    //    stroke(paint, lineWidth = 10.0, lineCap = LineCap.ROUND) {
-    //        moveTo(100, 100)
-    //        lineTo(400, 400)
-    //        lineTo(200, 500)
-    //        lineTo(100, 100)
-    //        //close()
-    //    }
-    //}
-    //    //.xy(40, 0)
-    //    //.scale(1.1)
-    //    //.rotation(15.degrees)
+    gpuShapeView {
+        val paint = createLinearGradient(200, 200, 400, 400).add(0.0, Colors.BLUE).add(1.0, Colors.WHITE)
+        //val paint = Colors.RED
+        stroke(paint, lineWidth = 10.0, lineCap = LineCap.ROUND) {
+            moveTo(100, 100)
+            lineTo(400, 400)
+            lineTo(200, 500)
+            //lineTo(100, 100)
+            close()
+        }
+    }
+        //.xy(40, 0)
+        //.scale(1.1)
+        //.rotation(15.degrees)
     //return
 
     Console.log("[1]")
