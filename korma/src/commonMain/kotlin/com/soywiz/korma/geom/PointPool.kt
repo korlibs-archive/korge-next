@@ -1,5 +1,7 @@
 package com.soywiz.korma.geom
 
+import com.soywiz.korma.internal.*
+
 @Suppress("NOTHING_TO_INLINE")
 class PointPool(val size: Int) {
     @PublishedApi
@@ -39,6 +41,7 @@ class PointPool(val size: Int) {
     operator fun IPoint.rem(value: Int): IPoint = this % value.toDouble()
 
     operator fun IPointArrayList.get(index: Int): IPoint = Point(this.getX(index), this.getY(index))
+    fun IPointArrayList.getCyclic(index: Int): IPoint = this[index umod size]
 
     inline operator fun invoke(callback: PointPool.() -> Unit) {
         val oldOffset = offset

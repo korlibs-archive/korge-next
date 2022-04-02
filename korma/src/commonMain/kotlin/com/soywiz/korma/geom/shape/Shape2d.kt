@@ -456,17 +456,9 @@ fun VectorPath.toShape2dOld(closed: Boolean = true): Shape2d {
     }
 }
 
-interface IPointArrayListExt : IPointArrayList {
-    val closed: Boolean
-}
-
-open class PointArrayListExt : PointArrayList(), IPointArrayListExt {
-    override var closed: Boolean = false
-}
-
-fun VectorPath.toPathList(emitClosePoint: Boolean = false): List<IPointArrayListExt> {
-    val paths = arrayListOf<PointArrayListExt>()
-    var path = PointArrayListExt()
+fun VectorPath.toPathList(emitClosePoint: Boolean = false): List<IPointArrayList> {
+    val paths = arrayListOf<PointArrayList>()
+    var path = PointArrayList()
     var firstX = 0.0
     var firstY = 0.0
     var first = true
@@ -482,7 +474,7 @@ fun VectorPath.toPathList(emitClosePoint: Boolean = false): List<IPointArrayList
             //println("POINTS:" + path.size)
             //for (p in path.toPoints()) println(" - $p")
             paths += path
-            path = PointArrayListExt()
+            path = PointArrayList()
         }
     }, { x, y ->
         if (first) {
