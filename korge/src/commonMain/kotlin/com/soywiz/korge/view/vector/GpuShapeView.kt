@@ -14,6 +14,7 @@ import com.soywiz.korim.color.*
 import com.soywiz.korim.paint.*
 import com.soywiz.korim.vector.*
 import com.soywiz.korma.geom.*
+import com.soywiz.korma.geom.Line
 import com.soywiz.korma.geom.shape.*
 import com.soywiz.korma.geom.vector.*
 import kotlin.math.*
@@ -70,13 +71,13 @@ class GpuShapeView(shape: Shape) : View() {
             is CompoundShape -> for (v in shape.components) renderShape(ctx, v)
             is TextShape -> renderShape(ctx, shape.primitiveShapes)
             is FillShape -> renderShape(ctx, shape)
-            //is PolylineShape -> renderStroke(ctx, shape.transform, shape.path, shape.paint, shape.globalAlpha, shape.thickness)
-            is PolylineShape -> renderShape(ctx, shape.fillShape)
+            is PolylineShape -> renderStroke(ctx, shape.transform, shape.path, shape.paint, shape.globalAlpha, shape.thickness, shape.scaleMode)
+            //is PolylineShape -> renderShape(ctx, shape.fillShape)
             else -> TODO("shape=$shape")
         }
     }
 
-    private val pointsScope = PointPool(32)
+    private val pointsScope = PointPool(64)
 
     fun FloatArrayList.add(p: IPoint) {
         add(p.x.toFloat())
@@ -93,6 +94,24 @@ class GpuShapeView(shape: Shape) : View() {
         add(b)
     }
 
+    class RenderStrokePoints(
+        val points: FloatArrayList = FloatArrayList(),
+        val distValues: FloatArrayList = FloatArrayList(),
+    ) {
+        val pointCount: Int get() = points.size / 2
+
+        fun add(p: IPoint, lineWidth: Float) {
+            points.add(p.x.toFloat())
+            points.add(p.y.toFloat())
+            distValues.add(lineWidth)
+        }
+
+        fun add(p1: IPoint, p2: IPoint, lineWidth: Float) {
+            add(p1, -lineWidth)
+            add(p2, +lineWidth)
+        }
+    }
+
     private fun renderStroke(
         ctx: RenderContext,
         stateTransform: Matrix,
@@ -100,41 +119,73 @@ class GpuShapeView(shape: Shape) : View() {
         paint: Paint,
         globalAlpha: Double,
         lineWidth: Double,
+        scaleMode: LineScaleMode
     ) {
-        var vertexCount = 0
-        val points = FloatArrayList()
-        val distValues = FloatArrayList()
+        val points = RenderStrokePoints()
 
         val m = globalMatrix
         val mt = m.toTransform()
+
+        val scaleWidth = scaleMode.anyScale
+        val lineWidth = if (scaleWidth) lineWidth * mt.scaleAvg else lineWidth
 
         //val lineWidth = 0.2
         //val lineWidth = 20.0
         val fLineWidth = max((lineWidth).toFloat(), 1.5f)
 
-        for (ppath in strokePath.toPathList(emitClosePoint = true)) {
-            //ppath.closed
-            for (n in 1 until ppath.size) pointsScope {
-                val a = m.transform(ppath[n - 1], MPoint())
-                val b = m.transform(ppath[n], MPoint())
-                val angle = Angle.between(a, b)
-                val angle0 = angle - 90.degrees
-                val angle1 = angle + 90.degrees
-                val a0 = Point(a, angle0, length = fLineWidth)
-                val a1 = Point(a, angle1, length = fLineWidth)
-                val b0 = Point(b, angle0, length = fLineWidth)
-                val b1 = Point(b, angle1, length = fLineWidth)
-                points.add(a1); distValues.add(-fLineWidth)
-                points.add(a0); distValues.add(fLineWidth)
-                points.add(b1); distValues.add(-fLineWidth)
-                points.add(b0); distValues.add(fLineWidth)
-                vertexCount += 4
+        for (ppath in strokePath.toPathList(emitClosePoint = false)) {
+            val loop = ppath.closed
+            //println("Points: " + ppath.toList())
+            val end = if (loop) ppath.size + 1 else ppath.size
+            for (n in 0 until end) pointsScope {
+                val a = m.transform(ppath.getCyclic(n - 1), MPoint())
+                val b = m.transform(ppath.getCyclic(n), MPoint()) // Current point
+                val c = m.transform(ppath.getCyclic(n + 1), MPoint())
+                val angleAB = Angle.between(a, b)
+                val angleAB0 = angleAB - 90.degrees
+                val angleAB1 = angleAB + 90.degrees
+                val a0 = Point(a, angleAB0, length = fLineWidth)
+                val a1 = Point(a, angleAB1, length = fLineWidth)
+                val b0 = Point(b, angleAB0, length = fLineWidth)
+                val b1 = Point(b, angleAB1, length = fLineWidth)
+
+                val angleBC = Angle.between(b, c)
+                val angleBC0 = angleBC - 90.degrees
+                val angleBC1 = angleBC + 90.degrees
+                val b_0 = Point(b, angleBC0, length = fLineWidth)
+                val b_1 = Point(b, angleBC1, length = fLineWidth)
+                val c0 = Point(c, angleBC0, length = fLineWidth)
+                val c1 = Point(c, angleBC1, length = fLineWidth)
+
+
+                when {
+                    // Start cap
+                    !loop && n == 0 -> {
+                        points.add(b_1, b_0, fLineWidth)
+                    }
+                    // End cap
+                    !loop && n == ppath.size - 1 -> {
+                        points.add(b1, b0, fLineWidth)
+                    }
+                    else -> {
+                        val m0 = Line.getIntersectXY(a0, b0, b_0, c0, MPoint()) // Outer (CW)
+                        val m1 = Line.getIntersectXY(a1, b1, b_1, c1, MPoint()) // Inner (CW)
+
+                        // @TODO: check miterLimit
+                        points.add(m1 ?: b1, m0 ?: b0, fLineWidth)
+                    }
+                }
+
+                //points.add(a1); distValues.add(-fLineWidth)
+                //points.add(a0); distValues.add(fLineWidth)
             }
         }
 
         //println("vertexCount=$vertexCount")
 
-        drawTriangleStrip(ctx, globalAlpha, paint, points, distValues, vertexCount, lineWidth.toFloat(), stateTransform)
+        val st2 = stateTransform.clone()
+        st2.premultiply(stage!!.globalMatrix)
+        drawTriangleStrip(ctx, globalAlpha, paint, points.points, points.distValues, points.pointCount, lineWidth.toFloat(), st2)
     }
 
     private fun drawTriangleStrip(

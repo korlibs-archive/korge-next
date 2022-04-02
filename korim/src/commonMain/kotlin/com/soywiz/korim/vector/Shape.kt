@@ -359,9 +359,10 @@ data class PolylineShape(
     private val tempRect = Rectangle()
 
     val fillShape: FillShape by lazy {
-        val out = GraphicsPath(winding = Winding.NON_ZERO)
-        StrokeToFill().strokeFill(path, thickness, lineJoin, startCaps, endCaps, miterLimit, out)
-        FillShape(out, clip, paint, transform, globalAlpha)
+        FillShape(
+            path.strokeToFill(thickness, lineJoin, startCaps, endCaps, miterLimit).toGraphicsPath(),
+            clip, paint, transform, globalAlpha
+        )
     }
 
     override fun addBounds(bb: BoundsBuilder, includeStrokes: Boolean) {

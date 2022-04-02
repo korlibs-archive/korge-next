@@ -20,10 +20,10 @@ import com.soywiz.korma.geom.vector.*
 suspend fun Stage.mainGpuVectorRendering() {
     gpuShapeView {
         val paint = createLinearGradient(200, 200, 400, 400).add(0.0, Colors.BLUE).add(1.0, Colors.WHITE)
-        //val paint = Colors.RED
-        stroke(paint, lineWidth = 10.0, lineCap = LineCap.ROUND) {
+        //val paint = Colors.RED.withAd(0.3)
+        stroke(paint, lineWidth = 10.0, lineCap = LineCap.BUTT, lineJoin = LineJoin.ROUND) {
             moveTo(100, 100)
-            lineTo(400, 400)
+            quadTo(400, 200, 400, 400)
             lineTo(200, 500)
             //lineTo(100, 100)
             close()
@@ -32,7 +32,7 @@ suspend fun Stage.mainGpuVectorRendering() {
         //.xy(40, 0)
         //.scale(1.1)
         //.rotation(15.degrees)
-    //return
+    return
 
     Console.log("[1]")
     val korgeBitmap = resourcesVfs["korge.png"].readBitmap()//.mipmaps()
