@@ -2,15 +2,33 @@ package com.soywiz.korma.geom
 
 import com.soywiz.korma.internal.*
 
+typealias PointScope = PointPool
+
 @Suppress("NOTHING_TO_INLINE")
-class PointPool(val size: Int) {
-    @PublishedApi
-    internal val points = Array(size) { com.soywiz.korma.geom.Point() }
+class PointPool(val capacity: Int = 16, preallocate: Boolean = false) {
     @PublishedApi
     internal var offset = 0
 
-    @PublishedApi
-    internal fun alloc(): Point = points[offset++]
+    //@PublishedApi internal val points = Array(capacity) { com.soywiz.korma.geom.Point() }
+    //@PublishedApi internal fun alloc(): Point = points[offset++]
+
+    @PublishedApi internal val points = arrayListOf<Point>()
+    @PublishedApi internal fun alloc(): Point {
+        return if (offset < points.size) {
+            points[offset++]
+        } else {
+            offset++
+            com.soywiz.korma.geom.Point().also { points.add(it) }
+        }
+    }
+
+    init {
+        if (preallocate) {
+            invoke {
+                repeat(capacity) { alloc() }
+            }
+        }
+    }
 
     fun MPoint(): Point = alloc()
     fun Point(x: Double, y: Double): IPoint = alloc().setTo(x, y)
@@ -40,8 +58,8 @@ class PointPool(val size: Int) {
     operator fun IPoint.rem(value: Float): IPoint = this % value.toDouble()
     operator fun IPoint.rem(value: Int): IPoint = this % value.toDouble()
 
-    operator fun IPointArrayList.get(index: Int): IPoint = Point(this.getX(index), this.getY(index))
-    fun IPointArrayList.getCyclic(index: Int): IPoint = this[index umod size]
+    operator fun IPointArrayList.get(index: Int): Point = MPoint().setTo(this.getX(index), this.getY(index))
+    fun IPointArrayList.getCyclic(index: Int): Point = this[index umod size]
 
     inline operator fun invoke(callback: PointPool.() -> Unit) {
         val oldOffset = offset

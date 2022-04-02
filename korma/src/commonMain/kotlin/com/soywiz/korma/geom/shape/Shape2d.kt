@@ -456,7 +456,7 @@ fun VectorPath.toShape2dOld(closed: Boolean = true): Shape2d {
     }
 }
 
-fun VectorPath.toPathList(emitClosePoint: Boolean = false): List<IPointArrayList> {
+fun VectorPath.toPathList(m: Matrix? = null, emitClosePoint: Boolean = false): List<IPointArrayList> {
     val paths = arrayListOf<PointArrayList>()
     var path = PointArrayList()
     var firstX = 0.0
@@ -482,7 +482,11 @@ fun VectorPath.toPathList(emitClosePoint: Boolean = false): List<IPointArrayList
             firstX = x
             firstY = y
         }
-        path.add(x, y)
+        if (m != null) {
+            path.add(m.transformX(x, y), m.transformY(x, y))
+        } else {
+            path.add(x, y)
+        }
     })
     return paths
 }

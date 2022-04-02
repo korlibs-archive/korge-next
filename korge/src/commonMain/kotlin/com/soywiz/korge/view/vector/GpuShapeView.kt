@@ -15,6 +15,7 @@ import com.soywiz.korim.paint.*
 import com.soywiz.korim.vector.*
 import com.soywiz.korma.geom.*
 import com.soywiz.korma.geom.Line
+import com.soywiz.korma.geom.bezier.*
 import com.soywiz.korma.geom.shape.*
 import com.soywiz.korma.geom.vector.*
 import kotlin.math.*
@@ -71,7 +72,7 @@ class GpuShapeView(shape: Shape) : View() {
             is CompoundShape -> for (v in shape.components) renderShape(ctx, v)
             is TextShape -> renderShape(ctx, shape.primitiveShapes)
             is FillShape -> renderShape(ctx, shape)
-            is PolylineShape -> renderStroke(ctx, shape.transform, shape.path, shape.paint, shape.globalAlpha, shape.thickness, shape.scaleMode)
+            is PolylineShape -> renderStroke(ctx, shape.transform, shape.path, shape.paint, shape.globalAlpha, shape.thickness, shape.scaleMode, shape.startCaps, shape.endCaps, shape.lineJoin)
             //is PolylineShape -> renderShape(ctx, shape.fillShape)
             else -> TODO("shape=$shape")
         }
@@ -119,7 +120,10 @@ class GpuShapeView(shape: Shape) : View() {
         paint: Paint,
         globalAlpha: Double,
         lineWidth: Double,
-        scaleMode: LineScaleMode
+        scaleMode: LineScaleMode,
+        startCap: LineCap,
+        endCap: LineCap,
+        join: LineJoin,
     ) {
         val points = RenderStrokePoints()
 
@@ -132,47 +136,91 @@ class GpuShapeView(shape: Shape) : View() {
         //val lineWidth = 0.2
         //val lineWidth = 20.0
         val fLineWidth = max((lineWidth).toFloat(), 1.5f)
+        class SegmentInfo {
+            lateinit var s: IPoint // start
+            lateinit var e: IPoint // end
+            lateinit var line: Line
+            var angleSE: Angle = 0.degrees
+            var angleSE0: Angle = 0.degrees
+            var angleSE1: Angle = 0.degrees
+            lateinit var s0: IPoint
+            lateinit var s1: IPoint
+            lateinit var e0: IPoint
+            lateinit var e1: IPoint
 
-        for (ppath in strokePath.toPathList(emitClosePoint = false)) {
+            fun p(index: Int) = if (index == 0) s else e
+            fun p0(index: Int) = if (index == 0) s0 else e0
+            fun p1(index: Int) = if (index == 0) s1 else e1
+
+            fun setTo(s: Point, e: Point, lineWidth: Double, scope: PointPool): Unit {
+                scope.apply {
+                    line = Line(s, e)
+                    angleSE = Angle.between(s, e)
+                    angleSE0 = angleSE - 90.degrees
+                    angleSE1 = angleSE + 90.degrees
+                    s0 = Point(s, angleSE0, length = lineWidth)
+                    s1 = Point(s, angleSE1, length = lineWidth)
+                    e0 = Point(e, angleSE0, length = lineWidth)
+                    e1 = Point(e, angleSE1, length = lineWidth)
+                }
+            }
+        }
+
+        val ab = SegmentInfo()
+        val bc = SegmentInfo()
+
+        for (ppath in strokePath.toPathList(m, emitClosePoint = false)) {
             val loop = ppath.closed
             //println("Points: " + ppath.toList())
             val end = if (loop) ppath.size + 1 else ppath.size
             for (n in 0 until end) pointsScope {
-                val a = m.transform(ppath.getCyclic(n - 1), MPoint())
-                val b = m.transform(ppath.getCyclic(n), MPoint()) // Current point
-                val c = m.transform(ppath.getCyclic(n + 1), MPoint())
-                val angleAB = Angle.between(a, b)
-                val angleAB0 = angleAB - 90.degrees
-                val angleAB1 = angleAB + 90.degrees
-                val a0 = Point(a, angleAB0, length = fLineWidth)
-                val a1 = Point(a, angleAB1, length = fLineWidth)
-                val b0 = Point(b, angleAB0, length = fLineWidth)
-                val b1 = Point(b, angleAB1, length = fLineWidth)
+                val a = ppath.getCyclic(n - 1)
+                val b = ppath.getCyclic(n) // Current point
+                val c = ppath.getCyclic(n + 1)
 
-                val angleBC = Angle.between(b, c)
-                val angleBC0 = angleBC - 90.degrees
-                val angleBC1 = angleBC + 90.degrees
-                val b_0 = Point(b, angleBC0, length = fLineWidth)
-                val b_1 = Point(b, angleBC1, length = fLineWidth)
-                val c0 = Point(c, angleBC0, length = fLineWidth)
-                val c1 = Point(c, angleBC1, length = fLineWidth)
-
+                ab.setTo(a, b, lineWidth, this)
+                bc.setTo(b, c, lineWidth, this)
 
                 when {
-                    // Start cap
-                    !loop && n == 0 -> {
-                        points.add(b_1, b_0, fLineWidth)
+                    // Start/End caps
+                    !loop && (n == 0 || n == ppath.size - 1) -> {
+                        val start = n == 0
+
+                        val cap = if (start) startCap else endCap
+                        val index = if (start) 0 else 1
+                        val segment = if (start) bc else ab
+                        val p1 = segment.p1(index)
+                        val p0 = segment.p0(index)
+                        val iangle = if (start) segment.angleSE - 180.degrees else segment.angleSE
+
+                        when (cap) {
+                            LineCap.BUTT -> points.add(p1, p0, fLineWidth)
+                            LineCap.SQUARE -> {
+                                val p1s = Point(p1, iangle, lineWidth)
+                                val p0s = Point(p0, iangle, lineWidth)
+                                points.add(p1s, p0s, fLineWidth)
+                            }
+                            LineCap.ROUND -> {
+                                val p1s = Point(p1, iangle, lineWidth * 1.5)
+                                val p0s = Point(p0, iangle, lineWidth * 1.5)
+                                for (i in 0..15) {
+                                    val ratio = i.toDouble() / 15.0
+                                    val pos = when {
+                                        start -> Bezier.cubicCalc(p0, p0s, p1s, p1, ratio, MPoint())
+                                        else -> Bezier.cubicCalc(p1, p1s, p0s, p0, ratio, MPoint())
+                                    }
+                                    points.add(pos, p0, fLineWidth)
+                                }
+                            }
+                        }
                     }
-                    // End cap
-                    !loop && n == ppath.size - 1 -> {
-                        points.add(b1, b0, fLineWidth)
-                    }
+                    // Joins
                     else -> {
-                        val m0 = Line.getIntersectXY(a0, b0, b_0, c0, MPoint()) // Outer (CW)
-                        val m1 = Line.getIntersectXY(a1, b1, b_1, c1, MPoint()) // Inner (CW)
+                        val m0 = Line.getIntersectXY(ab.s0, ab.e0, bc.s0, bc.e0, MPoint()) // Outer (CW)
+                        val m1 = Line.getIntersectXY(ab.s1, ab.e1, bc.s1, bc.e1, MPoint()) // Inner (CW)
 
                         // @TODO: check miterLimit
-                        points.add(m1 ?: b1, m0 ?: b0, fLineWidth)
+                        points.add(m1 ?: ab.e1, m0 ?: ab.e0, fLineWidth)
                     }
                 }
 
