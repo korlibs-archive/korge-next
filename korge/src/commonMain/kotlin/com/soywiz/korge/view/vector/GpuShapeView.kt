@@ -72,7 +72,7 @@ class GpuShapeView(shape: Shape) : View() {
             is CompoundShape -> for (v in shape.components) renderShape(ctx, v)
             is TextShape -> renderShape(ctx, shape.primitiveShapes)
             is FillShape -> renderShape(ctx, shape)
-            is PolylineShape -> renderStroke(ctx, shape.transform, shape.path, shape.paint, shape.globalAlpha, shape.thickness, shape.scaleMode, shape.startCaps, shape.endCaps, shape.lineJoin)
+            is PolylineShape -> renderStroke(ctx, shape.transform, shape.path, shape.paint, shape.globalAlpha, shape.thickness, shape.scaleMode, shape.startCaps, shape.endCaps, shape.lineJoin, shape.miterLimit)
             //is PolylineShape -> renderShape(ctx, shape.fillShape)
             else -> TODO("shape=$shape")
         }
@@ -101,6 +101,11 @@ class GpuShapeView(shape: Shape) : View() {
     ) {
         val pointCount: Int get() = points.size / 2
 
+        fun clear() {
+            points.clear()
+            distValues.clear()
+        }
+
         fun add(p: IPoint, lineWidth: Float) {
             points.add(p.x.toFloat())
             points.add(p.y.toFloat())
@@ -110,6 +115,29 @@ class GpuShapeView(shape: Shape) : View() {
         fun add(p1: IPoint, p2: IPoint, lineWidth: Float) {
             add(p1, -lineWidth)
             add(p2, +lineWidth)
+        }
+
+        fun addCubicOrLine(
+            scope: PointPool, fix: IPoint,
+            p0: IPoint, p0s: IPoint, p1s: IPoint, p1: IPoint,
+            lineWidth: Double,
+            reverse: Boolean = false,
+            start: Boolean = true,
+        ) {
+            val NPOINTS = 15
+            scope.apply {
+                for (i in 0..NPOINTS) {
+                    val ratio = i.toDouble() / NPOINTS.toDouble()
+                    val pos = when {
+                        start -> Bezier.cubicCalc(p0, p0s, p1s, p1, ratio, MPoint())
+                        else -> Bezier.cubicCalc(p1, p1s, p0s, p0, ratio, MPoint())
+                    }
+                    when {
+                        reverse -> add(fix, pos, lineWidth.toFloat())
+                        else -> add(pos, fix, lineWidth.toFloat())
+                    }
+                }
+            }
         }
     }
 
@@ -124,11 +152,15 @@ class GpuShapeView(shape: Shape) : View() {
         startCap: LineCap,
         endCap: LineCap,
         join: LineJoin,
+        miterLimit: Double,
+        forceClosed: Boolean? = null
     ) {
         val points = RenderStrokePoints()
 
         val m = globalMatrix
         val mt = m.toTransform()
+        val st2 = stateTransform.clone()
+        st2.premultiply(stage!!.globalMatrix)
 
         val scaleWidth = scaleMode.anyScale
         val lineWidth = if (scaleWidth) lineWidth * mt.scaleAvg else lineWidth
@@ -147,12 +179,18 @@ class GpuShapeView(shape: Shape) : View() {
             lateinit var s1: IPoint
             lateinit var e0: IPoint
             lateinit var e1: IPoint
+            lateinit var e0s: IPoint
+            lateinit var e1s: IPoint
+            lateinit var s0s: IPoint
+            lateinit var s1s: IPoint
 
             fun p(index: Int) = if (index == 0) s else e
             fun p0(index: Int) = if (index == 0) s0 else e0
             fun p1(index: Int) = if (index == 0) s1 else e1
 
             fun setTo(s: Point, e: Point, lineWidth: Double, scope: PointPool): Unit {
+                this.s = s
+                this.e = e
                 scope.apply {
                     line = Line(s, e)
                     angleSE = Angle.between(s, e)
@@ -162,6 +200,12 @@ class GpuShapeView(shape: Shape) : View() {
                     s1 = Point(s, angleSE1, length = lineWidth)
                     e0 = Point(e, angleSE0, length = lineWidth)
                     e1 = Point(e, angleSE1, length = lineWidth)
+
+                    s0s = Point(s0, angleSE + 180.degrees, length = lineWidth)
+                    s1s = Point(s1, angleSE + 180.degrees, length = lineWidth)
+
+                    e0s = Point(e0, angleSE, length = lineWidth)
+                    e1s = Point(e1, angleSE, length = lineWidth)
                 }
             }
         }
@@ -169,21 +213,31 @@ class GpuShapeView(shape: Shape) : View() {
         val ab = SegmentInfo()
         val bc = SegmentInfo()
 
-        for (ppath in strokePath.toPathList(m, emitClosePoint = false)) {
-            val loop = ppath.closed
+        val pathList = strokePath.toPathList(m, emitClosePoint = false)
+        //println(pathList.size)
+        for (ppath in pathList) {
+            points.clear()
+            val loop = forceClosed ?: ppath.closed
             //println("Points: " + ppath.toList())
             val end = if (loop) ppath.size + 1 else ppath.size
+            //val end = if (loop) ppath.size else ppath.size
             for (n in 0 until end) pointsScope {
+                val isFirst = n == 0
+                val isLast = n == ppath.size - 1
+                val isFirstOrLast = isFirst || isLast
                 val a = ppath.getCyclic(n - 1)
                 val b = ppath.getCyclic(n) // Current point
                 val c = ppath.getCyclic(n + 1)
+                val orientation = Point.orientation(a, b, c).sign.toInt()
+                //val angle = Angle.between(b - a, c - a)
+                //println("angle = $angle")
 
                 ab.setTo(a, b, lineWidth, this)
                 bc.setTo(b, c, lineWidth, this)
 
                 when {
                     // Start/End caps
-                    !loop && (n == 0 || n == ppath.size - 1) -> {
+                    !loop && isFirstOrLast -> {
                         val start = n == 0
 
                         val cap = if (start) startCap else endCap
@@ -203,14 +257,7 @@ class GpuShapeView(shape: Shape) : View() {
                             LineCap.ROUND -> {
                                 val p1s = Point(p1, iangle, lineWidth * 1.5)
                                 val p0s = Point(p0, iangle, lineWidth * 1.5)
-                                for (i in 0..15) {
-                                    val ratio = i.toDouble() / 15.0
-                                    val pos = when {
-                                        start -> Bezier.cubicCalc(p0, p0s, p1s, p1, ratio, MPoint())
-                                        else -> Bezier.cubicCalc(p1, p1s, p0s, p0, ratio, MPoint())
-                                    }
-                                    points.add(pos, p0, fLineWidth)
-                                }
+                                points.addCubicOrLine(this, p0, p0, p0s, p1s, p1, lineWidth, reverse = false, start = start)
                             }
                         }
                     }
@@ -218,22 +265,64 @@ class GpuShapeView(shape: Shape) : View() {
                     else -> {
                         val m0 = Line.getIntersectXY(ab.s0, ab.e0, bc.s0, bc.e0, MPoint()) // Outer (CW)
                         val m1 = Line.getIntersectXY(ab.s1, ab.e1, bc.s1, bc.e1, MPoint()) // Inner (CW)
+                        val e1 = m1 ?: ab.e1
+                        val e0 = m0 ?: ab.e0
 
-                        // @TODO: check miterLimit
-                        points.add(m1 ?: ab.e1, m0 ?: ab.e0, fLineWidth)
+                        if (loop && isFirst) {
+                            if (orientation >= 0.0) {
+                                points.add(bc.s1, e0, fLineWidth)
+                            } else {
+                                points.add(e1, bc.s0, fLineWidth)
+                            }
+                        } else {
+
+                            val round = !isFirst && join == LineJoin.ROUND
+                            val dorientation = when {
+                                (join == LineJoin.MITER && e1.distanceTo(b) <= (miterLimit * lineWidth)) -> 0
+                                else -> orientation
+                            }
+                            //println("orientation=$orientation")
+                            when (dorientation) {
+                                // Turn right
+                                -1 -> {
+                                    val fp = m1 ?: ab.e1
+                                    //points.addCubicOrLine(this, true, fp, p0, p0, p1, p1, lineWidth, cubic = false)
+                                    if (round) {
+                                        points.addCubicOrLine(
+                                            this, fp,
+                                            ab.e0, ab.e0s, bc.s0s, bc.s0,
+                                            lineWidth, reverse = true
+                                        )
+                                    } else {
+                                        points.add(fp, ab.e0, fLineWidth)
+                                        points.add(fp, bc.s0, fLineWidth)
+                                    }
+                                }
+                                // Miter
+                                0 -> points.add(e1, e0, fLineWidth)
+                                // Turn left
+                                1 -> {
+                                    val fp = m0 ?: ab.e0
+                                    if (round) {
+                                        points.addCubicOrLine(
+                                            this, fp,
+                                            ab.e1, ab.e1s, bc.s1s, bc.s1,
+                                            lineWidth, reverse = false
+                                        )
+                                    } else {
+                                        points.add(ab.e1, fp, fLineWidth)
+                                        points.add(bc.s1, fp, fLineWidth)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-
-                //points.add(a1); distValues.add(-fLineWidth)
-                //points.add(a0); distValues.add(fLineWidth)
             }
+            drawTriangleStrip(ctx, globalAlpha, paint, points.points, points.distValues, points.pointCount, lineWidth.toFloat(), st2)
         }
 
         //println("vertexCount=$vertexCount")
-
-        val st2 = stateTransform.clone()
-        st2.premultiply(stage!!.globalMatrix)
-        drawTriangleStrip(ctx, globalAlpha, paint, points.points, points.distValues, points.pointCount, lineWidth.toFloat(), st2)
     }
 
     private fun drawTriangleStrip(

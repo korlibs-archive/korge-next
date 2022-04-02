@@ -19,18 +19,34 @@ import com.soywiz.korma.geom.vector.*
 @OptIn(KorgeExperimental::class)
 suspend fun Stage.mainGpuVectorRendering() {
     gpuShapeView {
-        val paint = createLinearGradient(200, 200, 400, 400).add(0.0, Colors.BLUE).add(1.0, Colors.WHITE)
-        //val paint = Colors.WHITE.withAd(0.7)
+        //val paint = createLinearGradient(200, 200, 400, 400).add(0.0, Colors.BLUE.withAd(0.9)).add(1.0, Colors.WHITE.withAd(0.7))
+        val paint = Colors.WHITE.withAd(0.7)
         //stroke(paint, lineWidth = 10.0, lineCap = LineCap.BUTT, lineJoin = LineJoin.ROUND) {
         //stroke(paint, lineWidth = 10.0, lineCap = LineCap.SQUARE, lineJoin = LineJoin.ROUND) {
+        //stroke(paint, lineWidth = 10.0, lineCap = LineCap.ROUND, lineJoin = LineJoin.ROUND) {
+        //stroke(paint, lineWidth = 10.0, lineCap = LineCap.ROUND, lineJoin = LineJoin.BEVEL) {
         stroke(paint, lineWidth = 10.0, lineCap = LineCap.ROUND, lineJoin = LineJoin.ROUND) {
+        //stroke(paint, lineWidth = 10.0, lineCap = LineCap.ROUND, lineJoin = LineJoin.BEVEL) {
             moveTo(100, 100)
-            quadTo(400, 200, 400, 400)
+            //quadTo(400, 200, 400, 400)
+            lineTo(400, 400)
             lineTo(200, 500)
+            lineTo(500, 500)
+            lineTo(200, 700)
+            //lineTo(100, 140)
             //lineTo(100, 100)
-            //close()
+            close()
+
+            moveTo(800, 600)
+            //quadTo(400, 200, 400, 400)
+            lineTo(900, 600)
+            lineTo(900, 400)
+            //lineTo(100, 140)
+            //lineTo(100, 100)
+            close()
         }
     }
+
     circle(6.0, Colors.RED).anchor(Anchor.CENTER).xy(100, 100)
         //.xy(40, 0)
         //.scale(1.1)

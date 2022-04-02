@@ -476,6 +476,7 @@ fun VectorPath.toPathList(m: Matrix? = null, emitClosePoint: Boolean = false): L
             paths += path
             path = PointArrayList()
         }
+        first = true
     }, { x, y ->
         if (first) {
             first = false
