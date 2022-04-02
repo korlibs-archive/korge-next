@@ -183,6 +183,16 @@ data class Point(
             xb.toDouble(), yb.toDouble(),
         )
 
+        // https://algorithmtutor.com/Computational-Geometry/Determining-if-two-consecutive-segments-turn-left-or-right/
+        /** < 0 left, > 0 right, 0 collinear */
+        fun orientation(p1: IPoint, p2: IPoint, p3: IPoint): Double =
+            orientation(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
+        fun orientation(ax: Double, ay: Double, bx: Double, by: Double, cx: Double, cy: Double): Double =
+            crossProduct(cx - ax, cy - ay, bx - ax, by - ay)
+
+        fun crossProduct(ax: Double, ay: Double, bx: Double, by: Double): Double = (ax * by) - (bx * ay)
+        fun crossProduct(p1: IPoint, p2: IPoint): Double = crossProduct(p1.x, p1.y, p2.x, p2.y)
+
         //val ax = x1 - x2
         //val ay = y1 - y2
         //val al = hypot(ax, ay)
