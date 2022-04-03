@@ -272,17 +272,24 @@ inline fun VectorPath.emitPoints(flush: (close: Boolean) -> Unit, emit: (x: Doub
     var ly = 0.0
     flush(false)
     this.visitCmds(
-        moveTo = { x, y -> emit(x, y).also { lx = x }.also { ly = y } },
-        lineTo = { x, y -> emit(x, y).also { lx = x }.also { ly = y } },
+        moveTo = { x, y ->
+            flush(false)
+            emit(x, y)
+            lx = x; ly = y
+        },
+        lineTo = { x, y ->
+            emit(x, y)
+            lx = x; ly = y
+        },
         quadTo = { x0, y0, x1, y1 ->
             val dt = 1.0 / curveSteps
             for (n in 1 until curveSteps) Bezier.quadCalc(lx, ly, x0, y0, x1, y1, n * dt, emit)
-            run { lx = x1 }.also { ly = y1 }
+            lx = x1 ; ly = y1
         },
         cubicTo = { x0, y0, x1, y1, x2, y2 ->
             val dt = 1.0 / curveSteps
             for (n in 1 until curveSteps) Bezier.cubicCalc(lx, ly, x0, y0, x1, y1, x2, y2, n * dt, emit)
-            run { lx = x2 }.also { ly = y2 }
+            lx = x2 ; ly = y2
 
         },
         close = { flush(true) }
@@ -456,7 +463,11 @@ fun VectorPath.toShape2dOld(closed: Boolean = true): Shape2d {
     }
 }
 
-fun VectorPath.toPathList(m: Matrix? = null, emitClosePoint: Boolean = false): List<IPointArrayList> {
+@Deprecated("", ReplaceWith("toPathPointList(m, emitClosePoint)"))
+fun VectorPath.toPathList(m: Matrix? = null, emitClosePoint: Boolean = false): List<IPointArrayList> =
+    toPathPointList(m, emitClosePoint)
+
+fun VectorPath.toPathPointList(m: Matrix? = null, emitClosePoint: Boolean = false): List<IPointArrayList> {
     val paths = arrayListOf<PointArrayList>()
     var path = PointArrayList()
     var firstX = 0.0

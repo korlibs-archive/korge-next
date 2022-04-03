@@ -275,7 +275,6 @@ class GpuShapeView(shape: Shape) : View() {
                                 points.add(e1, bc.s0, fLineWidth)
                             }
                         } else {
-
                             val round = !isFirst && join == LineJoin.ROUND
                             val dorientation = when {
                                 (join == LineJoin.MITER && e1.distanceTo(b) <= (miterLimit * lineWidth)) -> 0

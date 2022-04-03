@@ -44,6 +44,12 @@ suspend fun Stage.mainGpuVectorRendering() {
             //lineTo(100, 140)
             //lineTo(100, 100)
             close()
+
+            moveTo(800, 100)
+            lineTo(800, 110)
+
+            moveTo(750, 100)
+            lineTo(750, 110)
         }
     }
 
@@ -51,7 +57,7 @@ suspend fun Stage.mainGpuVectorRendering() {
         //.xy(40, 0)
         //.scale(1.1)
         //.rotation(15.degrees)
-    return
+    //return
 
     Console.log("[1]")
     val korgeBitmap = resourcesVfs["korge.png"].readBitmap()//.mipmaps()
