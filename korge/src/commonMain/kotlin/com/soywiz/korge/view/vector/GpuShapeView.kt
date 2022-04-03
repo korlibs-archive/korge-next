@@ -153,7 +153,9 @@ class GpuShapeView(shape: Shape) : View() {
         endCap: LineCap,
         join: LineJoin,
         miterLimit: Double,
-        forceClosed: Boolean? = null
+        forceClosed: Boolean? = null,
+        scissor: AG.Scissor? = null,
+        stencil: AG.StencilState = AG.StencilState(),
     ) {
         val points = RenderStrokePoints()
 
@@ -318,7 +320,7 @@ class GpuShapeView(shape: Shape) : View() {
                     }
                 }
             }
-            drawTriangleStrip(ctx, globalAlpha, paint, points.points, points.distValues, points.pointCount, lineWidth.toFloat(), st2)
+            drawTriangleStrip(ctx, globalAlpha, paint, points.points, points.distValues, points.pointCount, lineWidth.toFloat(), st2, scissor, stencil)
         }
 
         //println("vertexCount=$vertexCount")
@@ -458,6 +460,30 @@ class GpuShapeView(shape: Shape) : View() {
             )
             stencilEqualsValue = 0b00000011
         }
+
+        // Antialias
+        renderStroke(
+            ctx = ctx,
+            //transform = shape.transform,
+            stateTransform = Matrix(),
+            strokePath = shape.path,
+            paint = shape.paint,
+            globalAlpha = shape.globalAlpha,
+            lineWidth = 1.0,
+            scaleMode = LineScaleMode.NONE,
+            startCap = LineCap.BUTT,
+            endCap = LineCap.BUTT,
+            join = LineJoin.MITER,
+            miterLimit = 0.5,
+            forceClosed = true,
+            scissor = scissor,
+            stencil = AG.StencilState(
+                enabled = true,
+                compareMode = AG.CompareMode.NOT_EQUAL,
+                referenceValue = stencilEqualsValue,
+                writeMask = 0,
+            )
+        )
 
         renderFill(
             ctx,
