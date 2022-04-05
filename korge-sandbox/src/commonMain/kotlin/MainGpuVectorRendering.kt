@@ -27,7 +27,7 @@ suspend fun Stage.mainGpuVectorRendering() {
             val lineWidth = 12.0
             val width = 300.0
             val height = 300.0
-            rotation = 180.degrees
+            //rotation = 180.degrees
             this.stroke(Colors.WHITE.withAd(0.5), lineWidth = lineWidth, lineJoin = LineJoin.MITER, lineCap = LineCap.BUTT) {
                 this.rect(
                     lineWidth / 2, lineWidth / 2,
@@ -103,6 +103,8 @@ suspend fun Stage.mainGpuVectorRendering() {
         //.xy(40, 0)
         //.scale(1.1)
         //.rotation(15.degrees)
+    //return
+
     //return
 
     Console.log("[1]")

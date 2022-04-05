@@ -253,7 +253,7 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
                 val a = ppath.getCyclic(n - 1)
                 val b = ppath.getCyclic(n) // Current point
                 val c = ppath.getCyclic(n + 1)
-                val orientation = Point.orientation(a, b, c).sign.toInt() * baseOrientation
+                val orientation = Point.orientation(a, b, c).sign.toInt()
                 //val angle = Angle.between(b - a, c - a)
                 //println("angle = $angle")
 
@@ -292,19 +292,20 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
                         val m1 = Line.getIntersectXY(ab.s1, ab.e1, bc.s1, bc.e1, MPoint()) // Inner (CW)
                         val e1 = m1 ?: ab.e1
                         val e0 = m0 ?: ab.e0
+                        val round = join == LineJoin.ROUND
+                        val dorientation = when {
+                            (join == LineJoin.MITER && e1.distanceTo(b) <= (miterLimit * lineWidth)) -> 0
+                            else -> orientation
+                        }
 
                         if (loop && isFirst) {
-                            when {
-                                orientation > 0 -> points.add(bc.s1, e0, fLineWidth)
-                                orientation < 0 -> points.add(e1, bc.s0, fLineWidth)
-                                else -> points.add(e1, e0, fLineWidth)
+                            //println("forientation=$forientation")
+                            when (dorientation) {
+                                -1 -> points.add(e1, bc.s0, fLineWidth)
+                                0 -> points.add(e1, e0, fLineWidth)
+                                +1 -> points.add(bc.s1, e0, fLineWidth)
                             }
                         } else {
-                            val round = !isFirst && join == LineJoin.ROUND
-                            val dorientation = when {
-                                (join == LineJoin.MITER && e1.distanceTo(b) <= (miterLimit * lineWidth)) -> 0
-                                else -> orientation
-                            }
                             //println("dorientation=$dorientation")
                             when (dorientation) {
                                 // Turn right
