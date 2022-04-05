@@ -33,6 +33,8 @@ inline fun Container.gpuShapeView(shape: Shape, antialiased: Boolean = true, cal
 class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
     private val pointCache = FastIdentityMap<VectorPath, PointArrayList>()
 
+    var applyScissor: Boolean = true
+
     var antialiased: Boolean = antialiased
         set(value) {
             field = value
@@ -81,28 +83,13 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
             is CompoundShape -> for (v in shape.components) renderShape(ctx, v)
             is TextShape -> renderShape(ctx, shape.primitiveShapes)
             is FillShape -> renderShape(ctx, shape)
-            is PolylineShape -> renderStroke(ctx, shape.transform, shape.path, shape.paint, shape.globalAlpha, shape.thickness, shape.scaleMode, shape.startCaps, shape.endCaps, shape.lineJoin, shape.miterLimit)
+            is PolylineShape -> renderStroke(ctx, shape.transform, shape.path, shape.paint, shape.globalAlpha, shape.thickness, shape.scaleMode, shape.startCaps, shape.endCaps, shape.lineJoin, shape.miterLimit, scissor = if (applyScissor) ctx.batch.scissor else null)
             //is PolylineShape -> renderShape(ctx, shape.fillShape)
             else -> TODO("shape=$shape")
         }
     }
 
     private val pointsScope = PointPool(128)
-
-    fun FloatArrayList.add(p: IPoint) {
-        add(p.x.toFloat())
-        add(p.y.toFloat())
-    }
-
-    fun FloatArrayList.add(p: IPoint, m: Matrix) {
-        add(m.transformXf(p))
-        add(m.transformYf(p))
-    }
-
-    fun FloatArrayList.add(a: IPoint, b: IPoint) {
-        add(a)
-        add(b)
-    }
 
     class RenderStrokePoints(
         val points: FloatArrayList = FloatArrayList(),
@@ -465,7 +452,8 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
 
         // @TODO: Scissor should be the intersection between the path bounds and the clipping bounds
 
-        val scissor: AG.Scissor? = AG.Scissor().setTo(scissorBounds)
+        val rscissor: AG.Scissor? = AG.Scissor().setTo(scissorBounds)
+        val scissor = if (applyScissor) AG.Scissor.combine(ctx.batch.scissor, rscissor) else rscissor
         //val scissor: AG.Scissor? = null
 
         ctx.ag.clearStencil(0, scissor = scissor)
