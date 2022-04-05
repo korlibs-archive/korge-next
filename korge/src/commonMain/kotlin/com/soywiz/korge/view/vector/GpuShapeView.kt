@@ -300,10 +300,10 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
                         val e0 = m0 ?: ab.e0
 
                         if (loop && isFirst) {
-                            if (orientation >= 0.0) {
-                                points.add(bc.s1, e0, fLineWidth)
-                            } else {
-                                points.add(e1, bc.s0, fLineWidth)
+                            when {
+                                orientation > 0 -> points.add(bc.s1, e0, fLineWidth)
+                                orientation < 0 -> points.add(e1, bc.s0, fLineWidth)
+                                else -> points.add(e1, e0, fLineWidth)
                             }
                         } else {
                             val round = !isFirst && join == LineJoin.ROUND
