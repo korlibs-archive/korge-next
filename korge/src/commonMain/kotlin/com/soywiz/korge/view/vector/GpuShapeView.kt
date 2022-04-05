@@ -476,7 +476,7 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
 
         // @TODO: Scissor should be the intersection between the path bounds and the clipping bounds
 
-        val rscissor: AG.Scissor? = AG.Scissor().setTo(scissorBounds)
+        val rscissor: AG.Scissor = AG.Scissor().setTo(scissorBounds)
         val scissor = if (applyScissor) AG.Scissor.combine(ctx.batch.scissor, rscissor) else rscissor
         //val scissor: AG.Scissor? = null
 
