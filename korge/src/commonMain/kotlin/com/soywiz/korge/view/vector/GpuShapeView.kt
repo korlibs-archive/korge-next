@@ -155,7 +155,51 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
         }
     }
 
+    class SegmentInfo {
+        lateinit var s: IPoint // start
+        lateinit var e: IPoint // end
+        lateinit var line: Line
+        var angleSE: Angle = 0.degrees
+        var angleSE0: Angle = 0.degrees
+        var angleSE1: Angle = 0.degrees
+        lateinit var s0: IPoint
+        lateinit var s1: IPoint
+        lateinit var e0: IPoint
+        lateinit var e1: IPoint
+        lateinit var e0s: IPoint
+        lateinit var e1s: IPoint
+        lateinit var s0s: IPoint
+        lateinit var s1s: IPoint
+
+        fun p(index: Int) = if (index == 0) s else e
+        fun p0(index: Int) = if (index == 0) s0 else e0
+        fun p1(index: Int) = if (index == 0) s1 else e1
+
+        fun setTo(s: Point, e: Point, lineWidth: Double, scope: PointPool): Unit {
+            this.s = s
+            this.e = e
+            scope.apply {
+                line = Line(s, e)
+                angleSE = Angle.between(s, e)
+                angleSE0 = angleSE - 90.degrees
+                angleSE1 = angleSE + 90.degrees
+                s0 = Point(s, angleSE0, length = lineWidth)
+                s1 = Point(s, angleSE1, length = lineWidth)
+                e0 = Point(e, angleSE0, length = lineWidth)
+                e1 = Point(e, angleSE1, length = lineWidth)
+
+                s0s = Point(s0, angleSE + 180.degrees, length = lineWidth)
+                s1s = Point(s1, angleSE + 180.degrees, length = lineWidth)
+
+                e0s = Point(e0, angleSE, length = lineWidth)
+                e1s = Point(e1, angleSE, length = lineWidth)
+            }
+        }
+    }
+
     private val points = RenderStrokePoints()
+    private val ab = SegmentInfo()
+    private val bc = SegmentInfo()
 
     private fun renderStroke(
         ctx: RenderContext,
@@ -192,52 +236,8 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
         //val lineWidth = 0.2
         //val lineWidth = 20.0
         val fLineWidth = max((lineWidth).toFloat(), 1.5f)
-        class SegmentInfo {
-            lateinit var s: IPoint // start
-            lateinit var e: IPoint // end
-            lateinit var line: Line
-            var angleSE: Angle = 0.degrees
-            var angleSE0: Angle = 0.degrees
-            var angleSE1: Angle = 0.degrees
-            lateinit var s0: IPoint
-            lateinit var s1: IPoint
-            lateinit var e0: IPoint
-            lateinit var e1: IPoint
-            lateinit var e0s: IPoint
-            lateinit var e1s: IPoint
-            lateinit var s0s: IPoint
-            lateinit var s1s: IPoint
 
-            fun p(index: Int) = if (index == 0) s else e
-            fun p0(index: Int) = if (index == 0) s0 else e0
-            fun p1(index: Int) = if (index == 0) s1 else e1
-
-            fun setTo(s: Point, e: Point, lineWidth: Double, scope: PointPool): Unit {
-                this.s = s
-                this.e = e
-                scope.apply {
-                    line = Line(s, e)
-                    angleSE = Angle.between(s, e)
-                    angleSE0 = angleSE - 90.degrees
-                    angleSE1 = angleSE + 90.degrees
-                    s0 = Point(s, angleSE0, length = lineWidth)
-                    s1 = Point(s, angleSE1, length = lineWidth)
-                    e0 = Point(e, angleSE0, length = lineWidth)
-                    e1 = Point(e, angleSE1, length = lineWidth)
-
-                    s0s = Point(s0, angleSE + 180.degrees, length = lineWidth)
-                    s1s = Point(s1, angleSE + 180.degrees, length = lineWidth)
-
-                    e0s = Point(e0, angleSE, length = lineWidth)
-                    e1s = Point(e1, angleSE, length = lineWidth)
-                }
-            }
-        }
-
-        val ab = SegmentInfo()
-        val bc = SegmentInfo()
-
-        val pathList = strokePath.toPathList(m, emitClosePoint = false)
+        val pathList = strokePath.toPathPointList(m, emitClosePoint = false)
         //println(pathList.size)
         for (ppath in pathList) {
             points.clear()
@@ -245,12 +245,6 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
             //println("Points: " + ppath.toList())
             val end = if (loop) ppath.size + 1 else ppath.size
             //val end = if (loop) ppath.size else ppath.size
-
-            //val baseOrientation = pointsScope {
-            //    val sign = Point.orientation(ppath.getCyclic(-1), ppath.getCyclic(0), ppath.getCyclic(+1)).sign.toInt()
-            //    if (sign == 0) 1 else sign
-            //}
-            val baseOrientation = 1
 
             for (n in 0 until end) pointsScope {
                 val isFirst = n == 0
