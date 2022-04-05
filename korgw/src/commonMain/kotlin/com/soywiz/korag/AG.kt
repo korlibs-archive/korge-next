@@ -178,6 +178,13 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         }
 
         override fun toString(): String = "Scissor(x=${x.niceStr}, y=${y.niceStr}, width=${width.niceStr}, height=${height.niceStr})"
+
+        companion object {
+            fun combine(prev: Scissor?, next: Scissor?, out: Scissor = Scissor()): Scissor? {
+                if (prev === null || next === null) return prev
+                return prev.rect.intersection(next.rect, out.rect)?.let { rect -> out.setTo(rect) }
+            }
+        }
     }
 
     data class Blending(
