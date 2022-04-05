@@ -111,7 +111,10 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
         var antialiased = true
         val pointCount: Int get() = points.size / 2
 
+        override fun toString(): String = "RenderStrokePoints(points=$points, dists=$distValues)"
+
         fun clear() {
+            //println("------------")
             points.clear()
             distValues.clear()
         }
@@ -125,6 +128,7 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
         fun add(p1: IPoint, p2: IPoint, lineWidth: Float) {
             add(p1, -lineWidth)
             add(p2, +lineWidth)
+            //println("ADD: $p1, $p2")
         }
 
         fun addCubicOrLine(
@@ -171,13 +175,18 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
     ) {
         points.antialiased = this.antialiased
 
+        //val m0 = root.globalMatrix
+        //val mt0 = m0.toTransform()
         val m = globalMatrix
         val mt = m.toTransform()
         val st2 = stateTransform.clone()
         st2.premultiply(stage!!.globalMatrix)
 
         val scaleWidth = scaleMode.anyScale
-        val flineWidth = if (scaleWidth) lineWidth * mt.scaleAvg else lineWidth
+        //val lineScale = mt0.scaleAvg.absoluteValue / mt.scaleAvg.absoluteValue
+        val lineScale = mt.scaleAvg.absoluteValue
+        //println("lineScale=$lineScale")
+        val flineWidth = if (scaleWidth) lineWidth * lineScale else lineWidth
         val lineWidth = if (antialiased) (flineWidth * 0.5) + 0.25 else flineWidth * 0.5
 
         //val lineWidth = 0.2
@@ -302,7 +311,7 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
                                 (join == LineJoin.MITER && e1.distanceTo(b) <= (miterLimit * lineWidth)) -> 0
                                 else -> orientation
                             }
-                            //println("orientation=$orientation")
+                            //println("dorientation=$dorientation")
                             when (dorientation) {
                                 // Turn right
                                 -1 -> {
@@ -340,11 +349,19 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
                     }
                 }
             }
+            //run {
+            //    val pointsString = "$points"
+            //    if (lastPointsString != pointsString) {
+            //        lastPointsString = pointsString
+            //        println("pointsString=$pointsString")
+            //    }
+            //}
             drawTriangleStrip(ctx, globalAlpha, paint, points.points, points.distValues, points.pointCount, lineWidth.toFloat(), st2, scissor, stencil)
         }
 
         //println("vertexCount=$vertexCount")
     }
+    //private var lastPointsString = ""
 
     private fun drawTriangleStrip(
         ctx: RenderContext,

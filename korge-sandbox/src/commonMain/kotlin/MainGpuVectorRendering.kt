@@ -23,10 +23,12 @@ suspend fun Stage.mainGpuVectorRendering() {
     container {
         xy(300, 300)
         val shape = gpuShapeView({
-            val lineWidth = 6.12123231 * 2
+            //val lineWidth = 6.12123231 * 2
+            val lineWidth = 12.0
             val width = 300.0
             val height = 300.0
-            this.stroke(Colors.WHITE.withAd(0.5), lineWidth = lineWidth, lineJoin = LineJoin.MITER) {
+            rotation = 180.degrees
+            this.stroke(Colors.WHITE.withAd(0.5), lineWidth = lineWidth, lineJoin = LineJoin.MITER, lineCap = LineCap.BUTT) {
                 this.rect(
                     lineWidth / 2, lineWidth / 2,
                     width,
@@ -49,7 +51,7 @@ suspend fun Stage.mainGpuVectorRendering() {
             downFrame(Key.N6) { rotation = 15.degrees * 5 }
             downFrame(Key.N7) { rotation = 15.degrees * 6 }
             downFrame(Key.N8) { rotation = 15.degrees * 7 }
-            downFrame(Key.N9) { rotation = 15.degrees * 8 }
+            downFrame(Key.N9) { rotation = 180.degrees }
             downFrame(Key.LEFT) { rotation -= 1.degrees }
             downFrame(Key.RIGHT) { rotation += 1.degrees }
         }
