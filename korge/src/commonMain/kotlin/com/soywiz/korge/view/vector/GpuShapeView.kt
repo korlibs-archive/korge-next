@@ -22,22 +22,31 @@ import kotlin.math.*
 
 
 @KorgeExperimental
-inline fun Container.gpuShapeView(buildContext2d: Context2d.() -> Unit) =
-    GpuShapeView(buildShape { buildContext2d() }).addTo(this)
+inline fun Container.gpuShapeView(build: ShapeBuilder.() -> Unit, antialiased: Boolean = true, callback: @ViewDslMarker GpuShapeView.() -> Unit = {}) =
+    GpuShapeView(buildShape { build() }, antialiased).addTo(this, callback)
 
 @KorgeExperimental
-inline fun Container.gpuShapeView(shape: Shape, callback: @ViewDslMarker GpuShapeView.() -> Unit = {}) =
-    GpuShapeView(shape).addTo(this, callback)
+inline fun Container.gpuShapeView(shape: Shape, antialiased: Boolean = true, callback: @ViewDslMarker GpuShapeView.() -> Unit = {}) =
+    GpuShapeView(shape, antialiased).addTo(this, callback)
 
 @KorgeExperimental
-class GpuShapeView(shape: Shape) : View() {
+class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
     private val pointCache = FastIdentityMap<VectorPath, PointArrayList>()
 
+    var antialiased: Boolean = antialiased
+        set(value) {
+            field = value
+            invalidateShape()
+        }
     var shape: Shape = shape
         set(value) {
             field = value
-            pointCache.clear()
+            invalidateShape()
         }
+
+    private fun invalidateShape() {
+        pointCache.clear()
+    }
 
     private val bb = BoundsBuilder()
     override fun getLocalBoundsInternal(out: Rectangle) {
@@ -99,6 +108,7 @@ class GpuShapeView(shape: Shape) : View() {
         val points: FloatArrayList = FloatArrayList(),
         val distValues: FloatArrayList = FloatArrayList(),
     ) {
+        var antialiased = true
         val pointCount: Int get() = points.size / 2
 
         fun clear() {
@@ -109,7 +119,7 @@ class GpuShapeView(shape: Shape) : View() {
         fun add(p: IPoint, lineWidth: Float) {
             points.add(p.x.toFloat())
             points.add(p.y.toFloat())
-            distValues.add(lineWidth)
+            distValues.add(if (antialiased) lineWidth else 0f)
         }
 
         fun add(p1: IPoint, p2: IPoint, lineWidth: Float) {
@@ -141,6 +151,8 @@ class GpuShapeView(shape: Shape) : View() {
         }
     }
 
+    private val points = RenderStrokePoints()
+
     private fun renderStroke(
         ctx: RenderContext,
         stateTransform: Matrix,
@@ -157,7 +169,7 @@ class GpuShapeView(shape: Shape) : View() {
         scissor: AG.Scissor? = null,
         stencil: AG.StencilState = AG.StencilState(),
     ) {
-        val points = RenderStrokePoints()
+        points.antialiased = this.antialiased
 
         val m = globalMatrix
         val mt = m.toTransform()
@@ -165,7 +177,8 @@ class GpuShapeView(shape: Shape) : View() {
         st2.premultiply(stage!!.globalMatrix)
 
         val scaleWidth = scaleMode.anyScale
-        val lineWidth = if (scaleWidth) lineWidth * mt.scaleAvg else lineWidth
+        val flineWidth = if (scaleWidth) lineWidth * mt.scaleAvg else lineWidth
+        val lineWidth = if (antialiased) (flineWidth * 0.5) + 0.25 else flineWidth * 0.5
 
         //val lineWidth = 0.2
         //val lineWidth = 20.0
@@ -223,6 +236,13 @@ class GpuShapeView(shape: Shape) : View() {
             //println("Points: " + ppath.toList())
             val end = if (loop) ppath.size + 1 else ppath.size
             //val end = if (loop) ppath.size else ppath.size
+
+            //val baseOrientation = pointsScope {
+            //    val sign = Point.orientation(ppath.getCyclic(-1), ppath.getCyclic(0), ppath.getCyclic(+1)).sign.toInt()
+            //    if (sign == 0) 1 else sign
+            //}
+            val baseOrientation = 1
+
             for (n in 0 until end) pointsScope {
                 val isFirst = n == 0
                 val isLast = n == ppath.size - 1
@@ -230,7 +250,7 @@ class GpuShapeView(shape: Shape) : View() {
                 val a = ppath.getCyclic(n - 1)
                 val b = ppath.getCyclic(n) // Current point
                 val c = ppath.getCyclic(n + 1)
-                val orientation = Point.orientation(a, b, c).sign.toInt()
+                val orientation = Point.orientation(a, b, c).sign.toInt() * baseOrientation
                 //val angle = Angle.between(b - a, c - a)
                 //println("angle = $angle")
 
@@ -462,28 +482,30 @@ class GpuShapeView(shape: Shape) : View() {
         }
 
         // Antialias
-        renderStroke(
-            ctx = ctx,
-            //transform = shape.transform,
-            stateTransform = Matrix(),
-            strokePath = shape.path,
-            paint = shape.paint,
-            globalAlpha = shape.globalAlpha,
-            lineWidth = 1.0,
-            scaleMode = LineScaleMode.NONE,
-            startCap = LineCap.BUTT,
-            endCap = LineCap.BUTT,
-            join = LineJoin.MITER,
-            miterLimit = 0.5,
-            forceClosed = true,
-            scissor = scissor,
-            stencil = AG.StencilState(
-                enabled = true,
-                compareMode = AG.CompareMode.NOT_EQUAL,
-                referenceValue = stencilEqualsValue,
-                writeMask = 0,
+        if (antialiased) {
+            renderStroke(
+                ctx = ctx,
+                //transform = shape.transform,
+                stateTransform = Matrix(),
+                strokePath = shape.path,
+                paint = shape.paint,
+                globalAlpha = shape.globalAlpha,
+                lineWidth = 2.0,
+                scaleMode = LineScaleMode.NONE,
+                startCap = LineCap.BUTT,
+                endCap = LineCap.BUTT,
+                join = LineJoin.MITER,
+                miterLimit = 0.5,
+                forceClosed = true,
+                scissor = scissor,
+                stencil = AG.StencilState(
+                    enabled = true,
+                    compareMode = AG.CompareMode.NOT_EQUAL,
+                    referenceValue = stencilEqualsValue,
+                    writeMask = 0,
+                )
             )
-        )
+        }
 
         renderFill(
             ctx,
