@@ -88,12 +88,12 @@ open class UIButton(
             bover -> 1.0
             else -> 1.0
         }
-
+        var textSize = realUiSkin.textSize
         if (text.isNotEmpty()) {
             val alignment = skin.buttonTextAlignment
             val font = skin.textFont
             val text = text
-            val textSize = skin.textSize
+            //val textSize = skin.textSize
 
             textAndShadow.fastForEach { textView ->
                 textView.setTextBounds(Rectangle(0.0, 0.0, width, height))
@@ -101,7 +101,7 @@ open class UIButton(
                 textView.text = text
                 textView.alignment = alignment
                 textView.font = font
-                textView.textSize = textSize
+                //textView.textSize = textSize
             }
 
             textView.color = skin.textColor
