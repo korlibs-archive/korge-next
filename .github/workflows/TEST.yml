@@ -38,6 +38,10 @@ jobs:
       run: ./gradlew jsNodeTest
     - name: Try building Android
       run: ./gradlew publishAndroidPublicationToMavenLocal
+    - name: Cleanup Gradle Cache
+      run: |
+        rm -f ~/.gradle/caches/modules-2/modules-2.lock
+        rm -f ~/.gradle/caches/modules-2/gc.properties
     #- name: Test Report
     #  uses: dorny/test-reporter@v1
     #  if: success() || failure()
