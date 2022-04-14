@@ -1,0 +1,15 @@
+name: "Caches gradle & Kotlin/Native artifacts"
+description: "Caches gradle & Kotlin/Native artifacts"
+inputs: {}
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+          ~/.konan
+        key: ${{ runner.os }}-gradle-${{ hashFiles('gradle.properties', 'gradle/wrapper/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
