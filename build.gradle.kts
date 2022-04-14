@@ -129,6 +129,7 @@ subprojects {
 
         // AppData\Local\Android\Sdk\tools\bin>sdkmanager --licenses
         apply(plugin = "kotlin-multiplatform")
+        apply(plugin = "kover")
 
         if (hasAndroid) {
             if (isSample) {
