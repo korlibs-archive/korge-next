@@ -21,5 +21,11 @@ class LineTest {
     fun testProjectedPoint() {
         assertEquals(Point(0, 50), Line(Point(0, 0), Point(0, 100)).projectedPoint(Point(50, 50)))
         assertEquals(Point(50, 50), Line(Point(0, 0), Point(100, 100)).projectedPoint(Point(100, 0)))
+
+        // On line
+        assertEquals(Point(0, 0), Line(Point(0, 0), Point(0, 100)).projectedPoint(Point(0, 0)))
+        assertEquals(Point(0, 50), Line(Point(0, 0), Point(0, 100)).projectedPoint(Point(0, 50)))
+        assertEquals(Point(0, 100), Line(Point(0, 0), Point(0, 100)).projectedPoint(Point(0, 100)))
+        assertEquals(Point(0, 150), Line(Point(0, 0), Point(0, 100)).projectedPoint(Point(0, 150)))
     }
 }

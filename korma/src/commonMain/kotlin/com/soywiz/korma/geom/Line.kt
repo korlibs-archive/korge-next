@@ -148,7 +148,6 @@ open class LineIntersection(
 // https://math.stackexchange.com/questions/62633/orthogonal-projection-of-a-point-onto-a-line
 // http://www.sunshine2k.de/coding/java/PointOnLine/PointOnLine.html
 fun ILine.projectedPoint(point: IPoint, out: Point = Point()): Point {
-    // @TODO: Probably we should use more accurate and simpler math
     // return this.getIntersectionPoint(Line(point, Point.fromPolar(point, this.angle + 90.degrees)))!!
 
     val v1 = this.a
@@ -156,14 +155,26 @@ fun ILine.projectedPoint(point: IPoint, out: Point = Point()): Point {
     val p = point
 
     // get dot product of e1, e2
-    val e1 = Point(v2.x - v1.x, v2.y - v1.y)
-    val e2 = Point(p.x - v1.x, p.y - v1.y)
-    val valDp = Point.dot(e1, e2)
+    val e1x = v2.x - v1.x
+    val e1y = v2.y - v1.y
+    val e2x = p.x - v1.x
+    val e2y = p.y - v1.y
+    val valDp = Point.dot(e1x, e1y, e2x, e2y)
     // get length of vectors
-    val lenLineE1 = kotlin.math.sqrt(e1.x * e1.x + e1.y * e1.y)
-    val lenLineE2 = kotlin.math.sqrt(e2.x * e2.x + e2.y * e2.y)
+
+    val lenLineE1 = kotlin.math.hypot(e1x, e1y)
+    val lenLineE2 = kotlin.math.hypot(e2x, e2y)
+
+    // What happens if lenLineE1 or lenLineE2 are zero?, it would be a division by zero.
+    // Does that mean that the point is on the line, and we should use it?
+    if (lenLineE1 == 0.0 || lenLineE2 == 0.0) {
+        return out.copyFrom(p)
+    }
+
     val cos = valDp / (lenLineE1 * lenLineE2)
+
     // length of v1P'
     val projLenOfLine = cos * lenLineE2
-    return out.setTo((v1.x + (projLenOfLine * e1.x) / lenLineE1), (v1.y + (projLenOfLine * e1.y) / lenLineE1))
+
+    return out.setTo((v1.x + (projLenOfLine * e1x) / lenLineE1), (v1.y + (projLenOfLine * e1y) / lenLineE1))
 }
