@@ -9,12 +9,18 @@ runs:
         path: |
           ~/.gradle/caches
           ~/.gradle/wrapper
-          ~/.konan
-        key: ${{ runner.os }}-gradle-${{ hashFiles('gradle.properties', 'gradle/wrapper/gradle-wrapper.properties') }}
+        key: ${{ runner.os }}-gradle-alone-${{ hashFiles('gradle.properties', 'gradle/wrapper/gradle-wrapper.properties') }}
         restore-keys: |
-          ${{ runner.os }}-gradle-
+          ${{ runner.os }}-gradle-alone-
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ~/.konan
+        key: ${{ runner.os }}-konan-alone-${{ hashFiles('gradle.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-konan-alone-
     - uses: webiny/action-post-run@2.0.1
-      id: gradle-cache-cleanup
+      id: gradle-and-konan-cache-cleanup
       with:
         run: |
           rm -rf ~/.gradle/caches/modules-2/modules-2.lock
