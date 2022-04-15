@@ -178,7 +178,14 @@ interface GameWindowConfig {
     val quality: GameWindow.Quality
 }
 
-open class GameWindow : EventDispatcher.Mixin(), DialogInterfaceProvider, CoroutineContext.Element, AGWindow, Extra by Extra.Mixin() {
+open class GameWindow :
+    EventDispatcher.Mixin(),
+    DialogInterfaceProvider,
+    CoroutineContext.Element,
+    AGWindow,
+    GameWindowConfig,
+    Extra by Extra.Mixin()
+{
     interface ICursor
 
     override val dialogInterface: DialogInterface get() = DialogInterface.Unsupported

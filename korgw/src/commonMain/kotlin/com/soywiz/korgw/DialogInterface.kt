@@ -31,7 +31,6 @@ suspend fun DialogInterfaceProvider.confirm(message: String): Boolean = dialogIn
 suspend fun DialogInterfaceProvider.prompt(message: String, default: String = ""): String = dialogInterface.prompt(message, default)
 suspend fun DialogInterfaceProvider.openFileDialog(filter: FileFilter? = null, write: Boolean = false, multi: Boolean = false, currentDir: VfsFile? = null): List<VfsFile> =
     dialogInterface.openFileDialog(filter, write, multi, currentDir)
-fun DialogInterfaceProvider.close(exitCode: Int = 0): Unit = dialogInterface.close(exitCode)
 
 suspend fun DialogInterfaceProvider.openFileDialog(filter: String? = null, write: Boolean = false, multi: Boolean = false): List<VfsFile> {
     return dialogInterface.openFileDialog(null, write, multi)
