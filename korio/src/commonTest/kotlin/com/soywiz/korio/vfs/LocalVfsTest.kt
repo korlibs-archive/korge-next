@@ -34,7 +34,6 @@ class LocalVfsTest {
 	fun execTest() = suspendTestNoBrowser {
 		when {
 			OS.isJsBrowserOrWorker -> Unit // Skip
-			OS.isNative -> Unit // Skip
 			else -> assertEquals("1", temp.execToString(listOf("echo", "1")).trim())
 		}
 	}
