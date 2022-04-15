@@ -10,7 +10,7 @@ runs:
           ~/.gradle/caches
           ~/.gradle/wrapper
           ~/.konan
-        key: ${{ runner.os }}-gradle-${{ hashFiles('gradle.properties', 'gradle/wrapper/gradle-wrapper.properties') }}
+        key: ${{ runner.os }}-gradle-${{ hashFiles('gradle.properties', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
         restore-keys: |
           ${{ runner.os }}-gradle-
     - uses: webiny/action-post-run@2.0.1
@@ -20,3 +20,8 @@ runs:
           rm -rf ~/.gradle/caches/modules-2/modules-2.lock
           rm -rf ~/.gradle/caches/modules-2/gc.properties
           rm -rf ~/.konan/cache
+    - uses: webiny/action-post-run@2.0.1
+      id: gradle-daemon-stop
+      with:
+        run: |
+          ./gradlew --stop
