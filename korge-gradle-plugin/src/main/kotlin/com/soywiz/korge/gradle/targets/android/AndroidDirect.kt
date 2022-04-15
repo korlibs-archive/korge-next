@@ -91,7 +91,8 @@ fun Project.configureAndroidDirect() {
             val resolvedArtifacts = LinkedHashMap<String, String>()
 
             project.configurations.all {
-                it.resolutionStrategy.eachDependency {
+                resolutionStrategy.eachDependency {
+                    val it = this
                     val cleanFullName = "${it.requested.group}:${it.requested.name}".removeSuffix("-js").removeSuffix("-jvm")
                     //println("RESOLVE ARTIFACT: ${it.requested}")
                     //if (cleanFullName.startsWith("org.jetbrains.intellij.deps:trove4j")) return@eachDependency

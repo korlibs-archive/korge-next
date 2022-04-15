@@ -6,7 +6,8 @@ import java.io.*
 
 
 fun Project.configureClosureCompiler() {
-    val jsBrowserEsbuildClosureCompiler = tasks.create("jsBrowserEsbuildClosureCompiler") { task ->
+    val jsBrowserEsbuildClosureCompiler = tasks.create("jsBrowserEsbuildClosureCompiler") {
+        val task = this
         val browserReleaseEsbuild = tasks.getByName("browserReleaseEsbuild")
         val jsFile = browserReleaseEsbuild.outputs.files.first()
         val jsMinFile = File(jsFile.parentFile, jsFile.nameWithoutExtension + ".min.js")
@@ -22,7 +23,8 @@ fun Project.configureClosureCompiler() {
         }
     }
 
-    tasks.create("packageJsClosureCompiler") { task ->
+    tasks.create("packageJsClosureCompiler") {
+        val task = this
         task.dependsOn("jsBrowserEsbuildClosureCompiler")
         task.group = "package"
     }

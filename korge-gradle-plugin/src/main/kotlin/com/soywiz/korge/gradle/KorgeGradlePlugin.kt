@@ -39,6 +39,7 @@ class KorgeGradleApply(val project: Project) {
         logger.info("Korge Gradle plugin: ${BuildVersions.ALL}")
 
         project.tasks.create("showKorgeVersions", Task::class.java) {
+            val it = this
             it.doLast {
                 println("Build-time:")
                 for ((key, value) in mapOf(
@@ -93,7 +94,8 @@ class KorgeGradleApply(val project: Project) {
 	private fun Project.configureIdea() {
 		project.plugins.apply("idea")
 		(project["idea"] as IdeaModel).apply {
-			module { module ->
+			module {
+                val module = this
                 module.excludeDirs = module.excludeDirs.also {
                     it.addAll(listOf(
                         ".gradle", ".idea", "gradle", "node_modules", "classes", "docs", "dependency-cache",

@@ -29,6 +29,7 @@ class KorgeBundles(val project: Project) {
     fun sha256Tree(tree: FileTree): String {
         val files = LinkedHashMap<String, File>()
         tree.visit {
+            val it = this
             if (!it.isDirectory) {
                 val mpath = it.path.trim('/')
                 val rpath = "/$mpath"
@@ -77,6 +78,7 @@ class KorgeBundles(val project: Project) {
             //println("SHA256: ${sha256Tree(tree)}")
 
             project.sync {
+                val it = this
                 it.from(tree)
                 it.into(outputDir)
             }
@@ -111,6 +113,7 @@ class KorgeBundles(val project: Project) {
             for (repo in repositories) {
                 logger.info("KorGE.bundle.repository: $repo")
                 project.repositories.maven {
+                    val it = this
                     it.url = project.uri(repo.url)
                 }
             }
@@ -129,7 +132,8 @@ class KorgeBundles(val project: Project) {
             logger.info("KorGE.bundle: $outputDir")
             for (target in project.gkotlin.targets) {
                 logger.info("  target: $target")
-                target.compilations.all { compilation ->
+                target.compilations.all {
+                    val compilation = this
                     logger.info("    compilation: $compilation")
 
                     val sourceSets = compilation.kotlinSourceSets.toMutableSet()
@@ -210,6 +214,7 @@ class KorgeBundles(val project: Project) {
             packDir.mkdirs()
             logger.warn("KorGE.bundle: Git cloning $repo @ $ref...")
             project.exec {
+                val it = this
                 it.workingDir(packDir)
                 it.commandLine("git", "-c", "core.autocrlf=false", "clone", repo, ".")
             }.assertNormalExitValue()
@@ -219,10 +224,12 @@ class KorgeBundles(val project: Project) {
 
         if (!matchingReg) {
             project.exec {
+                val it = this
                 it.workingDir(packDir)
                 it.commandLine("git", "-c", "core.autocrlf=false", "reset", "--hard", ref)
             }.assertNormalExitValue()
             project.delete {
+                val it = this
                 it.delete(File(packDir, ".git"))
             }
             packEnsure.writeText(ref)

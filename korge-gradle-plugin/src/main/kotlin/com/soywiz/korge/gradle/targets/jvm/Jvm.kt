@@ -25,11 +25,13 @@ fun Project.configureJvm() {
 
     gkotlin.jvm {
         testRuns["test"].executionTask.configure {
+            val it = this
             it.useJUnit()
             //it.useJUnitPlatform()
         }
     }
 	project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).all {
+        val it = this
         it.kotlinOptions {
             this.jvmTarget = korge.jvmTarget
         }
@@ -123,6 +125,7 @@ private fun Project.configureJvmTest() {
 	jvmTest.jvmArgs = (jvmTest.jvmArgs ?: listOf()) + listOf("-Djava.awt.headless=true")
 
     val jvmTestFix = tasks.create("jvmTestFix", Test::class.java) {
+        val it = this
         it.group = "verification"
         it.environment("UPDATE_TEST_REF", "true")
         it.testClassesDirs = jvmTest.testClassesDirs
@@ -206,7 +209,8 @@ private fun Project.addProguard() {
             task.from(project.files().from(project.getCompilationKorgeProcessedResourcesFolder(mainJvmCompilation)))
         }
 		project.afterEvaluate {
-			task.manifest { manifest ->
+			task.manifest {
+                val manifest = this
 				manifest.attributes(
 					mapOf(
 						"Implementation-Title" to korge.realJvmMainClassName,
@@ -236,7 +240,8 @@ private fun Project.addProguard() {
 			task.libraryjars("${System.getProperty("java.home")}/lib/rt.jar")
 			// Support newer java versions that doesn't have rt.jar
 			task.libraryjars(project.fileTree("${System.getProperty("java.home")}/jmods/") {
-				it.include("**/java.*.jmod")
+                val it = this
+                it.include("**/java.*.jmod")
 			})
 			//println(packageJvmFatJar.outputs.files.toList())
 			task.injars(packageJvmFatJar.outputs.files.toList())

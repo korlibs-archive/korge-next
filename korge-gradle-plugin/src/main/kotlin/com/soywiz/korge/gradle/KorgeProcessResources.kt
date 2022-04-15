@@ -31,6 +31,7 @@ fun Project.addGenResourcesTasks(): Project {
     val runJvm by lazy { (tasks["runJvm"] as KorgeJavaExec) }
 
     tasks.create("listKorgeTargets", Task::class.java) {
+        val it = this
         it.group = GROUP_KORGE_LIST
         it.doLast {
             println("gkotlin.targets: ${gkotlin.targets.names}")
@@ -38,6 +39,7 @@ fun Project.addGenResourcesTasks(): Project {
     }
 
     tasks.create("listKorgePlugins", Task::class.java) {
+        val it = this
         it.group = GROUP_KORGE_LIST
         it.dependsOn("jvmMainClasses")
         it.doLast {

@@ -13,44 +13,44 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import java.io.*
 
 fun Project.configureNativeIos() {
-	val prepareKotlinNativeBootstrapIos = tasks.create("prepareKotlinNativeBootstrapIos") { task ->
-		task.apply {
-			doLast {
-				File(buildDir, "platforms/native-ios/info.kt").delete() // Delete old versions
-				File(buildDir, "platforms/native-ios/bootstrap.kt").apply {
-					parentFile.mkdirs()
-                    val DOLLAR = "\$"
-					writeText("""
-                        import ${korge.realEntryPoint}
-                        
-                        object RootGameMain {
-                            fun preRunMain() {
-                                // println("RootGameMain.preRunMain")
-                                val path = platform.Foundation.NSBundle.mainBundle.resourcePath
-                                // println("RootGameMain.runMain: path=${DOLLAR}path")
-                                if (path != null) {
-                                    val rpath = "${DOLLAR}path/include/app/resources"
-                                    // println("RootGameMain.runMain: rpath=${DOLLAR}rpath")
-                                    platform.Foundation.NSFileManager.defaultManager.changeCurrentDirectoryPath(rpath)
-                                    MyIosGameWindow2.setCustomCwd(rpath)
-                                }                        
-                            }
-                        
-                            fun runMain() {
-                                MyIosGameWindow2.gameWindow.entry {
-                                    ${korge.realEntryPoint}()
-                                }
+	val prepareKotlinNativeBootstrapIos = tasks.create("prepareKotlinNativeBootstrapIos") {
+        val task = this
+        doLast {
+            File(buildDir, "platforms/native-ios/info.kt").delete() // Delete old versions
+            File(buildDir, "platforms/native-ios/bootstrap.kt").apply {
+                parentFile.mkdirs()
+                val DOLLAR = "\$"
+                writeText("""
+                    import ${korge.realEntryPoint}
+                    
+                    object RootGameMain {
+                        fun preRunMain() {
+                            // println("RootGameMain.preRunMain")
+                            val path = platform.Foundation.NSBundle.mainBundle.resourcePath
+                            // println("RootGameMain.runMain: path=${DOLLAR}path")
+                            if (path != null) {
+                                val rpath = "${DOLLAR}path/include/app/resources"
+                                // println("RootGameMain.runMain: rpath=${DOLLAR}rpath")
+                                platform.Foundation.NSFileManager.defaultManager.changeCurrentDirectoryPath(rpath)
+                                MyIosGameWindow2.setCustomCwd(rpath)
+                            }                        
+                        }
+                    
+                        fun runMain() {
+                            MyIosGameWindow2.gameWindow.entry {
+                                ${korge.realEntryPoint}()
                             }
                         }
-                        
-                        object MyIosGameWindow2 {
-                            fun setCustomCwd(cwd: String?) { com.soywiz.korio.file.std.customCwd = cwd }
-                            val gameWindow get() = com.soywiz.korgw.MyIosGameWindow
-                        }
-					""".trimIndent())
-				}
-			}
-		}
+                    }
+                    
+                    object MyIosGameWindow2 {
+                        fun setCustomCwd(cwd: String?) { com.soywiz.korio.file.std.customCwd = cwd }
+                        val gameWindow get() = com.soywiz.korgw.MyIosGameWindow
+                    }
+                """.trimIndent())
+            }
+        }
+
 	}
 
     val iosTargets = listOf(kotlin.iosX64(), kotlin.iosArm64(), kotlin.iosSimulatorArm64())
@@ -99,27 +99,26 @@ fun Project.configureNativeIos() {
     )
     val xcodeGenGitTag = "2.25.0"
 
-    tasks.create("installXcodeGen") { task ->
-		task.apply {
-			onlyIf { !xcodeGenLocalExecutable.exists() && !xcodeGenExecutable.exists() }
-			doLast {
-                if (!xcodeGenFolder[".git"].isDirectory) {
-                    execLogger {
-                        //it.commandLine("git", "clone", "--depth", "1", "--branch", xcodeGenGitTag, "https://github.com/yonaskolb/XcodeGen.git")
-                        it.commandLine("git", "clone", "https://github.com/yonaskolb/XcodeGen.git")
-                        it.workingDir(korlibsFolder)
-                    }
-                }
+    tasks.create("installXcodeGen") {
+        val task = this
+        onlyIf { !xcodeGenLocalExecutable.exists() && !xcodeGenExecutable.exists() }
+        doLast {
+            if (!xcodeGenFolder[".git"].isDirectory) {
                 execLogger {
-                    it.commandLine("git", "checkout", xcodeGenGitTag)
-                    it.workingDir(xcodeGenFolder)
+                    //it.commandLine("git", "clone", "--depth", "1", "--branch", xcodeGenGitTag, "https://github.com/yonaskolb/XcodeGen.git")
+                    it.commandLine("git", "clone", "https://github.com/yonaskolb/XcodeGen.git")
+                    it.workingDir(korlibsFolder)
                 }
-				execLogger {
-					it.commandLine("make", "build")
-					it.workingDir(xcodeGenFolder)
-				}
-			}
-		}
+            }
+            execLogger {
+                it.commandLine("git", "checkout", xcodeGenGitTag)
+                it.workingDir(xcodeGenFolder)
+            }
+            execLogger {
+                it.commandLine("make", "build")
+                it.workingDir(xcodeGenFolder)
+            }
+        }
 	}
 
 	val combinedResourcesFolder = File(buildDir, "combinedResources/resources")
@@ -136,7 +135,8 @@ fun Project.configureNativeIos() {
 		}
 	}
 
-	val prepareKotlinNativeIosProject = tasks.create("prepareKotlinNativeIosProject") { task ->
+	val prepareKotlinNativeIosProject = tasks.create("prepareKotlinNativeIosProject") {
+        val task = this
 		task.dependsOn("installXcodeGen", "prepareKotlinNativeBootstrapIos", prepareKotlinNativeBootstrap, copyIosResources)
 		task.doLast {
 			// project.yml requires these folders to be available or it will fail
@@ -589,7 +589,8 @@ fun Project.configureNativeIos() {
 		}
 	}
 
-	tasks.create("iosShutdownSimulator", Task::class.java) { task ->
+	tasks.create("iosShutdownSimulator", Task::class.java) {
+        val task = this
 		task.doFirst {
 			execLogger { it.commandLine("xcrun", "simctl", "shutdown", "booted") }
 		}
@@ -597,7 +598,8 @@ fun Project.configureNativeIos() {
 
     val iphoneVersion = korge.preferredIphoneSimulatorVersion
 
-	val iosCreateIphone = tasks.create("iosCreateIphone", Task::class.java) { task ->
+	val iosCreateIphone = tasks.create("iosCreateIphone", Task::class.java) {
+        val task = this
 		task.onlyIf { appleGetDevices().none { it.name == "iPhone $iphoneVersion" } }
 		task.doFirst {
             val result = execOutput("xcrun", "simctl", "list")
@@ -608,7 +610,8 @@ fun Project.configureNativeIos() {
 		}
 	}
 
-	tasks.create("iosBootSimulator", Task::class.java) { task ->
+	tasks.create("iosBootSimulator", Task::class.java) {
+        val task = this
 		task.onlyIf { appleGetBootedDevice() == null }
 		task.dependsOn(iosCreateIphone)
 		task.doLast {
@@ -634,7 +637,8 @@ fun Project.configureNativeIos() {
 			val arch = if (simulator) "X64" else "Arm64"
 			val arch2 = if (simulator) "x86_64" else "arm64"
 			val sdkName = if (simulator) "iphonesimulator" else "iphoneos"
-			tasks.create("iosBuild$simulatorSuffix$debugSuffix") { task ->
+			tasks.create("iosBuild$simulatorSuffix$debugSuffix") {
+                val task = this
 				//task.dependsOn(prepareKotlinNativeIosProject, "linkMain${debugSuffix}FrameworkIos$arch")
 				task.dependsOn(prepareKotlinNativeIosProject, "link${debugSuffix}FrameworkIos$arch")
 				val xcodeProjDir = buildDir["platforms/ios/app.xcodeproj"]
@@ -650,7 +654,8 @@ fun Project.configureNativeIos() {
 			}
 		}
 
-		val installIosSimulator = tasks.create("installIosSimulator$debugSuffix", Task::class.java) { task ->
+		val installIosSimulator = tasks.create("installIosSimulator$debugSuffix", Task::class.java) {
+            val task = this
 			val buildTaskName = "iosBuildSimulator$debugSuffix"
 			task.group = GROUP_KORGE_INSTALL
 
@@ -662,7 +667,8 @@ fun Project.configureNativeIos() {
 			}
 		}
 
-		val installIosDevice = tasks.create("installIosDevice$debugSuffix", Task::class.java) { task ->
+		val installIosDevice = tasks.create("installIosDevice$debugSuffix", Task::class.java) {
+            val task = this
 			task.group = GROUP_KORGE_INSTALL
 			val buildTaskName = "iosBuildDevice$debugSuffix"
 			task.dependsOn("installIosDeploy", buildTaskName)
@@ -694,20 +700,23 @@ fun Project.configureNativeIos() {
         }
     }
 
-	tasks.create("iosEraseAllSimulators") { task ->
+	tasks.create("iosEraseAllSimulators") {
+        val task = this
 		task.doLast { execLogger { it.commandLine("osascript", "-e", "tell application \"iOS Simulator\" to quit") } }
 		task.doLast { execLogger { it.commandLine("osascript", "-e", "tell application \"Simulator\" to quit") } }
 		task.doLast { execLogger { it.commandLine("xcrun", "simctl", "erase", "all") } }
 	}
 
-	tasks.create("installIosDeploy", Task::class.java) { task ->
+	tasks.create("installIosDeploy", Task::class.java) {
+        val task = this
 		task.onlyIf { !iosDeployExt.isInstalled }
         task.doFirst {
             iosDeployExt.installIfRequired()
         }
 	}
 
-    tasks.create("updateIosDeploy", Task::class.java) { task ->
+    tasks.create("updateIosDeploy", Task::class.java) {
+        val task = this
         task.doFirst {
             iosDeployExt.update()
         }

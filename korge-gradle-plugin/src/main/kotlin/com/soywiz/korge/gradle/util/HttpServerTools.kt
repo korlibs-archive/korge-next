@@ -179,6 +179,7 @@ fun File.miniMimeType() = when (this.extension.toLowerCase()) {
 
 fun Project.openBrowser(url: String) {
     exec {
+        val it = this
         when {
             isWindows -> {
                 it.commandLine("cmd", "/c", "explorer.exe $url")

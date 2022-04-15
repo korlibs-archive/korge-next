@@ -40,6 +40,7 @@ fun Project.configureJavaScript() {
 			this.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.js)
 
 			compilations.all {
+                val it = this
 				it.kotlinOptions.apply {
 					sourceMap = korge.sourceMaps
 					//metaInfo = true
@@ -70,6 +71,7 @@ fun Project.configureJavaScript() {
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
             dependsOn(jsCreateIndexHtml)
             from(generatedIndexHtmlDir) {
+                val it = this
                 it.duplicatesStrategy = DuplicatesStrategy.EXCLUDE
             }
             //println(this.outputs.files.toList())

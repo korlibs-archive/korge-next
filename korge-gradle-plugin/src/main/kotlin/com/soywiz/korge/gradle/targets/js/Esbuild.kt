@@ -29,7 +29,8 @@ fun Project.configureEsbuild() {
     }
 
     if (rootProject.tasks.findByName(npmInstallEsbuild) == null) {
-        rootProject.tasks.create(npmInstallEsbuild, Exec::class) { task ->
+        rootProject.tasks.create(npmInstallEsbuild, Exec::class) {
+            val task = this
             task.dependsOn("kotlinNodeJsSetup")
             task.onlyIf { !esbuildCmdCheck.exists() && !esbuildCmd.exists() }
 
@@ -87,7 +88,8 @@ fun Project.configureEsbuild() {
 
             // browserDebugEsbuild
             // browserReleaseEsbuild
-            tasks.create("browser${debugPrefix}Esbuild${runSuffix}", Exec::class) { task ->
+            tasks.create("browser${debugPrefix}Esbuild${runSuffix}", Exec::class) {
+                val task = this
                 task.group = "kotlin browser"
                 task.dependsOn(browserPrepareEsbuild)
 

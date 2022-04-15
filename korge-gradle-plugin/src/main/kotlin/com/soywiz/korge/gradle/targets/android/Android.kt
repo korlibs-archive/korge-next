@@ -26,9 +26,11 @@ fun Project.configureAndroidIndirect() {
 	}.orEmpty()
 	val topLevelDependencies = mutableListOf<String>()
 
-	configurations.all { conf ->
+	configurations.all {
+        val conf = this
 		if (conf.attributes.getAttribute(KotlinPlatformType.attribute)?.name == "jvm") {
-			conf.resolutionStrategy.eachDependency { dep ->
+			conf.resolutionStrategy.eachDependency {
+                val dep = this
 				if (topLevelDependencies.isEmpty() && !conf.name.removePrefix("jvm").startsWith("Test")) {
 					topLevelDependencies.addAll(conf.incoming.dependencies.map { "${it.group}:${it.name}" })
 				}
@@ -58,7 +60,8 @@ fun Project.configureAndroidIndirect() {
 
     val runJvm by lazy { (tasks["runJvm"] as KorgeJavaExec) }
 
-    val prepareAndroidBootstrap = tasks.create("prepareAndroidBootstrap") { task ->
+    val prepareAndroidBootstrap = tasks.create("prepareAndroidBootstrap") {
+        val task = this
 		task.dependsOn("compileTestKotlinJvm") // So artifacts are resolved
         task.dependsOn("jvmMainClasses")
 		task.apply {
@@ -298,18 +301,18 @@ fun Project.configureAndroidIndirect() {
 		}
 	}
 
-	val bundleAndroid = tasks.create("bundleAndroid", GradleBuild::class.java) { task ->
-		task.apply {
-			group = GROUP_KORGE_INSTALL
-			dependsOn(prepareAndroidBootstrap)
-			buildFile = File(buildDir, "platforms/android/build.gradle")
-			version = "4.10.1"
-			tasks = listOf("bundleDebugAar")
-		}
+	val bundleAndroid = tasks.create("bundleAndroid", GradleBuild::class.java) {
+        val task = this
+        group = GROUP_KORGE_INSTALL
+        dependsOn(prepareAndroidBootstrap)
+        buildFile = File(buildDir, "platforms/android/build.gradle")
+        version = "4.10.1"
+        tasks = listOf("bundleDebugAar")
 	}
 
-	val buildAndroidAar = tasks.create("buildAndroidAar", GradleBuild::class.java) { task ->
-		task.dependsOn(bundleAndroid)
+	val buildAndroidAar = tasks.create("buildAndroidAar", GradleBuild::class.java) {
+        val task = this
+        task.dependsOn(bundleAndroid)
 	}
 
     installAndroidRun(listOf(prepareAndroidBootstrap.name), direct = false)

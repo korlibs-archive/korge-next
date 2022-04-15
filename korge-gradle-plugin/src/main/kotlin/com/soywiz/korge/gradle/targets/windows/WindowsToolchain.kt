@@ -39,6 +39,7 @@ object WindowsToolchain {
 
 fun Project.compileWindowsRC(rcFile: File, objFile: File, log: Boolean = true): File {
     exec {
+        val it = this
         it.commandLine(WindowsToolchain.windres.absolutePath, rcFile.path, "-O", "coff", objFile.absolutePath)
 		it.workingDir(rcFile.parentFile)
 		it.environment("PATH", System.getenv("PATH") + ";" + listOfNotNull(WindowsToolchain.path.absolutePath, WindowsToolchain.path2?.absolutePath).joinToString(";"))
@@ -61,7 +62,8 @@ fun Project.compileWindowsRES(rcFile: File, resFile: File, log: Boolean = true):
     return File(rcFile.parentFile, "${rcFile.nameWithoutExtension}.res")
      */
     exec {
-        //rh.exe -open .\in\resources.rc -save .\out\resources.res -action compile -log NUL
+        val it = this
+    //rh.exe -open .\in\resources.rc -save .\out\resources.res -action compile -log NUL
         it.workingDir = rcFile.parentFile
         it.commandLine(
             WindowsToolchain.resourceHackerExe.absolutePath,
@@ -76,6 +78,7 @@ fun Project.compileWindowsRES(rcFile: File, resFile: File, log: Boolean = true):
 
 fun Project.replaceExeWithRes(exe: File, res: File) {
     exec {
+        val it = this
         it.commandLine(
             WindowsToolchain.resourceHackerExe.absolutePath,
             "-open", exe.path,
@@ -89,7 +92,8 @@ fun Project.replaceExeWithRes(exe: File, res: File) {
 
 fun Project.stripWindowsExe(exe: File, log: Boolean = true): File {
 	exec {
-		it.commandLine(WindowsToolchain.strip.absolutePath, exe.absolutePath)
+        val it = this
+        it.commandLine(WindowsToolchain.strip.absolutePath, exe.absolutePath)
 		it.workingDir(exe.parentFile)
 		it.environment("PATH", System.getenv("PATH") + ";" + WindowsToolchain.path.absolutePath)
 		if (log) {
