@@ -2,8 +2,6 @@ import com.soywiz.korlibs.modules.*
 
 description = "Portable UI with accelerated graphics support for Kotlin"
 
-val jnaVersion: String by project
-
 if (doEnableKotlinNative) {
     kotlin {
         for (target in nativeTargets(project)) {
@@ -19,8 +17,7 @@ if (doEnableKotlinNative) {
 
 dependencies {
     add("commonMainApi", project(":korim"))
-    add("jvmMainApi", "net.java.dev.jna:jna:$jnaVersion")
-    add("jvmMainApi", "net.java.dev.jna:jna-platform:$jnaVersion")
+    add("jvmMainApi", libs.bundles.jna)
 }
 
 afterEvaluate {

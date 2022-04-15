@@ -43,7 +43,6 @@ val kotlinVersion: String by project
 val realKotlinVersion = (System.getenv("FORCED_KOTLIN_VERSION") ?: kotlinVersion)
 val coroutinesVersion: String by project
 val nodeVersion: String by project
-val jnaVersion: String by project
 val androidBuildGradleVersion: String by project
 val kotlinSerializationVersion: String by project
 
@@ -967,7 +966,7 @@ object BuildVersions {
     const val GIT = "$gitVersion"
     const val KOTLIN = "$realKotlinVersion"
     const val NODE_JS = "$nodeVersion"
-    const val JNA = "$jnaVersion"
+    const val JNA = "${libs.versions.jna.get()}"
     const val COROUTINES = "$coroutinesVersion"
     const val ANDROID_BUILD = "$androidBuildGradleVersion"
     const val KOTLIN_SERIALIZATION = "$kotlinSerializationVersion"

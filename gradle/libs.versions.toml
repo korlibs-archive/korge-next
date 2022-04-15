@@ -1,0 +1,12 @@
+[versions]
+jna = "5.11.0"
+
+[libraries]
+jna-core = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
+
+[bundles]
+jna = ["jna-core", "jna-platform"]
+
+#[plugins]
+#jmh = { id = "me.champeau.jmh", version = "0.6.5" }
