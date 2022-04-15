@@ -60,7 +60,6 @@ configureSigning()
 //val kotlinVersion: String by project
 val kotlinVersion: String by project
 val androidBuildGradleVersion: String by project
-val proguardVersion: String by project
 val closureCompilerVersion: String by project
 
 dependencies {
@@ -71,8 +70,7 @@ dependencies {
     //implementation("org.jetbrains.kotlin:kotlin-gradle-plugin")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
 
-    implementation("net.sf.proguard:proguard-gradle:$proguardVersion") // @TODO: Not supporting Java 17
-    //implementation("com.guardsquare:proguard-gradle:$proguardVersion") // @TODO: This requires Java 11 but supports Java 17
+    implementation(libs.proguard.gradle)
 
     implementation("com.android.tools.build:gradle:$androidBuildGradleVersion")
     implementation("com.google.javascript:closure-compiler:$closureCompilerVersion")
