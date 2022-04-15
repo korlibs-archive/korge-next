@@ -26,7 +26,7 @@ actual suspend fun posixExec(
 
     // @TODO: place environment variables like ENV=value ENV2=value2 cd path; command
     // @TODO: does it work on windows? only posix?
-    val commandLine = "/bin/sh -c '" + cmdAndArgs.joinToString(" ") { escapeshellarg(it) }.replace("'", "\"'\"") + "'"
+    val commandLine = "/bin/sh -c '" + cmdAndArgs.joinToString(" ") { escapeshellargUnix(it) }.replace("'", "\"'\"") + "'"
 
     //println("[MAIN] BEFORE WORKER: commandLine=$commandLine")
 

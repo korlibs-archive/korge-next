@@ -7,7 +7,6 @@ import com.soywiz.korio.file.*
 import kotlinx.cinterop.*
 import platform.posix.*
 import kotlin.collections.*
-import kotlin.text.*
 import kotlin.*
 
 actual suspend fun posixExec(
@@ -48,6 +47,8 @@ fun sopen(vararg cmds: String, cwd: String, envs: Map<String, String> = mapOf())
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
         return null to 0L
     }
+    val rcmd = cmds.joinToString(" ") { escapeshellargUnix(it) }
+    //println("rcmd=$rcmd")
     val pid = fork()
     when (pid) {
         -1 -> {
@@ -63,7 +64,7 @@ fun sopen(vararg cmds: String, cwd: String, envs: Map<String, String> = mapOf())
             close(fds[1])
             chdir(cwd)
             for ((k ,v) in envs) putenv("$k=$v".cstr)
-            execl("/bin/sh", "sh", "-c", cmds.joinToString(" ") { "'" + it.replace("'", "\\'") + "'" }, null)
+            execl("/bin/sh", "/bin/sh", "-c", rcmd, null)
             _exit(127);
         }
     }
