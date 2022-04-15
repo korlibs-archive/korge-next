@@ -39,8 +39,7 @@ class KorgeGradleApply(val project: Project) {
         logger.info("Korge Gradle plugin: ${BuildVersions.ALL}")
 
         project.tasks.create("showKorgeVersions", Task::class.java) {
-            val it = this
-            it.doLast {
+            doLast {
                 println("Build-time:")
                 for ((key, value) in mapOf(
                     "os.name" to System.getProperty("os.name"),

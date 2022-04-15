@@ -48,7 +48,6 @@ private val Project.cnativeTarget get() = DESKTOP_NATIVE_TARGET.capitalize()
 val Project.nativeDesktopBootstrapFile get() = File(buildDir, "platforms/native-desktop/bootstrap.kt")
 
 val Project.prepareKotlinNativeBootstrap: Task get() = tasks.createOnce("prepareKotlinNativeBootstrap") {
-    val task = this
     val output = nativeDesktopBootstrapFile
     outputs.file(output)
     doLast {

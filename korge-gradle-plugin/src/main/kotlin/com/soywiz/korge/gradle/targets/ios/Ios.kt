@@ -14,7 +14,6 @@ import java.io.*
 
 fun Project.configureNativeIos() {
 	val prepareKotlinNativeBootstrapIos = tasks.create("prepareKotlinNativeBootstrapIos") {
-        val task = this
         doLast {
             File(buildDir, "platforms/native-ios/info.kt").delete() // Delete old versions
             File(buildDir, "platforms/native-ios/bootstrap.kt").apply {
@@ -100,7 +99,6 @@ fun Project.configureNativeIos() {
     val xcodeGenGitTag = "2.25.0"
 
     tasks.create("installXcodeGen") {
-        val task = this
         onlyIf { !xcodeGenLocalExecutable.exists() && !xcodeGenExecutable.exists() }
         doLast {
             if (!xcodeGenFolder[".git"].isDirectory) {
@@ -136,9 +134,8 @@ fun Project.configureNativeIos() {
 	}
 
 	val prepareKotlinNativeIosProject = tasks.create("prepareKotlinNativeIosProject") {
-        val task = this
-		task.dependsOn("installXcodeGen", "prepareKotlinNativeBootstrapIos", prepareKotlinNativeBootstrap, copyIosResources)
-		task.doLast {
+		dependsOn("installXcodeGen", "prepareKotlinNativeBootstrapIos", prepareKotlinNativeBootstrap, copyIosResources)
+		doLast {
 			// project.yml requires these folders to be available or it will fail
 			//File(rootDir, "src/commonMain/resources").mkdirs()
 
@@ -590,8 +587,7 @@ fun Project.configureNativeIos() {
 	}
 
 	tasks.create("iosShutdownSimulator", Task::class.java) {
-        val task = this
-		task.doFirst {
+		doFirst {
 			execLogger { it.commandLine("xcrun", "simctl", "shutdown", "booted") }
 		}
 	}
@@ -599,9 +595,8 @@ fun Project.configureNativeIos() {
     val iphoneVersion = korge.preferredIphoneSimulatorVersion
 
 	val iosCreateIphone = tasks.create("iosCreateIphone", Task::class.java) {
-        val task = this
-		task.onlyIf { appleGetDevices().none { it.name == "iPhone $iphoneVersion" } }
-		task.doFirst {
+		onlyIf { appleGetDevices().none { it.name == "iPhone $iphoneVersion" } }
+		doFirst {
             val result = execOutput("xcrun", "simctl", "list")
             val regex = Regex("com\\.apple\\.CoreSimulator\\.SimRuntime\\.iOS[\\w\\-]+")
             val simRuntime = regex.find(result)?.value ?: error("Can't find SimRuntime. exec: xcrun simctl list")
@@ -611,10 +606,9 @@ fun Project.configureNativeIos() {
 	}
 
 	tasks.create("iosBootSimulator", Task::class.java) {
-        val task = this
-		task.onlyIf { appleGetBootedDevice() == null }
-		task.dependsOn(iosCreateIphone)
-		task.doLast {
+		onlyIf { appleGetBootedDevice() == null }
+		dependsOn(iosCreateIphone)
+		doLast {
             val device = appleGetBootDevice(iphoneVersion)
             val udid = device.udid
             logger.info("Booting udid=$udid")
@@ -638,14 +632,13 @@ fun Project.configureNativeIos() {
 			val arch2 = if (simulator) "x86_64" else "arm64"
 			val sdkName = if (simulator) "iphonesimulator" else "iphoneos"
 			tasks.create("iosBuild$simulatorSuffix$debugSuffix") {
-                val task = this
 				//task.dependsOn(prepareKotlinNativeIosProject, "linkMain${debugSuffix}FrameworkIos$arch")
-				task.dependsOn(prepareKotlinNativeIosProject, "link${debugSuffix}FrameworkIos$arch")
+				dependsOn(prepareKotlinNativeIosProject, "link${debugSuffix}FrameworkIos$arch")
 				val xcodeProjDir = buildDir["platforms/ios/app.xcodeproj"]
 				afterEvaluate {
-					task.outputs.file(xcodeProjDir["build/Build/Products/$debugSuffix-$sdkName/${korge.name}.app/${korge.name}"])
+					outputs.file(xcodeProjDir["build/Build/Products/$debugSuffix-$sdkName/${korge.name}.app/${korge.name}"])
 				}
-				task.doLast {
+				doLast {
 					execLogger {
 						it.workingDir(xcodeProjDir)
 						it.commandLine("xcrun", "xcodebuild", "-scheme", "app-$arch-$debugSuffix", "-project", ".", "-configuration", debugSuffix, "-derivedDataPath", "build", "-arch", arch2, "-sdk", appleFindSdk(sdkName))
@@ -655,12 +648,11 @@ fun Project.configureNativeIos() {
 		}
 
 		val installIosSimulator = tasks.create("installIosSimulator$debugSuffix", Task::class.java) {
-            val task = this
 			val buildTaskName = "iosBuildSimulator$debugSuffix"
-			task.group = GROUP_KORGE_INSTALL
+			group = GROUP_KORGE_INSTALL
 
-			task.dependsOn(buildTaskName, "iosBootSimulator")
-			task.doLast {
+			dependsOn(buildTaskName, "iosBootSimulator")
+			doLast {
 				val appFolder = tasks.getByName(buildTaskName).outputs.files.first().parentFile
                 val device = appleGetInstallDevice(iphoneVersion)
 				execLogger { it.commandLine("xcrun", "simctl", "install", device.udid, appFolder.absolutePath) }
@@ -668,11 +660,10 @@ fun Project.configureNativeIos() {
 		}
 
 		val installIosDevice = tasks.create("installIosDevice$debugSuffix", Task::class.java) {
-            val task = this
-			task.group = GROUP_KORGE_INSTALL
+			group = GROUP_KORGE_INSTALL
 			val buildTaskName = "iosBuildDevice$debugSuffix"
-			task.dependsOn("installIosDeploy", buildTaskName)
-			task.doLast {
+			dependsOn("installIosDeploy", buildTaskName)
+			doLast {
 				val appFolder = tasks.getByName(buildTaskName).outputs.files.first().parentFile
                 iosDeployExt.command("--bundle", appFolder.absolutePath)
 			}
@@ -701,23 +692,20 @@ fun Project.configureNativeIos() {
     }
 
 	tasks.create("iosEraseAllSimulators") {
-        val task = this
-		task.doLast { execLogger { it.commandLine("osascript", "-e", "tell application \"iOS Simulator\" to quit") } }
-		task.doLast { execLogger { it.commandLine("osascript", "-e", "tell application \"Simulator\" to quit") } }
-		task.doLast { execLogger { it.commandLine("xcrun", "simctl", "erase", "all") } }
+		doLast { execLogger { it.commandLine("osascript", "-e", "tell application \"iOS Simulator\" to quit") } }
+		doLast { execLogger { it.commandLine("osascript", "-e", "tell application \"Simulator\" to quit") } }
+		doLast { execLogger { it.commandLine("xcrun", "simctl", "erase", "all") } }
 	}
 
 	tasks.create("installIosDeploy", Task::class.java) {
-        val task = this
-		task.onlyIf { !iosDeployExt.isInstalled }
-        task.doFirst {
+		onlyIf { !iosDeployExt.isInstalled }
+        doFirst {
             iosDeployExt.installIfRequired()
         }
 	}
 
     tasks.create("updateIosDeploy", Task::class.java) {
-        val task = this
-        task.doFirst {
+        doFirst {
             iosDeployExt.update()
         }
     }

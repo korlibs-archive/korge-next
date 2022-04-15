@@ -25,14 +25,12 @@ fun Project.configureJvm() {
 
     gkotlin.jvm {
         testRuns["test"].executionTask.configure {
-            val it = this
-            it.useJUnit()
+            useJUnit()
             //it.useJUnitPlatform()
         }
     }
 	project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).all {
-        val it = this
-        it.kotlinOptions {
+        kotlinOptions {
             this.jvmTarget = korge.jvmTarget
         }
     }
@@ -125,13 +123,12 @@ private fun Project.configureJvmTest() {
 	jvmTest.jvmArgs = (jvmTest.jvmArgs ?: listOf()) + listOf("-Djava.awt.headless=true")
 
     val jvmTestFix = tasks.create("jvmTestFix", Test::class.java) {
-        val it = this
-        it.group = "verification"
-        it.environment("UPDATE_TEST_REF", "true")
-        it.testClassesDirs = jvmTest.testClassesDirs
-        it.classpath = jvmTest.classpath
-        it.bootstrapClasspath = jvmTest.bootstrapClasspath
-        it.systemProperty("java.awt.headless", "true")
+        group = "verification"
+        environment("UPDATE_TEST_REF", "true")
+        testClassesDirs = jvmTest.testClassesDirs
+        classpath = jvmTest.classpath
+        bootstrapClasspath = jvmTest.bootstrapClasspath
+        systemProperty("java.awt.headless", "true")
     }
 }
 
@@ -240,8 +237,7 @@ private fun Project.addProguard() {
 			task.libraryjars("${System.getProperty("java.home")}/lib/rt.jar")
 			// Support newer java versions that doesn't have rt.jar
 			task.libraryjars(project.fileTree("${System.getProperty("java.home")}/jmods/") {
-                val it = this
-                it.include("**/java.*.jmod")
+                include("**/java.*.jmod")
 			})
 			//println(packageJvmFatJar.outputs.files.toList())
 			task.injars(packageJvmFatJar.outputs.files.toList())

@@ -29,15 +29,14 @@ class KorgeBundles(val project: Project) {
     fun sha256Tree(tree: FileTree): String {
         val files = LinkedHashMap<String, File>()
         tree.visit {
-            val it = this
-            if (!it.isDirectory) {
-                val mpath = it.path.trim('/')
+            if (!isDirectory) {
+                val mpath = path.trim('/')
                 val rpath = "/$mpath"
                 when {
                     rpath.contains("/.git") -> Unit
                     rpath.endsWith("/.DS_Store") -> Unit
                     rpath.endsWith("/thumbs.db") -> Unit
-                    else -> files[mpath] = it.file
+                    else -> files[mpath] = file
                 }
             }
         }
@@ -78,9 +77,8 @@ class KorgeBundles(val project: Project) {
             //println("SHA256: ${sha256Tree(tree)}")
 
             project.sync {
-                val it = this
-                it.from(tree)
-                it.into(outputDir)
+                from(tree)
+                into(outputDir)
             }
         } else {
             logger.info("KorGE.bundle: Already unzipped $zipFile")
@@ -113,8 +111,7 @@ class KorgeBundles(val project: Project) {
             for (repo in repositories) {
                 logger.info("KorGE.bundle.repository: $repo")
                 project.repositories.maven {
-                    val it = this
-                    it.url = project.uri(repo.url)
+                    url = project.uri(repo.url)
                 }
             }
             for (dep in dependencies) {
@@ -214,9 +211,8 @@ class KorgeBundles(val project: Project) {
             packDir.mkdirs()
             logger.warn("KorGE.bundle: Git cloning $repo @ $ref...")
             project.exec {
-                val it = this
-                it.workingDir(packDir)
-                it.commandLine("git", "-c", "core.autocrlf=false", "clone", repo, ".")
+                workingDir(packDir)
+                commandLine("git", "-c", "core.autocrlf=false", "clone", repo, ".")
             }.assertNormalExitValue()
         } else {
             logger.info("KorGE.bundle: Already cloned $repo")
@@ -224,13 +220,11 @@ class KorgeBundles(val project: Project) {
 
         if (!matchingReg) {
             project.exec {
-                val it = this
-                it.workingDir(packDir)
-                it.commandLine("git", "-c", "core.autocrlf=false", "reset", "--hard", ref)
+                workingDir(packDir)
+                commandLine("git", "-c", "core.autocrlf=false", "reset", "--hard", ref)
             }.assertNormalExitValue()
             project.delete {
-                val it = this
-                it.delete(File(packDir, ".git"))
+                delete(File(packDir, ".git"))
             }
             packEnsure.writeText(ref)
         } else {
