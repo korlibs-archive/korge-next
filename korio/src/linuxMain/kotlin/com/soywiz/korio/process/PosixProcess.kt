@@ -4,6 +4,7 @@ import com.soywiz.klock.*
 import com.soywiz.kmem.*
 import com.soywiz.korio.async.*
 import com.soywiz.korio.file.*
+import com.soywiz.korio.file.std.*
 import kotlinx.cinterop.*
 import platform.posix.*
 import kotlin.collections.*
@@ -47,7 +48,7 @@ fun sopen(vararg cmds: String, cwd: String, envs: Map<String, String> = mapOf())
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
         return null to 0L
     }
-    val rcmd = cmds.joinToString(" ") { escapeshellargUnix(it) }
+    val rcmd = ShellArgs.buildShellExecCommandLineArrayForExecl(cmds.toList())
     //println("rcmd=$rcmd")
     val pid = fork()
     when (pid) {
@@ -64,7 +65,7 @@ fun sopen(vararg cmds: String, cwd: String, envs: Map<String, String> = mapOf())
             close(fds[1])
             chdir(cwd)
             for ((k ,v) in envs) putenv("$k=$v".cstr)
-            execl("/bin/sh", "/bin/sh", "-c", rcmd, null)
+            execl(rcmd.first(), rcmd.first(), *rcmd.drop(1).toTypedArray(), null)
             _exit(127);
         }
     }

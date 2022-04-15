@@ -4,6 +4,7 @@ import com.soywiz.kds.concurrent.*
 import com.soywiz.klock.*
 import com.soywiz.korio.async.*
 import com.soywiz.korio.file.VfsProcessHandler
+import com.soywiz.korio.file.std.*
 import kotlinx.cinterop.*
 import platform.posix.*
 import platform.windows.*
@@ -23,7 +24,7 @@ actual suspend fun posixExec(
 
     // @TODO: place environment variables like ENV=value ENV2=value2 cd path; command
     // @TODO: does it work on windows? only posix?
-    val commandLine = cmdAndArgs.joinToString(" ") { escapeshellargWin(it) }
+    val commandLine = ShellArgs.buildShellExecCommandLineForPopen(cmdAndArgs)
 
     //println("[MAIN] BEFORE WORKER: commandLine=$commandLine")
 
