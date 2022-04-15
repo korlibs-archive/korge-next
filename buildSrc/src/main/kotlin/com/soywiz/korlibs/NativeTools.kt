@@ -36,10 +36,10 @@ object NativeTools {
     }
 
     @JvmStatic
-    fun configureCInterop(project: Project, name: String) {
+    fun configureAllCInterop(project: Project, name: String) {
         if (project.doEnableKotlinNative) {
             project.kotlin {
-                for (target in nativeTargets(project)) {
+                for (target in allNativeTargets(project)) {
                     target.compilations["main"].cinterops {
                         maybeCreate(name)
                     }
