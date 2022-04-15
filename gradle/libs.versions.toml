@@ -1,9 +1,11 @@
 [versions]
 jna = "5.11.0"
+jcodec = "0.2.5"
 
 [libraries]
 jna-core = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
+jcodec-core = { module = "org.jcodec:jcodec", version.ref = "jcodec" }
 
 [bundles]
 jna = ["jna-core", "jna-platform"]
