@@ -49,6 +49,8 @@ fun sopen(vararg cmds: String, cwd: String, envs: Map<String, String> = mapOf())
         return null to 0L
     }
     val rcmd = ShellArgs.buildShellExecCommandLineArrayForExecl(cmds.toList())
+    val command = rcmd.first()
+    val args: Array<Any?> = rcmd.drop(1).map { it as Any? }.toTypedArray()
     //println("rcmd=$rcmd")
     val pid = fork()
     when (pid) {
@@ -65,7 +67,7 @@ fun sopen(vararg cmds: String, cwd: String, envs: Map<String, String> = mapOf())
             close(fds[1])
             chdir(cwd)
             for ((k ,v) in envs) putenv("$k=$v".cstr)
-            execl(rcmd.first(), rcmd.first(), *rcmd.drop(1).toTypedArray(), null)
+            execl(command, command, *args, null)
             _exit(127);
         }
     }
