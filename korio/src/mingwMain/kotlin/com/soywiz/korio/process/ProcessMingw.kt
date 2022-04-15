@@ -9,6 +9,8 @@ import platform.posix.*
 import platform.windows.*
 import kotlin.native.concurrent.*
 
+private fun escapeshellargWin(str: String) = "\"" + str.replace("\"", "\\\"") + "\""
+
 actual suspend fun posixExec(
     path: String, cmdAndArgs: List<String>, env: Map<String, String>, handler: VfsProcessHandler
 ): Int {
@@ -23,7 +25,7 @@ actual suspend fun posixExec(
 
     // @TODO: place environment variables like ENV=value ENV2=value2 cd path; command
     // @TODO: does it work on windows? only posix?
-    val commandLine = cmdAndArgs.joinToString(" ") { escapeshellarg(it) }
+    val commandLine = cmdAndArgs.joinToString(" ") { escapeshellargWin(it) }
 
     //println("[MAIN] BEFORE WORKER: commandLine=$commandLine")
 
