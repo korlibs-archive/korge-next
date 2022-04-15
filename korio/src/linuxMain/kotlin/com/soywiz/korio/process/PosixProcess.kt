@@ -49,8 +49,13 @@ fun sopen(vararg cmds: String, cwd: String, envs: Map<String, String> = mapOf())
         return null to 0L
     }
     val rcmd = ShellArgs.buildShellExecCommandLineArrayForExecl(cmds.toList())
+    //val rcmd = listOf("/bin/sh", "-c", "\"'echo' 'hello world'\"")
+    //val rcmd = listOf("/bin/sh", "-c", "'echo' 'hello world'")
+
+    //println("rcmd=$rcmd")
     val command = rcmd.first()
-    val args = rcmd.drop(1)
+    //val args = rcmd.drop(1)
+    val args = rcmd
     //println("rcmd=$rcmd")
     val pid = fork()
     when (pid) {

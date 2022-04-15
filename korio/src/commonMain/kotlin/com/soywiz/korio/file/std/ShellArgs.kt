@@ -8,13 +8,14 @@ object ShellArgs {
     fun buildShellExecCommandLineForPopen(cmdAndArgs: List<String>): String = buildShellExecCommandLine(cmdAndArgs)
     fun buildShellExecCommandLineArrayForProcessBuilder(cmdAndArgs: List<String>): List<String> = buildShellExecCommandLineArray(cmdAndArgs)
     fun buildShellExecCommandLineArrayForExecl(cmdAndArgs: List<String>): List<String> = buildShellExecCommandLineArray(cmdAndArgs)
-    fun buildShellExecCommandLineArrayForNodeSpawn(cmdAndArgs: List<String>): List<String> = buildShellExecCommandLineArray(cmdAndArgs)
+    fun buildShellExecCommandLineArrayForNodeSpawn(cmdAndArgs: List<String>): List<String> = (cmdAndArgs)
 
     fun buildShellExecCommandLineArray(cmdAndArgs: List<String>): List<String> {
         return when {
             OS.isWindows -> listOf("cmd", "/c", ShellArgs.escapeshellCommandWin(cmdAndArgs))
             OS.isLinux -> listOf("/bin/sh", "-c", cmdAndArgs.joinToString(" ") { ShellArgs.escapeshellargUnix(it) })
-            //OS.isLinux -> listOf("/bin/sh", "-c", "'" + cmdAndArgs.joinToString(" ") { ShellArgs.escapeshellargUnix(it) }.replace("'", "\"'\"") + "'")
+            //OS.isLinux -> listOf("/bin/sh", "-c", "\"" + cmdAndArgs.joinToString(" ") { ShellArgs.escapeshellargUnix(it) } + "\"")
+            //OS.isLinux -> listOf("/bin/sh", "-c", "'" + cmdAndArgs.joinToString(" ") { ShellArgs.escapeshellargUnix(it) }.replace("'", "'\"'\"'") + "'")
             else -> cmdAndArgs
         }
     }
@@ -22,7 +23,7 @@ object ShellArgs {
     fun buildShellExecCommandLine(cmdAndArgs: List<String>): String {
         return when {
             OS.isWindows -> cmdAndArgs.joinToString(" ") { ShellArgs.escapeshellargWin(it) }
-            else -> "/bin/sh -c '" + cmdAndArgs.joinToString(" ") { ShellArgs.escapeshellargUnix(it) }.replace("'", "\"'\"") + "'"
+            else -> "/bin/sh -c '" + cmdAndArgs.joinToString(" ") { ShellArgs.escapeshellargUnix(it) }.replace("'", "'\"'\"'") + "'"
         }
     }
 
