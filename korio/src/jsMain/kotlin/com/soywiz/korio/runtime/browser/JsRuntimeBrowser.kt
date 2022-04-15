@@ -2,16 +2,12 @@ package com.soywiz.korio.runtime.browser
 
 import com.soywiz.korio.file.SimpleStorage
 import com.soywiz.korio.file.VfsFile
-import com.soywiz.korio.file.std.MapLikeStorageVfs
-import com.soywiz.korio.file.std.MemoryVfs
-import com.soywiz.korio.file.std.UrlVfs
+import com.soywiz.korio.file.std.*
 import com.soywiz.korio.net.QueryString
 import com.soywiz.korio.net.http.Http
 import com.soywiz.korio.net.http.HttpClient
 import com.soywiz.korio.runtime.JsRuntime
-import com.soywiz.korio.stream.AsyncStream
-import com.soywiz.korio.stream.openAsync
-import com.soywiz.korio.stream.readAll
+import com.soywiz.korio.stream.*
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.CompletableDeferred
@@ -46,7 +42,7 @@ object JsRuntimeBrowser : JsRuntime() {
 
     override fun langs(): List<String> = window.navigator.languages.asList()
     override fun openVfs(path: String): VfsFile {
-        return UrlVfs(currentDir())[path].also {
+        return UrlVfs(currentDir())[path].withCatalogJail().root.also {
             println("BROWSER openVfs: currentDir=${currentDir()}, path=$path, urlVfs=$it")
         }
     }
@@ -65,7 +61,7 @@ class HttpClientBrowserJs : HttpClient() {
         method: Http.Method,
         url: String,
         headers: Http.Headers,
-        content: AsyncStream?
+        content: AsyncInputStreamWithLength?
     ): Response {
         val deferred = CompletableDeferred<Response>(Job())
         val xhr = XMLHttpRequest()
@@ -113,6 +109,7 @@ class HttpClientBrowserJs : HttpClient() {
         } else {
             xhr.send()
         }
+        content?.close()
         return deferred.await()
     }
 

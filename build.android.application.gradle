@@ -79,7 +79,7 @@ android {
 
 def mainDir = project.buildDir
 
-tasks.create("createAndroidManifest") {
+def createAndroidManifest =tasks.create("createAndroidManifest") {
     doFirst {
         mainDir.mkdirs()
         new File(mainDir, "AndroidManifest.xml").text = """
@@ -103,6 +103,7 @@ tasks.create("createAndroidManifest") {
                         android:icon="@drawable/app_icon"
                         android:label="unnamed"
                         android:logo="@drawable/app_icon"
+                        android:screenOrientation="landscape"
                     >
                         <intent-filter>
                             <action android:name="android.intent.action.MAIN"/>
@@ -199,4 +200,7 @@ afterEvaluate {
         dependsOn ordered("createAndroidManifest", "installRelease")
         finalizedBy "onlyRunAndroid"
     }
+
+    tasks.findByName("generateDebugBuildConfig")
+        ?.dependsOn(createAndroidManifest)
 }

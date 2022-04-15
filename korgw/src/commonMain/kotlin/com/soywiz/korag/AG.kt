@@ -1,13 +1,13 @@
 package com.soywiz.korag
 
 import com.soywiz.kds.*
-import com.soywiz.kgl.KmlGl
 import com.soywiz.klogger.*
 import com.soywiz.kmem.*
 import com.soywiz.korag.annotation.KoragExperimental
 import com.soywiz.korag.shader.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
+import com.soywiz.korio.annotations.*
 import com.soywiz.korio.async.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korio.util.*
@@ -52,6 +52,7 @@ interface AGFeatures {
     val isFloatTextureSupported: Boolean get() = false
 }
 
+@OptIn(KorIncomplete::class)
 abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     var contextVersion = 0
     abstract val nativeComponent: Any
@@ -118,7 +119,10 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     //protected fun setViewport(v: IntArray) = setViewport(v[0], v[1], v[2], v[3])
 
     enum class BlendEquation {
-        ADD, SUBTRACT, REVERSE_SUBTRACT
+        ADD, SUBTRACT, REVERSE_SUBTRACT;
+        companion object {
+            val VALUES = values()
+        }
     }
 
     enum class BlendFactor {
@@ -132,6 +136,9 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         SOURCE_ALPHA,
         SOURCE_COLOR,
         ZERO;
+        companion object {
+            val VALUES = values()
+        }
     }
 
     data class Scissor(
@@ -173,6 +180,15 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         }
 
         override fun toString(): String = "Scissor(x=${x.niceStr}, y=${y.niceStr}, width=${width.niceStr}, height=${height.niceStr})"
+
+        companion object {
+            // null is equivalent to Scissor(-Inf, -Inf, +Inf, +Inf)
+            fun combine(prev: Scissor?, next: Scissor?, out: Scissor = Scissor()): Scissor? {
+                if (prev === null) return next
+                if (next === null) return prev
+                return prev.rect.intersection(next.rect, out.rect)?.let { rect -> out.setTo(rect) } ?: out.setTo(0.0, 0.0, 0.0, 0.0)
+            }
+        }
     }
 
     data class Blending(
@@ -214,6 +230,19 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         val height: Int
     }
 
+    class SyncBitmapSourceList(
+        override val rgba: Boolean,
+        override val width: Int,
+        override val height: Int,
+        val gen: () -> List<Bitmap>?
+    ) : BitmapSourceBase {
+        companion object {
+            val NIL = SyncBitmapSourceList(true, 0, 0) { null }
+        }
+
+        override fun toString(): String = "SyncBitmapSourceList(rgba=$rgba, width=$width, height=$height)"
+    }
+
     class SyncBitmapSource(
         override val rgba: Boolean,
         override val width: Int,
@@ -245,7 +274,8 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
 
     enum class TextureKind { RGBA, LUMINANCE }
 
-    enum class TextureTargetKind { TEXTURE_2D, TEXTURE_3D, TEXTURE_CUBE_MAP } //TODO: there are other possible values
+    //TODO: there are other possible values
+    enum class TextureTargetKind { TEXTURE_2D, TEXTURE_3D, TEXTURE_CUBE_MAP }
 
     //TODO: would it better if this was an interface ?
     open inner class Texture : Closeable {
@@ -257,7 +287,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         private var uploaded: Boolean = false
         private var generating: Boolean = false
         private var generated: Boolean = false
-        private var tempBitmap: Bitmap? = null
+        private var tempBitmaps: List<Bitmap?>? = null
         var ready: Boolean = false; private set
         val texId: Int = lastTextureId++
         open val nativeTexId: Int get() = texId
@@ -270,6 +300,10 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
             uploaded = false
             generating = false
             generated = false
+        }
+
+        fun upload(list: List<Bitmap>, width: Int, height: Int): Texture {
+            return upload(SyncBitmapSourceList(rgba = true, width = width, height = height) { list })
         }
 
         fun upload(bmp: Bitmap?, mipmaps: Boolean = false): Texture {
@@ -324,13 +358,17 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
             if (!generating) {
                 generating = true
                 when (source) {
+                    is SyncBitmapSourceList -> {
+                        tempBitmaps = source.gen()
+                        generated = true
+                    }
                     is SyncBitmapSource -> {
-                        tempBitmap = source.gen()
+                        tempBitmaps = listOf(source.gen())
                         generated = true
                     }
                     is AsyncBitmapSource -> {
                         launchImmediately(source.coroutineContext) {
-                            tempBitmap = source.gen()
+                            tempBitmaps = listOf(source.gen())
                             generated = true
                         }
                     }
@@ -341,16 +379,15 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
                 uploaded = true
                 generating = false
                 generated = false
-                actualSyncUpload(source, tempBitmap, requestMipmaps)
-                tempBitmap = null
+                actualSyncUpload(source, tempBitmaps, requestMipmaps)
+                tempBitmaps = null
                 ready = true
             }
             return this
         }
 
-        open fun actualSyncUpload(source: BitmapSourceBase, bmp: Bitmap?, requestMipmaps: Boolean) {
+        open fun actualSyncUpload(source: BitmapSourceBase, bmps: List<Bitmap?>?, requestMipmaps: Boolean) {
         }
-
 
         init {
             //Console.log("CREATED TEXTURE: $texId")
@@ -362,7 +399,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
             if (!alreadyClosed) {
                 alreadyClosed = true
                 source = SyncBitmapSource.NIL
-                tempBitmap = null
+                tempBitmaps = null
                 deletedTextureCount++
                 //Console.log("CLOSED TEXTURE: $texId")
                 //printTexStats()
@@ -463,14 +500,22 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         LINES,
         TRIANGLES,
         TRIANGLE_STRIP,
-        TRIANGLE_FAN,
+        TRIANGLE_FAN;
+
+        companion object {
+            val VALUES = values()
+        }
     }
 
     enum class IndexType {
         UBYTE, USHORT,
         // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/drawElements
         @Deprecated("UINT is not always supported on webgl")
-        UINT
+        UINT;
+
+        companion object {
+            val VALUES = values()
+        }
     }
 
     val dummyTexture by lazy { createTexture() }
@@ -483,9 +528,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     fun createTexture(bmp: Bitmap, mipmaps: Boolean = false, premultiplied: Boolean = true): Texture =
         createTexture(premultiplied).upload(bmp, mipmaps)
 
-    open fun createTexture(premultiplied: Boolean): Texture = Texture()
-
-    open fun createTexture(targetKind: TextureTargetKind, init:Texture.(gl:KmlGl)->Unit): Texture = Texture()
+    open fun createTexture(premultiplied: Boolean, targetKind: TextureTargetKind = TextureTargetKind.TEXTURE_2D): Texture = Texture()
 
     open fun createBuffer(kind: Buffer.Kind) = Buffer(kind)
     fun createIndexBuffer() = createBuffer(Buffer.Kind.INDEX)
@@ -522,14 +565,23 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         KEEP,
         SET,
         ZERO;
+        companion object {
+            val VALUES = values()
+        }
     }
 
     enum class TriangleFace {
         FRONT, BACK, FRONT_AND_BACK, NONE;
+        companion object {
+            val VALUES = values()
+        }
     }
 
     enum class CompareMode {
         ALWAYS, EQUAL, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL, NEVER, NOT_EQUAL;
+        companion object {
+            val VALUES = values()
+        }
     }
 
     data class ColorMaskState(
@@ -541,8 +593,21 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         //val enabled = !red || !green || !blue || !alpha
     }
 
+    enum class CullFace {
+        BOTH, FRONT, BACK;
+        companion object {
+            val VALUES = values()
+        }
+    }
+
+    // Default: CCW
     enum class FrontFace {
-        BOTH, CW, CCW
+        BOTH, // @TODO: This is incorrect
+        CCW, CW;
+        companion object {
+            val DEFAULT: FrontFace get() = CCW
+            val VALUES = values()
+        }
     }
 
     data class RenderState(
@@ -550,6 +615,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         var depthMask: Boolean = true,
         var depthNear: Float = 0f,
         var depthFar: Float = 1f,
+        @Deprecated("This is not used anymore, since it is not available on WebGL")
         var lineWidth: Float = 1f,
         var frontFace: FrontFace = FrontFace.BOTH
     )
@@ -809,7 +875,11 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         override fun set(): Unit = Unit
         fun readBitmap(bmp: Bitmap32) = this@AG.readColor(bmp)
         fun readDepth(width: Int, height: Int, out: FloatArray): Unit = this@AG.readDepth(width, height, out)
-        override fun close() = Unit
+        override fun close(): Unit {
+            cachedTexVersion = -1
+            _tex?.close()
+            _tex = null
+        }
     }
 
     open fun createRenderBuffer() = RenderBuffer()
@@ -833,12 +903,79 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         clearColor: Boolean = true,
         clearDepth: Boolean = true,
         clearStencil: Boolean = true,
-        scissor: AG.Scissor? = null
-    ) = Unit
+        scissor: Scissor? = null
+    ) {
+        commands { list ->
+            //println("CLEAR: $color, $depth")
+            applyScissorState(list, scissor)
+            //gl.disable(KmlGl.SCISSOR_TEST)
+            if (clearColor) {
+                list.colorMask(true, true, true, true)
+                list.clearColor(color.rf, color.gf, color.bf, color.af)
+            }
+            if (clearDepth) {
+                list.depthMask(true)
+                list.clearDepth(depth)
+            }
+            if (clearStencil) {
+                list.stencilMask(-1)
+                list.clearStencil(stencil)
+            }
+            list.clear(clearColor, clearDepth, clearStencil)
+        }
+    }
 
-    fun clearStencil(stencil: Int = 0, scissor: AG.Scissor? = null) = clear(clearColor = false, clearDepth = false, clearStencil = true, stencil = stencil, scissor = scissor)
-    fun clearDepth(depth: Float = 1f, scissor: AG.Scissor? = null) = clear(clearColor = false, clearDepth = true, clearStencil = false, depth = depth, scissor = scissor)
-    fun clearColor(color: RGBA = Colors.TRANSPARENT_BLACK, scissor: AG.Scissor? = null) = clear(clearColor = true, clearDepth = false, clearStencil = false, color = color, scissor = scissor)
+
+    private val finalScissorBL = Rectangle()
+    private val tempRect = Rectangle()
+
+    protected fun applyScissorState(list: AGList, scissor: Scissor? = null) {
+        //println("applyScissorState")
+        if (this.currentRenderBuffer == null) {
+            //println("this.currentRenderBuffer == null")
+        }
+        val currentRenderBuffer = this.currentRenderBuffer ?: return
+        if (currentRenderBuffer === mainRenderBuffer) {
+            var realScissors: Rectangle? = finalScissorBL
+            realScissors?.setTo(0.0, 0.0, realBackWidth.toDouble(), realBackHeight.toDouble())
+            if (scissor != null) {
+                tempRect.setTo(
+                    currentRenderBuffer.x + scissor.x,
+                    ((currentRenderBuffer.y + currentRenderBuffer.height) - (scissor.y + scissor.height)),
+                    (scissor.width),
+                    scissor.height
+                )
+                realScissors = realScissors?.intersection(tempRect, realScissors)
+            }
+
+            //println("currentRenderBuffer: $currentRenderBuffer")
+
+            val renderBufferScissor = currentRenderBuffer.scissor
+            if (renderBufferScissor != null) {
+                realScissors = realScissors?.intersection(renderBufferScissor.rect, realScissors)
+            }
+
+            //println("[MAIN_BUFFER] realScissors: $realScissors")
+
+            list.enable(AGEnable.SCISSOR)
+            if (realScissors != null) {
+                list.scissor(realScissors.x.toInt(), realScissors.y.toInt(), realScissors.width.toInt(), realScissors.height.toInt())
+            } else {
+                list.scissor(0, 0, 0, 0)
+            }
+        } else {
+            //println("[RENDER_TARGET] scissor: $scissor")
+
+            list.enableDisable(AGEnable.SCISSOR, scissor != null) {
+                list.scissor(scissor!!.x.toIntRound(), scissor.y.toIntRound(), scissor.width.toIntRound(), scissor.height.toIntRound())
+            }
+        }
+    }
+
+
+    fun clearStencil(stencil: Int = 0, scissor: Scissor? = null) = clear(clearColor = false, clearDepth = false, clearStencil = true, stencil = stencil, scissor = scissor)
+    fun clearDepth(depth: Float = 1f, scissor: Scissor? = null) = clear(clearColor = false, clearDepth = true, clearStencil = false, depth = depth, scissor = scissor)
+    fun clearColor(color: RGBA = Colors.TRANSPARENT_BLACK, scissor: Scissor? = null) = clear(clearColor = true, clearDepth = false, clearStencil = false, color = color, scissor = scissor)
 
     //@PublishedApi
     @KoragExperimental
@@ -1002,6 +1139,21 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     }
 
     private val drawTempTexture: Texture by lazy { createTexture() }
+
+    private val _globalState = AGGlobalState()
+    @PublishedApi internal val _list = _globalState.createList()
+
+    @KoragExperimental
+    inline fun commands(block: (AGList) -> Unit) {
+        block(_list)
+        _executeList(_list)
+    }
+
+    @PublishedApi
+    internal fun _executeList(list: AGList) = executeList(list)
+
+    protected open fun executeList(list: AGList) {
+    }
 
     fun drawBitmap(bmp: Bitmap) {
         drawTempTexture.upload(bmp, mipmaps = false)

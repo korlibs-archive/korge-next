@@ -4,22 +4,29 @@ import org.gradle.kotlin.dsl.kotlin
 import java.io.File
 
 buildscript {
-    val kotlinVersion: String by project
-    val androidBuildGradleVersion: String by project
-    val gradlePublishPluginVersion: String by project
+    val kotlinVersion: String = libs.versions.kotlin.get()
+
+    val androidBuildGradleVersion =
+        if (System.getProperty("java.version").startsWith("1.8") || System.getProperty("java.version").startsWith("9")) {
+            "4.2.0"
+        } else {
+            libs.versions.android.build.gradle.get()
+        }
+
     repositories {
         mavenLocal()
         mavenCentral()
         google()
         maven { url = uri("https://plugins.gradle.org/m2/") }
-        if (kotlinVersion.contains("-M") || kotlinVersion.contains("-RC") || kotlinVersion.contains("eap") || kotlinVersion.contains("-release")) {
+        if (kotlinVersion.contains("eap") || kotlinVersion.contains("-")) {
             maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/temporary")
+            maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
             maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-coroutines/maven")
         }
         maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
     }
     dependencies {
-        classpath("com.gradle.publish:plugin-publish-plugin:$gradlePublishPluginVersion")
+        classpath(libs.gradle.publish.plugin)
         classpath("com.android.tools.build:gradle:$androidBuildGradleVersion")
     }
 }
@@ -27,6 +34,8 @@ buildscript {
 plugins {
 	java
     kotlin("multiplatform")
+    id("org.jetbrains.kotlinx.kover") version "0.5.0" apply false
+    id("org.jetbrains.dokka") version "1.6.10" apply false
     signing
     `maven-publish`
 }
@@ -36,13 +45,10 @@ val headlessTests = System.getenv("NON_HEADLESS_TESTS") != "true"
 val useMimalloc = true
 //val useMimalloc = false
 
-val kotlinVersion: String by project
+val kotlinVersion: String = libs.versions.kotlin.get()
 val realKotlinVersion = (System.getenv("FORCED_KOTLIN_VERSION") ?: kotlinVersion)
-val coroutinesVersion: String by project
-val nodeVersion: String by project
-val jnaVersion: String by project
-val androidBuildGradleVersion: String by project
-val kotlinSerializationVersion: String by project
+val nodeVersion: String = libs.versions.node.get()
+val androidBuildGradleVersion: String = libs.versions.android.build.gradle.get()
 
 //println(KotlinVersion.CURRENT)
 
@@ -59,8 +65,9 @@ allprojects {
 		mavenCentral().content { excludeGroup("Kotlin/Native") }
         google().content { excludeGroup("Kotlin/Native") }
 		maven { url = uri("https://plugins.gradle.org/m2/") }.content { excludeGroup("Kotlin/Native") }
-        if (kotlinVersion.contains("-M") || kotlinVersion.contains("-RC") || kotlinVersion.contains("eap") || kotlinVersion.contains("-release")) {
+        if (kotlinVersion.contains("eap") || kotlinVersion.contains("-")) {
             maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/temporary").content { excludeGroup("Kotlin/Native") }
+            maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev").content { excludeGroup("Kotlin/Native") }
             maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-coroutines/maven").content { excludeGroup("Kotlin/Native") }
         }
         maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }.content { excludeGroup("Kotlin/Native") }
@@ -71,6 +78,8 @@ val hasAndroidSdk by lazy { hasAndroidSdk() }
 
 // Required by RC
 kotlin {
+    // Forced Java8 toolchain
+    //jvmToolchain { (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of("8")) }
     jvm { }
 }
 
@@ -116,7 +125,7 @@ subprojects {
             project.hasBuildGradle()
 
     if (doConfigure) {
-        val isSample = project.path.startsWith(":samples") || project.path.contains(":korge-sandbox")
+        val isSample = project.isSample
         val hasAndroid = doEnableKotlinAndroid && hasAndroidSdk
         //val hasAndroid = !isSample && true
         val mustPublish = !isSample
@@ -136,24 +145,20 @@ subprojects {
             }
         }
 
-        // @TODO: When Kotlin/Native is enabled:
-        // @TODO: Cannot change dependencies of dependency configuration ':kbignum:iosArm64MainImplementationDependenciesMetadata' after task dependencies have been resolved
-        if (!doEnableKotlinNative && !doEnableKotlinMobile) {
-            if (!isSample) {
-                apply(plugin = "org.jetbrains.dokka")
+        if (!isSample && rootProject.plugins.hasPlugin("org.jetbrains.dokka")) {
+            apply(plugin = "org.jetbrains.dokka")
 
-                tasks {
-                    val dokkaCopy by creating(Task::class) {
-                        dependsOn("dokkaHtml")
-                        doLast {
-                            val ffrom = File(project.buildDir, "dokka/html")
-                            val finto = File(project.rootProject.projectDir, "build/dokka-all/${project.name}")
-                            copy {
-                                from(ffrom)
-                                into(finto)
-                            }
-                            File(finto, "index.html").writeText("<meta http-equiv=\"refresh\" content=\"0; url=${project.name}\">\n")
+            tasks {
+                val dokkaCopy by creating(Task::class) {
+                    dependsOn("dokkaHtml")
+                    doLast {
+                        val ffrom = File(project.buildDir, "dokka/html")
+                        val finto = File(project.rootProject.projectDir, "build/dokka-all/${project.name}")
+                        copy {
+                            from(ffrom)
+                            into(finto)
                         }
+                        File(finto, "index.html").writeText("<meta http-equiv=\"refresh\" content=\"0; url=${project.name}\">\n")
                     }
                 }
             }
@@ -584,7 +589,7 @@ internal var _webServer: DecoratedHttpServer? = null
 
 samples {
     // @TODO: Patch, because runDebugReleaseExecutableMacosArm64 is not created!
-    if (isMacos && isArm) {
+    if (isMacos && isArm && doEnableKotlinNative) {
         project.tasks {
             afterEvaluate {
                 for (kind in listOf("Debug", "Release")) {
@@ -663,12 +668,11 @@ samples {
 
             if (rootProject.tasks.findByName(npmInstallEsbuild) == null) {
                 rootProject.tasks.create(npmInstallEsbuild, Exec::class) {
-                    val task = this
-                    task.dependsOn("kotlinNodeJsSetup")
-                    task.onlyIf { !esbuildCmdCheck.exists() && !esbuildCmd.exists() }
+                    dependsOn("kotlinNodeJsSetup")
+                    onlyIf { !esbuildCmdCheck.exists() && !esbuildCmd.exists() }
 
                     val esbuildVersion = esbuildVersion
-                    task.doFirst {
+                    doFirst {
                         val npmCmd = arrayOf(
                             File(env.nodeExecutable),
                             File(env.nodeDir, "lib/node_modules/npm/bin/npm-cli.js").takeIf { it.exists() }
@@ -676,8 +680,8 @@ samples {
                                 ?: error("Can't find npm-cli.js in ${env.nodeDir} standard folders")
                         )
 
-                        task.environment("PATH", ENV_PATH)
-                        task.commandLine(*npmCmd, "-g", "install", "esbuild@$esbuildVersion", "--prefix", esbuildFolder, "--scripts-prepend-node-path", "true")
+                        environment("PATH", ENV_PATH)
+                        commandLine(*npmCmd, "-g", "install", "esbuild@$esbuildVersion", "--prefix", esbuildFolder, "--scripts-prepend-node-path", "true")
                     }
                 }
             }
@@ -694,7 +698,6 @@ samples {
                 }
                 val compileDevelopmentExecutableKotlinJs = "compileDevelopmentExecutableKotlinJs"
                 val runJs by creating(Exec::class) {
-                    val task = this
                     group = "run"
                     //dependsOn("jsBrowserDevelopmentRun")
                     dependsOn(browserEsbuildResources)
@@ -707,22 +710,22 @@ samples {
                     }
 
                     val output = File(wwwFolder, "${project.name}.js")
-                    task.inputs.file(jsPath)
-                    task.outputs.file(output)
+                    inputs.file(jsPath)
+                    outputs.file(output)
                     //task.environment("PATH", ENV_PATH)
-                    task.commandLine(ArrayList<Any>().apply {
+                    commandLine(ArrayList<Any>().apply {
                         add(esbuildCmd)
                         //add("--watch",)
                         add("--bundle")
-                        add("--minify")
-                        add("--sourcemap=external")
+                        //add("--minify")
+                        //add("--sourcemap=external")
                         add(jsPath)
                         add("--outfile=$output")
                         // @TODO: Close this command on CTRL+C
                         //if (run) add("--servedir=$wwwFolder")
                     })
 
-                    task.doLast {
+                    doLast {
                         runServer(!project.gradle.startParameter.isContinuous)
                     }
                 }
@@ -965,10 +968,10 @@ object BuildVersions {
     const val GIT = "$gitVersion"
     const val KOTLIN = "$realKotlinVersion"
     const val NODE_JS = "$nodeVersion"
-    const val JNA = "$jnaVersion"
-    const val COROUTINES = "$coroutinesVersion"
+    const val JNA = "${libs.versions.jna.get()}"
+    const val COROUTINES = "${libs.versions.kotlinx.coroutines.get()}"
     const val ANDROID_BUILD = "$androidBuildGradleVersion"
-    const val KOTLIN_SERIALIZATION = "$kotlinSerializationVersion"
+    const val KOTLIN_SERIALIZATION = "${libs.versions.kotlinx.serialization.get()}"
     const val KRYPTO = "$projectVersion"
     const val KLOCK = "$projectVersion"
     const val KDS = "$projectVersion"
@@ -1019,6 +1022,8 @@ allprojects {
 }
 */
 
+val currentJavaVersion = com.soywiz.korlibs.currentJavaVersion()
+
 subprojects {
     afterEvaluate {
         tasks {
@@ -1068,6 +1073,9 @@ subprojects {
                 }
             }
             val publishMobileLocal by creating(Task::class) {
+                doFirst {
+                    //if (currentJavaVersion != 8) error("To use publishMobileRepo, must be used Java8, but used Java$currentJavaVersion")
+                }
                 run {
                     val taskName = "publishJvmPublicationToMavenLocal"
                     if (findByName(taskName) != null) {
@@ -1092,6 +1100,9 @@ subprojects {
 
             val publishMobileRepo by creating(Task::class) {
                 doFirst {
+                    if (currentJavaVersion != 8) {
+                        error("To use publishMobileRepo, must be used Java8, but used Java$currentJavaVersion")
+                    }
                     if (!customPublishEnabled) {
                         error("To use publishMobileRepo, must set `FORCED_VERSION=...` environment variable, and in ~/.gradle/gradle.properties : KORLIBS_CUSTOM_MAVEN_USER, KORLIBS_CUSTOM_MAVEN_PASS & KORLIBS_CUSTOM_MAVEN_URL")
                     }
@@ -1137,3 +1148,5 @@ if (isLinux) {
         }
     }
 }
+
+//println("currentJavaVersion=${com.soywiz.korlibs.currentJavaVersion()}")

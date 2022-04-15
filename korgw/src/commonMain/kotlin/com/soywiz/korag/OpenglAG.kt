@@ -6,16 +6,16 @@ import com.soywiz.kgl.*
 import com.soywiz.klock.*
 import com.soywiz.klogger.*
 import com.soywiz.kmem.*
+import com.soywiz.korag.annotation.*
 import com.soywiz.korag.internal.setFloats
-import com.soywiz.korag.shader.Program
-import com.soywiz.korag.shader.ProgramConfig
-import com.soywiz.korag.shader.VarKind
-import com.soywiz.korag.shader.VarType
+import com.soywiz.korag.shader.*
 import com.soywiz.korag.shader.gl.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.RGBA
 import com.soywiz.korim.vector.BitmapVector
+import com.soywiz.korio.annotations.*
 import com.soywiz.korio.lang.*
+import com.soywiz.korio.util.*
 import com.soywiz.korma.geom.*
 import com.soywiz.krypto.encoding.*
 import kotlin.jvm.JvmOverloads
@@ -24,6 +24,7 @@ import kotlin.native.concurrent.*
 
 open class SimpleAGOpengl<TKmlGl : KmlGl>(override val gl: TKmlGl, override val nativeComponent: Any = Unit) : AGOpengl()
 
+@OptIn(KorIncomplete::class, KorInternal::class, KoragExperimental::class)
 abstract class AGOpengl : AG() {
     class ShaderException(val str: String, val error: String, val errorInt: Int, val gl: KmlGl) :
         RuntimeException("Error Compiling Shader : ${errorInt.hex} : '$error' : source='$str', gl.versionInt=${gl.versionInt}, gl.versionString='${gl.versionString}', gl=$gl")
@@ -36,9 +37,9 @@ abstract class AGOpengl : AG() {
     override val isInstancedSupported: Boolean get() = gl.isInstancedSupported
 
     open val glSlVersion: Int? = null
-    open val gles: Boolean = false
-    open val linux: Boolean = false
-    open val android: Boolean = false
+    open val gles: Boolean get() = false
+    open val linux: Boolean get() = false
+    open val android: Boolean = OS.isAndroid
     open val webgl: Boolean get() = false
     open val webgl2: Boolean get() = false
 
@@ -67,22 +68,22 @@ abstract class AGOpengl : AG() {
 
         return object : BaseRenderBufferImpl() {
             override fun init() {
-                backBufferTextureBinding2d = gl.getIntegerv(gl.TEXTURE_BINDING_2D)
-                backBufferRenderBufferBinding = gl.getIntegerv(gl.RENDERBUFFER_BINDING)
-                backBufferFrameBufferBinding = gl.getIntegerv(gl.FRAMEBUFFER_BINDING)
+                backBufferTextureBinding2d = gl.getIntegerv(KmlGl.TEXTURE_BINDING_2D)
+                backBufferRenderBufferBinding = gl.getIntegerv(KmlGl.RENDERBUFFER_BINDING)
+                backBufferFrameBufferBinding = gl.getIntegerv(KmlGl.FRAMEBUFFER_BINDING)
             }
 
             override fun set() {
                 setViewport(this)
-                gl.bindTexture(gl.TEXTURE_2D, backBufferTextureBinding2d)
-                gl.bindRenderbuffer(gl.RENDERBUFFER, backBufferRenderBufferBinding)
-                gl.bindFramebuffer(gl.FRAMEBUFFER, backBufferFrameBufferBinding)
+                gl.bindTexture(KmlGl.TEXTURE_2D, backBufferTextureBinding2d)
+                gl.bindRenderbuffer(KmlGl.RENDERBUFFER, backBufferRenderBufferBinding)
+                gl.bindFramebuffer(KmlGl.FRAMEBUFFER, backBufferFrameBufferBinding)
             }
 
             override fun unset() {
-                backBufferTextureBinding2d = gl.getIntegerv(gl.TEXTURE_BINDING_2D)
-                backBufferRenderBufferBinding = gl.getIntegerv(gl.RENDERBUFFER_BINDING)
-                backBufferFrameBufferBinding = gl.getIntegerv(gl.FRAMEBUFFER_BINDING)
+                backBufferTextureBinding2d = gl.getIntegerv(KmlGl.TEXTURE_BINDING_2D)
+                backBufferRenderBufferBinding = gl.getIntegerv(KmlGl.RENDERBUFFER_BINDING)
+                backBufferFrameBufferBinding = gl.getIntegerv(KmlGl.FRAMEBUFFER_BINDING)
             }
         }
     }
@@ -100,8 +101,15 @@ abstract class AGOpengl : AG() {
         val depth = FBuffer(4)
         val framebuffer = FBuffer(4)
 
+        // http://wangchuan.github.io/coding/2016/05/26/multisampling-fbo.html
         override fun set() {
             setViewport(this)
+
+            val hasStencilAndDepth: Boolean = when {
+                android -> hasStencil || hasDepth // stencil8 causes strange bug artifacts in Android (at least in one of my devices)
+                else -> hasStencil && hasDepth
+            }
+
             //val width = this.width.nextPowerOfTwo
             //val height = this.height.nextPowerOfTwo
             if (dirty) {
@@ -114,43 +122,59 @@ abstract class AGOpengl : AG() {
                     gl.genFramebuffers(1, framebuffer)
                 }
 
-                gl.bindTexture(gl.TEXTURE_2D, ftex.tex)
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
-                gl.bindTexture(gl.TEXTURE_2D, 0)
-                gl.bindRenderbuffer(gl.RENDERBUFFER, depth.getInt(0))
+                //val doMsaa = nsamples != 1
+                val doMsaa = false
+                val texTarget = when {
+                    doMsaa -> KmlGl.TEXTURE_2D_MULTISAMPLE
+                    else -> KmlGl.TEXTURE_2D
+                }
+
+                gl.bindTexture(texTarget, ftex.tex)
+                gl.texParameteri(texTarget, KmlGl.TEXTURE_MAG_FILTER, KmlGl.LINEAR)
+                gl.texParameteri(texTarget, KmlGl.TEXTURE_MIN_FILTER, KmlGl.LINEAR)
+                if (doMsaa) {
+                    gl.texImage2DMultisample(texTarget, nsamples, gl.RGBA, width, height, false)
+                } else {
+                    gl.texImage2D(texTarget, 0, KmlGl.RGBA, width, height, 0, KmlGl.RGBA, KmlGl.UNSIGNED_BYTE, null)
+                }
+                gl.bindTexture(texTarget, 0)
+                gl.bindRenderbuffer(KmlGl.RENDERBUFFER, depth.getInt(0))
                 val internalFormat = when {
-                    hasStencil && hasDepth -> gl.DEPTH_STENCIL
-                    hasStencil -> gl.STENCIL_INDEX8
-                    hasDepth -> gl.DEPTH_COMPONENT
+                    hasStencilAndDepth -> KmlGl.DEPTH_STENCIL
+                    hasStencil -> KmlGl.STENCIL_INDEX8 // On android this is buggy somehow?
+                    hasDepth -> KmlGl.DEPTH_COMPONENT
                     else -> 0
                 }
                 if (internalFormat != 0) {
-                    if (nsamples != 1) {
-                        //gl.renderbufferStorageMultisample(gl.RENDERBUFFER, nsamples, internalFormat, width, height)
-                        gl.renderbufferStorage(gl.RENDERBUFFER, internalFormat, width, height)
+                    if (doMsaa) {
+                        gl.renderbufferStorageMultisample(KmlGl.RENDERBUFFER, nsamples, internalFormat, width, height)
+                        //gl.renderbufferStorage(KmlGl.RENDERBUFFER, internalFormat, width, height)
                     } else {
-                        gl.renderbufferStorage(gl.RENDERBUFFER, internalFormat, width, height)
+                        gl.renderbufferStorage(KmlGl.RENDERBUFFER, internalFormat, width, height)
                     }
                 }
+                gl.bindRenderbuffer(KmlGl.RENDERBUFFER, 0)
                 //gl.renderbufferStorageMultisample()
             }
 
-            gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer.getInt(0))
-            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ftex.tex, 0)
+            gl.bindFramebuffer(KmlGl.FRAMEBUFFER, framebuffer.getInt(0))
+            gl.framebufferTexture2D(KmlGl.FRAMEBUFFER, KmlGl.COLOR_ATTACHMENT0, KmlGl.TEXTURE_2D, ftex.tex, 0)
             val internalFormat = when {
-                hasStencil && hasDepth -> gl.DEPTH_STENCIL_ATTACHMENT
-                hasStencil -> gl.STENCIL_ATTACHMENT
-                hasDepth -> gl.DEPTH_ATTACHMENT
+                hasStencilAndDepth -> KmlGl.DEPTH_STENCIL_ATTACHMENT
+                hasStencil -> KmlGl.STENCIL_ATTACHMENT
+                hasDepth -> KmlGl.DEPTH_ATTACHMENT
                 else -> 0
             }
             if (internalFormat != 0) {
-                gl.framebufferRenderbuffer(gl.FRAMEBUFFER, internalFormat, gl.RENDERBUFFER, depth.getInt(0))
+                gl.framebufferRenderbuffer(KmlGl.FRAMEBUFFER, internalFormat, KmlGl.RENDERBUFFER, depth.getInt(0))
             }
+            //val status = gl.checkFramebufferStatus(KmlGl.FRAMEBUFFER);
+            //if (status != KmlGl.FRAMEBUFFER_COMPLETE) error("Error getting framebuffer")
+            //gl.bindFramebuffer(KmlGl.FRAMEBUFFER, 0)
         }
 
         override fun close() {
+            super.close()
             gl.deleteFramebuffers(1, framebuffer)
             gl.deleteRenderbuffers(1, depth)
             framebuffer.setInt(0, 0)
@@ -162,53 +186,6 @@ abstract class AGOpengl : AG() {
 
     override fun createRenderBuffer(): RenderBuffer = GlRenderBuffer()
 
-    private fun BlendEquation.toGl() = when (this) {
-        BlendEquation.ADD -> gl.FUNC_ADD
-        BlendEquation.SUBTRACT -> gl.FUNC_SUBTRACT
-        BlendEquation.REVERSE_SUBTRACT -> gl.FUNC_REVERSE_SUBTRACT
-    }
-
-    private fun BlendFactor.toGl() = when (this) {
-        BlendFactor.DESTINATION_ALPHA -> gl.DST_ALPHA
-        BlendFactor.DESTINATION_COLOR -> gl.DST_COLOR
-        BlendFactor.ONE -> gl.ONE
-        BlendFactor.ONE_MINUS_DESTINATION_ALPHA -> gl.ONE_MINUS_DST_ALPHA
-        BlendFactor.ONE_MINUS_DESTINATION_COLOR -> gl.ONE_MINUS_DST_COLOR
-        BlendFactor.ONE_MINUS_SOURCE_ALPHA -> gl.ONE_MINUS_SRC_ALPHA
-        BlendFactor.ONE_MINUS_SOURCE_COLOR -> gl.ONE_MINUS_SRC_COLOR
-        BlendFactor.SOURCE_ALPHA -> gl.SRC_ALPHA
-        BlendFactor.SOURCE_COLOR -> gl.SRC_COLOR
-        BlendFactor.ZERO -> gl.ZERO
-    }
-
-    fun TriangleFace.toGl() = when (this) {
-        TriangleFace.FRONT -> gl.FRONT
-        TriangleFace.BACK -> gl.BACK
-        TriangleFace.FRONT_AND_BACK -> gl.FRONT_AND_BACK
-        TriangleFace.NONE -> gl.FRONT
-    }
-
-    fun CompareMode.toGl() = when (this) {
-        CompareMode.ALWAYS -> gl.ALWAYS
-        CompareMode.EQUAL -> gl.EQUAL
-        CompareMode.GREATER -> gl.GREATER
-        CompareMode.GREATER_EQUAL -> gl.GEQUAL
-        CompareMode.LESS -> gl.LESS
-        CompareMode.LESS_EQUAL -> gl.LEQUAL
-        CompareMode.NEVER -> gl.NEVER
-        CompareMode.NOT_EQUAL -> gl.NOTEQUAL
-    }
-
-    fun StencilOp.toGl() = when (this) {
-        StencilOp.DECREMENT_SATURATE -> gl.DECR
-        StencilOp.DECREMENT_WRAP -> gl.DECR_WRAP
-        StencilOp.INCREMENT_SATURATE -> gl.INCR
-        StencilOp.INCREMENT_WRAP -> gl.INCR_WRAP
-        StencilOp.INVERT -> gl.INVERT
-        StencilOp.KEEP -> gl.KEEP
-        StencilOp.SET -> gl.REPLACE
-        StencilOp.ZERO -> gl.ZERO
-    }
 
     private val TEMP_MAX_MATRICES = 1024
     val tempBuffer1 = FBuffer(4)
@@ -221,51 +198,11 @@ abstract class AGOpengl : AG() {
     private val tempFloats = FloatArray(16 * TEMP_MAX_MATRICES)
     private val mat3dArray = arrayOf(Matrix3D())
 
-    private val finalScissorBL = Rectangle()
-    private val tempRect = Rectangle()
+    private val glProcessor = AGQueueProcessorOpenGL(KmlGlDummy)
 
-    fun applyScissorState(scissor: AG.Scissor? = null) {
-        //println("applyScissorState")
-        if (this.currentRenderBuffer == null) {
-            //println("this.currentRenderBuffer == null")
-        }
-        val currentRenderBuffer = this.currentRenderBuffer ?: return
-        if (currentRenderBuffer === mainRenderBuffer) {
-            var realScissors: Rectangle? = finalScissorBL
-            realScissors?.setTo(0.0, 0.0, realBackWidth.toDouble(), realBackHeight.toDouble())
-            if (scissor != null) {
-                tempRect.setTo(
-                    currentRenderBuffer.x + scissor.x,
-                    ((currentRenderBuffer.y + currentRenderBuffer.height) - (scissor.y + scissor.height)),
-                    (scissor.width),
-                    scissor.height
-                )
-                realScissors = realScissors?.intersection(tempRect, realScissors)
-            }
-
-            //println("currentRenderBuffer: $currentRenderBuffer")
-
-            val renderBufferScissor = currentRenderBuffer.scissor
-            if (renderBufferScissor != null) {
-                realScissors = realScissors?.intersection(renderBufferScissor.rect, realScissors)
-            }
-
-            //println("[MAIN_BUFFER] realScissors: $realScissors")
-
-            gl.enable(gl.SCISSOR_TEST)
-            if (realScissors != null) {
-                gl.scissor(realScissors.x.toInt(), realScissors.y.toInt(), realScissors.width.toInt(), realScissors.height.toInt())
-            } else {
-                gl.scissor(0, 0, 0, 0)
-            }
-        } else {
-            //println("[RENDER_TARGET] scissor: $scissor")
-
-            gl.enableDisable(gl.SCISSOR_TEST, scissor != null)
-            if (scissor != null) {
-                gl.scissor(scissor.x.toIntRound(), scissor.y.toIntRound(), scissor.width.toIntRound(), scissor.height.toIntRound())
-            }
-        }
+    override fun executeList(list: AGList) {
+        glProcessor.gl = gl
+        glProcessor.processBlockingAll(list)
     }
 
     override fun draw(batch: Batch) {
@@ -286,7 +223,9 @@ abstract class AGOpengl : AG() {
         //println("SCISSOR: $scissor")
 
         //finalScissor.setTo(0, 0, backWidth, backHeight)
-        applyScissorState(scissor)
+        commands { list ->
+            applyScissorState(list, scissor)
+        }
 
         var useExternalSampler = false
         for (n in 0 until uniforms.uniforms.size) {
@@ -294,11 +233,11 @@ abstract class AGOpengl : AG() {
             val uniformType = uniform.type
             val value = uniforms.values[n]
             when (uniformType) {
-                VarType.TextureUnit -> {
+                VarType.Sampler2D -> {
                     val unit = value.fastCastTo<TextureUnit>()
                     val tex = (unit.texture.fastCastTo<GlTexture?>())
                     if (tex != null) {
-                        if (tex.forcedTexTarget != gl.TEXTURE_2D && tex.forcedTexTarget != -1) {
+                        if (tex.forcedTexTarget != KmlGl.TEXTURE_2D && tex.forcedTexTarget != -1) {
                             useExternalSampler = true
                         }
                     }
@@ -329,7 +268,7 @@ abstract class AGOpengl : AG() {
                 if (!att.active) continue
                 val off = vattrspos[n]
                 val loc = glProgram.getAttribLocation(att.name)
-                val glElementType = att.type.glElementType
+                val glElementType = att.type.toGl()
                 val elementCount = att.type.elementCount
                 if (loc >= 0) {
                     gl.enableVertexAttribArray(loc)
@@ -355,19 +294,15 @@ abstract class AGOpengl : AG() {
             //println("uniform: $uniform, arrayCount=$arrayCount, stride=$stride")
 
             when (uniformType) {
-                VarType.TextureUnit, VarType.SamplerCube -> {
+                VarType.Sampler2D, VarType.SamplerCube -> {
                     val unit = value.fastCastTo<TextureUnit>()
-                    gl.activeTexture(gl.TEXTURE0 + textureUnit)
-                    if (uniformType == VarType.TextureUnit) {
-                        val tex = (unit.texture.fastCastTo<GlTexture?>())
-                        tex?.bindEnsuring()
-                        tex?.setWrap()
-                        tex?.setFilter(unit.linear, unit.trilinear ?: unit.linear)
-                    } else {
-                        val tex = unit.texture.fastCastTo<TextureGeneric>()
-                        tex.initialiseIfNeeded()
-                        tex.bindEnsuring()
-                    }
+                    gl.activeTexture(KmlGl.TEXTURE0 + textureUnit)
+
+                    val tex = (unit.texture.fastCastTo<GlTexture?>())
+                    tex?.bindEnsuring()
+                    tex?.setWrap()
+                    tex?.setFilter(unit.linear, unit.trilinear ?: unit.linear)
+
                     gl.uniform1i(location, textureUnit)
                     //val texBinding = gl.getIntegerv(gl.TEXTURE_BINDING_2D)
                     //println("OpenglAG.draw: textureUnit=$textureUnit, textureBinding=$texBinding, instances=$instances, vertexCount=$vertexCount")
@@ -469,70 +404,47 @@ abstract class AGOpengl : AG() {
             }
         }
 
-        if (blending.enabled) {
-            gl.enable(gl.BLEND)
-            gl.blendEquationSeparate(blending.eqRGB.toGl(), blending.eqA.toGl())
-            gl.blendFuncSeparate(
-                blending.srcRGB.toGl(), blending.dstRGB.toGl(),
-                blending.srcA.toGl(), blending.dstA.toGl()
-            )
-        } else {
-            gl.disable(gl.BLEND)
-        }
-
-        if (renderState.frontFace == FrontFace.BOTH) {
-            gl.disable(gl.CULL_FACE)
-        } else {
-            gl.enable(gl.CULL_FACE)
-            gl.frontFace(if (renderState.frontFace == FrontFace.CW) gl.CW else gl.CCW)
-        }
-
-        gl.depthMask(renderState.depthMask)
-        gl.depthRangef(renderState.depthNear, renderState.depthFar)
-        gl.lineWidth(renderState.lineWidth)
-
-        if (renderState.depthFunc != CompareMode.ALWAYS) {
-            gl.enable(gl.DEPTH_TEST)
-            gl.depthFunc(renderState.depthFunc.toGl())
-        } else {
-            gl.disable(gl.DEPTH_TEST)
-        }
-
-        gl.colorMask(colorMask.red, colorMask.green, colorMask.blue, colorMask.alpha)
-
-        if (stencil.enabled) {
-            gl.enable(gl.STENCIL_TEST)
-            gl.stencilFunc(stencil.compareMode.toGl(), stencil.referenceValue, stencil.readMask)
-            gl.stencilOp(
-                stencil.actionOnDepthFail.toGl(),
-                stencil.actionOnDepthPassStencilFail.toGl(),
-                stencil.actionOnBothPass.toGl()
-            )
-            gl.stencilMask(stencil.writeMask)
-        } else {
-            gl.disable(gl.STENCIL_TEST)
-            gl.stencilMask(0)
-        }
-
-        //val viewport = FBuffer(4 * 4)
-        //gl.getIntegerv(gl.VIEWPORT, viewport)
-        //println("viewport=${viewport.getAlignedInt32(0)},${viewport.getAlignedInt32(1)},${viewport.getAlignedInt32(2)},${viewport.getAlignedInt32(3)}")
-
-        if (indices != null) {
-            if (instances != 1) {
-                gl.drawElementsInstanced(type.glDrawMode, vertexCount, indexType.glIndexType, offset, instances)
-            } else {
-                gl.drawElements(type.glDrawMode, vertexCount, indexType.glIndexType, offset)
+        commands { list ->
+            list.enableDisable(AGEnable.BLEND, blending.enabled) {
+                list.blendEquation(blending.eqRGB, blending.eqA)
+                list.blendFunction(blending.srcRGB, blending.dstRGB, blending.srcA, blending.dstA)
             }
-        } else {
-            if (instances != 1) {
-                gl.drawArraysInstanced(type.glDrawMode, offset, vertexCount, instances)
-            } else {
-                gl.drawArrays(type.glDrawMode, offset, vertexCount)
+
+            list.enableDisable(AGEnable.CULL_FACE, renderState.frontFace != FrontFace.BOTH) {
+                list.frontFace(renderState.frontFace)
             }
+
+            list.depthMask(renderState.depthMask)
+            list.depthRange(renderState.depthNear, renderState.depthFar)
+
+            list.enableDisable(AGEnable.DEPTH, renderState.depthFunc != CompareMode.ALWAYS) {
+                list.depthFunction(renderState.depthFunc)
+            }
+
+            list.colorMask(colorMask.red, colorMask.green, colorMask.blue, colorMask.alpha)
+
+            if (stencil.enabled) {
+                list.enable(AGEnable.STENCIL)
+                list.stencilFunction(stencil.compareMode, stencil.referenceValue, stencil.readMask)
+                list.stencilOperation(
+                    stencil.actionOnDepthFail,
+                    stencil.actionOnDepthPassStencilFail,
+                    stencil.actionOnBothPass
+                )
+                list.stencilMask(stencil.writeMask)
+            } else {
+                list.disable(AGEnable.STENCIL)
+                list.stencilMask(0)
+            }
+
+            //val viewport = FBuffer(4 * 4)
+            //gl.getIntegerv(KmlGl.VIEWPORT, viewport)
+            //println("viewport=${viewport.getAlignedInt32(0)},${viewport.getAlignedInt32(1)},${viewport.getAlignedInt32(2)},${viewport.getAlignedInt32(3)}")
+
+            list.draw(type, vertexCount, offset, instances, if (indices != null) indexType else null)
         }
 
-        //glSetActiveTexture(gl.TEXTURE0)
+        //glSetActiveTexture(KmlGl.TEXTURE0)
 
         batch.vertexData.fastForEach { entry ->
             val vattrs = entry.layout.attributes
@@ -550,41 +462,6 @@ abstract class AGOpengl : AG() {
         }
     }
 
-    val TextureTargetKind.glTarget: Int
-        get() = when (this) {
-            TextureTargetKind.TEXTURE_2D -> gl.TEXTURE_2D
-            TextureTargetKind.TEXTURE_3D -> gl.TEXTURE_3D
-            TextureTargetKind.TEXTURE_CUBE_MAP -> gl.TEXTURE_CUBE_MAP
-        }
-
-    val DrawType.glDrawMode: Int
-        get() = when (this) {
-            DrawType.POINTS -> gl.POINTS
-            DrawType.LINE_STRIP -> gl.LINE_STRIP
-            DrawType.LINE_LOOP -> gl.LINE_LOOP
-            DrawType.LINES -> gl.LINES
-            DrawType.TRIANGLE_STRIP -> gl.TRIANGLE_STRIP
-            DrawType.TRIANGLE_FAN -> gl.TRIANGLE_FAN
-            DrawType.TRIANGLES -> gl.TRIANGLES
-        }
-
-    val VarType.glElementType: Int
-        get() = when (this.kind) {
-            VarKind.TBYTE -> gl.BYTE
-            VarKind.TUNSIGNED_BYTE -> gl.UNSIGNED_BYTE
-            VarKind.TSHORT -> gl.SHORT
-            VarKind.TUNSIGNED_SHORT -> gl.UNSIGNED_SHORT
-            VarKind.TINT -> gl.UNSIGNED_INT
-            VarKind.TFLOAT -> gl.FLOAT
-        }
-
-    val IndexType.glIndexType: Int
-        get() = when (this) {
-            IndexType.UBYTE -> gl.UNSIGNED_BYTE
-            IndexType.USHORT -> gl.UNSIGNED_SHORT
-            IndexType.UINT -> gl.UNSIGNED_INT
-        }
-
     private val programs = FastIdentityMap<Program, FastIdentityMap<ProgramConfig, GlProgram>>()
 
     @JvmOverloads
@@ -594,90 +471,32 @@ abstract class AGOpengl : AG() {
 
     inner class GlProgram(val gl: KmlGl, val program: Program, val programConfig: ProgramConfig) : Closeable {
         var cachedVersion = -1
-        var id: Int = 0
-        var fragmentShaderId: Int = 0
-        var vertexShaderId: Int = 0
+        var programInfo: GLProgramInfo? = null
 
-        val cachedAttribLocations = FastStringMap<Int>()
-        val cachedUniformLocations = FastStringMap<Int>()
+        val id: Int get() = programInfo?.programId ?: 0
 
-        fun getAttribLocation(name: String): Int =
-            cachedAttribLocations.getOrPut(name) { gl.getAttribLocation(id, name) }
-
-        fun getUniformLocation(name: String): Int =
-            cachedUniformLocations.getOrPut(name) { gl.getUniformLocation(id, name) }
-
-        private fun String.replaceVersion(version: Int) = this.replace("#version 100", "#version $version")
-
-        private inline fun createShaderCompat(type: Int, gen: (compat: Boolean) -> String): Int {
-            return try {
-                createShader(type, gen(true))
-            } catch (e: ShaderException) {
-                createShader(type, gen(false))
-            }
-        }
+        fun getAttribLocation(name: String): Int = programInfo?.getAttribLocation(gl, name) ?: 0
+        fun getUniformLocation(name: String): Int = programInfo?.getUniformLocation(gl, name) ?: 0
 
         private fun ensure() {
             if (cachedVersion != contextVersion) {
                 val time = measureTime {
-                    val oldCachedVersion = cachedVersion
                     cachedVersion = contextVersion
-                    id = gl.createProgram()
-
-                    if (GlslGenerator.DEBUG_GLSL) {
-                        Console.warn("OpenglAG: Creating program ${program.name} with id $id because contextVersion: $oldCachedVersion != $contextVersion")
-                    }
-
-                    //println("GL_SHADING_LANGUAGE_VERSION: $glslVersionInt : $glslVersionString")
-
-                    val guessedGlSlVersion = glSlVersion ?: gl.versionInt
-                    val usedGlSlVersion = GlslGenerator.FORCE_GLSL_VERSION?.toIntOrNull()
-                        ?: when (guessedGlSlVersion) {
-                            460 -> 460
-                            in 300..450 -> 100
-                            else -> guessedGlSlVersion
-                        }
-
-                    if (GlslGenerator.DEBUG_GLSL) {
-                        Console.trace("GLSL version: requested=$glSlVersion, guessed=$guessedGlSlVersion, forced=${GlslGenerator.FORCE_GLSL_VERSION}. used=$usedGlSlVersion")
-                    }
-
-                    fragmentShaderId = createShaderCompat(gl.FRAGMENT_SHADER) { compatibility ->
-                        program.fragment.toNewGlslString(GlslConfig(gles = gles, version = usedGlSlVersion, compatibility = compatibility, android = android, programConfig = programConfig))
-                    }
-                    vertexShaderId = createShaderCompat(gl.VERTEX_SHADER) { compatibility ->
-                        program.vertex.toNewGlslString(GlslConfig(gles = gles, version = usedGlSlVersion, compatibility = compatibility, android = android, programConfig = programConfig))
-                    }
-                    gl.attachShader(id, fragmentShaderId)
-                    gl.attachShader(id, vertexShaderId)
-                    gl.linkProgram(id)
-                    tempBuffer1.setInt(0, 0)
-                    gl.getProgramiv(id, gl.LINK_STATUS, tempBuffer1)
+                    programInfo = GLShaderCompiler.programCreate(
+                        gl, GlslConfig(gles = gles, android = android, programConfig = programConfig),
+                        program,
+                        glSlVersion
+                    )
                 }
                 if (GlslGenerator.DEBUG_GLSL) {
-                    Console.info("OpenglAG: Created program ${program.name} with id $id in time=$time")
+                    Console.info("OpenglAG: Created program ${program.name} with id ${programInfo?.programId} in time=$time")
                 }
             }
-        }
-
-        private fun createShader(type: Int, str: String): Int {
-            val shaderId = gl.createShader(type)
-
-            gl.shaderSource(shaderId, str)
-            gl.compileShader(shaderId)
-
-            val out = gl.getShaderiv(shaderId, gl.COMPILE_STATUS)
-            val errorInt = gl.getError()
-            if (out != gl.GTRUE) {
-                val error = gl.getShaderInfoLog(shaderId)
-                throw ShaderException(str, error, errorInt, gl)
-            }
-            return shaderId
         }
 
         fun use() {
             ensure()
-            gl.useProgram(id)
+            programInfo?.use(gl)
         }
 
         fun unuse() {
@@ -686,110 +505,18 @@ abstract class AGOpengl : AG() {
         }
 
         override fun close() {
-            gl.deleteShader(fragmentShaderId)
-            gl.deleteShader(vertexShaderId)
-            gl.deleteProgram(id)
+            programInfo?.delete(gl)
+            programInfo = null
         }
     }
 
-    // @TODO: Kotlin inline bug
-    //Back-end (JVM) Internal error: wrong code generated
-    //org.jetbrains.kotlin.codegen.CompilationException Back-end (JVM) Internal error: Couldn't transform method node:
-    //clear (IFIZZZ)V:
-    override fun clear(
-        color: RGBA,
-        depth: Float,
-        stencil: Int,
-        clearColor: Boolean,
-        clearDepth: Boolean,
-        clearStencil: Boolean,
-        scissor: AG.Scissor?,
-    ) {
-        //println("CLEAR: $color, $depth")
-        var bits = 0
-        applyScissorState(scissor)
-        //gl.disable(gl.SCISSOR_TEST)
-        if (clearColor) {
-            bits = bits or gl.COLOR_BUFFER_BIT
-            gl.colorMask(true, true, true, true)
-            gl.clearColor(color.rf, color.gf, color.bf, color.af)
-        }
-        if (clearDepth) {
-            bits = bits or gl.DEPTH_BUFFER_BIT
-            gl.depthMask(true)
-            gl.clearDepthf(depth)
-        }
-        if (clearStencil) {
-            bits = bits or gl.STENCIL_BUFFER_BIT
-            gl.stencilMask(-1)
-            gl.clearStencil(stencil)
-        }
-        gl.clear(bits)
-    }
-
-    override fun createTexture(premultiplied: Boolean): Texture = GlTexture(this.gl, premultiplied)
-
-    override fun createTexture(targetKind: TextureTargetKind, init: Texture.(gl: KmlGl) -> Unit): Texture {
-        val tex = TextureGeneric(targetKind, init)
-        return tex
-    }
-
-    inner class TextureGeneric(val targetKind: TextureTargetKind, val init: Texture.(gl: KmlGl) -> Unit) : Texture() {
-
-        private var initialised: Boolean = false
-
-        val texRef: Int by lazy {
-            val texIds = FBuffer(4)
-            gl.genTextures(1, texIds)
-            texIds.getInt(0)
-        }
-
-        fun initialiseIfNeeded() {
-            if (!initialised) {
-                this.texRef
-                this.init(gl)
-                this.initialised = true
-            }
-        }
-
-        override fun bind() {
-            gl.bindTexture(targetKind.glTarget, this.texRef)
-        }
-
-        override fun actualSyncUpload(source: BitmapSourceBase, bmp: Bitmap?, requestMipmaps: Boolean) {
-            this.mipmaps = false
-
-            val bytesPerPixel = if (source.rgba) 4 else 1
-            val type = if (source.rgba) {
-                //if (source is NativeImage) gl.BGRA else gl.RGBA
-                gl.RGBA
-            } else {
-                gl.LUMINANCE
-            }
-
-            val bmp = when (bmp) {
-                is BitmapVector -> bmp.nativeImage
-                else -> bmp
-            }
-
-            when (bmp) {
-                is NativeImage -> {
-                    prepareUploadNativeTexture(bmp)
-                    if (bmp.area != 0) {
-                        init.invoke(this, gl)
-                    }
-                }
-                else -> {
-                }
-            }
-        }
-
-    }
+    override fun createTexture(premultiplied: Boolean, targetKind: TextureTargetKind): Texture =
+        GlTexture(this.gl, premultiplied, targetKind)
 
     inner class GlBuffer(kind: Buffer.Kind) : Buffer(kind) {
         var cachedVersion = -1
         private var id = -1
-        val glKind = if (kind == Buffer.Kind.INDEX) gl.ELEMENT_ARRAY_BUFFER else gl.ARRAY_BUFFER
+        val glKind = if (kind == Buffer.Kind.INDEX) KmlGl.ELEMENT_ARRAY_BUFFER else KmlGl.ARRAY_BUFFER
 
         override fun afterSetMem() {
         }
@@ -817,7 +544,7 @@ abstract class AGOpengl : AG() {
             if (dirty) {
                 _bind(gl, id)
                 if (mem != null) {
-                    gl.bufferData(glKind, memLength, mem!!, gl.STATIC_DRAW)
+                    gl.bufferData(glKind, memLength, mem!!, KmlGl.STATIC_DRAW)
                 }
             }
             return id
@@ -837,13 +564,14 @@ abstract class AGOpengl : AG() {
 
     inner class GlTexture(
         val gl: KmlGl,
-        override val premultiplied: Boolean
+        override val premultiplied: Boolean,
+        val targetKind: TextureTargetKind = TextureTargetKind.TEXTURE_2D
     ) : Texture() {
         var cachedVersion = -1
         val texIds = FBuffer(4)
 
         var forcedTexId: Int = -1
-        var forcedTexTarget: Int = gl.TEXTURE_2D
+        var forcedTexTarget: Int = targetKind.toGl()
 
         val tex: Int
             get() {
@@ -869,60 +597,71 @@ abstract class AGOpengl : AG() {
             }
         }
 
-        override fun actualSyncUpload(source: BitmapSourceBase, bmp: Bitmap?, requestMipmaps: Boolean) {
+        override fun actualSyncUpload(source: BitmapSourceBase, bmps: List<Bitmap?>?, requestMipmaps: Boolean) {
             this.mipmaps = false
 
             val bytesPerPixel = if (source.rgba) 4 else 1
-            val type = if (source.rgba) {
-                //if (source is NativeImage) gl.BGRA else gl.RGBA
-                gl.RGBA
-            } else {
-                gl.LUMINANCE
-            }
-            val isFloat = bmp is FloatBitmap32
-
-            val bmp = when (bmp) {
-                is BitmapVector -> bmp.nativeImage
-                else -> bmp
+            val type = when {
+                source.rgba -> KmlGl.RGBA //if (source is NativeImage) KmlGl.BGRA else KmlGl.RGBA
+                else -> KmlGl.LUMINANCE
             }
 
-            when (bmp) {
-                is ForcedTexId -> {
-                    this.forcedTexId = bmp.forcedTexId
-                    if (bmp is ForcedTexTarget) this.forcedTexTarget = bmp.forcedTexTarget
-                    return
-                }
-                is NativeImage -> {
-                    if (bmp.forcedTexId != -1) {
-                        this.forcedTexId = bmp.forcedTexId
-                        if (bmp.forcedTexTarget != -1) this.forcedTexTarget = bmp.forcedTexTarget
-                        gl.bindTexture(forcedTexTarget, forcedTexId) // @TODO: Check. Why do we need to bind it now?
-                        return
+            //this.bind() // Already bound
+
+            if (bmps != null) {
+                for ((index, rbmp) in bmps.withIndex()) {
+                    val bmp = when (rbmp) {
+                        is BitmapVector -> rbmp.nativeImage
+                        else -> rbmp
                     }
-                    prepareUploadNativeTexture(bmp)
-                    if (bmp.area != 0) {
-                        prepareTexImage2D()
-                        gl.texImage2D(forcedTexTarget, 0, type, type, gl.UNSIGNED_BYTE, bmp)
+                    val isFloat = bmp is FloatBitmap32
+
+                    when {
+                        bmp is ForcedTexId -> {
+                            this.forcedTexId = bmp.forcedTexId
+                            if (bmp is ForcedTexTarget) this.forcedTexTarget = bmp.forcedTexTarget
+                            return
+                        }
+                        bmp is NativeImage && bmp.forcedTexId != -1 -> {
+                            this.forcedTexId = bmp.forcedTexId
+                            if (bmp.forcedTexTarget != -1) this.forcedTexTarget = bmp.forcedTexTarget
+                            gl.bindTexture(forcedTexTarget, forcedTexId) // @TODO: Check. Why do we need to bind it now?
+                            return
+                        }
                     }
-                }
-                else -> {
-                    val buffer = createBufferForBitmap(bmp)
-                    if (buffer != null && source.width != 0 && source.height != 0 && buffer.size != 0) {
-                        prepareTexImage2D()
-                        val internalFormat = when {
-                            isFloat && (webgl2 || !webgl) -> GL_RGBA32F
-                            else -> type
+
+                    val texTarget = when (forcedTexTarget) {
+                        KmlGl.TEXTURE_CUBE_MAP -> KmlGl.TEXTURE_CUBE_MAP_POSITIVE_X + index
+                        else -> forcedTexTarget
+                    }
+
+                    if (bmp is NativeImage) {
+                        prepareUploadNativeTexture(bmp)
+                        if (bmp.area != 0) {
+                            prepareTexImage2D()
+                            gl.texImage2D(texTarget, 0, type, type, KmlGl.UNSIGNED_BYTE, bmp)
                         }
-                        val format = type
-                        val texType = when {
-                            isFloat -> gl.FLOAT
-                            else -> gl.UNSIGNED_BYTE
+                    } else {
+                        val buffer = createBufferForBitmap(bmp)
+                        if (buffer != null && source.width != 0 && source.height != 0 && buffer.size != 0) {
+                            prepareTexImage2D()
+                            val internalFormat = when {
+                                isFloat && (webgl2 || !webgl) -> GL_RGBA32F
+                                else -> type
+                            }
+                            val format = type
+                            val texType = when {
+                                isFloat -> KmlGl.FLOAT
+                                else -> KmlGl.UNSIGNED_BYTE
+                            }
+                            //println("actualSyncUpload: webgl=$webgl, internalFormat=${internalFormat.hex}, format=${format.hex}, textype=${texType.hex}")
+                            gl.texImage2D(texTarget, 0, internalFormat, source.width, source.height, 0, format, texType, buffer)
                         }
-                        //println("actualSyncUpload: webgl=$webgl, internalFormat=${internalFormat.hex}, format=${format.hex}, textype=${texType.hex}")
-                        gl.texImage2D(forcedTexTarget, 0, internalFormat, source.width, source.height, 0, format, texType, buffer)
                     }
                     //println(buffer)
                 }
+            } else {
+                gl.texImage2D(forcedTexTarget, 0, type, source.width, source.height, 0, type, KmlGl.UNSIGNED_BYTE, null)
             }
 
             if (requestMipmaps && source.width.isPowerOfTwo && source.height.isPowerOfTwo) {
@@ -951,9 +690,9 @@ abstract class AGOpengl : AG() {
         fun prepareTexImage2D() {
             if (linux) {
                 //println("prepareTexImage2D")
-                //gl.pixelStorei(GL_UNPACK_LSB_FIRST, gl.TRUE)
-                gl.pixelStorei(GL_UNPACK_LSB_FIRST, gl.GFALSE)
-                gl.pixelStorei(GL_UNPACK_SWAP_BYTES, gl.GTRUE)
+                //gl.pixelStorei(GL_UNPACK_LSB_FIRST, KmlGl.TRUE)
+                gl.pixelStorei(GL_UNPACK_LSB_FIRST, KmlGl.GFALSE)
+                gl.pixelStorei(GL_UNPACK_SWAP_BYTES, KmlGl.GTRUE)
             }
         }
 
@@ -979,30 +718,33 @@ abstract class AGOpengl : AG() {
             val minFilter = if (this.mipmaps) {
                 when {
                     linear -> when {
-                        trilinear -> gl.LINEAR_MIPMAP_LINEAR
-                        else -> gl.LINEAR_MIPMAP_NEAREST
+                        trilinear -> KmlGl.LINEAR_MIPMAP_LINEAR
+                        else -> KmlGl.LINEAR_MIPMAP_NEAREST
                     }
                     else -> when {
-                        trilinear -> gl.NEAREST_MIPMAP_LINEAR
-                        else -> gl.NEAREST_MIPMAP_NEAREST
+                        trilinear -> KmlGl.NEAREST_MIPMAP_LINEAR
+                        else -> KmlGl.NEAREST_MIPMAP_NEAREST
                     }
                 }
             } else {
-                if (linear) gl.LINEAR else gl.NEAREST
+                if (linear) KmlGl.LINEAR else KmlGl.NEAREST
             }
-            val magFilter = if (linear) gl.LINEAR else gl.NEAREST
+            val magFilter = if (linear) KmlGl.LINEAR else KmlGl.NEAREST
 
             setMinMag(minFilter, magFilter)
         }
 
         fun setWrap() {
-            gl.texParameteri(forcedTexTarget, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-            gl.texParameteri(forcedTexTarget, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+            gl.texParameteri(forcedTexTarget, KmlGl.TEXTURE_WRAP_S, KmlGl.CLAMP_TO_EDGE)
+            gl.texParameteri(forcedTexTarget, KmlGl.TEXTURE_WRAP_T, KmlGl.CLAMP_TO_EDGE)
+            if (forcedTexTarget == KmlGl.TEXTURE_CUBE_MAP || forcedTexTarget == KmlGl.TEXTURE_3D) {
+                gl.texParameteri(forcedTexTarget, KmlGl.TEXTURE_WRAP_R, KmlGl.CLAMP_TO_EDGE)
+            }
         }
 
         private fun setMinMag(min: Int, mag: Int) {
-            gl.texParameteri(forcedTexTarget, gl.TEXTURE_MIN_FILTER, min)
-            gl.texParameteri(forcedTexTarget, gl.TEXTURE_MAG_FILTER, mag)
+            gl.texParameteri(forcedTexTarget, KmlGl.TEXTURE_MIN_FILTER, min)
+            gl.texParameteri(forcedTexTarget, KmlGl.TEXTURE_MAG_FILTER, mag)
         }
 
         override fun toString(): String = "AGOpengl.GlTexture($tex)"
@@ -1012,7 +754,7 @@ abstract class AGOpengl : AG() {
         fbuffer(bitmap.area * 4) { buffer ->
             gl.readPixels(
                 0, 0, bitmap.width, bitmap.height,
-                gl.RGBA, gl.UNSIGNED_BYTE, buffer
+                KmlGl.RGBA, KmlGl.UNSIGNED_BYTE, buffer
             )
             buffer.getAlignedArrayInt32(0, bitmap.data.ints, 0, bitmap.area)
             //println("readColor.HASH:" + bitmap.computeHash())
@@ -1023,7 +765,7 @@ abstract class AGOpengl : AG() {
         val area = width * height
         fbuffer(area * 4) { buffer ->
             gl.readPixels(
-                0, 0, width, height, gl.DEPTH_COMPONENT, gl.FLOAT,
+                0, 0, width, height, KmlGl.DEPTH_COMPONENT, KmlGl.FLOAT,
                 buffer
             )
             buffer.getAlignedArrayFloat32(0, out, 0, area)
@@ -1034,7 +776,7 @@ abstract class AGOpengl : AG() {
         fbuffer(bitmap.area * 1) { buffer ->
             gl.readPixels(
                 0, 0, bitmap.width, bitmap.height,
-                gl.STENCIL_INDEX, gl.UNSIGNED_BYTE, buffer
+                KmlGl.STENCIL_INDEX, KmlGl.UNSIGNED_BYTE, buffer
             )
             buffer.getArrayInt8(0, bitmap.data, 0, bitmap.area)
             //println("readColor.HASH:" + bitmap.computeHash())

@@ -7,6 +7,7 @@ import com.soywiz.korim.font.*
 import com.soywiz.korim.paint.*
 import com.soywiz.korim.text.HorizontalAlign
 import com.soywiz.korim.text.VerticalAlign
+import com.soywiz.korim.vector.format.*
 import com.soywiz.korio.serialization.xml.Xml
 import com.soywiz.korio.util.niceStr
 import com.soywiz.korio.util.toStringDecimal
@@ -126,6 +127,7 @@ fun Shape.getBounds(out: Rectangle = Rectangle(), bb: BoundsBuilder = BoundsBuil
     return out
 }
 
+fun Shape.toSvgInstance(scale: Double = 1.0): SVG = SVG(toSvg(scale))
 fun Shape.toSvg(scale: Double = 1.0): Xml = SvgBuilder(this.getBounds(), scale).apply { buildSvg(this) }.toXml()
 fun Drawable.toShape(width: Int, height: Int): Shape = buildShape(width, height) { draw(this@toShape) }
 fun Drawable.toSvg(width: Int, height: Int, scale: Double = 1.0): Xml = toShape(width, height).toSvg(scale)
@@ -134,28 +136,38 @@ fun SizedDrawable.toShape(): Shape = toShape(width, height)
 fun SizedDrawable.toSvg(scale: Double = 1.0): Xml = toSvg(width, height, scale)
 
 interface StyledShape : Shape {
+    /**
+     * Path with transform already applied
+     *
+     * @TODO: Probably it shouldn't have the transform applied
+     */
 	val path: GraphicsPath? get() = null
 	val clip: GraphicsPath?
 	val paint: Paint
 	val transform: Matrix
+    val globalAlpha: Double
 
-	override fun addBounds(bb: BoundsBuilder, includeStrokes: Boolean): Unit {
+    fun getUntransformedPath(): GraphicsPath? {
+        return path?.clone()?.applyTransform(transform.inverted())?.toGraphicsPath()
+    }
+
+	override fun addBounds(bb: BoundsBuilder, includeStrokes: Boolean) {
         path?.let { path ->
-            bb.add(path, transform)
+            // path is already transformed, so using `transform` is not required
+            bb.add(path)
         }
 	}
 
 	override fun buildSvg(svg: SvgBuilder) {
 		svg.nodes += Xml.Tag(
 			"path", mapOf(
-				//"d" to path.toSvgPathString(svg.scale, svg.tx, svg.ty)
-				"d" to (path?.toSvgPathString() ?: ""),
+				"d" to (getUntransformedPath()?.toSvgPathString() ?: ""),
                 "transform" to transform.toSvg()
             ) + getSvgXmlAttributes(svg), listOf()
 		)
 	}
 
-    override fun getPath(path: GraphicsPath) = path.also {
+    override fun getPath(path: GraphicsPath): GraphicsPath = path.also {
         this.path?.let { path.write(it) }
     }
 
@@ -165,7 +177,7 @@ interface StyledShape : Shape {
 
 	override fun draw(c: Context2d) {
 		c.keepTransform {
-			c.transform(transform)
+			//c.transform(transform) // Already applied to the path
 			c.beginPath()
 			path?.draw(c)
 			if (clip != null) {
@@ -310,7 +322,8 @@ data class FillShape(
     override val path: GraphicsPath,
     override val clip: GraphicsPath?,
     override val paint: Paint,
-    override val transform: Matrix = Matrix()
+    override val transform: Matrix = Matrix(),
+    override val globalAlpha: Double = 1.0,
 ) : StyledShape {
 	override fun drawInternal(c: Context2d) {
 		c.fill(paint)
@@ -339,10 +352,18 @@ data class PolylineShape(
     val startCaps: LineCap,
     val endCaps: LineCap,
     val lineJoin: LineJoin,
-    val miterLimit: Double
-) : StyledShape {
+    val miterLimit: Double,
+    override val globalAlpha: Double = 1.0,
+    ) : StyledShape {
     private val tempBB = BoundsBuilder()
     private val tempRect = Rectangle()
+
+    val fillShape: FillShape by lazy {
+        FillShape(
+            path.strokeToFill(thickness, lineJoin, startCaps, endCaps, miterLimit).toGraphicsPath(),
+            clip, paint, transform, globalAlpha
+        )
+    }
 
     override fun addBounds(bb: BoundsBuilder, includeStrokes: Boolean) {
         tempBB.reset()
@@ -407,7 +428,8 @@ class TextShape(
     val stroke: Paint?,
     val halign: HorizontalAlign = HorizontalAlign.LEFT,
     val valign: VerticalAlign = VerticalAlign.TOP,
-    override val transform: Matrix = Matrix()
+    override val transform: Matrix = Matrix(),
+    override val globalAlpha: Double = 1.0,
 ) : StyledShape {
     override val paint: Paint get() = fill ?: stroke ?: NonePaint
 
@@ -426,8 +448,8 @@ class TextShape(
         buildShape {
             this.transform(this@TextShape.transform)
             this.clip(this@TextShape.clip)
-            if (fill != null) font?.drawText(this, fontSize, text, fill, x, y, fill = true)
-            if (stroke != null) font?.drawText(this, fontSize, text, stroke, x, y, fill = false)
+            if (this@TextShape.fill != null) this@TextShape.font?.drawText(this, this@TextShape.fontSize, this@TextShape.text, this@TextShape.fill, this@TextShape.x, this@TextShape.y, fill = true)
+            if (this@TextShape.stroke != null) this@TextShape.font?.drawText(this, this@TextShape.fontSize, this@TextShape.text, this@TextShape.stroke, this@TextShape.x, this@TextShape.y, fill = false)
         }
     }
 

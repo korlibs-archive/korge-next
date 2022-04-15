@@ -105,7 +105,7 @@ open class Context2d constructor(
         var startLineCap: LineCap = LineCap.BUTT,
         var endLineCap: LineCap = LineCap.BUTT,
         var lineJoin: LineJoin = LineJoin.MITER,
-        var miterLimit: Double = 4.0,
+        var miterLimit: Double = 10.0,
         var strokeStyle: Paint = DefaultPaint,
         var fillStyle: Paint = DefaultPaint,
         var fontRegistry: FontRegistry? = null,
@@ -148,6 +148,7 @@ open class Context2d constructor(
 	var lineScaleMode: LineScaleMode ; get() = state.lineScaleMode ; set(value) { state.lineScaleMode = value }
 	var lineWidth: Double ; get() = state.lineWidth ; set(value) { state.lineWidth = value }
 	var lineCap: LineCap ; get() = state.lineCap ; set(value) { state.lineCap = value }
+    var miterLimit: Double ; get() = state.miterLimit ; set(value) { state.miterLimit = value }
     var startLineCap: LineCap ; get() = state.startLineCap ; set(value) { state.startLineCap = value }
     var endLineCap: LineCap ; get() = state.endLineCap ; set(value) { state.endLineCap = value }
     var lineJoin: LineJoin ; get() = state.lineJoin ; set(value) { state.lineJoin = value }
@@ -239,6 +240,7 @@ open class Context2d constructor(
 		}
 	}
 
+    // @TODO: preallocate states and use it as a pool, and mutate the ones there
 	fun save() { stack.push(state.clone()) }
 	fun restore() { state = stack.pop() }
 
@@ -367,17 +369,28 @@ open class Context2d constructor(
         fill(paint)
     }
 
-    inline fun stroke(paint: Paint, lineWidth: Double = this.lineWidth, lineCap: LineCap = this.lineCap, lineJoin: LineJoin = this.lineJoin, begin: Boolean = true, callback: () -> Unit) {
+    inline fun stroke(
+        paint: Paint,
+        lineWidth: Double = this.lineWidth,
+        lineCap: LineCap = this.lineCap,
+        lineJoin: LineJoin = this.lineJoin,
+        miterLimit: Double = this.miterLimit,
+        begin: Boolean = true,
+        callback: () -> Unit
+    ) {
         if (begin) beginPath()
 		callback()
-        this.lineWidth = lineWidth
-        this.lineCap = lineCap
-        this.lineJoin = lineJoin
-		stroke(paint)
+        keep {
+            this.lineWidth = lineWidth
+            this.lineCap = lineCap
+            this.lineJoin = lineJoin
+            this.miterLimit = miterLimit
+            stroke(paint)
+        }
 	}
 
     inline fun stroke(paint: Paint, info: StrokeInfo, begin: Boolean = true, callback: () -> Unit) {
-        stroke(paint, info.thickness, info.startCap, info.lineJoin, begin, callback)
+        stroke(paint, info.thickness, info.startCap, info.lineJoin, info.miterLimit, begin, callback)
     }
 
     inline fun fillStroke(fill: Paint, stroke: Paint, callback: () -> Unit) {
@@ -396,8 +409,22 @@ open class Context2d constructor(
             state.clip!!.clear()
             state.clip!!.winding = winding
             state.clip!!.write(path)
+            if (path === state.path) {
+                path.clear()
+            }
         } else {
             state.clip = null
+        }
+    }
+
+    fun clip(buildClipShape: () -> Unit, useClipShape: () -> Unit) {
+        val oldClip = state.clip
+        try {
+            buildClipShape()
+            clip()
+            useClipShape()
+        } finally {
+            state.clip = oldClip
         }
     }
 
@@ -452,10 +479,12 @@ open class Context2d constructor(
 
     inline fun createLinearGradient(x0: Number, y0: Number, x1: Number, y1: Number, cycle: CycleMethod = CycleMethod.NO_CYCLE, transform: Matrix = Matrix(), block: GradientPaint.() -> Unit) = LinearGradientPaint(x0, y0, x1, y1, cycle, transform, block)
     inline fun createRadialGradient(x0: Number, y0: Number, r0: Number, x1: Number, y1: Number, r1: Number, cycle: CycleMethod = CycleMethod.NO_CYCLE, transform: Matrix = Matrix(), block: GradientPaint.() -> Unit) = RadialGradientPaint(x0, y0, r0, x1, y1, r1, cycle, transform, block)
+    @Deprecated("Only available on Android or Bitmap32")
     inline fun createSweepGradient(x0: Number, y0: Number, transform: Matrix = Matrix(), block: GradientPaint.() -> Unit) = SweepGradientPaint(x0, y0, transform, block)
 
     inline fun createLinearGradient(x0: Number, y0: Number, x1: Number, y1: Number, cycle: CycleMethod = CycleMethod.NO_CYCLE, transform: Matrix = Matrix()) = LinearGradientPaint(x0, y0, x1, y1, cycle, transform)
     inline fun createRadialGradient(x0: Number, y0: Number, r0: Number, x1: Number, y1: Number, r1: Number, cycle: CycleMethod = CycleMethod.NO_CYCLE, transform: Matrix = Matrix()) = RadialGradientPaint(x0, y0, r0, x1, y1, r1, cycle, transform)
+    @Deprecated("Only available on Android or Bitmap32")
     inline fun createSweepGradient(x0: Number, y0: Number, transform: Matrix = Matrix()) = SweepGradientPaint(x0, y0, transform)
 
     fun createColor(color: RGBA): RGBA = color

@@ -37,8 +37,6 @@ class BitmapFiller : BaseFiller() {
     private var texture: Bitmap32 = Bitmaps.transparent.bmp
     private var transform: Matrix = Matrix()
     private var linear: Boolean = true
-    private val stateTrans = Matrix()
-    private val fillTrans = Matrix()
     private val compTrans = Matrix()
 
     fun set(fill: BitmapPaint, state: Context2d.State) = this.apply {
@@ -47,17 +45,16 @@ class BitmapFiller : BaseFiller() {
         this.texture = fill.bmp32
         this.transform = fill.transform
         this.linear = fill.smooth
-        state.transform.inverted(this.stateTrans)
-        fill.transform.inverted(this.fillTrans)
         compTrans.apply {
             identity()
-            premultiply(fillTrans)
-            premultiply(stateTrans)
+            premultiply(state.transform)
+            premultiply(fill.transform)
+            invert()
         }
     }
 
-    fun lookupLinear(x: Double, y: Double): RGBA = texture.getRgbaSampled(x, y)
-    fun lookupNearest(x: Double, y: Double): RGBA = texture[x.toInt(), y.toInt()]
+    fun lookupLinear(x: Float, y: Float): RGBA = texture.getRgbaSampled(x, y)
+    fun lookupNearest(x: Float, y: Float): RGBA = texture[x.toInt(), y.toInt()]
 
     override fun fill(data: RgbaPremultipliedArray, offset: Int, x0: Int, x1: Int, y: Int) {
         /*
@@ -75,10 +72,19 @@ class BitmapFiller : BaseFiller() {
             data[n] = color.premultiplied
         }
         */
+        val mat = compTrans
+        val texWidth = texture.width.toFloat()
+        val texHeight = texture.height.toFloat()
+        val iTexWidth = 1f / texWidth
+        val iTexHeight = 1f / texHeight
+        val yFloat = y.toFloat()
+        val cycleX = this.cycleX
+        val cycleY = this.cycleY
         for (n in x0..x1) {
-            val tx = cycleX.apply(compTrans.transformX(n.toDouble(), y.toDouble()), texture.width.toDouble())
-            val ty = cycleY.apply(compTrans.transformY(n.toDouble(), y.toDouble()), texture.height.toDouble())
+            val tx = cycleX.apply(mat.transformXf(n.toFloat(), yFloat) * iTexWidth) * texWidth
+            val ty = cycleY.apply(mat.transformYf(n.toFloat(), yFloat) * iTexHeight) * texHeight
             val color = if (linear) lookupLinear(tx, ty) else lookupNearest(tx, ty)
+            //val color = lookupNearest(tx, ty)
             //println("($tx, $ty)")
             data[offset + n] = color.premultiplied
         }
@@ -91,33 +97,33 @@ class GradientFiller : BaseFiller() {
     }
     private val colors = RgbaPremultipliedArray(NCOLORS)
     private lateinit var fill: GradientPaint
-    private val stateTrans = Matrix()
-    private val fillTrans = Matrix()
-    private val compTrans = Matrix()
+    //private val stateTransformInv = Matrix()
 
-    fun set(fill: GradientPaint, state: Context2d.State) = this.apply {
-        this.fill = fill
-        state.transform.inverted(this.stateTrans)
-        fill.transform.inverted(this.fillTrans)
-        compTrans.apply {
-            identity()
-            premultiply(fillTrans)
-            premultiply(stateTrans)
-        }
-
+    fun set(fill: GradientPaint, state: Context2d.State): GradientFiller {
         fill.fillColors(colors)
-        //println("colors=$colors")
+        this.fill = fill.copy(transform = Matrix().apply {
+            identity()
+            preconcat(fill.transform)
+            preconcat(state.transform)
+        })
+        //println("state.transform=${state.transform}")
+        //this.stateTransformInv.copyFromInverted(state.transform)
+        return this
     }
 
-    private fun color(ratio: Double): RGBAPremultiplied {
-        //println("ratio=$ratio")
-        return colors[(ratio.clamp01() * (NCOLORS - 1)).toInt()]
+    private fun color(ratio: Double): RGBAPremultiplied = colors[(ratio.clamp01() * (NCOLORS - 1)).toInt()]
+
+    fun getRatio(x: Double, y: Double): Double {
+        //return fill.getRatioAt(x, y, stateTransformInv)
+        return fill.getRatioAt(x, y)
+    }
+    fun getColor(x: Double, y: Double): RGBAPremultiplied {
+        return color(getRatio(x, y))
     }
 
     // @TODO: Radial gradient
-    // @TODO: This doesn't seems to work proprely
+    // @TODO: This doesn't seems to work properly
     override fun fill(data: RgbaPremultipliedArray, offset: Int, x0: Int, x1: Int, y: Int) {
-        //for (n in x0..x1) data[n] = color(mat.transformX(n.toDouble(), y.toDouble()).clamp01())
-        for (n in x0..x1) data[offset + n] = color(fill.getRatioAt(n.toDouble(), y.toDouble(), compTrans))
+        for (n in x0..x1) data[offset + n] = getColor(n.toDouble(), y.toDouble())
     }
 }

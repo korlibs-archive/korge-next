@@ -5,29 +5,37 @@ plugins {
     id "signing"
 }
 
-def gradleProperties = new Properties()
-gradleProperties.load(new StringReader(new File(rootDir, "../gradle.properties").text))
-
-def kotlinVersion = gradleProperties["kotlinVersion"].toString()
+def kotlinVersion = libs.versions.kotlin.get()
 def androidBuildGradleVersion
 if (System.getProperty("java.version").startsWith("1.8") || System.getProperty("java.version").startsWith("9")) {
     androidBuildGradleVersion = "4.2.0"
 } else {
-    androidBuildGradleVersion = gradleProperties["androidBuildGradleVersion"].toString()
+    androidBuildGradleVersion = libs.versions.android.build.gradle.get()
 }
 
 dependencies {
     implementation("com.android.tools.build:gradle:$androidBuildGradleVersion")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
-    implementation("com.google.code.gson:gson:2.8.6")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${libs.versions.kotlin.get()}")
+    implementation(libs.gson)
 }
 
 repositories {
     mavenLocal()
     mavenCentral()
     google()
+    if (kotlinVersion.contains("eap") || kotlinVersion.contains("-")) {
+        maven { url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/temporary") }
+        maven { url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev") }
+        maven { url = uri("https://maven.pkg.jetbrains.space/public/p/kotlinx-coroutines/maven") }
+    }
+    maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions.suppressWarnings = true
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }

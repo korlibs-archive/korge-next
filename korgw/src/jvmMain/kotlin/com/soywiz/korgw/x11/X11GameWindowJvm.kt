@@ -155,7 +155,7 @@ class X11GameWindow(val checkGl: Boolean) : EventLoopGameWindow() {
         realSetVisible(visible)
         realSetTitle(title)
 
-        ctx = X11OpenglContext(d, w, s, vi, doubleBuffered = doubleBuffered)
+        ctx = X11OpenglContext(gameWindow, d, w, s, vi, doubleBuffered = doubleBuffered)
         ctx.makeCurrent()
 
         val wmDeleteMessage = X.XInternAtom(d, "WM_DELETE_WINDOW", false)

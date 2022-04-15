@@ -1,11 +1,11 @@
-import com.soywiz.kds.*
+import com.soywiz.klock.*
 import com.soywiz.klogger.*
-import com.soywiz.kmem.*
-import com.soywiz.korag.*
-import com.soywiz.korag.shader.*
-import com.soywiz.korge.render.*
+import com.soywiz.korev.*
+import com.soywiz.korge.annotations.*
+import com.soywiz.korge.input.*
 import com.soywiz.korge.view.*
-import com.soywiz.korge.view.BlendMode
+import com.soywiz.korge.view.vector.*
+import com.soywiz.korgw.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
 import com.soywiz.korim.font.*
@@ -14,299 +14,237 @@ import com.soywiz.korim.paint.*
 import com.soywiz.korim.text.*
 import com.soywiz.korim.vector.*
 import com.soywiz.korim.vector.format.*
+import com.soywiz.korim.vector.format.SVG
 import com.soywiz.korio.file.std.*
 import com.soywiz.korma.geom.*
-import com.soywiz.korma.geom.shape.*
 import com.soywiz.korma.geom.vector.*
 
+@OptIn(KorgeExperimental::class)
 suspend fun Stage.mainGpuVectorRendering() {
+    container {
+        xy(300, 300)
+        val shape = gpuShapeView({
+            //val lineWidth = 6.12123231 * 2
+            val lineWidth = 12.0
+            val width = 300.0
+            val height = 300.0
+            //rotation = 180.degrees
+            this.stroke(Colors.WHITE.withAd(0.5), lineWidth = lineWidth, lineJoin = LineJoin.MITER, lineCap = LineCap.BUTT) {
+                this.rect(
+                    lineWidth / 2, lineWidth / 2,
+                    width,
+                    height
+                )
+            }
+        }) {
+            xy(-150, -150)
+            keys {
+                down(Key.N0) { antialiased = !antialiased }
+                down(Key.A) { antialiased = !antialiased }
+            }
+        }
+        keys {
+            downFrame(Key.N1) { rotation = 15.degrees * 0 }
+            downFrame(Key.N2) { rotation = 15.degrees * 1 }
+            downFrame(Key.N3) { rotation = 15.degrees * 2 }
+            downFrame(Key.N4) { rotation = 15.degrees * 3 }
+            downFrame(Key.N5) { rotation = 15.degrees * 4 }
+            downFrame(Key.N6) { rotation = 15.degrees * 5 }
+            downFrame(Key.N7) { rotation = 15.degrees * 6 }
+            downFrame(Key.N8) { rotation = 15.degrees * 7 }
+            downFrame(Key.N9) { rotation = 180.degrees }
+            downFrame(Key.LEFT) { rotation -= 1.degrees }
+            downFrame(Key.RIGHT) { rotation += 1.degrees }
+            up(Key.Q) { gameWindow.quality = if (gameWindow.quality == GameWindow.Quality.PERFORMANCE) GameWindow.Quality.QUALITY else GameWindow.Quality.PERFORMANCE }
+        }
+    }
+
+    //return
+
+    gpuShapeView({
+        //val paint = createLinearGradient(200, 200, 400, 400).add(0.0, Colors.BLUE.withAd(0.9)).add(1.0, Colors.WHITE.withAd(0.7))
+        val paint = Colors.WHITE.withAd(0.7)
+        //stroke(paint, lineWidth = 10.0, lineCap = LineCap.BUTT, lineJoin = LineJoin.ROUND) {
+        //stroke(paint, lineWidth = 10.0, lineCap = LineCap.SQUARE, lineJoin = LineJoin.ROUND) {
+        //stroke(paint, lineWidth = 10.0, lineCap = LineCap.ROUND, lineJoin = LineJoin.ROUND) {
+        //stroke(paint, lineWidth = 10.0, lineCap = LineCap.ROUND, lineJoin = LineJoin.BEVEL) {
+        stroke(paint, lineWidth = 10.0, lineCap = LineCap.ROUND, lineJoin = LineJoin.ROUND) {
+        //stroke(paint, lineWidth = 10.0, lineCap = LineCap.ROUND, lineJoin = LineJoin.BEVEL) {
+            moveTo(100, 100)
+            //quadTo(400, 200, 400, 400)
+            lineTo(400, 400)
+            lineTo(200, 500)
+            lineTo(500, 500)
+            lineTo(200, 700)
+            //lineTo(100, 140)
+            //lineTo(100, 100)
+            close()
+
+            moveTo(800, 600)
+            //quadTo(400, 200, 400, 400)
+            lineTo(900, 600)
+            lineTo(900, 400)
+            //lineTo(100, 140)
+            //lineTo(100, 100)
+            close()
+
+            moveTo(800, 100)
+            lineTo(800, 110)
+
+            moveTo(750, 100)
+            lineTo(750, 110)
+        }
+    }) {
+        keys {
+            down(Key.N0) { antialiased = !antialiased }
+            down(Key.A) { antialiased = !antialiased }
+        }
+    }
+
+    circle(6.0, Colors.RED).anchor(Anchor.CENTER).xy(100, 100)
+        //.xy(40, 0)
+        //.scale(1.1)
+        //.rotation(15.degrees)
+    //return
+
+    //return
+
     Console.log("[1]")
-    val korgeBitmap = resourcesVfs["korge.png"].readBitmap()
+    val korgeBitmap = resourcesVfs["korge.png"].readBitmap()//.mipmaps()
     Console.log("[2]")
-    val tigerSvg = resourcesVfs["Ghostscript_Tiger.svg"].readSVG()
+    val tigerSvg = measureTime({ resourcesVfs["Ghostscript_Tiger.svg"].readSVG() }) {
+        println("Elapsed $it")
+    }
     Console.log("[3]")
     //AudioData(44100, AudioSamples(1, 1024)).toSound().play()
 
-    fun Context2d.buildGraphics() {
-        keep {
-            draw(tigerSvg)
-            translate(100, 200)
-            fill(Colors.BLUE) {
-                rect(-10, -10, 120, 120)
-                rectHole(40, 40, 80, 80)
+    val PAINT_TIGER = true
+    val PAINT_SHAPES = true
+    val PAINT_BITMAP = true
+    //val PAINT_BITMAP = false
+    val PAINT_TEXT = true
+    val PAINT_LINEAR_GRADIENT = true
+    val PAINT_RADIAL_GRADIENT = true
+
+    val tigerShape = tigerSvg.toShape()
+    val tigerRender = tigerSvg
+    //val tigerRender = tigerShape
+
+    fun Context2d.buildGraphics(kind: String) {
+        if (PAINT_TIGER) {
+            keep {
+                scale(0.5)
+                draw(tigerRender)
             }
-            fill(Colors.YELLOW) {
-                this.circle(100, 100, 40)
-                //rect(-100, -100, 500, 500)
-                //rectHole(40, 40, 320, 320)
-            }
-            fill(Colors.RED) {
-                regularPolygon(6, 30.0, x = 100.0, y = 100.0)
-                //rect(-100, -100, 500, 500)
-                //rectHole(40, 40, 320, 320)
+        }
+        if (PAINT_SHAPES) {
+            keep {
+                translate(100, 200)
+                fill(Colors.BLUE) {
+                    rect(-10, -10, 120, 120)
+                    rectHole(40, 40, 80, 80)
+                }
+                fill(Colors.YELLOW) {
+                    this.circle(100, 100, 40)
+                    //rect(-100, -100, 500, 500)
+                    //rectHole(40, 40, 320, 320)
+                }
+                fill(Colors.RED) {
+                    regularPolygon(6, 30.0, x = 100.0, y = 100.0)
+                    //rect(-100, -100, 500, 500)
+                    //rectHole(40, 40, 320, 320)
+                }
             }
         }
         keep {
             translate(100, 20)
             scale(2.0)
-            globalAlpha = 0.75
-            fillStyle = BitmapPaint(
-                korgeBitmap,
-                Matrix().translate(50, 50).scale(0.125),
-                cycleX = CycleMethod.REPEAT,
-                cycleY = CycleMethod.REPEAT
-            )
-            fillRect(0.0, 0.0, 100.0, 100.0)
-            fillStyle =
-                createLinearGradient(0.0, 0.0, 200.0, 200.0, transform = Matrix().scale(0.5).pretranslate(130, 30))
-                    .addColorStop(0.0, Colors.RED)
-                    .addColorStop(1.0, Colors.BLUE)
-            fillRect(100.0, 0.0, 100.0, 100.0)
+            if (PAINT_BITMAP) {
+                globalAlpha = 0.75
+                fillStyle = BitmapPaint(
+                    korgeBitmap,
+                    Matrix().translate(50, 50).scale(0.125),
+                    cycleX = CycleMethod.REPEAT,
+                    cycleY = CycleMethod.REPEAT
+                )
+                fillRect(0.0, 0.0, 100.0, 100.0)
+            }
+
+            if (PAINT_LINEAR_GRADIENT) {
+                globalAlpha = 0.9
+                fillStyle =
+                    //createLinearGradient(150.0, 0.0, 200.0, 50.0)
+                    createLinearGradient(0.0, 0.0, 100.0, 100.0, transform = Matrix().scale(0.5).pretranslate(300, 0))
+                        //.addColorStop(0.0, Colors.BLACK).addColorStop(1.0, Colors.WHITE)
+                        .addColorStop(0.0, Colors.RED).addColorStop(0.5, Colors.GREEN).addColorStop(1.0, Colors.BLUE)
+                clip({
+                    circle(150, 50, 50)
+                }, {
+                    fillRect(100.0, 0.0, 100.0, 100.0)
+                })
+            }
+            if (PAINT_RADIAL_GRADIENT) {
+                globalAlpha = 0.9
+                fillStyle =
+                    createRadialGradient(150,150,30, 130,180,70)
+                        .addColorStop(0.0, Colors.RED).addColorStop(0.5, Colors.GREEN).addColorStop(1.0, Colors.BLUE)
+                fillRect(100.0, 100.0, 100.0, 100.0)
+            }
+            if (PAINT_RADIAL_GRADIENT) {
+                globalAlpha = 0.9
+                fillStyle =
+                    createSweepGradient(175, 100)
+                        .addColorStop(0.0, Colors.RED).addColorStop(0.5, Colors.PURPLE).addColorStop(1.0, Colors.YELLOW)
+                fillRect(150.0, 75.0, 50.0, 50.0)
+            }
         }
-        keep {
-            font = DefaultTtfFont
-            fontSize = 16.0
-            fillStyle = Colors.WHITE
-            alignment = TextAlignment.TOP_LEFT
-            fillText("HELLO WORLD", 0.0, 16.0)
-        }
-    }
-
-    gpuShapeView { buildGraphics() }.xy(0, 0)//.rotation(45.degrees)
-    image(NativeImage(512, 512).context2d { buildGraphics() }).xy(700, 0)
-    image(Bitmap32(512, 512).context2d { buildGraphics() }).xy(700, 370)
-}
-
-inline fun Container.gpuShapeView(buildContext2d: Context2d.() -> Unit) =
-    GpuShapeView(buildShape { buildContext2d() }).addTo(this)
-
-inline fun Container.gpuShapeView(shape: Shape, callback: @ViewDslMarker GpuShapeView.() -> Unit = {}) =
-    GpuShapeView(shape).addTo(this, callback)
-
-class GpuShapeView(shape: Shape) : View() {
-    private val pointCache = FastIdentityMap<VectorPath, PointArrayList>()
-
-    var shape: Shape = shape
-        set(value) {
-            field = value
-            pointCache.clear()
-        }
-
-    companion object {
-        val u_Color = Uniform("u_Color", VarType.Float4)
-        val u_Transform = Uniform("u_Transform", VarType.Mat4)
-        val LAYOUT = VertexLayout(DefaultShaders.a_Pos)
-        val LAYOUT_FILL = VertexLayout(DefaultShaders.a_Pos, DefaultShaders.a_Tex)
-        val VERTEX_FILL = VertexShaderDefault {
-            SET(out, u_ProjMat * u_ViewMat * vec4(a_Pos, 0f.lit, 1f.lit))
-            SET(v_Tex, DefaultShaders.a_Tex)
-        }
-        val PROGRAM_STENCIL = Program(
-            vertex = VertexShaderDefault { SET(out, u_ProjMat * u_ViewMat * vec4(a_Pos, 0f.lit, 1f.lit)) },
-            fragment = FragmentShaderDefault { SET(out, vec4(1f.lit, 0f.lit, 0f.lit, 1f.lit)) },
-        )
-        val PROGRAM_COLOR = Program(
-            vertex = VERTEX_FILL,
-            fragment = FragmentShaderDefault {
-                SET(out, u_Color)
-            },
-        )
-        val PROGRAM_BITMAP = Program(
-            vertex = VERTEX_FILL,
-            fragment = FragmentShaderDefault {
-                // @TODO: we should convert 0..1 to texture slice coordinates
-                SET(out, texture2D(u_Tex, fract(vec2((vec4(v_Tex, 0f.lit, 1f.lit) * u_Transform)["xy"]))))
-            },
-        )
-        val PROGRAM_LINEAR_GRADIENT = Program(
-            vertex = VERTEX_FILL,
-            fragment = FragmentShaderDefault {
-                SET(out, texture2D(u_Tex, (vec4(v_Tex.x, v_Tex.y, 0f.lit, 1f.lit) * u_Transform)["xy"]))
-            },
-        )
-    }
-
-    private val bb = BoundsBuilder()
-    override fun getLocalBoundsInternal(out: Rectangle) {
-        shape.getBounds(out, bb)
-    }
-
-    var msaaSamples: Int = 4
-
-    override fun renderInternal(ctx: RenderContext) {
-        ctx.flush()
-        val currentRenderBuffer = ctx.ag.currentRenderBufferOrMain
-        ctx.renderToTexture(currentRenderBuffer.width, currentRenderBuffer.height, {
-            renderShape(ctx, shape)
-        }, hasStencil = true, msamples = msaaSamples) { texture ->
-            ctx.useBatcher {
-                it.drawQuad(texture, x = 0f, y = 0f)
+        if (PAINT_TEXT) {
+            keep {
+                font = DefaultTtfFont
+                fontSize = 16.0
+                fillStyle = Colors.WHITE
+                alignment = TextAlignment.TOP_LEFT
+                fillText("HELLO WORLD ($kind)", 0.0, 16.0)
             }
         }
     }
 
-    private fun renderShape(ctx: RenderContext, shape: Shape) {
-        when (shape) {
-            EmptyShape -> Unit
-            is FillShape -> renderShape(ctx, shape)
-            is CompoundShape -> for (v in shape.components) renderShape(ctx, v)
-            is PolylineShape -> {
-                //println("TODO: PolylineShape not implemented. Convert into fills")
-            }
-            is TextShape -> renderShape(ctx, shape.primitiveShapes)
-            else -> TODO("shape=$shape")
-        }
+    buildShape { buildGraphics("only shape") }
+    for (n in 0 until 2) {
+        NativeImage(512, 512).context2d { buildGraphics("KOTLIN") }
+        Bitmap32(512, 512).context2d { buildGraphics("KOTLIN") }
     }
 
-    private fun renderShape(ctx: RenderContext, shape: FillShape) {
-        val path = shape.path
-        val m = globalMatrix
-
-        val points = pointCache.getOrPut(path) {
-            val points = PointArrayList()
-            path.emitPoints2 { x, y, move ->
-                points.add(x, y)
-            }
-            points
-        }
-
-        val bb = BoundsBuilder()
-        bb.reset()
-
-        val data = FloatArray(points.size * 2 + 4)
-        for (n in 0 until points.size + 1) {
-            val x = points.getX(n % points.size).toFloat()
-            val y = points.getY(n % points.size).toFloat()
-            val tx = m.transformXf(x, y)
-            val ty = m.transformYf(x, y)
-            data[(n + 1) * 2 + 0] = tx
-            data[(n + 1) * 2 + 1] = ty
-            bb.add(tx, ty)
-        }
-        data[0] = ((bb.xmax + bb.xmin) / 2).toFloat()
-        data[1] = ((bb.ymax + bb.ymin) / 2).toFloat()
-
-        if (shape.path.winding != Winding.EVEN_ODD) {
-            error("Currently only supported EVEN_ODD winding")
-        }
-
-        val bounds = bb.getBounds()
-
-        ctx.dynamicVertexBufferPool { vertices ->
-            vertices.upload(data)
-            ctx.batch.updateStandardUniforms()
-
-            ctx.batch.simulateBatchStats(points.size + 2)
-
-            val scissor: AG.Scissor? = AG.Scissor().setTo(
-                //bounds
-                Rectangle.fromBounds(bounds.left.toInt(), bounds.top.toInt(), bounds.right.toIntCeil(), bounds.bottom.toIntCeil())
-            )
-            //val scissor: AG.Scissor? = null
-
-            ctx.ag.clearStencil(0, scissor = scissor)
-            //ctx.ag.clearStencil(0, scissor = null)
-            ctx.ag.draw(
-                vertices = vertices,
-                program = PROGRAM_STENCIL,
-                type = AG.DrawType.TRIANGLE_FAN,
-                vertexLayout = LAYOUT,
-                vertexCount = points.size + 2,
-                uniforms = ctx.batch.uniforms,
-                stencil = AG.StencilState(
-                    enabled = true,
-                    readMask = 0xFF,
-                    compareMode = AG.CompareMode.ALWAYS,
-                    referenceValue = 0xFF,
-                    writeMask = 0xFF,
-                    actionOnDepthFail = AG.StencilOp.KEEP,
-                    actionOnDepthPassStencilFail = AG.StencilOp.KEEP,
-                    actionOnBothPass = AG.StencilOp.INVERT,
-                ),
-                blending = BlendMode.NONE.factors,
-                colorMask = AG.ColorMaskState(false, false, false, false),
-                scissor = scissor,
-            )
-        }
-        renderFill(ctx, shape.paint, shape.transform, bounds)
+    measureTime({
+        buildShape { buildGraphics("only shape") }
+    }) {
+        println("BUILD SHAPE: $it")
     }
 
-    private val colorUniforms = AG.UniformValues()
-    private val bitmapUniforms = AG.UniformValues()
-    private val gradientUniforms = AG.UniformValues()
-    private val gradientBitmap = Bitmap32(256, 1)
-
-    private val colorF = FloatArray(4)
-
-    private fun renderFill(ctx: RenderContext, paint: Paint, transform: Matrix, bounds: Rectangle) {
-        if (paint is NonePaint) return
-
-        ctx.dynamicVertexBufferPool { vertices ->
-            val data = FloatArray(4 * 4)
-            var n = 0
-            val x0 = bounds.left.toFloat()
-            val y0 = bounds.top.toFloat()
-            val x1 = bounds.right.toFloat()
-            val y1 = bounds.bottom.toFloat()
-            val w = x1 - x0
-            val h = y1 - y0
-            data[n++] = x0; data[n++] = y0; data[n++] = 0f; data[n++] = 0f
-            data[n++] = x1; data[n++] = y0; data[n++] = w; data[n++] = 0f
-            data[n++] = x1; data[n++] = y1; data[n++] = w; data[n++] = h
-            data[n++] = x0; data[n++] = y1; data[n++] = 0f; data[n++] = h
-
-            vertices.upload(data)
-            ctx.useBatcher { batch ->
-                batch.updateStandardUniforms()
-                var uniforms: AG.UniformValues = colorUniforms
-                var program: Program = PROGRAM_COLOR
-                when (paint) {
-                    is ColorPaint -> {
-                        val color = paint
-                        color.writeFloat(colorF)
-                        colorUniforms[u_Color] = colorF
-                        program = PROGRAM_COLOR
-                        uniforms = colorUniforms
-                    }
-                    is BitmapPaint -> {
-                        bitmapUniforms[DefaultShaders.u_Tex] = AG.TextureUnit(ctx.getTex(paint.bitmap).base)
-                        val mat = (paint.transform * transform)
-                        mat.scale(1.0 / paint.bitmap.width, 1.0 / paint.bitmap.height)
-                        bitmapUniforms[u_Transform] = mat.toMatrix3D()
-                        program = PROGRAM_BITMAP
-                        uniforms = bitmapUniforms
-                    }
-                    is GradientPaint -> {
-                        paint.fillColors(gradientBitmap.dataPremult)
-                        gradientUniforms[DefaultShaders.u_Tex] = AG.TextureUnit(ctx.getTex(gradientBitmap).base)
-                        val mat = paint.transform * transform * paint.gradientMatrixInv
-                        gradientUniforms[u_Transform] = mat.toMatrix3D()
-                        program = PROGRAM_LINEAR_GRADIENT
-                        uniforms = gradientUniforms
-                    }
-                    else -> {
-                        TODO("paint=$paint")
-                    }
-                }
-                batch.setTemporalUniforms(uniforms) {
-                    ctx.batch.simulateBatchStats(4)
-                    ctx.ag.draw(
-                        vertices = vertices,
-                        program = program,
-                        type = AG.DrawType.TRIANGLE_FAN,
-                        vertexLayout = LAYOUT_FILL,
-                        vertexCount = 4,
-                        uniforms = ctx.batch.uniforms,
-                        stencil = AG.StencilState(
-                            enabled = true,
-                            compareMode = AG.CompareMode.NOT_EQUAL,
-                            writeMask = 0,
-                        ),
-                        blending = BlendMode.NORMAL.factors,
-                        colorMask = AG.ColorMaskState(true, true, true, true),
-                    )
-                }
+    measureTime({
+        gpuShapeView({ buildGraphics("GPU") }) {
+            xy(40, 0)
+            scale(1.1)
+            rotation(15.degrees)
+            keys {
+                down(Key.N0) { antialiased = !antialiased }
+                down(Key.A) { antialiased = !antialiased }
             }
         }
+    }) {
+        println("GPU SHAPE: $it")
     }
+    measureTime({
+        image(NativeImage(512, 512).context2d { buildGraphics("NATIVE") }).xy(550, 0)
+    }) {
+        println("CONTEXT2D NATIVE: $it")
+    }
+
+    measureTime({
+        image(Bitmap32(512, 512).context2d { buildGraphics("KOTLIN") }).xy(550, 370)
+    }) {
+        println("CONTEXT2D BITMAP: $it")
+    }
+
+    //while (true) Bitmap32(512, 512).context2d { buildGraphics("KOTLIN") }
 }

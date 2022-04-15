@@ -10,20 +10,23 @@ import com.soywiz.korio.net.http.*
 import com.soywiz.korio.serialization.json.*
 import com.soywiz.korio.stream.*
 import com.soywiz.korio.util.*
+import kotlin.coroutines.*
 
-fun UrlVfs(url: String, client: HttpClient = createHttpClient(), failFromStatus: Boolean = true): VfsFile = UrlVfs(URL(url), client, failFromStatus)
+fun UrlVfs(url: String, client: HttpClient = createHttpClient(), failFromStatus: Boolean = true): VfsFile =
+    UrlVfs(URL(url), client, failFromStatus)
 
 fun UrlVfs(url: URL, client: HttpClient = createHttpClient(), failFromStatus: Boolean = true): VfsFile =
 	UrlVfs(url.copy(path = "", query = null).fullUrl, Unit, client, failFromStatus)[url.path]
 
-fun UrlVfsJailed(url: String, client: HttpClient = createHttpClient(), failFromStatus: Boolean = true): VfsFile = UrlVfsJailed(URL(url), client, failFromStatus)
+fun UrlVfsJailed(url: String, client: HttpClient = createHttpClient(), failFromStatus: Boolean = true): VfsFile =
+    UrlVfsJailed(URL(url), client, failFromStatus)
 
 fun UrlVfsJailed(url: URL, client: HttpClient = createHttpClient(), failFromStatus: Boolean = true): VfsFile =
 	UrlVfs(url.fullUrl, Unit, client, failFromStatus)[url.path]
 
 class UrlVfs(
     val url: String, val dummy: Unit, val client: HttpClient = createHttpClient(),
-    val failFromStatus: Boolean = true
+    val failFromStatus: Boolean = true,
 ) : Vfs() {
 	override val absolutePath: String = url
 
@@ -50,7 +53,7 @@ class UrlVfs(
 				return client.readBytes(fullUrl).openAsync()
 			}
 
-			val stat = stat(path)
+			val stat = coroutineContext[VfsCachedStatContext]?.stat ?: stat(path)
 			val response = stat.extraInfo as? HttpClient.Response
 
 			if (!stat.exists) {
@@ -161,23 +164,7 @@ class UrlVfs(
 	}
 
     override suspend fun listSimple(path: String): List<VfsFile> {
-        return listSimpleStats(path).map { it.file }
-    }
-
-    suspend fun listSimpleStats(path: String): List<VfsStat> {
-        val catalogJsonString = this[path]["\$catalog.json"].readString()
-        val data = Json.parse(catalogJsonString).dyn
-
-        return data.list.map {
-            val localName = PathInfo(it["name"].str).baseName
-            createExistsStat(
-                path = "$path/$localName",
-                isDirectory = it["isDirectory"].bool,
-                size = it["size"].long,
-                createTime = DateTime.fromUnix(it["createTime"].long),
-                modifiedTime = DateTime.fromUnix(it["modifiedTime"].long),
-            )
-        }
+        TODO()
     }
 
     override fun toString(): String = "UrlVfs"

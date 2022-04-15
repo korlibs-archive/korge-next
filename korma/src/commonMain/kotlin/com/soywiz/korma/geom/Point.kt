@@ -133,9 +133,9 @@ data class Point(
         inline operator fun invoke(angle: Angle, length: Double = 1.0): Point = fromPolar(angle, length)
 
         /** Constructs a point from polar coordinates determined by an [angle] and a [length]. Angle 0 is pointing to the right, and the direction is counter-clock-wise */
-        fun fromPolar(x: Double, y: Double, angle: Angle, length: Double = 1.0): Point = Point(x + angle.cosine * length, y + angle.sine * length)
-        fun fromPolar(angle: Angle, length: Double = 1.0): Point = fromPolar(0.0, 0.0, angle, length)
-        fun fromPolar(base: IPoint, angle: Angle, length: Double = 1.0): Point = fromPolar(base.x, base.y, angle, length)
+        fun fromPolar(x: Double, y: Double, angle: Angle, length: Double = 1.0, out: Point = Point()): Point = out.setTo(x + angle.cosine * length, y + angle.sine * length)
+        fun fromPolar(angle: Angle, length: Double = 1.0, out: Point = Point()): Point = fromPolar(0.0, 0.0, angle, length, out)
+        fun fromPolar(base: IPoint, angle: Angle, length: Double = 1.0, out: Point = Point()): Point = fromPolar(base.x, base.y, angle, length, out)
 
         fun middle(a: IPoint, b: IPoint, out: Point = Point()): Point = out.setTo((a.x + b.x) * 0.5, (a.y + b.y) * 0.5)
         fun angleArc(a: IPoint, b: IPoint): Angle = Angle.fromRadians(acos((a.dot(b)) / (a.length * b.length)))
@@ -172,7 +172,8 @@ data class Point(
         fun distanceSquared(a: Point, b: Point): Double = distanceSquared(a.x, a.y, b.x, b.y)
         fun distanceSquared(a: IPointInt, b: IPointInt): Int = distanceSquared(a.x, a.y, b.x, b.y)
 
-        fun dot(a: IPoint, b: IPoint): Double = (a.x * b.x) + (a.y * b.y)
+        fun dot(aX: Double, aY: Double, bX: Double, bY: Double): Double = (aX * bX) + (aY * bY)
+        fun dot(a: IPoint, b: IPoint): Double = dot(a.x, a.y, b.x, b.y)
         fun isCollinear(xa: Double, ya: Double, x: Double, y: Double, xb: Double, yb: Double): Boolean {
             return (((x - xa) / (y - ya)) - ((xa - xb) / (ya - yb))).absoluteValue.isAlmostZero()
         }
@@ -182,6 +183,16 @@ data class Point(
             x.toDouble(), y.toDouble(),
             xb.toDouble(), yb.toDouble(),
         )
+
+        // https://algorithmtutor.com/Computational-Geometry/Determining-if-two-consecutive-segments-turn-left-or-right/
+        /** < 0 left, > 0 right, 0 collinear */
+        fun orientation(p1: IPoint, p2: IPoint, p3: IPoint): Double =
+            orientation(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
+        fun orientation(ax: Double, ay: Double, bx: Double, by: Double, cx: Double, cy: Double): Double =
+            crossProduct(cx - ax, cy - ay, bx - ax, by - ay)
+
+        fun crossProduct(ax: Double, ay: Double, bx: Double, by: Double): Double = (ax * by) - (bx * ay)
+        fun crossProduct(p1: IPoint, p2: IPoint): Double = crossProduct(p1.x, p1.y, p2.x, p2.y)
 
         //val ax = x1 - x2
         //val ay = y1 - y2
