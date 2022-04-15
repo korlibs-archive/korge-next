@@ -1,6 +1,5 @@
 name: "Caches gradle & Kotlin/Native artifacts"
 description: "Caches gradle & Kotlin/Native artifacts"
-inputs: {}
 runs:
   using: "composite"
   steps:
