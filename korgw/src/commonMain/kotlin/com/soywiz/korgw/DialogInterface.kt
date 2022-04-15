@@ -48,6 +48,8 @@ data class FileFilter(val entries: List<Pair<String, List<String>>>) {
 }
 
 open class ZenityDialogs : DialogInterface {
+    companion object : ZenityDialogs()
+
     open suspend fun exec(vararg args: String): String = localCurrentDirVfs.execToString(args.toList())
     override suspend fun browse(url: URL): Unit { exec("xdg-open", url.toString()) }
     override suspend fun alert(message: String): Unit { exec("zenity", "--warning", "--text=$message") }

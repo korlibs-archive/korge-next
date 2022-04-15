@@ -9,10 +9,14 @@ import platform.posix.fread
 import platform.posix.pclose
 import platform.posix.popen
 
-private fun escapeshellarg(str: String) = "'" + str.replace("'", "\\'") + "'"
+actual fun createDialogInterfaceForComponent(nativeComponent: Any?): DialogInterface = ZenityDialogs
+//actual fun createDialogInterfaceForComponent(nativeComponent: Any?): DialogInterface = NativeZenityDialogs
 
+/*
 // @TODO: Move this to Korio exec/execToString
-class NativeZenityDialogs : ZenityDialogs() {
+object NativeZenityDialogs : ZenityDialogs() {
+    private fun escapeshellarg(str: String) = "'" + str.replace("'", "\\'") + "'"
+
     override suspend fun exec(vararg args: String): String = memScoped {
         val command = "/bin/sh -c '" + args.joinToString(" ") { escapeshellarg(it) }.replace("'", "\"'\"") + "' 2>&1"
         println("COMMAND: $command")
@@ -33,3 +37,4 @@ class NativeZenityDialogs : ZenityDialogs() {
         return out.toByteArray().toString(Charsets.UTF8)
     }
 }
+*/
