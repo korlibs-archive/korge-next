@@ -32,9 +32,10 @@ class LocalVfsTest {
 
 	@Test
 	fun execTest() = suspendTestNoBrowser {
+        val str = ">hello< '1^&) (|&,; 2"
 		when {
 			OS.isJsBrowserOrWorker -> Unit // Skip
-			else -> assertEquals("1", temp.execToString(listOf("echo", "1")).trim())
+			else -> assertEquals(str, temp.execToString(listOf("echo", str)).trim())
 		}
 	}
 

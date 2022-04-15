@@ -4,7 +4,6 @@ import com.soywiz.korio.file.VfsProcessHandler
 import kotlinx.cinterop.*
 import platform.posix.*
 
-// @TODO: Should we escape with ^ on windows? Check
 internal fun escapeshellarg(str: String) = "'" + str.replace("'", "\\'") + "'"
 
 expect suspend fun posixExec(

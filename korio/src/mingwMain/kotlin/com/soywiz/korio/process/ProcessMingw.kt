@@ -9,7 +9,17 @@ import platform.posix.*
 import platform.windows.*
 import kotlin.native.concurrent.*
 
-private fun escapeshellargWin(str: String) = "\"" + str.replace("\"", "\\\"") + "\""
+// https://sourcedaddy.com/windows-7/escaping-special-characters.html
+private fun escapeshellargWin(str: String): String {
+    return buildString {
+        for (c in str) {
+            when (c) {
+                '<', '>', '(', ')', '&', '|', ',', ';', '^', '"', '\'' -> append('^')
+            }
+            append(c)
+        }
+    }
+}
 
 actual suspend fun posixExec(
     path: String, cmdAndArgs: List<String>, env: Map<String, String>, handler: VfsProcessHandler
