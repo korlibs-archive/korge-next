@@ -50,7 +50,7 @@ fun sopen(vararg cmds: String, cwd: String, envs: Map<String, String> = mapOf())
     }
     val rcmd = ShellArgs.buildShellExecCommandLineArrayForExecl(cmds.toList())
     val command = rcmd.first()
-    val args: Array<Any?> = rcmd.drop(1).map { it as Any? }.toTypedArray()
+    val args = rcmd.drop(1)
     //println("rcmd=$rcmd")
     val pid = fork()
     when (pid) {
@@ -67,8 +67,13 @@ fun sopen(vararg cmds: String, cwd: String, envs: Map<String, String> = mapOf())
             close(fds[1])
             chdir(cwd)
             for ((k ,v) in envs) putenv("$k=$v".cstr)
-            execl(command, command, *args, null)
-            _exit(127);
+            memScoped {
+                val vargs = allocArray<CPointerVar<ByteVar>>(args.size + 1)
+                for (n in args.indices) vargs[n] = args[n].cstr.getPointer(this)
+                vargs[args.size] = null
+                execv(command, vargs)
+                _exit(127);
+            }
         }
     }
     //printf("GO!\n");
