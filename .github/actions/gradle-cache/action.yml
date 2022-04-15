@@ -17,6 +17,7 @@ runs:
       id: gradle-cache-cleanup
       with:
         run: |
+          ./gradlew --stop
           rm -rf ~/.gradle/caches/modules-2/modules-2.lock
           rm -rf ~/.gradle/caches/modules-2/gc.properties
           rm -rf ~/.konan/cache
