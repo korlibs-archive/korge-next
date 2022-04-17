@@ -5,7 +5,7 @@
 package com.soywiz.kgl
 
 import X11Embed.*
-import com.soywiz.kmem.*
+import com.soywiz.kmem.dyn.*
 import kotlinx.cinterop.*
 
 typealias XVisualInfo = ULongVar // Only used as pointer

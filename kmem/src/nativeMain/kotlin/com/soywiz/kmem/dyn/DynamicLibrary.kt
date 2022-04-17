@@ -1,4 +1,4 @@
-package com.soywiz.kmem
+package com.soywiz.kmem.dyn
 
 import kotlinx.cinterop.*
 import kotlin.native.concurrent.*

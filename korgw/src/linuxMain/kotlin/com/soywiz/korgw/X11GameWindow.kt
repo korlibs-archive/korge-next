@@ -2,7 +2,7 @@ package com.soywiz.korgw
 
 import X11Embed.*
 import com.soywiz.kgl.*
-import com.soywiz.kmem.DynamicLibrary
+import com.soywiz.kmem.dyn.DynamicLibrary
 import com.soywiz.kmem.startAddressOf
 import com.soywiz.kmem.write32LE
 import com.soywiz.korag.gl.AGOpengl
