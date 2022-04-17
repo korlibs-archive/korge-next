@@ -14,9 +14,9 @@ public actual open class DynamicLibraryBase actual constructor(val name: String)
     public actual val isAvailable get() = handle != null
     override fun getSymbol(name: String): KPointer? {
         if (DEBUG_DYNAMIC_LIB) println("Requesting ${this.name}.$name...")
-        val out: CPointer<CFunction<*>>? = if (handle == null) null else dlsym(handle, name)?.reinterpret()
+        val out = if (handle == null) null else dlsym(handle, name)?.rawValue
         if (DEBUG_DYNAMIC_LIB) println("Got ${this.name}.$name...$out")
-        return KPointerCreate(out?.toLong() ?: 0L)
+        return out
     }
     public actual fun close() {
         dlclose(handle)

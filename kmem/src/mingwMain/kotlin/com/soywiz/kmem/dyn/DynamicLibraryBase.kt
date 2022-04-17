@@ -11,7 +11,7 @@ public actual open class DynamicLibraryBase actual constructor(public val name: 
     public actual val isAvailable: Boolean get() = handle != null
     override fun getSymbol(name: String): KPointer? = when (handle) {
         null -> null
-        else -> KPointerCreate(GetProcAddress(handle, name)?.toLong() ?: 0L)
+        else -> GetProcAddress(handle, name)?.rawValue
     }
     public actual fun close() {
         FreeLibrary(handle)
