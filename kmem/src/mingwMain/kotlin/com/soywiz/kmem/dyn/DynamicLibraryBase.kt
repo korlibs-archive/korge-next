@@ -9,7 +9,10 @@ public actual open class DynamicLibraryBase actual constructor(public val name: 
         if (handle == null) println("Couldn't load '$name' library")
     }
     public actual val isAvailable: Boolean get() = handle != null
-    override fun getSymbol(name: String): CPointer<CFunction<*>>? = if (handle == null) null else GetProcAddress(handle, name)?.reinterpret()
+    override fun getSymbol(name: String): KPointer? = when (handle) {
+        null -> null
+        else -> KPointerCreate(GetProcAddress(handle, name)?.toLong() ?: 0L)
+    }
     public actual fun close() {
         FreeLibrary(handle)
     }
