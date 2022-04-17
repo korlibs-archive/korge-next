@@ -24,11 +24,11 @@ public abstract class DynamicFunBase<T : Function<*>>(public val name: String? =
 
     protected fun getFuncName(property: KProperty<*>): String = name ?: property.name.removeSuffix("Ext")
 
-    protected abstract fun glGetProcAddressT(name: String): CPointer<CFunction<T>>?
+    protected abstract fun getProcAddressT(name: String): CPointer<CFunction<T>>?
 
     protected fun _getValue(property: KProperty<*>): CPointer<CFunction<T>>? {
         if (_set.value == 0) {
-            _value.value = glGetProcAddressT(getFuncName(property))
+            _value.value = getProcAddressT(getFuncName(property))
             _set.value = 1
         }
         return _value.value
@@ -36,7 +36,7 @@ public abstract class DynamicFunBase<T : Function<*>>(public val name: String? =
 }
 
 public abstract class DynamicFunLibrary<T : Function<*>>(public val library: DynamicSymbolResolver, name: String? = null) : DynamicFunBase<T>(name) {
-    override fun glGetProcAddressT(name: String): CPointer<CFunction<T>>? = library.getSymbol(name) as CPointer<CFunction<T>>?
+    override fun getProcAddressT(name: String): CPointer<CFunction<T>>? = library.getSymbol(name) as CPointer<CFunction<T>>?
 }
 
 public open class DynamicFun<T : Function<*>>(library: DynamicSymbolResolver, name: String? = null) : DynamicFunLibrary<T>(library, name) {
