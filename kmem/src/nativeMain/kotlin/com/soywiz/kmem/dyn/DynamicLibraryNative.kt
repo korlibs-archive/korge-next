@@ -10,12 +10,12 @@ public fun <T : Function<*>> DynamicLibrary.funcNull(name: String? = null): Dyna
 public open class DynamicFun<T : Function<*>>(library: DynamicSymbolResolver, name: String? = null) : DynamicFunLibrary<T>(library, name) {
     public operator fun getValue(obj: Any?, property: KProperty<*>): CPointer<CFunction<T>> {
         val out: NativePtr? = _getValue(property)
-        if (out == null) {
+        if (out == null || out == NativePtr.NULL) {
             val message = "Can't find function '${getFuncName(property)}' in $this"
             println(message)
             error(message)
         }
-        return interpretCPointer(out)!!
+        return interpretCPointer(out) ?: error("DynamicFun.getValue null: ${getFuncName(property)}")
     }
 }
 

@@ -29,4 +29,6 @@ public abstract class DynamicFunBase<T : Function<*>>(public val name: String? =
 
 public abstract class DynamicFunLibrary<T : Function<*>>(public val library: DynamicSymbolResolver, name: String? = null) : DynamicFunBase<T>(name) {
     override fun getProcAddress(name: String): KPointer? = library.getSymbol(name)
+
+    override fun toString(): String = "DynamicFunLibrary($library)"
 }
