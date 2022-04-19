@@ -4,7 +4,10 @@ import com.soywiz.korio.lang.*
 import java.awt.event.ActionListener
 import javax.swing.*
 
-open class AwtComboBox<T>(factory: BaseAwtUiFactory, val comboBox: JComboBox<T> = JComboBox<T>()) : AwtComponent(factory, comboBox), NativeUiFactory.NativeComboBox<T> {
+open class AwtComboBox<T>(
+    factory: BaseAwtUiFactory,
+    val comboBox: JComboBox<T> = factory.createJComboBox<T>()
+) : AwtComponent(factory, comboBox), NativeUiFactory.NativeComboBox<T> {
     override var items: List<T>
         get() {
             val model = comboBox.model
@@ -26,7 +29,6 @@ open class AwtComboBox<T>(factory: BaseAwtUiFactory, val comboBox: JComboBox<T> 
     override fun close() {
         comboBox.hidePopup()
     }
-
 
     override fun onChange(block: () -> Unit): Disposable {
         val listener = ActionListener { block() }

@@ -48,6 +48,9 @@ open class BaseAwtUiFactory : NativeUiFactory {
         it.background = JPanel().background
     }
 
+    open fun <T> createJComboBox(): JComboBox<T> = JComboBox<T>().also {
+    }
+
     open fun createJPopupMenu() = JPopupMenu()
     open fun createJMenuItem() = JMenuItem()
     open fun createJMenu() = JMenu()

@@ -1,6 +1,7 @@
 package com.soywiz.korgw.osx
 
 import com.soywiz.kgl.*
+import com.soywiz.kmem.*
 import com.soywiz.korag.*
 import com.soywiz.korag.gl.*
 import com.soywiz.korgw.*
@@ -188,11 +189,48 @@ class MacAWTOpenglContext(val gwconfig: GameWindowConfig, val c: Component, var 
 
     override val scaleFactor: Double get() = getDisplayScalingFactor(c)
 
+    private val tempBuffer4 = FBuffer(4 * 4)
+
     override fun useContext(g: Graphics, ag: AG, action: (Graphics, BaseOpenglContext.ContextInfo) -> Unit) {
+        val raction = { g: Graphics, info: BaseOpenglContext.ContextInfo ->
+            val factor = getDisplayScalingFactor(c)
+
+            val gl = (ag as AGOpengl).gl
+
+            val viewport = getOGLViewport(null, g, (c.width * factor).toInt(), (c.height * factor).toInt()) as java.awt.Rectangle
+            val scissorBox = getOGLScissorBox(null, g) as? java.awt.Rectangle?
+
+            //gl.getIntegerv(KmlGl.SCISSOR_BOX, tempBuffer4)
+            //val sx = tempBuffer4.getAlignedInt32(0).toInt()
+            //val sy = tempBuffer4.getAlignedInt32(1).toInt()
+            //val sw = tempBuffer4.getAlignedInt32(2).toInt()
+            //val sh = tempBuffer4.getAlignedInt32(3).toInt()
+
+            val bounds = c.getBounds()
+            val location = c.location
+            //println("SCISSOR3: $sx, $sy, $sw, $sh")
+            //println("c=$c: c=$bounds, $location")
+            //println("viewport=$viewport, scissorBox=$scissorBox")
+
+            if (scissorBox != null) {
+                val rect = scissorBox
+                val sx = rect.x
+                val sy = rect.y
+                val sw = rect.width
+                val sh = rect.height
+
+                this.info.scissors?.setTo(sx, sy, sw, sh)
+                //info.viewport?.setTo(viewport.x, viewport.y, viewport.width, viewport.height)
+                this.info.viewport?.setTo(sx, sy, sw, sh)
+            }
+
+            action(g, info)
+        }
         invokeWithOGLContextCurrentMethod.invoke(null, g, Runnable {
             //if (!(isQueueFlusherThread.invoke(null) as Boolean)) error("Can't render on another thread")
             try {
-                val factor = getDisplayScalingFactor(c)
+
+                /*
                 //val window = SwingUtilities.getWindowAncestor(c)
                 val viewport = getOGLViewport.invoke(null, g, (c.width * factor).toInt(), (c.height * factor).toInt()) as java.awt.Rectangle
                 //val viewport = getOGLViewport.invoke(null, g, window.width.toInt(), window.height.toInt()) as java.awt.Rectangle
@@ -204,17 +242,28 @@ class MacAWTOpenglContext(val gwconfig: GameWindowConfig, val c: Component, var 
                     //info.viewport?.setTo(viewport.x, viewport.y, viewport.width, viewport.height)
                     info.viewport?.setTo(scissorBox.x, scissorBox.y, scissorBox.width, scissorBox.height)
                 } else {
-                    System.err.println("ERROR !! scissorBox = $scissorBox, viewport = $viewport")
+                    if (viewport != null) {
+                        val vx = viewport.x
+                        val vy = viewport.y
+                        val vw = viewport.width
+                        val vh = viewport.height
+                        info.scissors?.setTo(vx, vy, vw, vh)
+                        info.viewport?.setTo(vx, vy, vw, vh)
+                    }
+                    //System.err.println("ERROR !! scissorBox = $scissorBox, viewport = $viewport")
                 }
+                */
                 //info.viewport?.setTo(scissorBox.x, scissorBox.y)
                 //println("viewport: $viewport, $scissorBox")
                 //println(g.clipBounds)
                 if (other != null) {
                     val oldContext = NSClass("NSOpenGLContext").msgSend("currentContext")
-                    other!!.useContext(g, ag) { g, info -> action(g, info) }
+                    other!!.useContext(g, ag) { g, info ->
+                        raction(g, info)
+                    }
                     oldContext.msgSend("makeCurrentContext")
                 } else {
-                    action(g, info)
+                    raction(g, info)
                 }
 
             } catch (e: Throwable) {
