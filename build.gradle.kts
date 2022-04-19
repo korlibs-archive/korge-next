@@ -133,6 +133,22 @@ subprojects {
         // AppData\Local\Android\Sdk\tools\bin>sdkmanager --licenses
         apply(plugin = "kotlin-multiplatform")
 
+
+        val jvmVersion = JavaLanguageVersion.of(8)
+
+        val compiler = javaToolchains.compilerFor {
+            languageVersion.set(jvmVersion)
+        }
+
+        project.tasks
+            .withType<org.jetbrains.kotlin.gradle.tasks.UsesKotlinJavaToolchain>()
+            .configureEach {
+                kotlinJavaToolchain.jdk.use(
+                    compiler.get().metadata.installationPath.asFile.absolutePath,
+                    jvmVersion
+                )
+            }
+
         if (hasAndroid) {
             if (isSample) {
                 apply(plugin = "com.android.application")
