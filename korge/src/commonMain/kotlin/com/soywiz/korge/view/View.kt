@@ -2237,6 +2237,19 @@ fun <T : View> T.scaleWhileMaintainingAspect(scalingOption: ScalingOption): T {
     return this
 }
 
+fun View.localToOtherViewSpaceX(x: Double, y: Double, targetSpace: View): Double =
+    targetSpace.globalToLocalX(this.localToGlobalX(x, y), this.localToGlobalY(x, y))
+
+fun View.localToOtherViewSpaceY(x: Double, y: Double, targetSpace: View): Double =
+    targetSpace.globalToLocalY(this.localToGlobalX(x, y), this.localToGlobalY(x, y))
+
+fun View.localToOtherViewSpace(x: Double, y: Double, targetSpace: View, out: Point = Point()): IPoint =
+    out.setTo(localToOtherViewSpaceX(x, y, targetSpace), localToOtherViewSpaceY(x, y, targetSpace))
+
+fun View.localToOtherViewSpace(pos: IPoint, targetSpace: View, out: Point = Point()): IPoint =
+    localToOtherViewSpace(pos.x, pos.y, targetSpace, out)
+
+
 /*
 fun <T : BaseView> T.addMouseComponent(block: (view: T, views: Views, event: MouseEvent) -> Unit): MouseComponent {
     return addComponent(object : MouseComponent {
