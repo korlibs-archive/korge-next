@@ -18,7 +18,7 @@ void main() {
 }
 ])
 compileShader([1])
-getShaderiv([1, 35713, FBuffer(size=4)])
+getShaderiv([1, 35713, FBuffer(size=16)])
 getError([]) = 0
 createShader([35633]) = 1
 shaderSource([1, #version 100 compatibility
@@ -38,7 +38,7 @@ void main() {
 }
 ])
 compileShader([1])
-getShaderiv([1, 35713, FBuffer(size=4)])
+getShaderiv([1, 35713, FBuffer(size=16)])
 getError([]) = 0
 attachShader([1, 1])
 attachShader([1, 1])
