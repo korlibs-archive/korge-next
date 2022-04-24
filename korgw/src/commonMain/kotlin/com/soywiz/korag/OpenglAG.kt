@@ -168,6 +168,7 @@ abstract class AGOpengl : AG() {
             if (internalFormat != 0) {
                 gl.framebufferRenderbuffer(gl.FRAMEBUFFER, internalFormat, gl.RENDERBUFFER, depth.getInt(0))
             }
+            //println("VIEWPORT: ${gl.getRectanglev(KmlGl.VIEWPORT)}, x=$x, y=$y, width=$width, height=$height, fullWidth=$fullWidth, fullHeight=$fullHeight")
             //val status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
             //if (status != gl.FRAMEBUFFER_COMPLETE) error("Error getting framebuffer")
             //gl.bindFramebuffer(gl.FRAMEBUFFER, 0)

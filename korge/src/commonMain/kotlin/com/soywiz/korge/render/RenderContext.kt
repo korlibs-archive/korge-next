@@ -122,6 +122,7 @@ class RenderContext constructor(
 			val oldScissors = batch.scissor
             renderToTextureScissors.alloc { scissor ->
                 batch.scissor = scissor.setTo(0, 0, width, height)
+                //println("  renderToTexture: ${batch.scissor}, width=$width, height=$height")
                 try {
                     render(it)
                     flush()
@@ -130,6 +131,7 @@ class RenderContext constructor(
                 }
             }
 		}, hasDepth = hasDepth, hasStencil = hasStencil, msamples = msamples, use = { tex, texWidth, texHeight ->
+            //println("  renderToTexture.texture: texWidth=$texWidth, texHeight=$texHeight")
             use(Texture(tex, texWidth, texHeight).slice(0, 0, width, height))
 			flush()
 		})
