@@ -2249,6 +2249,31 @@ fun View.localToOtherViewSpace(x: Double, y: Double, targetSpace: View, out: Poi
 fun View.localToOtherViewSpace(pos: IPoint, targetSpace: View, out: Point = Point()): IPoint =
     localToOtherViewSpace(pos.x, pos.y, targetSpace, out)
 
+fun <R> View.temporalTransform(block: T.() -> R): R {
+    val temp = localMatrix.copy()
+    try {
+        return block()
+    } finally {
+        localMatrix = temp
+    }
+}
+
+// @TODO: This shouldn't be required if Stage.scaleXY is 1.0. As it should be
+fun globalToFixedGlobal(views: Views, point: Point): Point =
+    views.stage.localMatrix.inverted().transform(point)
+
+fun fixedGlobalToGlobal(views: Views, point: Point): Point =
+    views.stage.localMatrix.transform(point)
+
+fun View.localToFixedGlobal(views: Views, local: Point): Point =
+    globalToFixedGlobal(views, localToGlobal(local))
+
+var View.fixedGlobalXY: Point
+    get() = globalToFixedGlobal(stage!!.views, globalXY())
+    set(value) {
+        // println("newGlobalXY=$value --- ${newGlobalToGlobal(stage!!.views, value)}")
+        setGlobalXY(fixedGlobalToGlobal(stage!!.views, value))
+    }
 
 /*
 fun <T : BaseView> T.addMouseComponent(block: (view: T, views: Views, event: MouseEvent) -> Unit): MouseComponent {

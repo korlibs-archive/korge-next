@@ -154,3 +154,17 @@ fun <T : View> T.draggable(selector: View = this, autoMove: Boolean = true, onDr
     }
     return this
 }
+
+// @TODO: This shouldn't be required if Stage.scaleXY is 1.0. As it should be
+
+val com.soywiz.korge.input.DraggableInfo.fixedGlobalPrevXY: Point
+    get() = globalToFixedGlobal(
+        this.view.stage!!.views,
+        this.view.parent!!.localToGlobal(this.viewPrevXY)
+    )
+
+val com.soywiz.korge.input.DraggableInfo.fixedGlobalNextXY: Point
+    get() = globalToFixedGlobal(
+        this.view.stage!!.views,
+        this.view.parent!!.localToGlobal(this.viewNextXY)
+    )
