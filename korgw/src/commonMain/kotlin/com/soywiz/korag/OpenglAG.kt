@@ -61,7 +61,21 @@ abstract class AGOpengl : AG() {
         //println("setViewport: ${buffer.x}, ${buffer.y}, ${buffer.width}, ${buffer.height}")
     }
 
+    private val showGlLimits = Once()
+
     override fun createMainRenderBuffer(): BaseRenderBufferImpl {
+        showGlLimits {
+            println("MAX_RENDERBUFFER_SIZE: " + gl.getIntegerv(KmlGl.MAX_RENDERBUFFER_SIZE))
+            println("MAX_TEXTURE_SIZE: " + gl.getIntegerv(KmlGl.MAX_TEXTURE_SIZE))
+            println("MAX_COMBINED_TEXTURE_IMAGE_UNITS: " + gl.getIntegerv(KmlGl.MAX_COMBINED_TEXTURE_IMAGE_UNITS))
+            println("MAX_FRAGMENT_UNIFORM_VECTORS: " + gl.getIntegerv(KmlGl.MAX_FRAGMENT_UNIFORM_VECTORS))
+            println("MAX_TEXTURE_IMAGE_UNITS: " + gl.getIntegerv(KmlGl.MAX_TEXTURE_IMAGE_UNITS))
+            println("MAX_VARYING_VECTORS: " + gl.getIntegerv(KmlGl.MAX_VARYING_VECTORS))
+            println("MAX_VERTEX_ATTRIBS: " + gl.getIntegerv(KmlGl.MAX_VERTEX_ATTRIBS))
+            println("MAX_VERTEX_TEXTURE_IMAGE_UNITS: " + gl.getIntegerv(KmlGl.MAX_VERTEX_TEXTURE_IMAGE_UNITS))
+            println("MAX_VERTEX_UNIFORM_VECTORS: " + gl.getIntegerv(KmlGl.MAX_VERTEX_UNIFORM_VECTORS))
+            println("MAX_VIEWPORT_DIMS: " + gl.getIntegerv(KmlGl.MAX_VIEWPORT_DIMS))
+        }
         var backBufferTextureBinding2d: Int = 0
         var backBufferRenderBufferBinding: Int = 0
         var backBufferFrameBufferBinding: Int = 0
@@ -98,7 +112,7 @@ abstract class AGOpengl : AG() {
 
         val ftex get() = tex as GlTexture
 
-        val depth = FBuffer(4)
+        val renderbuffer = FBuffer(4)
         val framebuffer = FBuffer(4)
 
         // http://wangchuan.github.io/coding/2016/05/26/multisampling-fbo.html
@@ -118,7 +132,7 @@ abstract class AGOpengl : AG() {
 
                 if (cachedVersion != contextVersion) {
                     cachedVersion = contextVersion
-                    gl.genRenderbuffers(1, depth)
+                    gl.genRenderbuffers(1, renderbuffer)
                     gl.genFramebuffers(1, framebuffer)
                 }
 
@@ -138,7 +152,7 @@ abstract class AGOpengl : AG() {
                     gl.texImage2D(texTarget, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
                 }
                 gl.bindTexture(texTarget, 0)
-                gl.bindRenderbuffer(gl.RENDERBUFFER, depth.getInt(0))
+                gl.bindRenderbuffer(gl.RENDERBUFFER, renderbuffer.getInt(0))
                 val internalFormat = when {
                     hasStencilAndDepth -> gl.DEPTH_STENCIL
                     hasStencil -> gl.STENCIL_INDEX8 // On android this is buggy somehow?
@@ -166,7 +180,10 @@ abstract class AGOpengl : AG() {
                 else -> 0
             }
             if (internalFormat != 0) {
-                gl.framebufferRenderbuffer(gl.FRAMEBUFFER, internalFormat, gl.RENDERBUFFER, depth.getInt(0))
+                gl.framebufferRenderbuffer(gl.FRAMEBUFFER, internalFormat, gl.RENDERBUFFER, renderbuffer.getInt(0))
+            } else {
+                gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.STENCIL_ATTACHMENT, gl.RENDERBUFFER, 0)
+                gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, 0)
             }
             //println("VIEWPORT: ${gl.getRectanglev(KmlGl.VIEWPORT)}, x=$x, y=$y, width=$width, height=$height, fullWidth=$fullWidth, fullHeight=$fullHeight")
             //val status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
@@ -174,12 +191,17 @@ abstract class AGOpengl : AG() {
             //gl.bindFramebuffer(gl.FRAMEBUFFER, 0)
         }
 
+        override fun unset() {
+            super.unset()
+            // glCopyTexImage2D
+        }
+
         override fun close() {
             super.close()
             gl.deleteFramebuffers(1, framebuffer)
-            gl.deleteRenderbuffers(1, depth)
+            gl.deleteRenderbuffers(1, renderbuffer)
             framebuffer.setInt(0, 0)
-            depth.setInt(0, 0)
+            renderbuffer.setInt(0, 0)
         }
 
         override fun toString(): String = "GlRenderBuffer[$id]($width, $height)"
@@ -237,7 +259,7 @@ abstract class AGOpengl : AG() {
                 gl.scissor(0, 0, 0, 0)
             }
         } else {
-            //println("[RENDER_TARGET] scissor: $scissor")
+            println("[RENDER_TARGET] scissor: $scissor")
 
             gl.enableDisable(gl.SCISSOR_TEST, scissor != null)
             if (scissor != null) {

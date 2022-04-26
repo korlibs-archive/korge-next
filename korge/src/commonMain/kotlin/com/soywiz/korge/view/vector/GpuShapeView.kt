@@ -81,7 +81,8 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
     override fun renderInternal(ctx: RenderContext) {
         ctx.flush()
 
-        val doRequireTexture = shape.requireStencil
+        //val doRequireTexture = shape.requireStencil
+        val doRequireTexture = true
 
         val time = measureTime {
             if (doRequireTexture) {

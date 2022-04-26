@@ -857,23 +857,37 @@ abstract class View internal constructor(
 
         ctx.matrixPool.alloc { tempMat2d ->
             val tryFilterScale = Filter.discretizeFilterScale(kotlin.math.min(filterScale, filter.recommendedFilterScale))
+            //val tryFilterScale = 1.0
             //println("tryFilterScale=$tryFilterScale")
             val texWidthNoBorder = (bounds.width * tryFilterScale).toInt().coerceAtLeast(1)
             val texHeightNoBorder = (bounds.height * tryFilterScale).toInt().coerceAtLeast(1)
 
-            val realFilterScale = (texWidthNoBorder.toDouble() / bounds.width).clamp(0.03125, 1.0)
-
             val texWidth = texWidthNoBorder
             val texHeight = texHeightNoBorder
+
+            val realFilterScale = (texWidthNoBorder.toDouble() / bounds.width).clamp(0.03125, 1.0) //* 0.5
+            //val realFilterScale = 1.0
 
             val addx = -bounds.x
             val addy = -bounds.y
 
+            println("stage.scale=${stage?.scaleX}, ${stage?.scaleY}")
+            println("bounds=$bounds")
+            println("realFilterScale=$realFilterScale")
+
             //println("FILTER: $texWidth, $texHeight : $globalMatrixInv, $globalMatrix, addx=$addx, addy=$addy, renderColorAdd=$renderColorAdd, renderColorMulInt=$renderColorMulInt, blendMode=$blendMode")
             //println("FILTER($this): $texWidth, $texHeight : bounds=${bounds} addx=$addx, addy=$addy, renderColorAdd=$renderColorAdd, renderColorMul=$renderColorMul, blendMode=$blendMode")
 
+            val m = globalMatrix.clone()
+
+            //m.prescale(stage!!.scaleX, stage!!.scaleY)
+
+            println("globalMatrix=$m")
+            println("globalMatrixInv=${m.inverted()}")
+
             ctx.renderToTexture(texWidth, texHeight, render = {
-                tempMat2d.copyFrom(globalMatrixInv)
+                ctx.ag.clear(Colors.RED.withAd(0.3))
+                tempMat2d.copyFromInverted(m)
                 //tempMat2d.copyFrom(globalMatrix)
                 tempMat2d.translate(addx, addy)
                 tempMat2d.scale(realFilterScale)
@@ -886,7 +900,7 @@ abstract class View internal constructor(
                 }
             }) { texture ->
                 //println("texWidthHeight=$texWidth,$texHeight")
-                tempMat2d.copyFrom(globalMatrix)
+                tempMat2d.copyFrom(m)
                 tempMat2d.pretranslate(-addx, -addy)
                 tempMat2d.prescale(1.0 / realFilterScale)
                 filter.render(

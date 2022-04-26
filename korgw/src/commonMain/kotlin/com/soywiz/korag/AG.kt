@@ -12,7 +12,6 @@ import com.soywiz.korio.async.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korio.util.*
 import com.soywiz.korma.geom.*
-import com.soywiz.korma.math.*
 import kotlin.coroutines.*
 
 interface AGFactory {
@@ -939,20 +938,23 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         }
     }
 
+    var unadjustedFrameBufferSize: Boolean = true
+
     // iOS seems to require power of two textures for the render target, and we need it to be at least 64-pixels wide/long
-    open fun fixWidthForRenderToTexture(width: Int): Int = kotlin.math.max(64, width).nextPowerOfTwo
-    open fun fixHeightForRenderToTexture(height: Int): Int = kotlin.math.max(64, height).nextPowerOfTwo
-
-    //open fun fixWidthForRenderToTexture(width: Int): Int = width.nextMultipleOf(64)
-    //open fun fixHeightForRenderToTexture(height: Int): Int = height.nextMultipleOf(64)
-
-    //open fun fixWidthForRenderToTexture(width: Int): Int = width
-    //open fun fixHeightForRenderToTexture(height: Int): Int = height
+    private val renderTargetSize = AGTextureSize(
+        requireMin64 = true, // @TODO: This seems to be required by some Android Phones
+        requirePot = false, // @TODO: This seems to be required on iPhone 13
+        requireSquare = false // @TODO: This seems to be required on iPhone 7?
+    )
 
     @KoragExperimental
-    fun unsafeAllocateFrameRenderBuffer(width: Int, height: Int, hasDepth: Boolean = false, hasStencil: Boolean = false, msamples: Int = 1): RenderBuffer {
-        val realWidth = fixWidthForRenderToTexture(width)
-        val realHeight = fixHeightForRenderToTexture(height)
+    open fun unsafeAllocateFrameRenderBuffer(width: Int, height: Int, hasDepth: Boolean = false, hasStencil: Boolean = false, msamples: Int = 1): RenderBuffer {
+        val realSize = renderTargetSize.computeSize(width, height)
+        val realWidth = if (unadjustedFrameBufferSize) width else realSize.width
+        val realHeight = if (unadjustedFrameBufferSize) height else realSize.height
+        //val realWidth = width * 2
+        //val realHeight = height * 2
+        println("unsafeAllocateFrameRenderBuffer: realSize=($realWidth, $realHeight), size=($width, $height)")
         val rb = renderBuffers.alloc()
         frameRenderBuffers += rb
         rb.setSize(0, 0, realWidth, realHeight, realWidth, realHeight)
@@ -979,6 +981,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         try {
             setRenderBufferTemporally(rb) {
                 clear(Colors.TRANSPARENT_BLACK) // transparent
+                //clear(Colors.RED) // transparent
                 render(rb)
             }
             use(rb.tex, rb.width, rb.height)

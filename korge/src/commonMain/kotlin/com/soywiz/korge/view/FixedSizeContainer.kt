@@ -50,11 +50,13 @@ open class FixedSizeContainer(
             val hasRotation = m.b != 0.0 || m.c != 0.0
             //val hasNegativeScale = m.a < 0.0 || m.d < 0.0
             //if (hasRotation || hasNegativeScale) {
-            if (hasRotation) {
+            //if (hasRotation) {
+            if (true) {
                 // Use a renderbuffer instead
                 val old = renderingInternal
                 try {
                     renderingInternal = true
+                    println("FixedSizeContainer.siize: $width,$height")
                     renderFiltered(ctx, IdentityFilter)
                 } finally {
                     renderingInternal = old
