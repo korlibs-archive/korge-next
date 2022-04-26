@@ -167,6 +167,9 @@ abstract class AGOpengl : AG() {
             }
             if (internalFormat != 0) {
                 gl.framebufferRenderbuffer(gl.FRAMEBUFFER, internalFormat, gl.RENDERBUFFER, depth.getInt(0))
+            } else {
+                gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.STENCIL_ATTACHMENT, gl.RENDERBUFFER, 0)
+                gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, 0)
             }
             //println("VIEWPORT: ${gl.getRectanglev(KmlGl.VIEWPORT)}, x=$x, y=$y, width=$width, height=$height, fullWidth=$fullWidth, fullHeight=$fullHeight")
             //val status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
