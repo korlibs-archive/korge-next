@@ -47,7 +47,7 @@ draw(vertexCount=12, instances=1, indices=Buffer[5], type=TRIANGLES, offset=0)
 ::draw.vertex[5]: a_Pos[200,0], a_Tex[1,0], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
 ::draw.vertex[6]: a_Pos[200,100], a_Tex[1,1], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
 ::draw.vertex[7]: a_Pos[100,100], a_Tex[0,1], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
-::draw.shader.vertex=#version 100 compatibility
+::draw.shader.vertex=#SHADER-1: #version 100 compatibility
 #ifdef GL_ES
 	precision highp float;
 	precision highp int;
@@ -77,7 +77,7 @@ void main() {
 	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
 }
 
-::draw.shader.fragment=#version 100 compatibility
+::draw.shader.fragment=#SHADER-2: #version 100 compatibility
 #ifdef GL_ES
 	precision highp float;
 	precision highp int;

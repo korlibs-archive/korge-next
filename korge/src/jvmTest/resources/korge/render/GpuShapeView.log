@@ -36,7 +36,7 @@ draw(vertexCount=12, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[9]: a_Pos[-780,-860]
 ::draw.vertex[10]: a_Pos[-460,-860]
 ::draw.vertex[11]: a_Pos[-260,-660]
-::draw.shader.vertex=#version 100 compatibility
+::draw.shader.vertex=#SHADER-1: #version 100 compatibility
 #ifdef GL_ES
 	precision highp float;
 	precision highp int;
@@ -54,7 +54,7 @@ void main() {
 	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
 }
 
-::draw.shader.fragment=#version 100 compatibility
+::draw.shader.fragment=#SHADER-2: #version 100 compatibility
 #ifdef GL_ES
 	precision highp float;
 	precision highp int;
@@ -70,7 +70,7 @@ void main() {
 }
 
 draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_Color, u_GlobalAlpha])
+::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
 ::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=NOT_EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=1, readMask=255, writeMask=0)
@@ -95,6 +95,8 @@ draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.uniform.Uniform(u_Color) = [0.0, 0.0, 1.0, 1.0]
 ::draw.uniform.Uniform(u_GlobalAlpha) = 1.0
 ::draw.uniform.Uniform(u_LineWidth) = 1.25
+::draw.uniform.Uniform(u_ProgramType) = 0.0
+::draw.ERROR.Missing:[Uniform(u_Tex), Uniform(u_Transform), Uniform(u_Gradientp0), Uniform(u_Gradientp1)]
 ::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
 ::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
 ::draw.attribute[5][0]=Attribute(a_Tex, type=Float2, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
@@ -118,7 +120,7 @@ draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.vertex[15]: a_Pos[-258.75,-660], a_Tex[-258.75,-660], a_Dist[1.5]
 ::draw.vertex[16]: a_Pos[-261.25,-661.25], a_Tex[-261.25,-661.25], a_Dist[-1.5]
 ::draw.vertex[17]: a_Pos[-260,-658.75], a_Tex[-260,-658.75], a_Dist[1.5]
-::draw.shader.vertex=#version 100 compatibility
+::draw.shader.vertex=#SHADER-3: #version 100 compatibility
 #ifdef GL_ES
 	precision highp float;
 	precision highp int;
@@ -142,7 +144,7 @@ void main() {
 	v_Dist = a_Dist;
 }
 
-::draw.shader.fragment=#version 100 compatibility
+::draw.shader.fragment=#SHADER-4: #version 100 compatibility
 #ifdef GL_ES
 	precision highp float;
 	precision highp int;
@@ -154,14 +156,59 @@ void main() {
 	  #define lowp 
 #endif
 uniform float u_LineWidth;
+uniform float u_ProgramType;
 uniform vec4 u_Color;
+uniform sampler2D u_Tex;
+uniform mat4 u_Transform;
+uniform vec3 u_Gradientp0;
+uniform vec3 u_Gradientp1;
 uniform float u_GlobalAlpha;
 varying mediump float v_Dist;
+varying mediump vec2 v_Tex;
 void main() {
+	vec2 temp3;
+	vec4 temp0;
+	vec4 temp1;
+	vec2 temp4;
 	if ((abs(v_Dist) >= u_LineWidth)) {
 		discard;
 	}
-	gl_FragColor = u_Color;
+	if ((u_ProgramType == 0.0)) {
+		gl_FragColor = u_Color;
+	}
+	else {
+		if ((u_ProgramType == 1.0)) {
+			gl_FragColor = texture2D(u_Tex, fract(vec2((u_Transform * vec4(v_Tex, 0.0, 1.0)).xy)));
+		}
+		else {
+			if ((u_ProgramType == 2.0)) {
+				gl_FragColor = texture2D(u_Tex, (u_Transform * vec4(v_Tex.x, v_Tex.y, 0.0, 1.0)).xy);
+			}
+			else {
+				if ((u_ProgramType == 3.0)) {
+					temp3.xy = (u_Transform * vec4(v_Tex.x, v_Tex.y, 0.0, 1.0)).xy;
+					temp0.y = ((2.0 * u_Gradientp0.z) * u_Gradientp1.z);
+					temp0.z = pow(u_Gradientp0.z, 2.0);
+					temp0.w = pow(u_Gradientp1.z, 2.0);
+					temp1.y = (u_Gradientp0.x - u_Gradientp1.x);
+					temp1.x = (u_Gradientp0.y - u_Gradientp1.y);
+					temp1.z = (u_Gradientp0.z - u_Gradientp1.z);
+					temp1.w = (1.0 / ((pow((u_Gradientp0.z - u_Gradientp1.z), 2.0) - pow((u_Gradientp0.x - u_Gradientp1.x), 2.0)) - pow((u_Gradientp0.y - u_Gradientp1.y), 2.0)));
+					temp0.x = (1.0 - ((((((-(u_Gradientp1.z)) * temp1.z) + (temp1.y * (u_Gradientp1.x - temp3.x))) + (temp1.x * (u_Gradientp1.y - temp3.y))) - sqrt(((((temp0.w * (pow((u_Gradientp0.x - temp3.x), 2.0) + pow((u_Gradientp0.y - temp3.y), 2.0))) - (temp0.y * (((u_Gradientp0.x - temp3.x) * (u_Gradientp1.x - temp3.x)) + ((u_Gradientp0.y - temp3.y) * (u_Gradientp1.y - temp3.y))))) + (temp0.z * (pow((u_Gradientp1.x - temp3.x), 2.0) + pow((u_Gradientp1.y - temp3.y), 2.0)))) - pow(((((((u_Gradientp1.x * u_Gradientp0.y) - (temp3.x * u_Gradientp0.y)) - (u_Gradientp0.x * u_Gradientp1.y)) + (temp3.x * u_Gradientp1.y)) + (u_Gradientp0.x * temp3.y)) - (u_Gradientp1.x * temp3.y)), 2.0)))) * temp1.w));
+					gl_FragColor = texture2D(u_Tex, vec2(temp0.x, 0.0));
+				}
+				else {
+					temp4.xy = (u_Transform * vec4(v_Tex.x, v_Tex.y, 0.0, 1.0)).xy;
+					temp0.y = atan((temp4.y - u_Gradientp0.y), (temp4.x - u_Gradientp0.x));
+					if ((temp0.y < 0.0)) {
+						temp0.y = (temp0.y + 6.2831855);
+					}
+					temp0.x = (temp0.y / 6.2831855);
+					gl_FragColor = texture2D(u_Tex, fract(vec2(temp0.x, 0.0)));
+				}
+			}
+		}
+	}
 	gl_FragColor.w = (gl_FragColor.w * u_GlobalAlpha);
 	if ((abs(v_Dist) >= (u_LineWidth - 1.0))) {
 		gl_FragColor.a = (gl_FragColor.a * (1.0 - (abs(v_Dist) - (u_LineWidth - 1.0))));
@@ -169,7 +216,7 @@ void main() {
 }
 
 draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_Color, u_GlobalAlpha])
+::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
 ::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=NOT_EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=1, readMask=255, writeMask=0)
@@ -194,6 +241,8 @@ draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.uniform.Uniform(u_Color) = [0.0, 0.0, 1.0, 1.0]
 ::draw.uniform.Uniform(u_GlobalAlpha) = 1.0
 ::draw.uniform.Uniform(u_LineWidth) = 1.25
+::draw.uniform.Uniform(u_ProgramType) = 0.0
+::draw.ERROR.Missing:[Uniform(u_Tex), Uniform(u_Transform), Uniform(u_Gradientp0), Uniform(u_Gradientp1)]
 ::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
 ::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
 ::draw.attribute[5][0]=Attribute(a_Tex, type=Float2, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
@@ -217,58 +266,10 @@ draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.vertex[15]: a_Pos[-461.25,-861.25], a_Tex[-461.25,-861.25], a_Dist[1.5]
 ::draw.vertex[16]: a_Pos[-458.75,-860], a_Tex[-458.75,-860], a_Dist[-1.5]
 ::draw.vertex[17]: a_Pos[-461.25,-861.25], a_Tex[-461.25,-861.25], a_Dist[1.5]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-attribute mediump vec2 a_Tex;
-attribute mediump float a_Dist;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-varying mediump vec2 v_Tex;
-varying mediump float v_Dist;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-	v_Tex = a_Tex;
-	v_Dist = a_Dist;
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-uniform float u_LineWidth;
-uniform vec4 u_Color;
-uniform float u_GlobalAlpha;
-varying mediump float v_Dist;
-void main() {
-	if ((abs(v_Dist) >= u_LineWidth)) {
-		discard;
-	}
-	gl_FragColor = u_Color;
-	gl_FragColor.w = (gl_FragColor.w * u_GlobalAlpha);
-	if ((abs(v_Dist) >= (u_LineWidth - 1.0))) {
-		gl_FragColor.a = (gl_FragColor.a * (1.0 - (abs(v_Dist) - (u_LineWidth - 1.0))));
-	}
-}
-
+::draw.shader.vertex=#SHADER-3 (already shown)
+::draw.shader.fragment=#SHADER-4 (already shown)
 draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_Color, u_GlobalAlpha])
+::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
 ::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=1, readMask=255, writeMask=0)
@@ -293,6 +294,8 @@ draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.uniform.Uniform(u_Color) = [0.0, 0.0, 1.0, 1.0]
 ::draw.uniform.Uniform(u_GlobalAlpha) = 1.0
 ::draw.uniform.Uniform(u_LineWidth) = 1.0E7
+::draw.uniform.Uniform(u_ProgramType) = 0.0
+::draw.ERROR.Missing:[Uniform(u_Tex), Uniform(u_Transform), Uniform(u_Gradientp0), Uniform(u_Gradientp1)]
 ::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
 ::draw.ERROR.Unexpected:[Attribute(a_Dist)]
 ::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
@@ -302,56 +305,8 @@ draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[1]: a_Pos[200,0], a_Tex[100,0]
 ::draw.vertex[2]: a_Pos[200,200], a_Tex[100,100]
 ::draw.vertex[3]: a_Pos[0,200], a_Tex[0,100]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-attribute mediump vec2 a_Tex;
-attribute mediump float a_Dist;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-varying mediump vec2 v_Tex;
-varying mediump float v_Dist;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-	v_Tex = a_Tex;
-	v_Dist = a_Dist;
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-uniform float u_LineWidth;
-uniform vec4 u_Color;
-uniform float u_GlobalAlpha;
-varying mediump float v_Dist;
-void main() {
-	if ((abs(v_Dist) >= u_LineWidth)) {
-		discard;
-	}
-	gl_FragColor = u_Color;
-	gl_FragColor.w = (gl_FragColor.w * u_GlobalAlpha);
-	if ((abs(v_Dist) >= (u_LineWidth - 1.0))) {
-		gl_FragColor.a = (gl_FragColor.a * (1.0 - (abs(v_Dist) - (u_LineWidth - 1.0))));
-	}
-}
-
+::draw.shader.vertex=#SHADER-3 (already shown)
+::draw.shader.fragment=#SHADER-4 (already shown)
 draw(vertexCount=276, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.program=Program(name=program, attributes=[a_Pos], uniforms=[u_ProjMat, u_ViewMat])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
@@ -654,41 +609,10 @@ draw(vertexCount=276, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[273]: a_Pos[-859.955,-1103.8313]
 ::draw.vertex[274]: a_Pos[-860,-1100]
 ::draw.vertex[275]: a_Pos[-860,-1100]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-void main() {
-	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-}
-
+::draw.shader.vertex=#SHADER-1 (already shown)
+::draw.shader.fragment=#SHADER-2 (already shown)
 draw(vertexCount=310, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_Color, u_GlobalAlpha])
+::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
 ::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=NOT_EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=1, readMask=255, writeMask=0)
@@ -713,6 +637,8 @@ draw(vertexCount=310, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.uniform.Uniform(u_Color) = [1.0, 1.0, 0.0, 1.0]
 ::draw.uniform.Uniform(u_GlobalAlpha) = 1.0
 ::draw.uniform.Uniform(u_LineWidth) = 1.25
+::draw.uniform.Uniform(u_ProgramType) = 0.0
+::draw.ERROR.Missing:[Uniform(u_Tex), Uniform(u_Transform), Uniform(u_Gradientp0), Uniform(u_Gradientp1)]
 ::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
 ::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
 ::draw.attribute[5][0]=Attribute(a_Tex, type=Float2, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
@@ -1028,58 +954,10 @@ draw(vertexCount=310, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.vertex[307]: a_Pos[-858.74896,-1100], a_Tex[-858.74896,-1100], a_Dist[1.5]
 ::draw.vertex[308]: a_Pos[-861.24896,-1099.9495], a_Tex[-861.24896,-1099.9495], a_Dist[-1.5]
 ::draw.vertex[309]: a_Pos[-858.74896,-1100], a_Tex[-858.74896,-1100], a_Dist[1.5]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-attribute mediump vec2 a_Tex;
-attribute mediump float a_Dist;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-varying mediump vec2 v_Tex;
-varying mediump float v_Dist;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-	v_Tex = a_Tex;
-	v_Dist = a_Dist;
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-uniform float u_LineWidth;
-uniform vec4 u_Color;
-uniform float u_GlobalAlpha;
-varying mediump float v_Dist;
-void main() {
-	if ((abs(v_Dist) >= u_LineWidth)) {
-		discard;
-	}
-	gl_FragColor = u_Color;
-	gl_FragColor.w = (gl_FragColor.w * u_GlobalAlpha);
-	if ((abs(v_Dist) >= (u_LineWidth - 1.0))) {
-		gl_FragColor.a = (gl_FragColor.a * (1.0 - (abs(v_Dist) - (u_LineWidth - 1.0))));
-	}
-}
-
+::draw.shader.vertex=#SHADER-3 (already shown)
+::draw.shader.fragment=#SHADER-4 (already shown)
 draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_Color, u_GlobalAlpha])
+::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
 ::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=1, readMask=255, writeMask=0)
@@ -1104,6 +982,8 @@ draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.uniform.Uniform(u_Color) = [1.0, 1.0, 0.0, 1.0]
 ::draw.uniform.Uniform(u_GlobalAlpha) = 1.0
 ::draw.uniform.Uniform(u_LineWidth) = 1.0E7
+::draw.uniform.Uniform(u_ProgramType) = 0.0
+::draw.ERROR.Missing:[Uniform(u_Tex), Uniform(u_Transform), Uniform(u_Gradientp0), Uniform(u_Gradientp1)]
 ::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
 ::draw.ERROR.Unexpected:[Attribute(a_Dist)]
 ::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
@@ -1113,56 +993,8 @@ draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[1]: a_Pos[200,0], a_Tex[100,0]
 ::draw.vertex[2]: a_Pos[200,200], a_Tex[100,100]
 ::draw.vertex[3]: a_Pos[0,200], a_Tex[0,100]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-attribute mediump vec2 a_Tex;
-attribute mediump float a_Dist;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-varying mediump vec2 v_Tex;
-varying mediump float v_Dist;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-	v_Tex = a_Tex;
-	v_Dist = a_Dist;
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-uniform float u_LineWidth;
-uniform vec4 u_Color;
-uniform float u_GlobalAlpha;
-varying mediump float v_Dist;
-void main() {
-	if ((abs(v_Dist) >= u_LineWidth)) {
-		discard;
-	}
-	gl_FragColor = u_Color;
-	gl_FragColor.w = (gl_FragColor.w * u_GlobalAlpha);
-	if ((abs(v_Dist) >= (u_LineWidth - 1.0))) {
-		gl_FragColor.a = (gl_FragColor.a * (1.0 - (abs(v_Dist) - (u_LineWidth - 1.0))));
-	}
-}
-
+::draw.shader.vertex=#SHADER-3 (already shown)
+::draw.shader.fragment=#SHADER-4 (already shown)
 draw(vertexCount=9, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.program=Program(name=program, attributes=[a_Pos], uniforms=[u_ProjMat, u_ViewMat])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
@@ -1198,41 +1030,10 @@ draw(vertexCount=9, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[6]: a_Pos[-596.07697,-1040]
 ::draw.vertex[7]: a_Pos[-700,-980]
 ::draw.vertex[8]: a_Pos[-700,-980]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-void main() {
-	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-}
-
+::draw.shader.vertex=#SHADER-1 (already shown)
+::draw.shader.fragment=#SHADER-2 (already shown)
 draw(vertexCount=26, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_Color, u_GlobalAlpha])
+::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
 ::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=NOT_EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=1, readMask=255, writeMask=0)
@@ -1257,6 +1058,8 @@ draw(vertexCount=26, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.uniform.Uniform(u_Color) = [1.0, 0.0, 0.0, 1.0]
 ::draw.uniform.Uniform(u_GlobalAlpha) = 1.0
 ::draw.uniform.Uniform(u_LineWidth) = 1.25
+::draw.uniform.Uniform(u_ProgramType) = 0.0
+::draw.ERROR.Missing:[Uniform(u_Tex), Uniform(u_Transform), Uniform(u_Gradientp0), Uniform(u_Gradientp1)]
 ::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
 ::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
 ::draw.attribute[5][0]=Attribute(a_Tex, type=Float2, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
@@ -1288,58 +1091,10 @@ draw(vertexCount=26, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.vertex[23]: a_Pos[-699.375,-978.9175], a_Tex[-699.375,-978.9175], a_Dist[1.5]
 ::draw.vertex[24]: a_Pos[-700,-981.44336], a_Tex[-700,-981.44336], a_Dist[-1.5]
 ::draw.vertex[25]: a_Pos[-700.625,-978.9175], a_Tex[-700.625,-978.9175], a_Dist[1.5]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-attribute mediump vec2 a_Tex;
-attribute mediump float a_Dist;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-varying mediump vec2 v_Tex;
-varying mediump float v_Dist;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-	v_Tex = a_Tex;
-	v_Dist = a_Dist;
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-uniform float u_LineWidth;
-uniform vec4 u_Color;
-uniform float u_GlobalAlpha;
-varying mediump float v_Dist;
-void main() {
-	if ((abs(v_Dist) >= u_LineWidth)) {
-		discard;
-	}
-	gl_FragColor = u_Color;
-	gl_FragColor.w = (gl_FragColor.w * u_GlobalAlpha);
-	if ((abs(v_Dist) >= (u_LineWidth - 1.0))) {
-		gl_FragColor.a = (gl_FragColor.a * (1.0 - (abs(v_Dist) - (u_LineWidth - 1.0))));
-	}
-}
-
+::draw.shader.vertex=#SHADER-3 (already shown)
+::draw.shader.fragment=#SHADER-4 (already shown)
 draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_Color, u_GlobalAlpha])
+::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
 ::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=1, readMask=255, writeMask=0)
@@ -1364,6 +1119,8 @@ draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.uniform.Uniform(u_Color) = [1.0, 0.0, 0.0, 1.0]
 ::draw.uniform.Uniform(u_GlobalAlpha) = 1.0
 ::draw.uniform.Uniform(u_LineWidth) = 1.0E7
+::draw.uniform.Uniform(u_ProgramType) = 0.0
+::draw.ERROR.Missing:[Uniform(u_Tex), Uniform(u_Transform), Uniform(u_Gradientp0), Uniform(u_Gradientp1)]
 ::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
 ::draw.ERROR.Unexpected:[Attribute(a_Dist)]
 ::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
@@ -1373,56 +1130,8 @@ draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[1]: a_Pos[200,0], a_Tex[100,0]
 ::draw.vertex[2]: a_Pos[200,200], a_Tex[100,100]
 ::draw.vertex[3]: a_Pos[0,200], a_Tex[0,100]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-attribute mediump vec2 a_Tex;
-attribute mediump float a_Dist;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-varying mediump vec2 v_Tex;
-varying mediump float v_Dist;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-	v_Tex = a_Tex;
-	v_Dist = a_Dist;
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-uniform float u_LineWidth;
-uniform vec4 u_Color;
-uniform float u_GlobalAlpha;
-varying mediump float v_Dist;
-void main() {
-	if ((abs(v_Dist) >= u_LineWidth)) {
-		discard;
-	}
-	gl_FragColor = u_Color;
-	gl_FragColor.w = (gl_FragColor.w * u_GlobalAlpha);
-	if ((abs(v_Dist) >= (u_LineWidth - 1.0))) {
-		gl_FragColor.a = (gl_FragColor.a * (1.0 - (abs(v_Dist) - (u_LineWidth - 1.0))));
-	}
-}
-
+::draw.shader.vertex=#SHADER-3 (already shown)
+::draw.shader.fragment=#SHADER-4 (already shown)
 draw(vertexCount=7, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.program=Program(name=program, attributes=[a_Pos], uniforms=[u_ProjMat, u_ViewMat])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
@@ -1456,41 +1165,10 @@ draw(vertexCount=7, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[4]: a_Pos[-300,-780]
 ::draw.vertex[5]: a_Pos[-300,20]
 ::draw.vertex[6]: a_Pos[-300,20]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-void main() {
-	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-}
-
+::draw.shader.vertex=#SHADER-1 (already shown)
+::draw.shader.fragment=#SHADER-2 (already shown)
 draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_Tex, u_Transform, u_GlobalAlpha])
+::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
 ::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=NOT_EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=1, readMask=255, writeMask=0)
@@ -1521,6 +1199,8 @@ draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 )
 ::draw.uniform.Uniform(u_GlobalAlpha) = 0.75
 ::draw.uniform.Uniform(u_LineWidth) = 1.25
+::draw.uniform.Uniform(u_ProgramType) = 1.0
+::draw.ERROR.Missing:[Uniform(u_Color), Uniform(u_Gradientp0), Uniform(u_Gradientp1)]
 ::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
 ::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
 ::draw.attribute[5][0]=Attribute(a_Tex, type=Float2, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
@@ -1544,60 +1224,10 @@ draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.vertex[15]: a_Pos[-298.75,20], a_Tex[-298.75,20], a_Dist[1.5]
 ::draw.vertex[16]: a_Pos[-301.25,18.75], a_Tex[-301.25,18.75], a_Dist[-1.5]
 ::draw.vertex[17]: a_Pos[-300,21.25], a_Tex[-300,21.25], a_Dist[1.5]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-attribute mediump vec2 a_Tex;
-attribute mediump float a_Dist;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-varying mediump vec2 v_Tex;
-varying mediump float v_Dist;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-	v_Tex = a_Tex;
-	v_Dist = a_Dist;
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-uniform float u_LineWidth;
-uniform sampler2D u_Tex;
-uniform mat4 u_Transform;
-uniform float u_GlobalAlpha;
-varying mediump float v_Dist;
-varying mediump vec2 v_Tex;
-void main() {
-	if ((abs(v_Dist) >= u_LineWidth)) {
-		discard;
-	}
-	gl_FragColor = texture2D(u_Tex, fract(vec2((u_Transform * vec4(v_Tex, 0.0, 1.0)).xy)));
-	gl_FragColor.w = (gl_FragColor.w * u_GlobalAlpha);
-	if ((abs(v_Dist) >= (u_LineWidth - 1.0))) {
-		gl_FragColor.a = (gl_FragColor.a * (1.0 - (abs(v_Dist) - (u_LineWidth - 1.0))));
-	}
-}
-
+::draw.shader.vertex=#SHADER-3 (already shown)
+::draw.shader.fragment=#SHADER-4 (already shown)
 draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_Tex, u_Transform, u_GlobalAlpha])
+::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
 ::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=1, readMask=255, writeMask=0)
@@ -1628,6 +1258,8 @@ draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 )
 ::draw.uniform.Uniform(u_GlobalAlpha) = 0.75
 ::draw.uniform.Uniform(u_LineWidth) = 1.0E7
+::draw.uniform.Uniform(u_ProgramType) = 1.0
+::draw.ERROR.Missing:[Uniform(u_Color), Uniform(u_Gradientp0), Uniform(u_Gradientp1)]
 ::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
 ::draw.ERROR.Unexpected:[Attribute(a_Dist)]
 ::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
@@ -1637,58 +1269,8 @@ draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[1]: a_Pos[200,0], a_Tex[100,0]
 ::draw.vertex[2]: a_Pos[200,200], a_Tex[100,100]
 ::draw.vertex[3]: a_Pos[0,200], a_Tex[0,100]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-attribute mediump vec2 a_Tex;
-attribute mediump float a_Dist;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-varying mediump vec2 v_Tex;
-varying mediump float v_Dist;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-	v_Tex = a_Tex;
-	v_Dist = a_Dist;
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-uniform float u_LineWidth;
-uniform sampler2D u_Tex;
-uniform mat4 u_Transform;
-uniform float u_GlobalAlpha;
-varying mediump float v_Dist;
-varying mediump vec2 v_Tex;
-void main() {
-	if ((abs(v_Dist) >= u_LineWidth)) {
-		discard;
-	}
-	gl_FragColor = texture2D(u_Tex, fract(vec2((u_Transform * vec4(v_Tex, 0.0, 1.0)).xy)));
-	gl_FragColor.w = (gl_FragColor.w * u_GlobalAlpha);
-	if ((abs(v_Dist) >= (u_LineWidth - 1.0))) {
-		gl_FragColor.a = (gl_FragColor.a * (1.0 - (abs(v_Dist) - (u_LineWidth - 1.0))));
-	}
-}
-
+::draw.shader.vertex=#SHADER-3 (already shown)
+::draw.shader.fragment=#SHADER-4 (already shown)
 draw(vertexCount=7, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.program=Program(name=program, attributes=[a_Pos], uniforms=[u_ProjMat, u_ViewMat])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
@@ -1722,39 +1304,8 @@ draw(vertexCount=7, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[4]: a_Pos[-1100,-780]
 ::draw.vertex[5]: a_Pos[-1100,20]
 ::draw.vertex[6]: a_Pos[-1100,20]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-void main() {
-	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-}
-
+::draw.shader.vertex=#SHADER-1 (already shown)
+::draw.shader.fragment=#SHADER-2 (already shown)
 draw(vertexCount=697, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.program=Program(name=program, attributes=[a_Pos], uniforms=[u_ProjMat, u_ViewMat])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
@@ -2478,41 +2029,10 @@ draw(vertexCount=697, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[694]: a_Pos[-1899.982,-383.82666]
 ::draw.vertex[695]: a_Pos[-1900,-380]
 ::draw.vertex[696]: a_Pos[-300,20]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-void main() {
-	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-}
-
+::draw.shader.vertex=#SHADER-1 (already shown)
+::draw.shader.fragment=#SHADER-2 (already shown)
 draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_Tex, u_Transform, u_GlobalAlpha])
+::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
 ::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=NOT_EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=3, readMask=255, writeMask=0)
@@ -2545,7 +2065,9 @@ draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.uniform.Uniform(u_Gradientp1) = [100.0, 100.0, 0.0]
 ::draw.uniform.Uniform(u_GlobalAlpha) = 0.9
 ::draw.uniform.Uniform(u_LineWidth) = 1.25
-::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3), Uniform(u_Gradientp0), Uniform(u_Gradientp1)]
+::draw.uniform.Uniform(u_ProgramType) = 2
+::draw.ERROR.Missing:[Uniform(u_Color)]
+::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
 ::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
 ::draw.attribute[5][0]=Attribute(a_Tex, type=Float2, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
 ::draw.attribute[6][0]=Attribute(a_Dist, type=Float1, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
@@ -2568,60 +2090,10 @@ draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.vertex[15]: a_Pos[-1098.75,20], a_Tex[-1098.75,20], a_Dist[1.5]
 ::draw.vertex[16]: a_Pos[-1101.25,18.75], a_Tex[-1101.25,18.75], a_Dist[-1.5]
 ::draw.vertex[17]: a_Pos[-1100,21.25], a_Tex[-1100,21.25], a_Dist[1.5]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-attribute mediump vec2 a_Tex;
-attribute mediump float a_Dist;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-varying mediump vec2 v_Tex;
-varying mediump float v_Dist;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-	v_Tex = a_Tex;
-	v_Dist = a_Dist;
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-uniform float u_LineWidth;
-uniform sampler2D u_Tex;
-uniform mat4 u_Transform;
-uniform float u_GlobalAlpha;
-varying mediump float v_Dist;
-varying mediump vec2 v_Tex;
-void main() {
-	if ((abs(v_Dist) >= u_LineWidth)) {
-		discard;
-	}
-	gl_FragColor = texture2D(u_Tex, (u_Transform * vec4(v_Tex.x, v_Tex.y, 0.0, 1.0)).xy);
-	gl_FragColor.w = (gl_FragColor.w * u_GlobalAlpha);
-	if ((abs(v_Dist) >= (u_LineWidth - 1.0))) {
-		gl_FragColor.a = (gl_FragColor.a * (1.0 - (abs(v_Dist) - (u_LineWidth - 1.0))));
-	}
-}
-
+::draw.shader.vertex=#SHADER-3 (already shown)
+::draw.shader.fragment=#SHADER-4 (already shown)
 draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_Tex, u_Transform, u_GlobalAlpha])
+::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
 ::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=3, readMask=255, writeMask=0)
@@ -2654,7 +2126,9 @@ draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.uniform.Uniform(u_Gradientp1) = [100.0, 100.0, 0.0]
 ::draw.uniform.Uniform(u_GlobalAlpha) = 0.9
 ::draw.uniform.Uniform(u_LineWidth) = 1.0E7
-::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3), Uniform(u_Gradientp0), Uniform(u_Gradientp1)]
+::draw.uniform.Uniform(u_ProgramType) = 2
+::draw.ERROR.Missing:[Uniform(u_Color)]
+::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
 ::draw.ERROR.Unexpected:[Attribute(a_Dist)]
 ::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
 ::draw.attribute[4][1]=Attribute(a_Tex, type=Float2, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
@@ -2663,58 +2137,8 @@ draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[1]: a_Pos[200,0], a_Tex[100,0]
 ::draw.vertex[2]: a_Pos[200,200], a_Tex[100,100]
 ::draw.vertex[3]: a_Pos[0,200], a_Tex[0,100]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-attribute mediump vec2 a_Tex;
-attribute mediump float a_Dist;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-varying mediump vec2 v_Tex;
-varying mediump float v_Dist;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-	v_Tex = a_Tex;
-	v_Dist = a_Dist;
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-uniform float u_LineWidth;
-uniform sampler2D u_Tex;
-uniform mat4 u_Transform;
-uniform float u_GlobalAlpha;
-varying mediump float v_Dist;
-varying mediump vec2 v_Tex;
-void main() {
-	if ((abs(v_Dist) >= u_LineWidth)) {
-		discard;
-	}
-	gl_FragColor = texture2D(u_Tex, (u_Transform * vec4(v_Tex.x, v_Tex.y, 0.0, 1.0)).xy);
-	gl_FragColor.w = (gl_FragColor.w * u_GlobalAlpha);
-	if ((abs(v_Dist) >= (u_LineWidth - 1.0))) {
-		gl_FragColor.a = (gl_FragColor.a * (1.0 - (abs(v_Dist) - (u_LineWidth - 1.0))));
-	}
-}
-
+::draw.shader.vertex=#SHADER-3 (already shown)
+::draw.shader.fragment=#SHADER-4 (already shown)
 draw(vertexCount=7, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.program=Program(name=program, attributes=[a_Pos], uniforms=[u_ProjMat, u_ViewMat])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
@@ -2748,41 +2172,10 @@ draw(vertexCount=7, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[4]: a_Pos[-1100,-1580]
 ::draw.vertex[5]: a_Pos[-1100,-780]
 ::draw.vertex[6]: a_Pos[-1100,-780]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-void main() {
-	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-}
-
+::draw.shader.vertex=#SHADER-1 (already shown)
+::draw.shader.fragment=#SHADER-2 (already shown)
 draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_Transform, u_Gradientp0, u_Gradientp1, u_Tex, u_GlobalAlpha])
+::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
 ::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=NOT_EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=1, readMask=255, writeMask=0)
@@ -2815,6 +2208,8 @@ draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.uniform.Uniform(u_Gradientp1) = [130.0, 180.0, 70.0]
 ::draw.uniform.Uniform(u_GlobalAlpha) = 0.9
 ::draw.uniform.Uniform(u_LineWidth) = 1.25
+::draw.uniform.Uniform(u_ProgramType) = 3
+::draw.ERROR.Missing:[Uniform(u_Color)]
 ::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
 ::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
 ::draw.attribute[5][0]=Attribute(a_Tex, type=Float2, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
@@ -2838,74 +2233,10 @@ draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.vertex[15]: a_Pos[-1098.75,-780], a_Tex[-1098.75,-780], a_Dist[1.5]
 ::draw.vertex[16]: a_Pos[-1101.25,-781.25], a_Tex[-1101.25,-781.25], a_Dist[-1.5]
 ::draw.vertex[17]: a_Pos[-1100,-778.75], a_Tex[-1100,-778.75], a_Dist[1.5]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-attribute mediump vec2 a_Tex;
-attribute mediump float a_Dist;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-varying mediump vec2 v_Tex;
-varying mediump float v_Dist;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-	v_Tex = a_Tex;
-	v_Dist = a_Dist;
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-uniform float u_LineWidth;
-uniform mat4 u_Transform;
-uniform vec3 u_Gradientp0;
-uniform vec3 u_Gradientp1;
-uniform sampler2D u_Tex;
-uniform float u_GlobalAlpha;
-varying mediump float v_Dist;
-varying mediump vec2 v_Tex;
-void main() {
-	vec2 temp3;
-	vec4 temp0;
-	vec4 temp1;
-	if ((abs(v_Dist) >= u_LineWidth)) {
-		discard;
-	}
-	temp3.xy = (u_Transform * vec4(v_Tex.x, v_Tex.y, 0.0, 1.0)).xy;
-	temp0.y = ((2.0 * u_Gradientp0.z) * u_Gradientp1.z);
-	temp0.z = pow(u_Gradientp0.z, 2.0);
-	temp0.w = pow(u_Gradientp1.z, 2.0);
-	temp1.y = (u_Gradientp0.x - u_Gradientp1.x);
-	temp1.x = (u_Gradientp0.y - u_Gradientp1.y);
-	temp1.z = (u_Gradientp0.z - u_Gradientp1.z);
-	temp1.w = (1.0 / ((pow((u_Gradientp0.z - u_Gradientp1.z), 2.0) - pow((u_Gradientp0.x - u_Gradientp1.x), 2.0)) - pow((u_Gradientp0.y - u_Gradientp1.y), 2.0)));
-	temp0.x = (1.0 - ((((((-(u_Gradientp1.z)) * temp1.z) + (temp1.y * (u_Gradientp1.x - temp3.x))) + (temp1.x * (u_Gradientp1.y - temp3.y))) - sqrt(((((temp0.w * (pow((u_Gradientp0.x - temp3.x), 2.0) + pow((u_Gradientp0.y - temp3.y), 2.0))) - (temp0.y * (((u_Gradientp0.x - temp3.x) * (u_Gradientp1.x - temp3.x)) + ((u_Gradientp0.y - temp3.y) * (u_Gradientp1.y - temp3.y))))) + (temp0.z * (pow((u_Gradientp1.x - temp3.x), 2.0) + pow((u_Gradientp1.y - temp3.y), 2.0)))) - pow(((((((u_Gradientp1.x * u_Gradientp0.y) - (temp3.x * u_Gradientp0.y)) - (u_Gradientp0.x * u_Gradientp1.y)) + (temp3.x * u_Gradientp1.y)) + (u_Gradientp0.x * temp3.y)) - (u_Gradientp1.x * temp3.y)), 2.0)))) * temp1.w));
-	gl_FragColor = texture2D(u_Tex, vec2(temp0.x, 0.0));
-	gl_FragColor.w = (gl_FragColor.w * u_GlobalAlpha);
-	if ((abs(v_Dist) >= (u_LineWidth - 1.0))) {
-		gl_FragColor.a = (gl_FragColor.a * (1.0 - (abs(v_Dist) - (u_LineWidth - 1.0))));
-	}
-}
-
+::draw.shader.vertex=#SHADER-3 (already shown)
+::draw.shader.fragment=#SHADER-4 (already shown)
 draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_Transform, u_Gradientp0, u_Gradientp1, u_Tex, u_GlobalAlpha])
+::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
 ::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=1, readMask=255, writeMask=0)
@@ -2938,6 +2269,8 @@ draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.uniform.Uniform(u_Gradientp1) = [130.0, 180.0, 70.0]
 ::draw.uniform.Uniform(u_GlobalAlpha) = 0.9
 ::draw.uniform.Uniform(u_LineWidth) = 1.0E7
+::draw.uniform.Uniform(u_ProgramType) = 3
+::draw.ERROR.Missing:[Uniform(u_Color)]
 ::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
 ::draw.ERROR.Unexpected:[Attribute(a_Dist)]
 ::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
@@ -2947,72 +2280,8 @@ draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[1]: a_Pos[200,0], a_Tex[100,0]
 ::draw.vertex[2]: a_Pos[200,200], a_Tex[100,100]
 ::draw.vertex[3]: a_Pos[0,200], a_Tex[0,100]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-attribute mediump vec2 a_Tex;
-attribute mediump float a_Dist;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-varying mediump vec2 v_Tex;
-varying mediump float v_Dist;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-	v_Tex = a_Tex;
-	v_Dist = a_Dist;
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-uniform float u_LineWidth;
-uniform mat4 u_Transform;
-uniform vec3 u_Gradientp0;
-uniform vec3 u_Gradientp1;
-uniform sampler2D u_Tex;
-uniform float u_GlobalAlpha;
-varying mediump float v_Dist;
-varying mediump vec2 v_Tex;
-void main() {
-	vec2 temp3;
-	vec4 temp0;
-	vec4 temp1;
-	if ((abs(v_Dist) >= u_LineWidth)) {
-		discard;
-	}
-	temp3.xy = (u_Transform * vec4(v_Tex.x, v_Tex.y, 0.0, 1.0)).xy;
-	temp0.y = ((2.0 * u_Gradientp0.z) * u_Gradientp1.z);
-	temp0.z = pow(u_Gradientp0.z, 2.0);
-	temp0.w = pow(u_Gradientp1.z, 2.0);
-	temp1.y = (u_Gradientp0.x - u_Gradientp1.x);
-	temp1.x = (u_Gradientp0.y - u_Gradientp1.y);
-	temp1.z = (u_Gradientp0.z - u_Gradientp1.z);
-	temp1.w = (1.0 / ((pow((u_Gradientp0.z - u_Gradientp1.z), 2.0) - pow((u_Gradientp0.x - u_Gradientp1.x), 2.0)) - pow((u_Gradientp0.y - u_Gradientp1.y), 2.0)));
-	temp0.x = (1.0 - ((((((-(u_Gradientp1.z)) * temp1.z) + (temp1.y * (u_Gradientp1.x - temp3.x))) + (temp1.x * (u_Gradientp1.y - temp3.y))) - sqrt(((((temp0.w * (pow((u_Gradientp0.x - temp3.x), 2.0) + pow((u_Gradientp0.y - temp3.y), 2.0))) - (temp0.y * (((u_Gradientp0.x - temp3.x) * (u_Gradientp1.x - temp3.x)) + ((u_Gradientp0.y - temp3.y) * (u_Gradientp1.y - temp3.y))))) + (temp0.z * (pow((u_Gradientp1.x - temp3.x), 2.0) + pow((u_Gradientp1.y - temp3.y), 2.0)))) - pow(((((((u_Gradientp1.x * u_Gradientp0.y) - (temp3.x * u_Gradientp0.y)) - (u_Gradientp0.x * u_Gradientp1.y)) + (temp3.x * u_Gradientp1.y)) + (u_Gradientp0.x * temp3.y)) - (u_Gradientp1.x * temp3.y)), 2.0)))) * temp1.w));
-	gl_FragColor = texture2D(u_Tex, vec2(temp0.x, 0.0));
-	gl_FragColor.w = (gl_FragColor.w * u_GlobalAlpha);
-	if ((abs(v_Dist) >= (u_LineWidth - 1.0))) {
-		gl_FragColor.a = (gl_FragColor.a * (1.0 - (abs(v_Dist) - (u_LineWidth - 1.0))));
-	}
-}
-
+::draw.shader.vertex=#SHADER-3 (already shown)
+::draw.shader.fragment=#SHADER-4 (already shown)
 draw(vertexCount=7, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.program=Program(name=program, attributes=[a_Pos], uniforms=[u_ProjMat, u_ViewMat])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
@@ -3046,41 +2315,10 @@ draw(vertexCount=7, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[4]: a_Pos[-1500,-980]
 ::draw.vertex[5]: a_Pos[-1500,-580]
 ::draw.vertex[6]: a_Pos[-1500,-580]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-void main() {
-	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-}
-
+::draw.shader.vertex=#SHADER-1 (already shown)
+::draw.shader.fragment=#SHADER-2 (already shown)
 draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_Transform, u_Gradientp0, u_Tex, u_GlobalAlpha])
+::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
 ::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=NOT_EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=1, readMask=255, writeMask=0)
@@ -3113,7 +2351,9 @@ draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.uniform.Uniform(u_Gradientp1) = [0.0, 0.0, 0.0]
 ::draw.uniform.Uniform(u_GlobalAlpha) = 0.9
 ::draw.uniform.Uniform(u_LineWidth) = 1.25
-::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3), Uniform(u_Gradientp1)]
+::draw.uniform.Uniform(u_ProgramType) = 4
+::draw.ERROR.Missing:[Uniform(u_Color)]
+::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
 ::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
 ::draw.attribute[5][0]=Attribute(a_Tex, type=Float2, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
 ::draw.attribute[6][0]=Attribute(a_Dist, type=Float1, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
@@ -3136,69 +2376,10 @@ draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.vertex[15]: a_Pos[-1498.75,-580], a_Tex[-1498.75,-580], a_Dist[1.5]
 ::draw.vertex[16]: a_Pos[-1501.25,-581.25], a_Tex[-1501.25,-581.25], a_Dist[-1.5]
 ::draw.vertex[17]: a_Pos[-1500,-578.75], a_Tex[-1500,-578.75], a_Dist[1.5]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-attribute mediump vec2 a_Tex;
-attribute mediump float a_Dist;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-varying mediump vec2 v_Tex;
-varying mediump float v_Dist;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-	v_Tex = a_Tex;
-	v_Dist = a_Dist;
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-uniform float u_LineWidth;
-uniform mat4 u_Transform;
-uniform vec3 u_Gradientp0;
-uniform sampler2D u_Tex;
-uniform float u_GlobalAlpha;
-varying mediump float v_Dist;
-varying mediump vec2 v_Tex;
-void main() {
-	vec2 temp3;
-	vec4 temp0;
-	if ((abs(v_Dist) >= u_LineWidth)) {
-		discard;
-	}
-	temp3.xy = (u_Transform * vec4(v_Tex.x, v_Tex.y, 0.0, 1.0)).xy;
-	temp0.y = atan((temp3.y - u_Gradientp0.y), (temp3.x - u_Gradientp0.x));
-	if ((temp0.y < 0.0)) {
-		temp0.y = (temp0.y + 6.2831855);
-	}
-	temp0.x = (temp0.y / 6.2831855);
-	gl_FragColor = texture2D(u_Tex, fract(vec2(temp0.x, 0.0)));
-	gl_FragColor.w = (gl_FragColor.w * u_GlobalAlpha);
-	if ((abs(v_Dist) >= (u_LineWidth - 1.0))) {
-		gl_FragColor.a = (gl_FragColor.a * (1.0 - (abs(v_Dist) - (u_LineWidth - 1.0))));
-	}
-}
-
+::draw.shader.vertex=#SHADER-3 (already shown)
+::draw.shader.fragment=#SHADER-4 (already shown)
 draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_Transform, u_Gradientp0, u_Tex, u_GlobalAlpha])
+::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
 ::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=1, readMask=255, writeMask=0)
@@ -3231,7 +2412,9 @@ draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.uniform.Uniform(u_Gradientp1) = [0.0, 0.0, 0.0]
 ::draw.uniform.Uniform(u_GlobalAlpha) = 0.9
 ::draw.uniform.Uniform(u_LineWidth) = 1.0E7
-::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3), Uniform(u_Gradientp1)]
+::draw.uniform.Uniform(u_ProgramType) = 4
+::draw.ERROR.Missing:[Uniform(u_Color)]
+::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
 ::draw.ERROR.Unexpected:[Attribute(a_Dist)]
 ::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
 ::draw.attribute[4][1]=Attribute(a_Tex, type=Float2, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
@@ -3240,67 +2423,8 @@ draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[1]: a_Pos[200,0], a_Tex[100,0]
 ::draw.vertex[2]: a_Pos[200,200], a_Tex[100,100]
 ::draw.vertex[3]: a_Pos[0,200], a_Tex[0,100]
-::draw.shader.vertex=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-attribute highp vec2 a_Pos;
-attribute mediump vec2 a_Tex;
-attribute mediump float a_Dist;
-uniform mat4 u_ProjMat;
-uniform mat4 u_ViewMat;
-varying mediump vec2 v_Tex;
-varying mediump float v_Dist;
-void main() {
-	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
-	v_Tex = a_Tex;
-	v_Dist = a_Dist;
-}
-
-::draw.shader.fragment=#version 100 compatibility
-#ifdef GL_ES
-	precision highp float;
-	precision highp int;
-	precision lowp sampler2D;
-	precision lowp samplerCube;
-#else
-	  #define highp 
-	  #define mediump 
-	  #define lowp 
-#endif
-uniform float u_LineWidth;
-uniform mat4 u_Transform;
-uniform vec3 u_Gradientp0;
-uniform sampler2D u_Tex;
-uniform float u_GlobalAlpha;
-varying mediump float v_Dist;
-varying mediump vec2 v_Tex;
-void main() {
-	vec2 temp3;
-	vec4 temp0;
-	if ((abs(v_Dist) >= u_LineWidth)) {
-		discard;
-	}
-	temp3.xy = (u_Transform * vec4(v_Tex.x, v_Tex.y, 0.0, 1.0)).xy;
-	temp0.y = atan((temp3.y - u_Gradientp0.y), (temp3.x - u_Gradientp0.x));
-	if ((temp0.y < 0.0)) {
-		temp0.y = (temp0.y + 6.2831855);
-	}
-	temp0.x = (temp0.y / 6.2831855);
-	gl_FragColor = texture2D(u_Tex, fract(vec2(temp0.x, 0.0)));
-	gl_FragColor.w = (gl_FragColor.w * u_GlobalAlpha);
-	if ((abs(v_Dist) >= (u_LineWidth - 1.0))) {
-		gl_FragColor.a = (gl_FragColor.a * (1.0 - (abs(v_Dist) - (u_LineWidth - 1.0))));
-	}
-}
-
+::draw.shader.vertex=#SHADER-3 (already shown)
+::draw.shader.fragment=#SHADER-4 (already shown)
 draw(vertexCount=6, instances=1, indices=Buffer[2], type=TRIANGLES, offset=0)
 ::draw.program=Program(name=BatchBuilder2D.Premultiplied.Tinted.NoAdd, attributes=[a_Tex, a_TexIndex, a_Col, a_Col2, a_Pos], uniforms=[u_ProjMat, u_ViewMat, u_Tex0, u_Tex1, u_Tex2, u_Tex3])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
@@ -3334,7 +2458,7 @@ draw(vertexCount=6, instances=1, indices=Buffer[2], type=TRIANGLES, offset=0)
 ::draw.vertex[1]: a_Pos[200,0], a_Tex[0.78125,0], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
 ::draw.vertex[2]: a_Pos[200,200], a_Tex[0.78125,0.78125], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
 ::draw.vertex[3]: a_Pos[0,200], a_Tex[0,0.78125], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
-::draw.shader.vertex=#version 100 compatibility
+::draw.shader.vertex=#SHADER-5: #version 100 compatibility
 #ifdef GL_ES
 	precision highp float;
 	precision highp int;
@@ -3364,7 +2488,7 @@ void main() {
 	gl_Position = ((u_ProjMat * u_ViewMat) * vec4(a_Pos, 0.0, 1.0));
 }
 
-::draw.shader.fragment=#version 100 compatibility
+::draw.shader.fragment=#SHADER-6: #version 100 compatibility
 #ifdef GL_ES
 	precision highp float;
 	precision highp int;
