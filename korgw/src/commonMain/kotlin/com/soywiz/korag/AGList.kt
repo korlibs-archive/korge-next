@@ -546,15 +546,3 @@ class AGList(val globalState: AGGlobalState) {
         private const val CMD_FRAMEBUFFER_USE = 0xC3
     }
 }
-
-@KorIncomplete fun AGList.enableBlend(): Unit = enable(AGEnable.BLEND)
-@KorIncomplete fun AGList.enableCullFace(): Unit = enable(AGEnable.CULL_FACE)
-@KorIncomplete fun AGList.enableDepth(): Unit = enable(AGEnable.DEPTH)
-@KorIncomplete fun AGList.enableScissor(): Unit = enable(AGEnable.SCISSOR)
-@KorIncomplete fun AGList.enableStencil(): Unit = enable(AGEnable.STENCIL)
-@KorIncomplete fun AGList.disableBlend(): Unit = disable(AGEnable.BLEND)
-@KorIncomplete fun AGList.disableCullFace(): Unit = disable(AGEnable.CULL_FACE)
-@KorIncomplete fun AGList.disableDepth(): Unit = disable(AGEnable.DEPTH)
-@KorIncomplete fun AGList.disableScissor(): Unit = disable(AGEnable.SCISSOR)
-@KorIncomplete fun AGList.disableStencil(): Unit = disable(AGEnable.STENCIL)
-

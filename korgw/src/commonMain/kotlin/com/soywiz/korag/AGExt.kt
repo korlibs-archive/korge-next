@@ -3,7 +3,19 @@ package com.soywiz.korag
 import com.soywiz.kds.*
 import com.soywiz.kmem.*
 import com.soywiz.korag.shader.*
+import com.soywiz.korio.annotations.*
 import com.soywiz.korma.geom.*
+
+@KorIncomplete fun AGList.enableBlend(): Unit = enable(AGEnable.BLEND)
+@KorIncomplete fun AGList.enableCullFace(): Unit = enable(AGEnable.CULL_FACE)
+@KorIncomplete fun AGList.enableDepth(): Unit = enable(AGEnable.DEPTH)
+@KorIncomplete fun AGList.enableScissor(): Unit = enable(AGEnable.SCISSOR)
+@KorIncomplete fun AGList.enableStencil(): Unit = enable(AGEnable.STENCIL)
+@KorIncomplete fun AGList.disableBlend(): Unit = disable(AGEnable.BLEND)
+@KorIncomplete fun AGList.disableCullFace(): Unit = disable(AGEnable.CULL_FACE)
+@KorIncomplete fun AGList.disableDepth(): Unit = disable(AGEnable.DEPTH)
+@KorIncomplete fun AGList.disableScissor(): Unit = disable(AGEnable.SCISSOR)
+@KorIncomplete fun AGList.disableStencil(): Unit = disable(AGEnable.STENCIL)
 
 fun AGList.setBlendingState(blending: AG.Blending = AG.Blending.NORMAL) {
     enableDisable(AGEnable.BLEND, blending.enabled) {
