@@ -1,6 +1,8 @@
 package com.soywiz.korag
 
+import com.soywiz.kds.*
 import com.soywiz.kmem.*
+import com.soywiz.korag.shader.*
 import com.soywiz.korma.geom.*
 
 fun AGList.setBlendingState(blending: AG.Blending = AG.Blending.NORMAL) {
@@ -42,6 +44,9 @@ fun AGList.setStencilState(stencil: AG.StencilState) {
         stencilMask(0)
     }
 }
+
+fun AGList.setScissorState(ag: AG, scissor: AG.Scissor? = null) =
+    setScissorState(ag.currentRenderBuffer, ag.mainRenderBuffer, scissor)
 
 fun AGList.setScissorState(currentRenderBuffer: AG.BaseRenderBuffer?, mainRenderBuffer: AG.BaseRenderBuffer, scissor: AG.Scissor? = null) {
     if (currentRenderBuffer == null) return
@@ -99,4 +104,36 @@ fun AGList.setState(
     setRenderState(renderState)
     setColorMaskState(colorMask)
     setStencilState(stencil)
+}
+
+inline fun AGList.uniformsSet(uniforms: AG.UniformValues, block: () -> Unit) {
+    val ubo = uboCreate()
+    try {
+        uboSet(ubo, uniforms)
+        uboUse(ubo)
+        block()
+    } finally {
+        uboDelete(ubo)
+    }
+}
+
+inline fun AGList.vertexArrayObjectSet(vao: AG.VertexArrayObject, block: () -> Unit) {
+    val vaoId = vaoCreate()
+    try {
+        vaoSet(vaoId, vao)
+        vaoUse(vaoId)
+        block()
+    } finally {
+        vaoUse(0)
+        vaoDelete(vaoId)
+    }
+}
+
+inline fun AGList.vertexArrayObjectSet(ag: AG, layout: VertexLayout, data: Any, offset: Int = 0, length: Int = -1, block: () -> Unit) {
+    ag.tempVertexBufferPool.alloc { buffer ->
+        buffer.upload(data, offset, length)
+        vertexArrayObjectSet(AG.VertexArrayObject(fastArrayListOf(AG.VertexData(buffer, layout)))) {
+            block()
+        }
+    }
 }

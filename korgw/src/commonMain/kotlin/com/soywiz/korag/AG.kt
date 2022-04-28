@@ -5,12 +5,10 @@ import com.soywiz.klock.*
 import com.soywiz.klogger.*
 import com.soywiz.kmem.*
 import com.soywiz.korag.annotation.KoragExperimental
-import com.soywiz.korag.gl.*
 import com.soywiz.korag.shader.*
 import com.soywiz.korag.shader.gl.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
-import com.soywiz.korim.vector.*
 import com.soywiz.korio.annotations.*
 import com.soywiz.korio.async.*
 import com.soywiz.korio.lang.*
@@ -78,6 +76,9 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         Console.info("AG.contextLost()", this)
         contextVersion++
     }
+
+    val tempVertexBufferPool = Pool { createBuffer(AGBufferKind.VERTEX) }
+    val tempIndexBufferPool = Pool { createBuffer(AGBufferKind.INDEX) }
 
     open val maxTextureSize = Size(2048, 2048)
 
@@ -490,6 +491,23 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         fun upload(data: FBuffer, offset: Int = 0, length: Int = data.size): Buffer =
             _upload(data, offset, length)
 
+        private fun getLen(len: Int, dataSize: Int): Int {
+            return if (len >= 0) len else dataSize
+        }
+
+        fun upload(data: Any, offset: Int = 0, length: Int = -1): Buffer {
+            return when (data) {
+                is ByteArray -> upload(data, offset, getLen(length, data.size))
+                is ShortArray -> upload(data, offset, getLen(length, data.size))
+                is IntArray -> upload(data, offset, getLen(length, data.size))
+                is FloatArray -> upload(data, offset, getLen(length, data.size))
+                is FBuffer -> upload(data, offset, getLen(length, data.size))
+                is IntArrayList -> upload(data.data, offset, getLen(length, data.size))
+                is FloatArrayList -> upload(data.data, offset, getLen(length, data.size))
+                else -> TODO()
+            }
+        }
+
         private fun _upload(data: FBuffer, offset: Int = 0, length: Int = data.size): Buffer {
             mem = data
             memOffset = offset
@@ -826,34 +844,24 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         if (indices != null && indices.kind != AGBufferKind.INDEX) invalidOp("Not a IndexBuffer")
 
         commandsNoWait { list ->
-            list.applyScissorState(scissor)
+            list.setScissorState(this, scissor)
 
             getProgram(program, config = when {
                 uniforms.useExternalSampler() -> ProgramConfig.EXTERNAL_TEXTURE_SAMPLER
                 else -> ProgramConfig.DEFAULT
             }).use(list)
 
-            val vaoId = list.vaoCreate()
-            list.vaoSet(vaoId, VertexArrayObject(batch.vertexData))
-            list.vaoUse(vaoId)
+            list.vertexArrayObjectSet(VertexArrayObject(batch.vertexData)) {
+                list.uniformsSet(uniforms) {
+                    list.setState(blending, stencil, colorMask, renderState)
 
-            val uboId = list.uboCreate()
-            list.uboSet(uboId, uniforms)
-            list.uboUse(uboId)
+                    //val viewport = FBuffer(4 * 4)
+                    //gl.getIntegerv(KmlGl.VIEWPORT, viewport)
+                    //println("viewport=${viewport.getAlignedInt32(0)},${viewport.getAlignedInt32(1)},${viewport.getAlignedInt32(2)},${viewport.getAlignedInt32(3)}")
 
-            list.setState(blending, stencil, colorMask, renderState)
-
-            //val viewport = FBuffer(4 * 4)
-            //gl.getIntegerv(KmlGl.VIEWPORT, viewport)
-            //println("viewport=${viewport.getAlignedInt32(0)},${viewport.getAlignedInt32(1)},${viewport.getAlignedInt32(2)},${viewport.getAlignedInt32(3)}")
-
-            list.draw(type, vertexCount, offset, instances, if (indices != null) indexType else null, indices)
-
-            //list.uboUse(0)
-            list.uboDelete(uboId)
-
-            list.vaoUse(0)
-            list.vaoDelete(vaoId)
+                    list.draw(type, vertexCount, offset, instances, if (indices != null) indexType else null, indices)
+                }
+            }
         }
     }
 
@@ -1017,7 +1025,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     ) {
         commandsNoWait { list ->
             //println("CLEAR: $color, $depth")
-            list.applyScissorState(scissor)
+            list.setScissorState(this, scissor)
             //gl.disable(KmlGl.SCISSOR_TEST)
             if (clearColor) {
                 list.colorMask(true, true, true, true)
@@ -1038,10 +1046,6 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
 
     private val finalScissorBL = Rectangle()
     private val tempRect = Rectangle()
-
-    private fun AGList.applyScissorState(scissor: Scissor? = null) {
-        setScissorState(currentRenderBuffer, mainRenderBuffer, scissor)
-    }
 
     fun clearStencil(stencil: Int = 0, scissor: Scissor? = null) = clear(clearColor = false, clearDepth = false, clearStencil = true, stencil = stencil, scissor = scissor)
     fun clearDepth(depth: Float = 1f, scissor: Scissor? = null) = clear(clearColor = false, clearDepth = true, clearStencil = false, depth = depth, scissor = scissor)
