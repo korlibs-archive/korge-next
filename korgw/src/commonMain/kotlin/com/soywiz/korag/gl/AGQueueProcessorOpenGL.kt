@@ -473,12 +473,24 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
                             }
                         }
                     } else {
-                        when (uniform.type) {
-                            VarType.Float1 -> gl.uniform1fv(location, arrayCount, tempBuffer)
-                            VarType.Float2 -> gl.uniform2fv(location, arrayCount, tempBuffer)
-                            VarType.Float3 -> gl.uniform3fv(location, arrayCount, tempBuffer)
-                            VarType.Float4 -> gl.uniform4fv(location, arrayCount, tempBuffer)
-                            else -> Unit
+                        val tb = tempBuffer
+                        val f32 = tb.f32
+                        if (arrayCount == 1) {
+                            when (uniform.type) {
+                                VarType.Float1 -> gl.uniform1f(location, f32[0])
+                                VarType.Float2 -> gl.uniform2f(location, f32[0], f32[1])
+                                VarType.Float3 -> gl.uniform3f(location, f32[0], f32[1], f32[2])
+                                VarType.Float4 -> gl.uniform4f(location, f32[0], f32[1], f32[2], f32[3])
+                                else -> Unit
+                            }
+                        } else {
+                            when (uniform.type) {
+                                VarType.Float1 -> gl.uniform1fv(location, arrayCount, tempBuffer)
+                                VarType.Float2 -> gl.uniform2fv(location, arrayCount, tempBuffer)
+                                VarType.Float3 -> gl.uniform3fv(location, arrayCount, tempBuffer)
+                                VarType.Float4 -> gl.uniform4fv(location, arrayCount, tempBuffer)
+                                else -> Unit
+                            }
                         }
                     }
                 }
