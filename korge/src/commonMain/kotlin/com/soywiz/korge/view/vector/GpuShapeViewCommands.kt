@@ -54,8 +54,10 @@ class GpuShapeViewCommands {
                             batcher.updateStandardUniforms()
                             batcher.simulateBatchStats(cmd.vertexCount)
 
+                            //println(paintShader.uniforms)
+
                             batcher.setTemporalUniforms(paintShader.uniforms) {
-                                list.uniformsSet(batcher.uniforms) {
+                                list.uniformsSet(it) {
                                     list.draw(cmd.drawType, cmd.vertexCount, cmd.vertexIndex)
                                 }
                             }

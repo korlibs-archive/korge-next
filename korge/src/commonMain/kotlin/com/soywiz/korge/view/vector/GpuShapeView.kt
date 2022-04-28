@@ -90,8 +90,8 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
 
     private val gpuShapeViewCommands = GpuShapeViewCommands()
 
-    var NEW_RENDERER = false
-    //val NEW_RENDERER = false
+    //var NEW_RENDERER = false
+    val NEW_RENDERER = true
 
     override fun renderInternal(ctx: RenderContext) {
         ctx.flush()

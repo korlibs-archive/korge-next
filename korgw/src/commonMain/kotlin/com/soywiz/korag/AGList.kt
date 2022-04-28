@@ -71,6 +71,8 @@ class AGList(val globalState: AGGlobalState) {
     private val _float = FloatDeque(16)
     private val _extra = Deque<Any?>(16)
 
+    private val uniformValuesPool = Pool { AG.UniformValues() }
+
     private fun addExtra(v0: Any?) { _lock { _extra.add(v0) } }
     private fun addExtra(v0: Any?, v1: Any?) { _lock { _extra.add(v0); _extra.add(v1) } }
 
@@ -168,7 +170,11 @@ class AGList(val globalState: AGGlobalState) {
                 // UBO
                 CMD_UBO_CREATE -> processor.uboCreate(data.extract16(0))
                 CMD_UBO_DELETE -> processor.uboDelete(data.extract16(0))
-                CMD_UBO_SET -> processor.uboSet(data.extract16(0), readExtra())
+                CMD_UBO_SET -> {
+                    val ubo = readExtra<AG.UniformValues>()
+                    processor.uboSet(data.extract16(0), ubo)
+                    uniformValuesPool.free(ubo)
+                }
                 CMD_UBO_USE -> processor.uboUse(data.extract16(0))
                 // BUFFER
                 CMD_BUFFER_CREATE -> processor.bufferCreate(data.extract16(0))
@@ -410,7 +416,9 @@ class AGList(val globalState: AGGlobalState) {
     }
 
     fun uboSet(id: Int, ubo: AG.UniformValues) {
-        addExtra(ubo)
+        val uboCopy = uniformValuesPool.alloc()
+        uboCopy.setTo(ubo)
+        addExtra(uboCopy)
         add(CMD(CMD_UBO_SET).finsert16(id, 0))
     }
 

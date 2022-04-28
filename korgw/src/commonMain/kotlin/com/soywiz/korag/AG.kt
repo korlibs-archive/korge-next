@@ -1341,6 +1341,8 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
             internal val EMPTY = UniformValues()
         }
 
+        fun clone(): UniformValues = UniformValues().also { it.setTo(this) }
+
         private val _uniforms = FastArrayList<Uniform>()
         private val _values = FastArrayList<Any>()
         val uniforms = _uniforms as List<Uniform>
