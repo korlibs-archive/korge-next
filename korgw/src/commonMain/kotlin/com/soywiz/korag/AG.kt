@@ -616,6 +616,10 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         var blue: Boolean = true,
         var alpha: Boolean = true
     ) {
+        companion object {
+            internal val DUMMY = ColorMaskState()
+        }
+
         //val enabled = !red || !green || !blue || !alpha
     }
 
@@ -644,7 +648,11 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         @Deprecated("This is not used anymore, since it is not available on WebGL")
         var lineWidth: Float = 1f,
         var frontFace: FrontFace = FrontFace.BOTH
-    )
+    ) {
+        companion object {
+            internal val DUMMY = RenderState()
+        }
+    }
 
     data class StencilState(
         var enabled: Boolean = false,
@@ -657,6 +665,10 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         var readMask: Int = 0xFF,
         var writeMask: Int = 0xFF
     ) {
+        companion object {
+            internal val DUMMY = StencilState()
+        }
+
         fun copyFrom(other: StencilState) {
             this.enabled = other.enabled
             this.triangleFace = other.triangleFace
@@ -669,10 +681,6 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
             this.writeMask = other.writeMask
         }
     }
-
-    private val dummyRenderState = RenderState()
-    private val dummyStencilState = StencilState()
-    private val dummyColorMaskState = ColorMaskState()
 
     //open val supportInstancedDrawing: Boolean get() = false
 
@@ -688,9 +696,9 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         offset: Int = 0,
         blending: Blending = Blending.NORMAL,
         uniforms: UniformValues = UniformValues.EMPTY,
-        stencil: StencilState = dummyStencilState,
-        colorMask: ColorMaskState = dummyColorMaskState,
-        renderState: RenderState = dummyRenderState,
+        stencil: StencilState = StencilState.DUMMY,
+        colorMask: ColorMaskState = ColorMaskState.DUMMY,
+        renderState: RenderState = RenderState.DUMMY,
         scissor: Scissor? = null,
         instances: Int = 1
     ) = draw(batch.also { batch ->
@@ -721,9 +729,9 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         offset: Int = 0,
         blending: Blending = Blending.NORMAL,
         uniforms: UniformValues = UniformValues.EMPTY,
-        stencil: StencilState = dummyStencilState,
-        colorMask: ColorMaskState = dummyColorMaskState,
-        renderState: RenderState = dummyRenderState,
+        stencil: StencilState = StencilState.DUMMY,
+        colorMask: ColorMaskState = ColorMaskState.DUMMY,
+        renderState: RenderState = RenderState.DUMMY,
         scissor: Scissor? = null,
         instances: Int = 1
     ) = draw(batch.also { batch ->
@@ -818,7 +826,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         if (indices != null && indices.kind != AGBufferKind.INDEX) invalidOp("Not a IndexBuffer")
 
         commandsNoWait { list ->
-            applyScissorState(list, scissor)
+            list.applyScissorState(scissor)
 
             getProgram(program, config = when {
                 uniforms.useExternalSampler() -> ProgramConfig.EXTERNAL_TEXTURE_SAMPLER
@@ -833,37 +841,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
             list.uboSet(uboId, uniforms)
             list.uboUse(uboId)
 
-            list.enableDisable(AGEnable.BLEND, blending.enabled) {
-                list.blendEquation(blending.eqRGB, blending.eqA)
-                list.blendFunction(blending.srcRGB, blending.dstRGB, blending.srcA, blending.dstA)
-            }
-
-            list.enableDisable(AGEnable.CULL_FACE, renderState.frontFace != FrontFace.BOTH) {
-                list.frontFace(renderState.frontFace)
-            }
-
-            list.depthMask(renderState.depthMask)
-            list.depthRange(renderState.depthNear, renderState.depthFar)
-
-            list.enableDisable(AGEnable.DEPTH, renderState.depthFunc != CompareMode.ALWAYS) {
-                list.depthFunction(renderState.depthFunc)
-            }
-
-            list.colorMask(colorMask.red, colorMask.green, colorMask.blue, colorMask.alpha)
-
-            if (stencil.enabled) {
-                list.enable(AGEnable.STENCIL)
-                list.stencilFunction(stencil.compareMode, stencil.referenceValue, stencil.readMask)
-                list.stencilOperation(
-                    stencil.actionOnDepthFail,
-                    stencil.actionOnDepthPassStencilFail,
-                    stencil.actionOnBothPass
-                )
-                list.stencilMask(stencil.writeMask)
-            } else {
-                list.disable(AGEnable.STENCIL)
-                list.stencilMask(0)
-            }
+            list.setState(blending, stencil, colorMask, renderState)
 
             //val viewport = FBuffer(4 * 4)
             //gl.getIntegerv(KmlGl.VIEWPORT, viewport)
@@ -1039,7 +1017,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     ) {
         commandsNoWait { list ->
             //println("CLEAR: $color, $depth")
-            applyScissorState(list, scissor)
+            list.applyScissorState(scissor)
             //gl.disable(KmlGl.SCISSOR_TEST)
             if (clearColor) {
                 list.colorMask(true, true, true, true)
@@ -1061,49 +1039,9 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     private val finalScissorBL = Rectangle()
     private val tempRect = Rectangle()
 
-    protected fun applyScissorState(list: AGList, scissor: Scissor? = null) {
-        //println("applyScissorState")
-        if (this.currentRenderBuffer == null) {
-            //println("this.currentRenderBuffer == null")
-        }
-        val currentRenderBuffer = this.currentRenderBuffer ?: return
-        if (currentRenderBuffer === mainRenderBuffer) {
-            var realScissors: Rectangle? = finalScissorBL
-            realScissors?.setTo(0.0, 0.0, realBackWidth.toDouble(), realBackHeight.toDouble())
-            if (scissor != null) {
-                tempRect.setTo(
-                    currentRenderBuffer.x + scissor.x,
-                    ((currentRenderBuffer.y + currentRenderBuffer.height) - (scissor.y + scissor.height)),
-                    (scissor.width),
-                    scissor.height
-                )
-                realScissors = realScissors?.intersection(tempRect, realScissors)
-            }
-
-            //println("currentRenderBuffer: $currentRenderBuffer")
-
-            val renderBufferScissor = currentRenderBuffer.scissor
-            if (renderBufferScissor != null) {
-                realScissors = realScissors?.intersection(renderBufferScissor.rect, realScissors)
-            }
-
-            //println("[MAIN_BUFFER] realScissors: $realScissors")
-
-            list.enable(AGEnable.SCISSOR)
-            if (realScissors != null) {
-                list.scissor(realScissors.x.toInt(), realScissors.y.toInt(), realScissors.width.toInt(), realScissors.height.toInt())
-            } else {
-                list.scissor(0, 0, 0, 0)
-            }
-        } else {
-            //println("[RENDER_TARGET] scissor: $scissor")
-
-            list.enableDisable(AGEnable.SCISSOR, scissor != null) {
-                list.scissor(scissor!!.x.toIntRound(), scissor.y.toIntRound(), scissor.width.toIntRound(), scissor.height.toIntRound())
-            }
-        }
+    private fun AGList.applyScissorState(scissor: Scissor? = null) {
+        setScissorState(currentRenderBuffer, mainRenderBuffer, scissor)
     }
-
 
     fun clearStencil(stencil: Int = 0, scissor: Scissor? = null) = clear(clearColor = false, clearDepth = false, clearStencil = true, stencil = stencil, scissor = scissor)
     fun clearDepth(depth: Float = 1f, scissor: Scissor? = null) = clear(clearColor = false, clearDepth = true, clearStencil = false, depth = depth, scissor = scissor)

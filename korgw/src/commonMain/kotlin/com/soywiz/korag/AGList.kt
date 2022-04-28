@@ -13,6 +13,7 @@ import com.soywiz.korag.annotation.*
 import com.soywiz.korag.shader.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korio.annotations.*
+import com.soywiz.korma.geom.*
 import com.soywiz.krypto.encoding.*
 import kotlinx.coroutines.*
 
@@ -60,6 +61,8 @@ class AGGlobalState {
 
 class AGList(val globalState: AGGlobalState) {
     var contextVersion: Int by globalState::contextVersion
+
+    val tempRect = Rectangle()
 
     internal val completed = CompletableDeferred<Unit>()
     private val _lock = Lock() // @TODO: This is slow!
