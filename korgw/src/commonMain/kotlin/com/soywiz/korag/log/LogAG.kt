@@ -1,16 +1,13 @@
 package com.soywiz.korag.log
 
 import com.soywiz.kds.*
-import com.soywiz.kgl.*
 import com.soywiz.kmem.*
 import com.soywiz.korag.*
 import com.soywiz.korag.shader.*
 import com.soywiz.korag.shader.gl.*
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
-import com.soywiz.korio.lang.*
 import com.soywiz.korio.util.*
-import com.soywiz.korma.geom.*
 
 /*
 open class ComposedAG(val agBase: AG, val agExtra: AG) : AG(), AGFeatures by agBase {
@@ -227,6 +224,21 @@ open class LogBaseAG(
         val buffer = data.buffer as LogBuffer
     }
 
+    class ShaderInfo(val shader: Shader, val id: Int, val code: String) {
+        var requested: Int = 0
+
+        override fun toString(): String = if (requested <= 1) "#SHADER-$id: $code" else "#SHADER-$id (already shown)"
+    }
+    var shaderSourceId = 0
+    val shaderSources = linkedHashMapOf<Shader, ShaderInfo>()
+    fun getShaderSource(shader: Shader, type: ShaderType): ShaderInfo {
+        return shaderSources.getOrPut(shader) {
+            ShaderInfo(shader, ++shaderSourceId, GlslGenerator(type).generate(shader))
+        }.also {
+            it.requested++
+        }
+    }
+
     override fun draw(batch: Batch) {
         val program = batch.program
         val type = batch.type
@@ -324,8 +336,10 @@ open class LogBaseAG(
                     }
                 }
             }
-            log("::draw.shader.vertex=${GlslGenerator(ShaderType.VERTEX).generate(program.vertex)}", Kind.SHADER)
-            log("::draw.shader.fragment=${GlslGenerator(ShaderType.FRAGMENT).generate(program.fragment)}", Kind.SHADER)
+            val vertexInfo = getShaderSource(program.vertex, ShaderType.VERTEX)
+            val fragmentInfo = getShaderSource(program.fragment, ShaderType.FRAGMENT)
+            log("::draw.shader.vertex=$vertexInfo", Kind.SHADER)
+            log("::draw.shader.fragment=$fragmentInfo", Kind.SHADER)
         } catch (e: Throwable) {
             log("LogBaseAG.draw.ERROR: ${e.message}", Kind.DRAW)
             e.printStackTrace()
