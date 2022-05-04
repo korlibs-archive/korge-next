@@ -35,8 +35,12 @@ class UUID(val data: UByteArrayInt) {
 	val version: Int get() = (data[6] ushr 4) and 0b1111
 	val variant: Int get() = (data[8] ushr 6) and 0b11
 
-	override fun toString() = "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x".format(
-		data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7],
-		data[8], data[9], data[10], data[11], data[12], data[13], data[14], data[15]
-	)
+	override fun toString(): String = buildString(36) {
+        for (n in 0 until 16) {
+            val c = data[n]
+            append(Hex.encodeCharLower(c ushr 4))
+            append(Hex.encodeCharLower(c and 0xF))
+            if (n == 3 || n == 5 || n == 7 || n == 9) append('-')
+        }
+    }
 }
