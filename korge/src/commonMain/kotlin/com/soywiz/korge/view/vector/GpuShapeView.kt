@@ -265,12 +265,13 @@ open class GpuShapeView(
     ) {
         //val m0 = root.globalMatrix
         //val mt0 = m0.toTransform()
-        val m = globalMatrix
-        val mt = m.toTransform()
+        //val m = globalMatrix
+        //val mt = m.toTransform()
 
         val scaleWidth = scaleMode.anyScale
-        //val lineScale = mt0.scaleAvg.absoluteValue / mt.scaleAvg.absoluteValue
-        val lineScale = mt.scaleAvg.absoluteValue
+        //val lineScale = mt.scaleAvg.absoluteValue
+
+        val lineScale = 1.0
         //println("lineScale=$lineScale")
         val flineWidth = if (scaleWidth) lineWidth * lineScale else lineWidth
         val lineWidth = if (antialiased) (flineWidth * 0.5) + 0.25 else flineWidth * 0.5
@@ -441,7 +442,6 @@ open class GpuShapeView(
                     paint = paint,
                     globalAlpha = globalAlpha,
                     lineWidth = lineWidth,
-                    out = gpuShapeViewPaintShader.tempPaintShader
                 )
 
                 gpuShapeViewCommands.draw(AG.DrawType.TRIANGLE_STRIP, info, stencil = stencil, scissor = scissor)
@@ -546,8 +546,8 @@ open class GpuShapeView(
 
         // Antialias when we don't have clipping
         // @TODO: How should we handle clipping antialiasing? Should we render the mask into a buffer first, and then do the masking?
-        //if (antialiased && shape.clip == null) {
-        if (true) {
+        if (antialiased && shape.clip == null) {
+        //if (true) {
             renderStroke(
                 stateTransform = shape.transform,
                 //stateTransform = Matrix(),
@@ -593,7 +593,6 @@ open class GpuShapeView(
         val paintShader = gpuShapeViewPaintShader.paintToShaderInfo(
             stateTransform, null, paint, globalAlpha,
             lineWidth = 10000000.0,
-            out = gpuShapeViewPaintShader.tempPaintShader
         ) ?: return
 
         val x0 = 0f

@@ -27,33 +27,6 @@ object GpuShapeViewPrograms {
     val LW = (u_LineWidth)
     val LW1 = Program.ExpressionBuilder { (LW - 1f.lit) }
 
-    val VERTEX_FILL = VertexShaderDefault {
-        SET(out, (u_ProjMat * u_ViewMat) * vec4(a_Pos, 0f.lit, 1f.lit))
-        //SET(out, vec4(a_Pos, 0f.lit, 1f.lit))
-        SET(v_Tex, DefaultShaders.a_Tex)
-        SET(v_Dist, a_Dist)
-    }
-    val PROGRAM_STENCIL = Program(
-        vertex = VertexShaderDefault { SET(out, (u_ProjMat * u_ViewMat) * vec4(a_Pos, 0f.lit, 1f.lit)) },
-        fragment = FragmentShaderDefault { SET(out, vec4(1f.lit, 0f.lit, 0f.lit, 1f.lit)) },
-    )
-
-    fun Program.Builder.PREFIX() {
-        IF(abs(v_Dist) ge LW) {
-            DISCARD()
-        }
-    }
-
-    fun Program.Builder.UPDATE_GLOBAL_ALPHA() {
-        SET(out.a, out.a * u_GlobalAlpha)
-        IF(abs(v_Dist) ge LW1) {
-            //run {
-            val aaAlpha = 1f.lit - (abs(v_Dist) - LW1)
-            SET(out["a"], out["a"] * aaAlpha)
-            //SET(out["a"], out["a"] * clamp(aaAlpha, 0f.lit, 1f.lit))
-        }
-    }
-
     val Operand.pow2: Operand get() = Program.ExpressionBuilder { pow(this@pow2, 2f.lit) }
 
     const val PROGRAM_TYPE_COLOR = 0
@@ -64,18 +37,26 @@ object GpuShapeViewPrograms {
     const val PROGRAM_TYPE_STENCIL = 5
 
     val PROGRAM_COMBINED = Program(
-        vertex = VERTEX_FILL,
+        vertex = VertexShaderDefault {
+            SET(out, (u_ProjMat * u_ViewMat) * vec4(a_Pos, 0f.lit, 1f.lit))
+            //SET(out, vec4(a_Pos, 0f.lit, 1f.lit))
+            SET(v_Tex, DefaultShaders.a_Tex)
+            SET(v_Dist, a_Dist)
+        },
         fragment = FragmentShaderDefault {
             IF(u_ProgramType eq PROGRAM_TYPE_STENCIL.toFloat().lit) {
                 SET(out, vec4(1f.lit, 0f.lit, 0f.lit, 1f.lit))
                 RETURN()
             }
-            PREFIX()
+            IF(abs(v_Dist) ge LW) {
+                DISCARD()
+            }
             IF_ELSE_LIST(u_ProgramType, 0, 4) {
                 when (it) {
                     // Color paint
                     PROGRAM_TYPE_COLOR -> {
                         SET(out, u_Color)
+                        //SET(out, vec4(1f.lit, 1f.lit, 0f.lit, 1f.lit))
                     }
                     // Bitmap paint
                     PROGRAM_TYPE_BITMAP -> {
@@ -140,96 +121,15 @@ object GpuShapeViewPrograms {
                     }
                 }
             }
-            UPDATE_GLOBAL_ALPHA()
-        },
-    )
 
-    /*
-    val PROGRAM_COLOR = Program(
-        vertex = VERTEX_FILL,
-        fragment = FragmentShaderDefault {
-            PREFIX()
-            SET(out, u_Color)
-            UPDATE_GLOBAL_ALPHA()
+            // Update global alpha
+            SET(out.a, out.a * u_GlobalAlpha)
+            IF(abs(v_Dist) ge LW1) {
+                //run {
+                val aaAlpha = 1f.lit - (abs(v_Dist) - LW1)
+                SET(out["a"], out["a"] * aaAlpha)
+                //SET(out["a"], out["a"] * clamp(aaAlpha, 0f.lit, 1f.lit))
+            }
         },
     )
-    val PROGRAM_BITMAP = Program(
-        vertex = VERTEX_FILL,
-        fragment = FragmentShaderDefault {
-            PREFIX()
-            // @TODO: we should convert 0..1 to texture slice coordinates
-            SET(out, texture2D(u_Tex, fract(vec2((u_Transform * vec4(v_Tex, 0f.lit, 1f.lit))["xy"]))))
-            UPDATE_GLOBAL_ALPHA()
-            //SET(out, vec4(1f.lit, 1f.lit, 0f.lit, 1f.lit))
-        },
-    )
-    val PROGRAM_LINEAR_GRADIENT = Program(
-        vertex = VERTEX_FILL,
-        fragment = FragmentShaderDefault {
-            PREFIX()
-            SET(out, texture2D(u_Tex, (u_Transform * vec4(v_Tex.x, v_Tex.y, 0f.lit, 1f.lit))["xy"]))
-            UPDATE_GLOBAL_ALPHA()
-        },
-    )
-    val PROGRAM_RADIAL_GRADIENT = Program(
-        vertex = VERTEX_FILL,
-        fragment = FragmentShaderDefault {
-            PREFIX()
-            val rpoint = createTemp(VarType.Float2)
-            SET(rpoint["xy"], (u_Transform * vec4(v_Tex.x, v_Tex.y, 0f.lit, 1f.lit))["xy"])
-            val x = rpoint.x
-            val y = rpoint.y
-            val x0 = u_Gradientp0.x
-            val y0 = u_Gradientp0.y
-            val r0 = u_Gradientp0.z
-            val x1 = u_Gradientp1.x
-            val y1 = u_Gradientp1.y
-            val r1 = u_Gradientp1.z
-            val ratio = t_Temp0.x
-            val r0r1_2 = t_Temp0.y
-            val r0pow2 = t_Temp0.z
-            val r1pow2 = t_Temp0.w
-            val y0_y1 = t_Temp1.x
-            val x0_x1 = t_Temp1.y
-            val r0_r1 = t_Temp1.z
-            val radial_scale = t_Temp1.w
-
-            SET(r0r1_2, 2f.lit * r0 * r1)
-            SET(r0pow2, r0.pow2)
-            SET(r1pow2, r1.pow2)
-            SET(x0_x1, x0 - x1)
-            SET(y0_y1, y0 - y1)
-            SET(r0_r1, r0 - r1)
-            SET(radial_scale, 1f.lit / ((r0 - r1).pow2 - (x0 - x1).pow2 - (y0 - y1).pow2))
-
-            SET(
-                ratio,
-                1f.lit - (-r1 * r0_r1 + x0_x1 * (x1 - x) + y0_y1 * (y1 - y) - sqrt(r1pow2 * ((x0 - x).pow2 + (y0 - y).pow2) - r0r1_2 * ((x0 - x) * (x1 - x) + (y0 - y) * (y1 - y)) + r0pow2 * ((x1 - x).pow2 + (y1 - y).pow2) - (x1 * y0 - x * y0 - x0 * y1 + x * y1 + x0 * y - x1 * y).pow2)) * radial_scale
-            )
-            SET(out, texture2D(u_Tex, vec2(ratio, 0f.lit)))
-            UPDATE_GLOBAL_ALPHA()
-        },
-    )
-    val PROGRAM_SWEEP_GRADIENT = Program(
-        vertex = VERTEX_FILL,
-        fragment = FragmentShaderDefault {
-            PREFIX()
-            val rpoint = createTemp(VarType.Float2)
-            SET(rpoint["xy"], (u_Transform * vec4(v_Tex.x, v_Tex.y, 0f.lit, 1f.lit))["xy"])
-            val x = rpoint.x
-            val y = rpoint.y
-            val ratio = t_Temp0.x
-            val angle = t_Temp0.y
-            val x0 = u_Gradientp0.x
-            val y0 = u_Gradientp0.y
-            val PI2 = (PI * 2).toFloat().lit
-
-            SET(angle, atan(y - y0, x - x0))
-            IF(angle lt 0f.lit) { SET(angle, angle + PI2) }
-            SET(ratio, angle / PI2)
-            SET(out, texture2D(u_Tex, fract(vec2(ratio, 0f.lit))))
-            UPDATE_GLOBAL_ALPHA()
-        },
-    )
-    */
 }
