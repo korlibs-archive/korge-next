@@ -66,6 +66,11 @@ data class Rectangle(
         fun isContainedIn(a: Rectangle, b: Rectangle): Boolean = a.x >= b.x && a.y >= b.y && a.x + a.width <= b.x + b.width && a.y + a.height <= b.y + b.height
     }
 
+    fun setXY(x: Double, y: Double) {
+        this.x = x
+        this.y = y
+    }
+
     val isEmpty: Boolean get() = area == 0.0
     val isNotEmpty: Boolean get() = area != 0.0
     val area: Double get() = width * height

@@ -35,10 +35,19 @@ inline fun Container.gpuShapeView(
 ) =
     GpuShapeView(shape, antialiased).addTo(this, callback)
 
+// @TODO: Optimize convex shapes (for example a circle, a rect, a rounded rect, shouldn't require stencils)
 @KorgeExperimental
 @OptIn(KorgeInternal::class)
-class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
+open class GpuShapeView(
+    shape: Shape = EmptyShape,
+    antialiased: Boolean = true,
+    // @TODO: Not used, but to be compatible with Graphics
+    var autoScaling: Boolean = true
+) : View(), Anchorable {
     private val pointCache = FastIdentityMap<VectorPath, PointArrayList>()
+
+    override var anchorX: Double = 0.0 ; set(value) { field = value; invalidate() }
+    override var anchorY: Double = 0.0 ; set(value) { field = value; invalidate() }
 
     var applyScissor: Boolean = true
 
@@ -61,6 +70,10 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
     private val bb = BoundsBuilder()
     override fun getLocalBoundsInternal(out: Rectangle) {
         shape.getBounds(out, bb)
+        out.setXY(
+            out.x - out.width * anchorX,
+            out.y - out.height * anchorY
+        )
     }
 
     var bufferWidth = 1000
