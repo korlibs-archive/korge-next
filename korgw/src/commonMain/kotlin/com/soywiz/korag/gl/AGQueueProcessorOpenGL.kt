@@ -371,7 +371,7 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
                     val unit = value.fastCastTo<AG.TextureUnit>()
                     gl.activeTexture(KmlGl.TEXTURE0 + textureUnit)
 
-                    val tex = (unit.texture.fastCastTo<AG.Texture?>())
+                    val tex = unit.texture
                     if (tex != null) {
                         // @TODO: This might be enqueuing commands, we shouldn'd do that here.
                         textureBindEnsuring(tex)

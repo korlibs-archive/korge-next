@@ -528,7 +528,6 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
             list.bufferDelete(this.agId)
             agId = 0
         }
-
     }
 
     enum class DrawType {
