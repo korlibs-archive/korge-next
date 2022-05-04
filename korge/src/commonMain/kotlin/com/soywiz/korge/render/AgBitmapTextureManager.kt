@@ -50,11 +50,11 @@ class AgBitmapTextureManager(
     //var framesBetweenGC = 30 * 60 // 30 seconds
     //var framesBetweenGC = 360
 
-	//var Bitmap._textureBase: Texture.Base? by Extra.Property { null }
+	//var Bitmap._textureBase: TextureBase? by Extra.Property { null }
 	//var Bitmap._slices by Extra.Property { LinkedHashSet<BmpCoordsWithBitmap>() }
 	//var BmpCoordsWithBitmap._texture: Texture? by Extra.Property { null }
 
-    /** Wrapper of [Texture.Base] that contains all the [TextureCoords] slices referenced as [BitmapCoords] in our current cache */
+    /** Wrapper of [TextureBase] that contains all the [TextureCoords] slices referenced as [BitmapCoords] in our current cache */
 	private class BitmapTextureInfo {
         var textureBase: TextureBase = TextureBase(null, 0, 0)
 		val slices = FastIdentityMap<BitmapCoords, TextureCoords>()
@@ -85,7 +85,7 @@ class AgBitmapTextureManager(
     /**
      * Obtains a temporal [BitmapTextureInfo] from a [Bitmap].
      *
-     * The [BitmapTextureInfo] is a wrapper of [Bitmap] including a [Texture.Base] and information about slices of that [Bitmap]
+     * The [BitmapTextureInfo] is a wrapper of [Bitmap] including a [TextureBase] and information about slices of that [Bitmap]
      * that is just kept temporarily until released.
      *
      * You shouldn't call this method directly. Use [getTexture] or [getTextureBase] instead.
@@ -121,7 +121,7 @@ class AgBitmapTextureManager(
 		return textureInfo
 	}
 
-    /** Obtains a temporal [Texture.Base] from [bitmap] [Bitmap]. The texture shouldn't be stored, but used for drawing since it will be destroyed once not used anymore. */
+    /** Obtains a temporal [TextureBase] from [bitmap] [Bitmap]. The texture shouldn't be stored, but used for drawing since it will be destroyed once not used anymore. */
 	fun getTextureBase(bitmap: Bitmap): TextureBase = getTextureInfo(bitmap).textureBase!!
 
     fun getTexture(slice: BmpSlice): Texture = _getTexture(slice) as Texture
