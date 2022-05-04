@@ -33,7 +33,7 @@ class GpuShapeViewPaintShader {
     fun paintToShaderInfo(
         ctx: RenderContext,
         stateTransform: Matrix,
-        localMatrix: Matrix,
+        matrix: Matrix,
         paint: Paint,
         globalAlpha: Double,
         lineWidth: Double,
@@ -59,7 +59,7 @@ class GpuShapeViewPaintShader {
                 identity()
                 preconcat(paint.transform)
                 preconcat(stateTransform)
-                preconcat(localMatrix)
+                preconcat(matrix)
                 invert()
                 scale(1.0 / paint.bitmap.width, 1.0 / paint.bitmap.height)
             }
@@ -85,7 +85,7 @@ class GpuShapeViewPaintShader {
                 identity()
                 preconcat(paint.transform)
                 preconcat(stateTransform)
-                preconcat(localMatrix)
+                preconcat(matrix)
             })
             //val mat = stateTransform * paint.gradientMatrix
             val mat = when (paint.kind) {
