@@ -14,6 +14,8 @@ class UUID(val data: UByteArrayInt) {
 		private val regex =
 			Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", RegexOption.IGNORE_CASE)
 
+        val NIL: UUID get() = UUID("00000000-0000-0000-0000-000000000000")
+
 		private fun fix(data: UByteArrayInt, version: Int, variant: Int): UByteArrayInt {
 			data[6] = ((data[6] and 0b0000_1111) or (version shl 4))
 			data[8] = ((data[8] and 0x00_111111) or (variant shl 6))
