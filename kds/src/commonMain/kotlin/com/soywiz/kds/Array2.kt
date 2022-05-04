@@ -28,16 +28,9 @@ inline fun DoubleArray2.map2(gen: (x: Int, y: Int, v: Double) -> Double): Double
         gen(x, y, this[x, y])
     }
 
-data class Array2Element(
-    var intData: Int = 0,
-    var floatData: Float = 0f,
-    var doubleData: Double = 0.0,
-    var any: Any? = null
-)
-
 // Note: Due to autoboxing, we INTENTIONALLY DO NOT require get/set methods.
 // https://discuss.kotlinlang.org/t/performance-question-related-to-boxing-and-interface-implementation/17387
-sealed interface IArray2<E> : Iterable<E> {
+interface IArray2<E> : Iterable<E> {
     val width: Int
     val height: Int
 
@@ -46,9 +39,15 @@ sealed interface IArray2<E> : Iterable<E> {
 
     fun inside(x: Int, y: Int): Boolean = x >= 0 && y >= 0 && x < width && y < height
 
+    // Prints the value at the given index.
+    fun printAt(idx: Int)
+
+    fun printAt(x: Int, y: Int) = printAt(index(x, y))
+
     fun setAt(idx: Int, value: E)
 
-    fun getTo(idx: Int, out: Array2Element)
+    // Returns true if the value at `idx` equals the `value`.
+    fun equalsAt(idx: Int, value: E): Boolean
 
     fun getAt(idx: Int): E
 
@@ -73,12 +72,12 @@ sealed interface IArray2<E> : Iterable<E> {
     }
 
     fun getPositionsWithValue(value: E) =
-        (0 until size).filter { getAt(it) == value }.map { Pair(it % width, it / width) }
+        (0 until size).filter { equalsAt(it, value) }.map { Pair(it % width, it / width) }
 
     fun dump() {
         for (y in 0 until height) {
             for (x in 0 until width) {
-                print(getAt(x, y))
+                printAt(x, y)
             }
             println()
         }
@@ -113,15 +112,14 @@ inline fun <E> IArray2<E>.fill(gen: (old: E) -> E) {
 }
 
 inline fun <E> IArray2<E>.each(callback: (x: Int, y: Int, v: E) -> Unit) {
-    var n = 0
     for (y in 0 until height) {
         for (x in 0 until width) {
-            callback(x, y, getAt(n++))
+            callback(x, y, getAt(x, y))
         }
     }
 }
 
-private fun <E> IArray2<E>.index(x: Int, y: Int): Int {
+fun <E> IArray2<E>.index(x: Int, y: Int): Int {
     if ((x !in 0 until width) || (y !in 0 until height)) throw IndexOutOfBoundsException()
     return y * width + x
 }
@@ -204,8 +202,12 @@ data class Array2<TGen>(override val width: Int, override val height: Int, val d
         this.data[idx] = value
     }
 
-    override fun getTo(idx: Int, out: Array2Element) {
-        out.any = this.data[idx]
+    override fun printAt(idx: Int) {
+        print(this.data[idx])
+    }
+
+    override fun equalsAt(idx: Int, value: TGen): Boolean {
+        return this.data[idx]?.equals(value) ?: false
     }
 
     override fun getAt(idx: Int): TGen = this.data[idx]
@@ -217,9 +219,14 @@ data class Array2<TGen>(override val width: Int, override val height: Int, val d
     }
 
     operator fun get(x: Int, y: Int): TGen = data[index(x, y)]
-    operator fun set(x: Int, y: Int, value: TGen): Unit { data[index(x, y)] = value }
+    operator fun set(x: Int, y: Int, value: TGen): Unit {
+        data[index(x, y)] = value
+    }
+
     fun tryGet(x: Int, y: Int): TGen? = if (inside(x, y)) data[index(x, y)] else null
-    fun trySet(x: Int, y: Int, value: TGen): Unit { if (inside(x, y)) data[index(x, y)] = value }
+    fun trySet(x: Int, y: Int, value: TGen): Unit {
+        if (inside(x, y)) data[index(x, y)] = value
+    }
 
     override fun hashCode(): Int = width + height + data.contentHashCode()
 
@@ -300,15 +307,25 @@ data class IntArray2(override val width: Int, override val height: Int, val data
     }
 
     operator fun get(x: Int, y: Int): Int = data[index(x, y)]
-    operator fun set(x: Int, y: Int, value: Int): Unit { data[index(x, y)] = value }
+    operator fun set(x: Int, y: Int, value: Int): Unit {
+        data[index(x, y)] = value
+    }
+
     fun tryGet(x: Int, y: Int): Int? = if (inside(x, y)) data[index(x, y)] else null
-    fun trySet(x: Int, y: Int, value: Int): Unit { if (inside(x, y)) data[index(x, y)] = value }
+    fun trySet(x: Int, y: Int, value: Int): Unit {
+        if (inside(x, y)) data[index(x, y)] = value
+    }
+
     override fun setAt(idx: Int, value: Int) {
         this.data[idx] = value
     }
 
-    override fun getTo(idx: Int, out: Array2Element) {
-        out.intData = getAt(idx)
+    override fun printAt(idx: Int) {
+        print(this.data[idx])
+    }
+
+    override fun equalsAt(idx: Int, value: Int): Boolean {
+        return this.data[idx] == value
     }
 
     override fun getAt(idx: Int): Int = this.data[idx]
@@ -398,15 +415,25 @@ data class DoubleArray2(override val width: Int, override val height: Int, val d
     }
 
     operator fun get(x: Int, y: Int): Double = data[index(x, y)]
-    operator fun set(x: Int, y: Int, value: Double): Unit { data[index(x, y)] = value }
+    operator fun set(x: Int, y: Int, value: Double): Unit {
+        data[index(x, y)] = value
+    }
+
     fun tryGet(x: Int, y: Int): Double? = if (inside(x, y)) data[index(x, y)] else null
-    fun trySet(x: Int, y: Int, value: Double): Unit { if (inside(x, y)) data[index(x, y)] = value }
+    fun trySet(x: Int, y: Int, value: Double): Unit {
+        if (inside(x, y)) data[index(x, y)] = value
+    }
+
     override fun setAt(idx: Int, value: Double) {
         this.data[idx] = value
     }
 
-    override fun getTo(idx: Int, out: Array2Element) {
-        out.doubleData = this.getAt(idx)
+    override fun printAt(idx: Int) {
+        print(this.data[idx])
+    }
+
+    override fun equalsAt(idx: Int, value: Double): Boolean {
+        return this.data[idx] == value
     }
 
     override fun getAt(idx: Int): Double = this.data[idx]
@@ -496,15 +523,25 @@ data class FloatArray2(override val width: Int, override val height: Int, val da
     }
 
     operator fun get(x: Int, y: Int): Float = data[index(x, y)]
-    operator fun set(x: Int, y: Int, value: Float): Unit { data[index(x, y)] = value }
+    operator fun set(x: Int, y: Int, value: Float): Unit {
+        data[index(x, y)] = value
+    }
+
     fun tryGet(x: Int, y: Int): Float? = if (inside(x, y)) data[index(x, y)] else null
-    fun trySet(x: Int, y: Int, value: Float): Unit { if (inside(x, y)) data[index(x, y)] = value }
+    fun trySet(x: Int, y: Int, value: Float): Unit {
+        if (inside(x, y)) data[index(x, y)] = value
+    }
+
     override fun setAt(idx: Int, value: Float) {
         this.data[idx] = value
     }
 
-    override fun getTo(idx: Int, out: Array2Element) {
-        out.floatData = this.data[idx]
+    override fun printAt(idx: Int) {
+        print(this.data[idx])
+    }
+
+    override fun equalsAt(idx: Int, value: Float): Boolean {
+        return this.data[idx] == value
     }
 
     override fun getAt(idx: Int): Float = this.data[idx]
