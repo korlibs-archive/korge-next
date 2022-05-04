@@ -314,6 +314,11 @@ class AGList(val globalState: AGGlobalState) {
         add(CMD(CMD_PROGRAM_USE).finsert16(programId, 0))
     }
 
+    fun useProgram(program: AG.AgProgram) {
+        program.ensure(this)
+        useProgram(program.programId)
+    }
+
     ////////////////////////////////////////
     // TEXTURES
     ////////////////////////////////////////
