@@ -19,7 +19,6 @@ import com.soywiz.korma.geom.shape.*
 import com.soywiz.korma.geom.vector.*
 import kotlin.math.*
 
-
 @KorgeExperimental
 inline fun Container.gpuShapeView(
     build: ShapeBuilder.() -> Unit,
@@ -90,8 +89,8 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
 
     private val gpuShapeViewCommands = GpuShapeViewCommands()
 
-    //var NEW_RENDERER = false
-    val NEW_RENDERER = true
+    var NEW_RENDERER = false
+    //var NEW_RENDERER = true
 
     override fun renderInternal(ctx: RenderContext) {
         ctx.flush()
@@ -305,8 +304,6 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
         //val mt0 = m0.toTransform()
         val m = globalMatrix
         val mt = m.toTransform()
-        val st2 = stateTransform.clone()
-        st2.premultiply(stage!!.globalMatrix)
 
         val scaleWidth = scaleMode.anyScale
         //val lineScale = mt0.scaleAvg.absoluteValue / mt.scaleAvg.absoluteValue
@@ -479,7 +476,8 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
                 val info = gpuShapeViewPaintShader.paintToShaderInfo(
                     ctx,
                     stateTransform = stateTransform,
-                    localMatrix = localMatrix,
+                    //localMatrix = localMatrix,
+                    matrix = globalMatrix,
                     paint = paint,
                     globalAlpha = globalAlpha,
                     lineWidth = lineWidth.toDouble(),
@@ -507,7 +505,10 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
 
         if (!NEW_RENDERER) {
             data.entries.fastForEach { points ->
-                drawTriangleStrip(ctx, globalAlpha, paint, points.points, points.distValues, points.pointCount, lineWidth.toFloat(), st2, scissor, stencil)
+                drawTriangleStrip(
+                    ctx, globalAlpha, paint, points.points, points.distValues, points.pointCount,
+                    lineWidth.toFloat(), stateTransform, scissor, stencil
+                )
             }
         }
         //println("vertexCount=$vertexCount")
@@ -529,7 +530,7 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
         val info = gpuShapeViewPaintShader.paintToShaderInfo(
             ctx,
             stateTransform = stateTransform,
-            localMatrix = localMatrix,
+            matrix = globalMatrix,
             paint = paint,
             globalAlpha = globalAlpha,
             lineWidth = lineWidth.toDouble(),
@@ -639,6 +640,8 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
                 )
             )
         }
+
+        // @TODO: Should we do clipping other way?
         if (clipData != null) {
             writeStencil(
                 ctx, clipData, scissor, AG.StencilState(
@@ -651,12 +654,13 @@ class GpuShapeView(shape: Shape, antialiased: Boolean = true) : View() {
             stencilEqualsValue = 0b00000011
         }
 
-        // Antialias
-        if (antialiased) {
+        // Antialias when we don't have clipping
+        // @TODO: How should we handle clipping antialiasing? Should we render the mask into a buffer first, and then do the masking?
+        if (antialiased && shape.clip == null) {
             renderStroke(
                 ctx = ctx,
-                //transform = shape.transform,
-                stateTransform = Matrix(),
+                stateTransform = shape.transform,
+                //stateTransform = Matrix(),
                 strokePath = shape.path,
                 paint = shape.paint,
                 globalAlpha = shape.globalAlpha,
