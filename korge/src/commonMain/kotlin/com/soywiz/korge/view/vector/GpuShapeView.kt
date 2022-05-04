@@ -501,12 +501,12 @@ open class GpuShapeView(
         }
 
         val pathDataStart = gpuShapeViewCommands.verticesStart()
-        val pathData = getPointsForPath(shape.path, globalMatrix, gpuShapeViewCommands)
+        val pathData = getPointsForPath(shape.path, m = null, gpuShapeViewCommands)
         val pathDataEnd = gpuShapeViewCommands.verticesEnd()
         val pathBounds = pathData.bounds
 
         val clipDataStart = gpuShapeViewCommands.verticesStart()
-        val clipData = shape.clip?.let { getPointsForPath(it, globalMatrix, gpuShapeViewCommands) }
+        val clipData = shape.clip?.let { getPointsForPath(it, m = null, gpuShapeViewCommands) }
         val clipDataEnd = gpuShapeViewCommands.verticesEnd()
         val clipBounds = clipData?.bounds
 
