@@ -1192,8 +1192,8 @@ draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.uniform.Uniform(u_Tex3) = TextureUnit(texture=null, linear=false, trilinear=null)
 ::draw.uniform.Uniform(u_Tex) = TextureUnit(texture=Texture[0], linear=true, trilinear=null)
 ::draw.uniform.Uniform(u_Transform) = Matrix3D(
-  [ -0.00390625, 4.783777E-19, 0, 0.09765625 ],
-  [ -4.783777E-19, -0.00390625, 0, 0.09765625 ],
+  [ -0.001953125, 2.3918884E-19, 0, -0.68359375 ],
+  [ -2.3918884E-19, -0.001953125, 0, -0.05859375 ],
   [ 0, 0, 1, 0 ],
   [ 0, 0, 0, 1 ],
 )
@@ -2031,67 +2031,6 @@ draw(vertexCount=697, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.vertex[696]: a_Pos[-300,20]
 ::draw.shader.vertex=#SHADER-1 (already shown)
 ::draw.shader.fragment=#SHADER-2 (already shown)
-draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
-::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
-::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
-::draw.scissor=Scissor(x=0, y=0, width=0, height=0)
-::draw.stencil=StencilState(enabled=true, triangleFace=FRONT_AND_BACK, compareMode=NOT_EQUAL, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=3, readMask=255, writeMask=0)
-::draw.blending=Blending(srcRGB=SOURCE_ALPHA, dstRGB=ONE_MINUS_SOURCE_ALPHA, srcA=ONE, dstA=ONE_MINUS_SOURCE_ALPHA, eqRGB=ADD, eqA=ADD)
-::draw.colorMask=ColorMaskState(red=true, green=true, blue=true, alpha=true)
-::draw.uniform.Uniform(u_ProjMat) = Matrix3D(
-  [ 0.0078125, 0, 0, -1 ],
-  [ 0, 0.0078125, 0, -1 ],
-  [ 0, 0, -1, 0 ],
-  [ 0, 0, 0, 1 ],
-)
-::draw.uniform.Uniform(u_ViewMat) = Matrix3D(
-  [ 1, 0, 0, 0 ],
-  [ 0, 1, 0, 0 ],
-  [ 0, 0, 1, 0 ],
-  [ 0, 0, 0, 1 ],
-)
-::draw.uniform.Uniform(u_Tex0) = TextureUnit(texture=null, linear=false, trilinear=null)
-::draw.uniform.Uniform(u_Tex1) = TextureUnit(texture=null, linear=false, trilinear=null)
-::draw.uniform.Uniform(u_Tex2) = TextureUnit(texture=null, linear=false, trilinear=null)
-::draw.uniform.Uniform(u_Tex3) = TextureUnit(texture=null, linear=false, trilinear=null)
-::draw.uniform.Uniform(u_Tex) = TextureUnit(texture=Texture[1], linear=true, trilinear=null)
-::draw.uniform.Uniform(u_Transform) = Matrix3D(
-  [ -0.0025, -0.0025, 0, -1.25 ],
-  [ 0.0025, -0.0025, 0, 1.5 ],
-  [ 0, 0, 1, 0 ],
-  [ 0, 0, 0, 1 ],
-)
-::draw.uniform.Uniform(u_Gradientp0) = [0.0, 0.0, 0.0]
-::draw.uniform.Uniform(u_Gradientp1) = [100.0, 100.0, 0.0]
-::draw.uniform.Uniform(u_GlobalAlpha) = 0.9
-::draw.uniform.Uniform(u_LineWidth) = 1.25
-::draw.uniform.Uniform(u_ProgramType) = 2
-::draw.ERROR.Missing:[Uniform(u_Color)]
-::draw.ERROR.Unexpected:[Uniform(u_Tex0), Uniform(u_Tex1), Uniform(u_Tex2), Uniform(u_Tex3)]
-::draw.attribute[4][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
-::draw.attribute[5][0]=Attribute(a_Tex, type=Float2, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
-::draw.attribute[6][0]=Attribute(a_Dist, type=Float1, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
-::draw.indices=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
-::draw.vertex[0]: a_Pos[-1101.25,18.75], a_Tex[-1101.25,18.75], a_Dist[-1.5]
-::draw.vertex[1]: a_Pos[-1100,21.25], a_Tex[-1100,21.25], a_Dist[1.5]
-::draw.vertex[2]: a_Pos[-1898.75,18.75], a_Tex[-1898.75,18.75], a_Dist[-1.5]
-::draw.vertex[3]: a_Pos[-1900,21.25], a_Tex[-1900,21.25], a_Dist[1.5]
-::draw.vertex[4]: a_Pos[-1898.75,18.75], a_Tex[-1898.75,18.75], a_Dist[-1.5]
-::draw.vertex[5]: a_Pos[-1901.25,20], a_Tex[-1901.25,20], a_Dist[1.5]
-::draw.vertex[6]: a_Pos[-1898.75,-778.75], a_Tex[-1898.75,-778.75], a_Dist[-1.5]
-::draw.vertex[7]: a_Pos[-1901.25,-780], a_Tex[-1901.25,-780], a_Dist[1.5]
-::draw.vertex[8]: a_Pos[-1898.75,-778.75], a_Tex[-1898.75,-778.75], a_Dist[-1.5]
-::draw.vertex[9]: a_Pos[-1900,-781.25], a_Tex[-1900,-781.25], a_Dist[1.5]
-::draw.vertex[10]: a_Pos[-1101.25,-778.75], a_Tex[-1101.25,-778.75], a_Dist[-1.5]
-::draw.vertex[11]: a_Pos[-1100,-781.25], a_Tex[-1100,-781.25], a_Dist[1.5]
-::draw.vertex[12]: a_Pos[-1101.25,-778.75], a_Tex[-1101.25,-778.75], a_Dist[-1.5]
-::draw.vertex[13]: a_Pos[-1098.75,-780], a_Tex[-1098.75,-780], a_Dist[1.5]
-::draw.vertex[14]: a_Pos[-1101.25,18.75], a_Tex[-1101.25,18.75], a_Dist[-1.5]
-::draw.vertex[15]: a_Pos[-1098.75,20], a_Tex[-1098.75,20], a_Dist[1.5]
-::draw.vertex[16]: a_Pos[-1101.25,18.75], a_Tex[-1101.25,18.75], a_Dist[-1.5]
-::draw.vertex[17]: a_Pos[-1100,21.25], a_Tex[-1100,21.25], a_Dist[1.5]
-::draw.shader.vertex=#SHADER-3 (already shown)
-::draw.shader.fragment=#SHADER-4 (already shown)
 draw(vertexCount=4, instances=1, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.program=Program(name=program, attributes=[a_Pos, a_Tex, a_Dist], uniforms=[u_ProjMat, u_ViewMat, u_LineWidth, u_ProgramType, u_Color, u_Tex, u_Transform, u_Gradientp0, u_Gradientp1, u_GlobalAlpha])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
@@ -2199,8 +2138,8 @@ draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.uniform.Uniform(u_Tex3) = TextureUnit(texture=null, linear=false, trilinear=null)
 ::draw.uniform.Uniform(u_Tex) = TextureUnit(texture=Texture[1], linear=true, trilinear=null)
 ::draw.uniform.Uniform(u_Transform) = Matrix3D(
-  [ -0.25, 3.061617E-17, 0, 12.5 ],
-  [ -3.061617E-17, -0.25, 0, 12.5 ],
+  [ -0.125, 1.5308086E-17, 0, -37.5 ],
+  [ -1.5308086E-17, -0.125, 0, 2.5 ],
   [ 0, 0, 1, 0 ],
   [ 0, 0, 0, 1 ],
 )
@@ -2342,8 +2281,8 @@ draw(vertexCount=18, instances=1, indices=null, type=TRIANGLE_STRIP, offset=0)
 ::draw.uniform.Uniform(u_Tex3) = TextureUnit(texture=null, linear=false, trilinear=null)
 ::draw.uniform.Uniform(u_Tex) = TextureUnit(texture=Texture[1], linear=true, trilinear=null)
 ::draw.uniform.Uniform(u_Transform) = Matrix3D(
-  [ -0.25, 3.061617E-17, 0, 12.5 ],
-  [ -3.061617E-17, -0.25, 0, 12.5 ],
+  [ -0.125, 1.5308086E-17, 0, -37.5 ],
+  [ -1.5308086E-17, -0.125, 0, 2.5 ],
   [ 0, 0, 1, 0 ],
   [ 0, 0, 0, 1 ],
 )

@@ -124,6 +124,14 @@ uniform1i(7005, 2)
 getUniformLocation(1001, "u_Tex3") = 7006
 activeTexture(33987)
 uniform1i(7006, 3)
+getUniformLocation(1001, "u_Color") = 7007
+uniform4f(7007, 1.0, 1.0, 1.0, 0.49803922)
+getUniformLocation(1001, "u_GlobalAlpha") = 7008
+uniform1f(7008, 1.0)
+getUniformLocation(1001, "u_LineWidth") = 7009
+uniform1f(7009, 0.85)
+getUniformLocation(1001, "u_ProgramType") = 7010
+uniform1f(7010, 0.0)
 drawArrays(5, 0, 10)
 disableVertexAttribArray(8001)
 disableVertexAttribArray(8002)
