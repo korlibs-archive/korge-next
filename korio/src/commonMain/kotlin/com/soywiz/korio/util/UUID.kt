@@ -7,6 +7,9 @@ import kotlin.random.*
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 class UUID(val data: UByteArrayInt) {
+    override fun equals(other: Any?): Boolean = other is UUID && this.data.bytes.contentEquals(other.data.bytes)
+    override fun hashCode(): Int = this.data.bytes.contentHashCode()
+
 	companion object {
 		private val regex =
 			Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", RegexOption.IGNORE_CASE)
