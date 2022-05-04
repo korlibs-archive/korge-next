@@ -28,7 +28,9 @@ inline fun DoubleArray2.map2(gen: (x: Int, y: Int, v: Double) -> Double): Double
         gen(x, y, this[x, y])
     }
 
-// Note: Due to autoboxing, we INTENTIONALLY DO NOT require get/set methods.
+// Note: Due to autoboxing, the get()/set() methods are implemented in the typed implementations
+// without an override (meaning we don't require the interface to have get/set methods).
+//
 // https://discuss.kotlinlang.org/t/performance-question-related-to-boxing-and-interface-implementation/17387
 interface IArray2<E> : Iterable<E> {
     val width: Int
