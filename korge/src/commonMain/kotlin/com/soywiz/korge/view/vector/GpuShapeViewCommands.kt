@@ -39,23 +39,21 @@ class GpuShapeViewCommands {
 
     fun draw(ctx: RenderContext) {
         val ag = ctx.ag
-        ag.commandsNoWait { list ->
-        //ag.commandsSync { list ->
-            // Set to default state
-            list.setState()
-            ag.getProgram(GpuShapeViewPrograms.PROGRAM_COMBINED).use(list)
-            //println(bufferVertexData)
-            list.vertexArrayObjectSet(ag, GpuShapeViewPrograms.LAYOUT_POS_TEX_FILL_DIST, bufferVertexData) {
-                commands.fastForEach { cmd ->
-                    val paintShader = cmd.paintShader
-                    if (paintShader != null) {
-                        //println("cmd.vertexCount=${cmd.vertexCount}, cmd.vertexIndex=${cmd.vertexIndex}, paintShader=$paintShader")
-                        ctx.useBatcher { batcher ->
-                            batcher.updateStandardUniforms()
+        ctx.useBatcher { batcher ->
+            batcher.updateStandardUniforms()
+            ag.commandsNoWait { list ->
+                //ag.commandsSync { list ->
+                // Set to default state
+                list.setState()
+                list.useProgram(ag.getProgram(GpuShapeViewPrograms.PROGRAM_COMBINED))
+                //println(bufferVertexData)
+                list.vertexArrayObjectSet(ag, GpuShapeViewPrograms.LAYOUT_POS_TEX_FILL_DIST, bufferVertexData) {
+                    commands.fastForEach { cmd ->
+                        val paintShader = cmd.paintShader
+                        if (paintShader != null) {
+                            //println("cmd.vertexCount=${cmd.vertexCount}, cmd.vertexIndex=${cmd.vertexIndex}, paintShader=$paintShader")
                             batcher.simulateBatchStats(cmd.vertexCount)
-
                             //println(paintShader.uniforms)
-
                             batcher.setTemporalUniforms(paintShader.uniforms) {
                                 list.uniformsSet(it) {
                                     list.draw(cmd.drawType, cmd.vertexCount, cmd.vertexIndex)
