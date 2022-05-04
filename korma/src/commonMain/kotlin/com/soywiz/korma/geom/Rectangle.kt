@@ -409,9 +409,19 @@ fun Rectangle.with(margin: Margin): Rectangle =
     Rectangle.fromBounds(left - margin.left, top - margin.top, right + margin.right, bottom + margin.bottom)
 
 fun Rectangle.applyTransform(m: Matrix): Rectangle {
-    val l = m.transformX(left, top)
-    val t = m.transformY(left, top)
-    val r = m.transformX(right, bottom)
-    val b = m.transformY(right, bottom)
-    return setTo(l, t, r - l, b - t)
+    val tl = m.transform(left, top)
+    val tr = m.transform(right, top)
+    val bl = m.transform(left, bottom)
+    val br = m.transform(right, bottom)
+
+    val minX = com.soywiz.korma.math.min(tl.x, tr.x, bl.x, br.x)
+    val minY = com.soywiz.korma.math.min(tl.y, tr.y, bl.y, br.y)
+    val maxX = com.soywiz.korma.math.max(tl.x, tr.x, bl.x, br.x)
+    val maxY = com.soywiz.korma.math.max(tl.y, tr.y, bl.y, br.y)
+
+    //val l = m.transformX(left, top)
+    //val t = m.transformY(left, top)
+    //val r = m.transformX(right, bottom)
+    //val b = m.transformY(right, bottom)
+    return setBounds(minX, minY, maxX, maxY)
 }

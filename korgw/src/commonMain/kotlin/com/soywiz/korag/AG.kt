@@ -189,13 +189,11 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
 
         fun setTo(rect: Rectangle): Scissor = setTo(rect.x, rect.y, rect.width, rect.height)
 
-        fun applyTransform(m: Matrix) {
-            val l = m.transformX(left, top)
-            val t = m.transformY(left, top)
-            val r = m.transformX(right, bottom)
-            val b = m.transformY(right, bottom)
-            setTo(l, t, r - l, b - t)
-        }
+        fun setToBounds(left: Int, top: Int, right: Int, bottom: Int): Scissor =
+            setTo(left, top, right - left, bottom - top)
+
+        fun setToBounds(left: Double, top: Double, right: Double, bottom: Double): Scissor =
+            setTo(left, top, right - left, bottom - top)
 
         override fun toString(): String = "Scissor(x=${x.niceStr}, y=${y.niceStr}, width=${width.niceStr}, height=${height.niceStr})"
 
@@ -628,11 +626,12 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     }
 
     data class ColorMaskState(
-        var red: Boolean = true,
-        var green: Boolean = true,
-        var blue: Boolean = true,
-        var alpha: Boolean = true
+        var red: Boolean,
+        var green: Boolean,
+        var blue: Boolean,
+        var alpha: Boolean
     ) {
+        constructor(value: Boolean = true) : this(value, value, value, value)
         companion object {
             internal val DUMMY = ColorMaskState()
         }

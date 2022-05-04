@@ -161,7 +161,7 @@ class AGList(val globalState: AGGlobalState) {
                 CMD_CLEAR -> processor.clear(data.extract(0), data.extract(1), data.extract(2))
                 CMD_CLEAR_COLOR -> processor.clearColor(readFloat(), readFloat(), readFloat(), readFloat())
                 CMD_CLEAR_DEPTH -> processor.clearDepth(readFloat())
-                CMD_CLEAR_STENCIL -> processor.clearStencil(readInt())
+                CMD_CLEAR_STENCIL -> processor.clearStencil(data.extract24(0))
                 // VAO
                 CMD_VAO_CREATE -> processor.vaoCreate(data.extract16(0))
                 CMD_VAO_DELETE -> processor.vaoDelete(data.extract16(0))
@@ -243,8 +243,7 @@ class AGList(val globalState: AGGlobalState) {
     }
 
     fun clearStencil(stencil: Int) {
-        addInt(stencil)
-        add(CMD(CMD_CLEAR_STENCIL))
+        add(CMD(CMD_CLEAR_STENCIL).finsert24(stencil, 0))
     }
 
     fun clear(color: Boolean, depth: Boolean, stencil: Boolean) {

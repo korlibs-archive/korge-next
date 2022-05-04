@@ -126,7 +126,7 @@ open class GpuShapeView(
                 bufferWidth = currentRenderBuffer.width
                 bufferHeight = currentRenderBuffer.height
                 ctx.renderToTexture(bufferWidth, bufferHeight, {
-                    gpuShapeViewCommands.draw(ctx, globalMatrix)
+                    renderCommands(ctx)
                 }, hasDepth = false, hasStencil = true, msamples = 1) { texture ->
                     ctx.ag.clearStencil()
                     ctx.useBatcher {
@@ -134,11 +134,15 @@ open class GpuShapeView(
                     }
                 }
             } else {
-                gpuShapeViewCommands.draw(ctx, globalMatrix)
+                renderCommands(ctx)
             }
         }
 
         //println("GPU RENDER IN: $time, doRequireTexture=$doRequireTexture")
+    }
+
+    private fun renderCommands(ctx: RenderContext) {
+        gpuShapeViewCommands.render(ctx, globalMatrix, localMatrix, renderAlpha)
     }
 
     private fun renderShape(shape: Shape) {
@@ -260,7 +264,6 @@ open class GpuShapeView(
         join: LineJoin,
         miterLimit: Double,
         forceClosed: Boolean? = null,
-        scissor: AG.Scissor? = null,
         stencil: AG.StencilState? = null
     ) {
         //val m0 = root.globalMatrix
@@ -444,7 +447,7 @@ open class GpuShapeView(
                     lineWidth = lineWidth,
                 )
 
-                gpuShapeViewCommands.draw(AG.DrawType.TRIANGLE_STRIP, info, stencil = stencil, scissor = scissor)
+                gpuShapeViewCommands.draw(AG.DrawType.TRIANGLE_STRIP, info, stencil = stencil)
             }
         }
 
@@ -500,10 +503,27 @@ open class GpuShapeView(
             }
         }
 
+        val paintShader = gpuShapeViewPaintShader.paintToShaderInfo(
+            shape.transform, null, shape.paint, shape.globalAlpha,
+            lineWidth = 10000000.0,
+        ) ?: return
+
         val pathDataStart = gpuShapeViewCommands.verticesStart()
         val pathData = getPointsForPath(shape.path, m = null, gpuShapeViewCommands)
         val pathDataEnd = gpuShapeViewCommands.verticesEnd()
         val pathBounds = pathData.bounds
+
+        if (!shape.requireStencil) {
+            gpuShapeViewCommands.draw(
+                AG.DrawType.TRIANGLE_FAN,
+                startIndex = pathDataStart,
+                endIndex = pathDataEnd,
+                paintShader = paintShader,
+                colorMask = AG.ColorMaskState(true),
+                blendMode = BlendMode.NONE.factors,
+            )
+            return
+        }
 
         val clipDataStart = gpuShapeViewCommands.verticesStart()
         val clipData = shape.clip?.let { getPointsForPath(it, m = null, gpuShapeViewCommands) }
@@ -521,10 +541,11 @@ open class GpuShapeView(
         //val scissor = if (applyScissor) AG.Scissor.combine(ctx.batch.scissor, rscissor) else rscissor
         val scissor: AG.Scissor? = null
 
+        gpuShapeViewCommands.setScissor(scissorBounds)
         gpuShapeViewCommands.clearStencil(0, scissor = scissor)
 
         var stencilEqualsValue = 0b00000001
-        writeStencil(pathDataStart, pathDataEnd, scissor, AG.StencilState(
+        writeStencil(pathDataStart, pathDataEnd, AG.StencilState(
             enabled = true,
             compareMode = AG.CompareMode.ALWAYS,
             writeMask = 0b00000001,
@@ -533,7 +554,7 @@ open class GpuShapeView(
 
         // @TODO: Should we do clipping other way?
         if (clipData != null) {
-            writeStencil(clipDataStart, clipDataEnd, scissor, AG.StencilState(
+            writeStencil(clipDataStart, clipDataEnd, AG.StencilState(
                 enabled = true,
                 compareMode = AG.CompareMode.ALWAYS,
                 writeMask = 0b00000010,
@@ -542,7 +563,7 @@ open class GpuShapeView(
             stencilEqualsValue = 0b00000011
         }
 
-        writeFill(shape, scissor, stencilEqualsValue)
+        writeFill(paintShader, stencilEqualsValue)
 
         // Antialias when we don't have clipping
         // @TODO: How should we handle clipping antialiasing? Should we render the mask into a buffer first, and then do the masking?
@@ -561,7 +582,6 @@ open class GpuShapeView(
                 join = LineJoin.MITER,
                 miterLimit = 0.5,
                 forceClosed = true,
-                scissor = scissor,
                 stencil = AG.StencilState(
                     enabled = true,
                     compareMode = AG.CompareMode.NOT_EQUAL,
@@ -573,28 +593,19 @@ open class GpuShapeView(
         // renderFill
     }
 
-    private fun writeStencil(pathDataStart: Int, pathDataEnd: Int, scissor: AG.Scissor?, stencil: AG.StencilState) {
+    private fun writeStencil(pathDataStart: Int, pathDataEnd: Int, stencil: AG.StencilState) {
         gpuShapeViewCommands.draw(
             AG.DrawType.TRIANGLE_FAN,
             startIndex = pathDataStart,
             endIndex = pathDataEnd,
             paintShader = gpuShapeViewPaintShader.stencilPaintShader,
-            scissor = scissor,
             colorMask = AG.ColorMaskState(false, false, false, false),
             blendMode = BlendMode.NONE.factors,
             stencil = stencil
         )
     }
 
-    private fun writeFill(shape: FillShape, scissor: AG.Scissor?, stencilEqualsValue: Int) {
-        val paint = shape.paint
-        val stateTransform = shape.transform
-        val globalAlpha = shape.globalAlpha
-        val paintShader = gpuShapeViewPaintShader.paintToShaderInfo(
-            stateTransform, null, paint, globalAlpha,
-            lineWidth = 10000000.0,
-        ) ?: return
-
+    private fun writeFill(paintShader: GpuShapeViewPaintShader.PaintShader, stencilEqualsValue: Int) {
         val x0 = 0f
         val y0 = 0f
         val x1 = bufferWidth.toFloat()
@@ -609,12 +620,9 @@ open class GpuShapeView(
 
         //println("[($lx0,$ly0)-($lx1,$ly1)]")
 
-        paintShader.uniforms.put(GpuShapeViewPrograms.u_GlobalAlpha, globalAlpha.toFloat())
-
         gpuShapeViewCommands.draw(
             AG.DrawType.TRIANGLE_FAN,
             paintShader = paintShader,
-            scissor = scissor,
             colorMask = AG.ColorMaskState(true, true, true, true),
             stencil = AG.StencilState(
                 enabled = true,
