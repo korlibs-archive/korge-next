@@ -61,10 +61,15 @@ object GpuShapeViewPrograms {
     const val PROGRAM_TYPE_GRADIENT_LINEAR = 2
     const val PROGRAM_TYPE_GRADIENT_RADIAL = 3
     const val PROGRAM_TYPE_GRADIENT_SWEEP = 4
+    const val PROGRAM_TYPE_STENCIL = 5
 
     val PROGRAM_COMBINED = Program(
         vertex = VERTEX_FILL,
         fragment = FragmentShaderDefault {
+            IF(u_ProgramType eq PROGRAM_TYPE_STENCIL.toFloat().lit) {
+                SET(out, vec4(1f.lit, 0f.lit, 0f.lit, 1f.lit))
+                RETURN()
+            }
             PREFIX()
             IF_ELSE_LIST(u_ProgramType, 0, 4) {
                 when (it) {

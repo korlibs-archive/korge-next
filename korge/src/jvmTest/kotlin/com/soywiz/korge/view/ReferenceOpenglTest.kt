@@ -47,7 +47,6 @@ class ReferenceOpenglTest : ViewsForTesting() {
                     )
                 }
             }) {
-                this.NEW_RENDERER = true
                 xy(-150, -150)
             }
         }

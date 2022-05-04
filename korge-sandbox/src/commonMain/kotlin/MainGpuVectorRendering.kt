@@ -29,9 +29,9 @@ suspend fun Stage.mainGpuVectorRendering() {
 
 
     //circle(128.0, fill = Colors.RED).xy(200, 200).also { it.antialiased = false }
-    roundRect(300, 300, 64, fill = mainStrokePaint).xy(200, 200).also { it.antialiased = true }
+    //roundRect(300, 300, 64, fill = mainStrokePaint).xy(200, 200).also { it.antialiased = true }
 
-    return
+    //return
 
     container {
         //xy(0, 0)
@@ -47,12 +47,10 @@ suspend fun Stage.mainGpuVectorRendering() {
             //this.fill(mainStrokePaint) {
                 this.rect(
                     lineWidth / 2, lineWidth / 2,
-                    width,
-                    height
+                    width, height
                 )
             }
         }) {
-            NEW_RENDERER = true
             xy(-150, -150)
             keys {
                 down(Key.N0) { antialiased = !antialiased }
@@ -75,7 +73,7 @@ suspend fun Stage.mainGpuVectorRendering() {
         }
     }
 
-    //return
+    return
 
     gpuShapeView({
         //val paint = createLinearGradient(200, 200, 400, 400).add(0.0, Colors.BLUE.withAd(0.9)).add(1.0, Colors.WHITE.withAd(0.7))

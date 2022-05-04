@@ -46,7 +46,6 @@ open class Graphics @JvmOverloads constructor(
 	internal var currentPath = graphicsPathPool.alloc()
 
     // @TODO: Not used but to have same API as GpuShapeView
-    var NEW_RENDERER: Boolean = false
     var antialiased: Boolean = true
 
     inline fun updateShape(block: ShapeBuilder.() -> Unit) {

@@ -14,6 +14,7 @@ class GpuShapeViewPaintShader {
     private val colorUniforms = AG.UniformValues()
     private val bitmapUniforms = AG.UniformValues()
     private val gradientUniforms = AG.UniformValues()
+    private val texUniforms = AG.UniformValues()
     private val gradientBitmap = Bitmap32(256, 1)
 
     private val colorF = FloatArray(4)
@@ -21,19 +22,26 @@ class GpuShapeViewPaintShader {
 
     data class PaintShader(
         var uniforms: AG.UniformValues = AG.UniformValues(),
+        var texUniforms: AG.UniformValues = AG.UniformValues(),
         var program: Program = DefaultShaders.PROGRAM_DEFAULT
     ) {
-        fun setTo(uniforms: AG.UniformValues, program: Program): PaintShader {
-            this.uniforms = uniforms
+        fun setTo(uniforms: AG.UniformValues, texUniforms: AG.UniformValues, program: Program): PaintShader {
+            this.uniforms.setTo(uniforms)
+            this.texUniforms.setTo(texUniforms)
             this.program = program
             return this
         }
     }
 
+    val stencilPaintShader = PaintShader(
+        AG.UniformValues(GpuShapeViewPrograms.u_ProgramType to GpuShapeViewPrograms.PROGRAM_TYPE_COLOR.toFloat(),),
+        AG.UniformValues(),
+        GpuShapeViewPrograms.PROGRAM_COMBINED
+    )
+
     fun paintToShaderInfo(
-        ctx: RenderContext,
         stateTransform: Matrix,
-        matrix: Matrix,
+        matrix: Matrix?,
         paint: Paint,
         globalAlpha: Double,
         lineWidth: Double,
@@ -51,6 +59,7 @@ class GpuShapeViewPaintShader {
                 uniforms[GpuShapeViewPrograms.u_LineWidth] = lineWidth.toFloat()
                 uniforms[GpuShapeViewPrograms.u_ProgramType] = GpuShapeViewPrograms.PROGRAM_TYPE_COLOR.toFloat()
             //}, GpuShapeView.PROGRAM_COLOR)
+            }, texUniforms.also { uniforms ->
             }, GpuShapeViewPrograms.PROGRAM_COMBINED)
 
         }
@@ -59,7 +68,7 @@ class GpuShapeViewPaintShader {
                 identity()
                 preconcat(paint.transform)
                 preconcat(stateTransform)
-                preconcat(matrix)
+                if (matrix != null) preconcat(matrix)
                 invert()
                 scale(1.0 / paint.bitmap.width, 1.0 / paint.bitmap.height)
             }
@@ -68,12 +77,13 @@ class GpuShapeViewPaintShader {
             //mat.scale(1.0 / paint.bitmap.width, 1.0 / paint.bitmap.height)
             //println("mat=$mat")
             out.setTo(bitmapUniforms.also { uniforms ->
-                uniforms[DefaultShaders.u_Tex] = AG.TextureUnit(ctx.getTex(paint.bitmap).base)
                 uniforms[GpuShapeViewPrograms.u_Transform] = mat.toMatrix3D() // @TODO: Why is this transposed???
                 uniforms[GpuShapeViewPrograms.u_GlobalAlpha] = globalAlpha.toFloat()
                 uniforms[GpuShapeViewPrograms.u_LineWidth] = lineWidth.toFloat()
                 uniforms[GpuShapeViewPrograms.u_ProgramType] = GpuShapeViewPrograms.PROGRAM_TYPE_BITMAP.toFloat()
             //}, GpuShapeView.PROGRAM_BITMAP)
+            }, texUniforms.also { uniforms ->
+                uniforms[DefaultShaders.u_Tex] = paint.bitmap
             }, GpuShapeViewPrograms.PROGRAM_COMBINED)
         }
         is GradientPaint -> {
@@ -85,7 +95,7 @@ class GpuShapeViewPaintShader {
                 identity()
                 preconcat(paint.transform)
                 preconcat(stateTransform)
-                preconcat(matrix)
+                if (matrix != null) preconcat(matrix)
             })
             //val mat = stateTransform * paint.gradientMatrix
             val mat = when (paint.kind) {
@@ -94,7 +104,6 @@ class GpuShapeViewPaintShader {
             }
             out.setTo(
                 gradientUniforms.also { uniforms ->
-                    uniforms[DefaultShaders.u_Tex] = AG.TextureUnit(ctx.getTex(gradientBitmap).base)
                     uniforms[GpuShapeViewPrograms.u_Transform] = mat.toMatrix3D()
                     uniforms[GpuShapeViewPrograms.u_Gradientp0] =
                         floatArrayOf(paint.x0.toFloat(), paint.y0.toFloat(), paint.r0.toFloat())
@@ -107,8 +116,9 @@ class GpuShapeViewPaintShader {
                         GradientKind.SWEEP -> GpuShapeViewPrograms.PROGRAM_TYPE_GRADIENT_SWEEP
                         else -> GpuShapeViewPrograms.PROGRAM_TYPE_GRADIENT_LINEAR
                     }
-                },
-                GpuShapeViewPrograms.PROGRAM_COMBINED
+                }, texUniforms.also { uniforms ->
+                    uniforms[DefaultShaders.u_Tex] = gradientBitmap
+                }, GpuShapeViewPrograms.PROGRAM_COMBINED
                 //when (paint.kind) {
                 //    GradientKind.RADIAL -> GpuShapeView.PROGRAM_RADIAL_GRADIENT
                 //    GradientKind.SWEEP -> GpuShapeView.PROGRAM_SWEEP_GRADIENT
