@@ -23,7 +23,7 @@ class GpuShapeViewCommands {
         commands.clear()
     }
 
-    fun addVertex(x: Float, y: Float, u: Float, v: Float, lw: Float) {
+    fun addVertex(x: Float, y: Float, u: Float = x, v: Float = y, lw: Float = 0f) {
         bufferVertexData.add(x, y, u, v, lw)
         vertexIndex++
     }
@@ -73,6 +73,7 @@ class GpuShapeViewCommands {
     fun draw(ctx: RenderContext, globalMatrix: Matrix) {
         val vertices = this.vertices ?: return
         ctx.agBufferManager.delete(verticesToDelete)
+        verticesToDelete.clear()
 
         ctx.flush()
         val ag = ctx.ag

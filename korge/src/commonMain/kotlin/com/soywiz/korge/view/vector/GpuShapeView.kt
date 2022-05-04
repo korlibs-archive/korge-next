@@ -116,8 +116,8 @@ open class GpuShapeView(
     override fun renderInternal(ctx: RenderContext) {
         ctx.flush()
 
-        //val doRequireTexture = shape.requireStencil
-        val doRequireTexture = false
+        val doRequireTexture = shape.requireStencil
+        //val doRequireTexture = false
 
         val time = measureTime {
             if (doRequireTexture) {
@@ -128,7 +128,7 @@ open class GpuShapeView(
                 ctx.renderToTexture(bufferWidth, bufferHeight, {
                     gpuShapeViewCommands.draw(ctx, globalMatrix)
                 }, hasDepth = false, hasStencil = true, msamples = 1) { texture ->
-                    gpuShapeViewCommands.clearStencil()
+                    ctx.ag.clearStencil()
                     ctx.useBatcher {
                         it.drawQuad(texture, x = 0f, y = 0f)
                     }
@@ -260,6 +260,8 @@ open class GpuShapeView(
         join: LineJoin,
         miterLimit: Double,
         forceClosed: Boolean? = null,
+        scissor: AG.Scissor? = null,
+        stencil: AG.StencilState? = null
     ) {
         //val m0 = root.globalMatrix
         //val mt0 = m0.toTransform()
@@ -442,7 +444,7 @@ open class GpuShapeView(
                     out = gpuShapeViewPaintShader.tempPaintShader
                 )
 
-                gpuShapeViewCommands.draw(AG.DrawType.TRIANGLE_STRIP, info)
+                gpuShapeViewCommands.draw(AG.DrawType.TRIANGLE_STRIP, info, stencil = stencil, scissor = scissor)
             }
         }
 
@@ -501,7 +503,6 @@ open class GpuShapeView(
         val pathDataStart = gpuShapeViewCommands.verticesStart()
         val pathData = getPointsForPath(shape.path, globalMatrix, gpuShapeViewCommands)
         val pathDataEnd = gpuShapeViewCommands.verticesEnd()
-
         val pathBounds = pathData.bounds
 
         val clipDataStart = gpuShapeViewCommands.verticesStart()
@@ -516,7 +517,7 @@ open class GpuShapeView(
 
         // @TODO: Scissor should be the intersection between the path bounds and the clipping bounds
 
-        val rscissor: AG.Scissor = AG.Scissor().setTo(scissorBounds)
+        //val rscissor: AG.Scissor = AG.Scissor().setTo(scissorBounds)
         //val scissor = if (applyScissor) AG.Scissor.combine(ctx.batch.scissor, rscissor) else rscissor
         val scissor: AG.Scissor? = null
 
@@ -541,12 +542,13 @@ open class GpuShapeView(
             stencilEqualsValue = 0b00000011
         }
 
+        writeFill(shape, scissor, stencilEqualsValue)
+
         // Antialias when we don't have clipping
         // @TODO: How should we handle clipping antialiasing? Should we render the mask into a buffer first, and then do the masking?
-        /*
-        if (antialiased && shape.clip == null) {
+        //if (antialiased && shape.clip == null) {
+        if (true) {
             renderStroke(
-                ctx = ctx,
                 stateTransform = shape.transform,
                 //stateTransform = Matrix(),
                 strokePath = shape.path,
@@ -568,51 +570,7 @@ open class GpuShapeView(
                 )
             )
         }
-        */
-
         // renderFill
-        run {
-            val paint = shape.paint
-            val stateTransform = shape.transform
-            val globalAlpha = shape.globalAlpha
-            val paintShader = gpuShapeViewPaintShader.paintToShaderInfo(
-                stateTransform, null, paint, globalAlpha,
-                lineWidth = 10000000.0,
-                out = gpuShapeViewPaintShader.tempPaintShader
-            ) ?: return
-
-            val x0 = 0f
-            val y0 = 0f
-            val x1 = bufferWidth.toFloat()
-            val y1 = bufferHeight.toFloat()
-
-            val vstart = gpuShapeViewCommands.verticesStart()
-            gpuShapeViewCommands.addVertex(x0, y0, x0, y0, 10000000f)
-            gpuShapeViewCommands.addVertex(x1, y0, x1, y0, 10000000f)
-            gpuShapeViewCommands.addVertex(x1, y1, x1, y1, 10000000f)
-            gpuShapeViewCommands.addVertex(x0, y1, x0, y1, 10000000f)
-            val vend = gpuShapeViewCommands.verticesEnd()
-
-            //println("[($lx0,$ly0)-($lx1,$ly1)]")
-
-            paintShader.uniforms.put(GpuShapeViewPrograms.u_GlobalAlpha, globalAlpha.toFloat())
-
-            gpuShapeViewCommands.draw(
-                AG.DrawType.TRIANGLE_FAN,
-                paintShader = paintShader,
-                scissor = scissor,
-                colorMask = AG.ColorMaskState(true, true, true, true),
-                stencil = AG.StencilState(
-                    //enabled = true,
-                    enabled = false,
-                    compareMode = AG.CompareMode.EQUAL,
-                    referenceValue = stencilEqualsValue,
-                    writeMask = 0,
-                ),
-                startIndex = vstart,
-                endIndex = vend,
-            )
-        }
     }
 
     private fun writeStencil(pathDataStart: Int, pathDataEnd: Int, scissor: AG.Scissor?, stencil: AG.StencilState) {
@@ -625,6 +583,48 @@ open class GpuShapeView(
             colorMask = AG.ColorMaskState(false, false, false, false),
             blendMode = BlendMode.NONE.factors,
             stencil = stencil
+        )
+    }
+
+    private fun writeFill(shape: FillShape, scissor: AG.Scissor?, stencilEqualsValue: Int) {
+        val paint = shape.paint
+        val stateTransform = shape.transform
+        val globalAlpha = shape.globalAlpha
+        val paintShader = gpuShapeViewPaintShader.paintToShaderInfo(
+            stateTransform, null, paint, globalAlpha,
+            lineWidth = 10000000.0,
+            out = gpuShapeViewPaintShader.tempPaintShader
+        ) ?: return
+
+        val x0 = 0f
+        val y0 = 0f
+        val x1 = bufferWidth.toFloat()
+        val y1 = bufferHeight.toFloat()
+
+        val vstart = gpuShapeViewCommands.verticesStart()
+        gpuShapeViewCommands.addVertex(x0, y0)
+        gpuShapeViewCommands.addVertex(x1, y0)
+        gpuShapeViewCommands.addVertex(x1, y1)
+        gpuShapeViewCommands.addVertex(x0, y1)
+        val vend = gpuShapeViewCommands.verticesEnd()
+
+        //println("[($lx0,$ly0)-($lx1,$ly1)]")
+
+        paintShader.uniforms.put(GpuShapeViewPrograms.u_GlobalAlpha, globalAlpha.toFloat())
+
+        gpuShapeViewCommands.draw(
+            AG.DrawType.TRIANGLE_FAN,
+            paintShader = paintShader,
+            scissor = scissor,
+            colorMask = AG.ColorMaskState(true, true, true, true),
+            stencil = AG.StencilState(
+                enabled = true,
+                compareMode = AG.CompareMode.EQUAL,
+                referenceValue = stencilEqualsValue,
+                writeMask = 0,
+            ),
+            startIndex = vstart,
+            endIndex = vend,
         )
     }
 

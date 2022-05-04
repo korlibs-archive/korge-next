@@ -1335,7 +1335,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         drawTempTexture.upload(Bitmaps.transparent)
     }
 
-    class UniformValues() {
+    class UniformValues() : Iterable<Pair<Uniform, Any>> {
         companion object {
             internal val EMPTY = UniformValues()
         }
@@ -1425,6 +1425,10 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         fun setTo(uniforms: UniformValues) {
             clear()
             put(uniforms)
+        }
+
+        override fun iterator(): Iterator<Pair<Uniform, Any>> = iterator {
+            fastForEach { uniform, value -> yield(uniform to value) }
         }
 
         override fun toString() = "{" + keys.zip(values).map { "${it.first}=${it.second}" }.joinToString(", ") + "}"

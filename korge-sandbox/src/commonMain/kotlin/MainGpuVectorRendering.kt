@@ -22,10 +22,7 @@ import com.soywiz.korma.geom.vector.*
 @OptIn(KorgeExperimental::class)
 suspend fun Stage.mainGpuVectorRendering() {
     //val mainStrokePaint = Colors.GREEN.withAd(0.5)
-    val mainStrokePaint = LinearGradientPaint(0, 0, 0, 300)
-        .addColorStop(0.0, Colors.GREEN)
-        .addColorStop(0.5, Colors.RED)
-        .addColorStop(1.0, Colors.BLUE)
+    val mainStrokePaint = LinearGradientPaint(0, 0, 0, 300).addColorStop(0.0, Colors.GREEN).addColorStop(0.5, Colors.RED).addColorStop(1.0, Colors.BLUE)
 
 
     //circle(128.0, fill = Colors.RED).xy(200, 200).also { it.antialiased = false }
@@ -43,8 +40,8 @@ suspend fun Stage.mainGpuVectorRendering() {
             val width = 300.0
             val height = 300.0
             //rotation = 180.degrees
-            this.stroke(mainStrokePaint, lineWidth = lineWidth, lineJoin = LineJoin.MITER, lineCap = LineCap.BUTT) {
-            //this.fill(mainStrokePaint) {
+            //this.stroke(mainStrokePaint, lineWidth = lineWidth, lineJoin = LineJoin.MITER, lineCap = LineCap.BUTT) {
+            this.fill(mainStrokePaint) {
                 this.rect(
                     lineWidth / 2, lineWidth / 2,
                     width, height
@@ -73,7 +70,7 @@ suspend fun Stage.mainGpuVectorRendering() {
         }
     }
 
-    return
+    //return
 
     gpuShapeView({
         //val paint = createLinearGradient(200, 200, 400, 400).add(0.0, Colors.BLUE.withAd(0.9)).add(1.0, Colors.WHITE.withAd(0.7))
