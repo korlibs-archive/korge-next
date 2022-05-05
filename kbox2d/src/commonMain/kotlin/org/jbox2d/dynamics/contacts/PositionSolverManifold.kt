@@ -99,6 +99,9 @@ internal class PositionSolverManifold {
                 normal.x *= -1f
                 normal.y *= -1f
             }
+
+            else -> {
+            }
         }
     }
 }
