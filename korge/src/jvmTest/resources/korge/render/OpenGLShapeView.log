@@ -102,9 +102,6 @@ vertexAttribPointer(8002, 2, 5126, false, 20, 8)
 getAttribLocation(1001, "a_Dist") = 8003
 enableVertexAttribArray(8003)
 vertexAttribPointer(8003, 1, 5126, false, 20, 16)
-clearStencil(0)
-stencilMask(255)
-clear(1024)
 getUniformLocation(1001, "u_ProjMat") = 7001
 uniformMatrix4fv(7001, 1, false, FBuffer(size=65536))
 getUniformLocation(1001, "u_ViewMat") = 7002
@@ -123,10 +120,14 @@ activeTexture(33987)
 uniform1i(7006, 3)
 getUniformLocation(1001, "u_GlobalAlpha") = 7007
 uniform1f(7007, 1.0)
+clearStencil(0)
+stencilMask(255)
+clear(1024)
 getUniformLocation(1001, "u_ProgramType") = 7008
 uniform1f(7008, 0.0)
 getUniformLocation(1001, "u_Color") = 7009
 uniform4f(7009, 1.0, 1.0, 1.0, 0.49803922)
+uniform1f(7007, 1.0)
 getUniformLocation(1001, "u_LineWidth") = 7010
 uniform1f(7010, 6.25)
 disable(2960)

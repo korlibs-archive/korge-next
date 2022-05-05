@@ -1338,6 +1338,11 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     class UniformValues() : Iterable<Pair<Uniform, Any>> {
         companion object {
             internal val EMPTY = UniformValues()
+
+            fun valueToString(value: Any?): String {
+                if (value is FloatArray) return value.toList().toString()
+                return value.toString()
+            }
         }
 
         fun clone(): UniformValues = UniformValues().also { it.setTo(this) }
@@ -1431,7 +1436,8 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
             fastForEach { uniform, value -> yield(uniform to value) }
         }
 
-        override fun toString() = "{" + keys.zip(values).map { "${it.first}=${it.second}" }.joinToString(", ") + "}"
+        override fun toString() = "{" + keys.zip(values)
+            .joinToString(", ") { "${it.first}=${valueToString(it.second)}" } + "}"
     }
 }
 

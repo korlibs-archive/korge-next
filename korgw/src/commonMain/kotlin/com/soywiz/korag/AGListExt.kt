@@ -122,10 +122,10 @@ inline fun AGList.useProgram(ag: AG, program: Program) {
     useProgram(ag.getProgram(program))
 }
 
-inline fun AGList.uniformsSet(uniforms: AG.UniformValues, block: () -> Unit) {
+inline fun AGList.uniformsSet(uniforms: AG.UniformValues?, block: () -> Unit) {
     val ubo = uboCreate()
     try {
-        uboSet(ubo, uniforms)
+        uboSet(ubo, uniforms ?: AG.UniformValues())
         uboUse(ubo)
         block()
     } finally {
