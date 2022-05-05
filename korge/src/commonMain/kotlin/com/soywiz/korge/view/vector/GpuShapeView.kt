@@ -455,39 +455,23 @@ open class GpuShapeView(
     }
     //private var lastPointsString = ""
 
-    class PointsResult(val bounds: Rectangle, val data: FloatArray, val vertexCount: Int)
+    class PointsResult(val bounds: Rectangle, val vertexCount: Int)
 
-    private fun getPointsForPath(path: VectorPath, m: Matrix? = null, gpuShapeViewCommands: GpuShapeViewCommands? = null): PointsResult {
+    private fun getPointsForPath(path: VectorPath): PointsResult {
         val points: PointArrayList = pointCache.getOrPut(path) {
-            val points = PointArrayList()
-            path.emitPoints2 { x, y, move ->
-                points.add(x, y)
-            }
-            points
+            PointArrayList().also { points -> path.emitPoints2 { x, y, move -> points.add(x, y) } }
         }
-
         val bb = BoundsBuilder()
         bb.reset()
-
-        val data = FloatArray(points.size * 2 + 4)
+        val startIndex = gpuShapeViewCommands.addVertex(0f, 0f)
         for (n in 0 until points.size + 1) {
             val x = points.getX(n % points.size).toFloat()
             val y = points.getY(n % points.size).toFloat()
-            val tx = m?.transformXf(x, y) ?: x
-            val ty = m?.transformYf(x, y) ?: y
-            data[(n + 1) * 2 + 0] = tx
-            data[(n + 1) * 2 + 1] = ty
-            bb.add(tx, ty)
+            gpuShapeViewCommands.addVertex(x, y)
+            bb.add(x, y)
         }
-        data[0] = ((bb.xmax + bb.xmin) / 2).toFloat()
-        data[1] = ((bb.ymax + bb.ymin) / 2).toFloat()
-        val bounds = bb.getBounds()
-        if (gpuShapeViewCommands != null) {
-            for (n in 0 until data.size step 2) {
-                gpuShapeViewCommands.addVertex(data[n + 0], data[n + 1], data[n + 0], data[n + 1], 0f)
-            }
-        }
-        return PointsResult(bounds, data, points.size + 2)
+        gpuShapeViewCommands.updateVertex(startIndex, ((bb.xmax + bb.xmin) / 2).toFloat(), ((bb.ymax + bb.ymin) / 2).toFloat())
+        return PointsResult(bb.getBounds(), points.size + 2)
     }
 
     private fun renderFill(shape: FillShape) {
@@ -509,11 +493,11 @@ open class GpuShapeView(
         ) ?: return
 
         val pathDataStart = gpuShapeViewCommands.verticesStart()
-        val pathData = getPointsForPath(shape.path, m = null, gpuShapeViewCommands)
+        val pathData = getPointsForPath(shape.path)
         val pathDataEnd = gpuShapeViewCommands.verticesEnd()
         val pathBounds = pathData.bounds
 
-        if (!shape.requireStencil) {
+        if (!shape.requireStencil && shape.clip == null) {
             gpuShapeViewCommands.draw(
                 AG.DrawType.TRIANGLE_FAN,
                 startIndex = pathDataStart,
@@ -526,23 +510,15 @@ open class GpuShapeView(
         }
 
         val clipDataStart = gpuShapeViewCommands.verticesStart()
-        val clipData = shape.clip?.let { getPointsForPath(it, m = null, gpuShapeViewCommands) }
+        val clipData = shape.clip?.let { getPointsForPath(it) }
         val clipDataEnd = gpuShapeViewCommands.verticesEnd()
         val clipBounds = clipData?.bounds
 
-        val scissorBounds: Rectangle = when {
+        gpuShapeViewCommands.setScissor(when {
             clipBounds != null -> Rectangle().also { it.setToIntersection(pathBounds, clipBounds) }
             else -> pathBounds
-        }
-
-        // @TODO: Scissor should be the intersection between the path bounds and the clipping bounds
-
-        //val rscissor: AG.Scissor = AG.Scissor().setTo(scissorBounds)
-        //val scissor = if (applyScissor) AG.Scissor.combine(ctx.batch.scissor, rscissor) else rscissor
-        val scissor: AG.Scissor? = null
-
-        gpuShapeViewCommands.setScissor(scissorBounds)
-        gpuShapeViewCommands.clearStencil(0, scissor = scissor)
+        })
+        //gpuShapeViewCommands.clearStencil(0)
 
         var stencilEqualsValue = 0b00000001
         writeStencil(pathDataStart, pathDataEnd, AG.StencilState(
@@ -569,6 +545,7 @@ open class GpuShapeView(
         // @TODO: How should we handle clipping antialiasing? Should we render the mask into a buffer first, and then do the masking?
         if (antialiased && shape.clip == null) {
         //if (true) {
+        //if (false) {
             renderStroke(
                 stateTransform = shape.transform,
                 //stateTransform = Matrix(),
@@ -590,6 +567,9 @@ open class GpuShapeView(
                 )
             )
         }
+
+        gpuShapeViewCommands.clearStencil(0)
+
         // renderFill
     }
 
@@ -623,7 +603,7 @@ open class GpuShapeView(
         gpuShapeViewCommands.draw(
             AG.DrawType.TRIANGLE_FAN,
             paintShader = paintShader,
-            colorMask = AG.ColorMaskState(true, true, true, true),
+            colorMask = AG.ColorMaskState(true),
             stencil = AG.StencilState(
                 enabled = true,
                 compareMode = AG.CompareMode.EQUAL,

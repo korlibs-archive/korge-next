@@ -16,13 +16,12 @@ class GpuShapeViewPaintShader {
     data class PaintShader(
         val uniforms: AG.UniformValues = AG.UniformValues(),
         val texUniforms: AG.UniformValues = AG.UniformValues(),
-        val program: Program = DefaultShaders.PROGRAM_DEFAULT
+        val program: Program = GpuShapeViewPrograms.PROGRAM_COMBINED
     )
 
     val stencilPaintShader = PaintShader(
-        AG.UniformValues(GpuShapeViewPrograms.u_ProgramType to GpuShapeViewPrograms.PROGRAM_TYPE_COLOR.toFloat(),),
+        AG.UniformValues(GpuShapeViewPrograms.u_ProgramType to GpuShapeViewPrograms.PROGRAM_TYPE_STENCIL.toFloat(),),
         AG.UniformValues(),
-        GpuShapeViewPrograms.PROGRAM_COMBINED
     )
 
     fun paintToShaderInfo(
@@ -36,15 +35,12 @@ class GpuShapeViewPaintShader {
             null
         }
         is ColorPaint -> {
-            val color = paint
-            val colorF = FloatArray(4)
-            color.writeFloat(colorF)
             PaintShader(AG.UniformValues(
-                GpuShapeViewPrograms.u_Color to colorF.copyOf(),
+                GpuShapeViewPrograms.u_Color to FloatArray(4).also { paint.writeFloat(it) },
                 GpuShapeViewPrograms.u_GlobalAlpha to globalAlpha.toFloat(),
                 GpuShapeViewPrograms.u_LineWidth to lineWidth.toFloat(),
                 GpuShapeViewPrograms.u_ProgramType to GpuShapeViewPrograms.PROGRAM_TYPE_COLOR.toFloat(),
-            ), AG.UniformValues(), GpuShapeViewPrograms.PROGRAM_COMBINED)
+            ), AG.UniformValues())
 
         }
         is BitmapPaint -> {
@@ -68,7 +64,7 @@ class GpuShapeViewPaintShader {
             //}, GpuShapeView.PROGRAM_BITMAP)
             ), AG.UniformValues(
                 DefaultShaders.u_Tex to paint.bitmap
-            ), GpuShapeViewPrograms.PROGRAM_COMBINED)
+            ))
         }
         is GradientPaint -> {
             gradientBitmap.lock {
@@ -100,7 +96,7 @@ class GpuShapeViewPaintShader {
                     },
                 ), AG.UniformValues(
                     DefaultShaders.u_Tex to gradientBitmap
-                ), GpuShapeViewPrograms.PROGRAM_COMBINED
+                )
                 //when (paint.kind) {
                 //    GradientKind.RADIAL -> GpuShapeView.PROGRAM_RADIAL_GRADIENT
                 //    GradientKind.SWEEP -> GpuShapeView.PROGRAM_SWEEP_GRADIENT

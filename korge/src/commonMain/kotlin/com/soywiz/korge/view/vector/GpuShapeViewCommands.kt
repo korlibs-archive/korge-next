@@ -23,9 +23,18 @@ class GpuShapeViewCommands {
         commands.clear()
     }
 
-    fun addVertex(x: Float, y: Float, u: Float = x, v: Float = y, lw: Float = 0f) {
+    fun updateVertex(index: Int, x: Float, y: Float, u: Float = x, v: Float = y, lw: Float = 0f) {
+        val p = index * 5
+        bufferVertexData[p + 0] = x
+        bufferVertexData[p + 1] = y
+        bufferVertexData[p + 2] = u
+        bufferVertexData[p + 3] = v
+        bufferVertexData[p + 4] = lw
+    }
+
+    fun addVertex(x: Float, y: Float, u: Float = x, v: Float = y, lw: Float = 0f): Int {
         bufferVertexData.add(x, y, u, v, lw)
-        vertexIndex++
+        return vertexIndex++
     }
 
     private var verticesStartIndex: Int = 0
@@ -58,8 +67,8 @@ class GpuShapeViewCommands {
         )
     }
 
-    fun clearStencil(i: Int = 0, scissor: AG.Scissor? = null) {
-        commands += ClearCommand(i, scissor)
+    fun clearStencil(i: Int = 0) {
+        commands += ClearCommand(i)
     }
 
     fun setScissor(scissor: Rectangle) {
@@ -88,6 +97,9 @@ class GpuShapeViewCommands {
                     decomposed.scaleX
                     decomposed.scaleY
                     ag.commandsNoWait { list ->
+                        //list.setScissorState(ag, AG.Scissor().setTo(rect))
+                        //list.disableScissor()
+
                         //ag.commandsSync { list ->
                         // Set to default state
                         //list.useProgram(ag.getProgram(GpuShapeViewPrograms.PROGRAM_COMBINED))
@@ -111,6 +123,7 @@ class GpuShapeViewCommands {
                                         val rect = cmd.scissor.clone()
                                         rect.applyTransform(globalMatrix)
                                         list.setScissorState(ag, AG.Scissor().setTo(rect))
+                                        list.disableScissor()
                                     }
                                     is ClearCommand -> {
                                         list.clearStencil(cmd.i)
@@ -153,7 +166,7 @@ class GpuShapeViewCommands {
 
     data class ScissorCommand(val scissor: Rectangle) : ICommand
 
-    data class ClearCommand(val i: Int, val scissor: AG.Scissor?) : ICommand
+    data class ClearCommand(val i: Int) : ICommand
 
     data class ShapeCommand(
         var drawType: AG.DrawType = AG.DrawType.LINE_STRIP,

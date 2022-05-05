@@ -289,7 +289,7 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
                 val vattrs = vertexLayout.attributes
                 val vattrspos = vertexLayout.attributePositions
 
-                if (vertices?.kind != AG.Buffer.Kind.VERTEX) invalidOp("Not a VertexBuffer")
+                if (vertices.kind != AG.Buffer.Kind.VERTEX) invalidOp("Not a VertexBuffer")
 
                 bindBuffer(vertices, AGBufferKind.VERTEX)
                 val totalSize = vertexLayout.totalSize
