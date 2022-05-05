@@ -81,7 +81,10 @@ class AgBitmapTextureManager(
             textureInfoPool.alloc().also {
                 val base = it.textureBase
                 base.version = -1
-                base.base = ag.createTexture(bitmap.premultiplied)
+                base.base = ag.createTexture(bitmap.premultiplied, targetKind = when (bitmap) {
+                    is MultiBitmap -> AG.TextureTargetKind.TEXTURE_CUBE_MAP
+                    else -> AG.TextureTargetKind.TEXTURE_2D
+                })
                 base.width = bitmap.width
                 base.height = bitmap.height
             }
