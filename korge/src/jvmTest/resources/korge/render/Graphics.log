@@ -1,4 +1,4 @@
-draw(vertexCount=18, instances=1, indices=Buffer[2], type=TRIANGLES, offset=0)
+draw(vertexCount=6, instances=1, indices=Buffer[2], type=TRIANGLES, offset=0)
 ::draw.program=Program(name=BatchBuilder2D.Premultiplied.Tinted.NoAdd, attributes=[a_Tex, a_TexIndex, a_Col, a_Col2, a_Pos], uniforms=[u_ProjMat, u_ViewMat, u_Tex0, u_Tex1, u_Tex2, u_Tex3])
 ::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
 ::draw.scissor=Scissor(x=0, y=0, width=200, height=200)
@@ -18,27 +18,19 @@ draw(vertexCount=18, instances=1, indices=Buffer[2], type=TRIANGLES, offset=0)
   [ 0, 0, 0, 1 ],
 )
 ::draw.uniform.Uniform(u_Tex0) = TextureUnit(texture=Texture[0], linear=true, trilinear=null)
-::draw.uniform.Uniform(u_Tex1) = TextureUnit(texture=Texture[1], linear=true, trilinear=null)
-::draw.uniform.Uniform(u_Tex2) = TextureUnit(texture=Texture[2], linear=true, trilinear=null)
+::draw.uniform.Uniform(u_Tex1) = TextureUnit(texture=null, linear=true, trilinear=null)
+::draw.uniform.Uniform(u_Tex2) = TextureUnit(texture=null, linear=true, trilinear=null)
 ::draw.uniform.Uniform(u_Tex3) = TextureUnit(texture=null, linear=true, trilinear=null)
 ::draw.attribute[0][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
 ::draw.attribute[0][1]=Attribute(a_Tex, type=Float2, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
 ::draw.attribute[0][2]=Attribute(a_Col, type=Byte4, normalized=true, offset=null, active=true, precision=LOW, divisor=0)
 ::draw.attribute[0][3]=Attribute(a_Col2, type=Byte4, normalized=true, offset=null, active=true, precision=DEFAULT, divisor=0)
 ::draw.attribute[1][0]=Attribute(a_TexIndex, type=UByte1, normalized=false, offset=null, active=true, precision=LOW, divisor=0)
-::draw.indices=[0, 1, 2, 3, 0, 2, 4, 5, 6, 7, 4, 6, 8, 9, 10, 11, 8, 10]
+::draw.indices=[0, 1, 2, 3, 0, 2]
 ::draw.vertex[0]: a_Pos[-120,-120], a_Tex[0,0], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
 ::draw.vertex[1]: a_Pos[20,-120], a_Tex[1,0], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
 ::draw.vertex[2]: a_Pos[20,20], a_Tex[1,1], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
 ::draw.vertex[3]: a_Pos[-120,20], a_Tex[0,1], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
-::draw.vertex[4]: a_Pos[53.14875,-74.85126], a_Tex[0,0], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[1]
-::draw.vertex[5]: a_Pos[274.85126,53.14875], a_Tex[1,0], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[1]
-::draw.vertex[6]: a_Pos[146.85126,274.85126], a_Tex[1,1], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[1]
-::draw.vertex[7]: a_Pos[-74.85126,146.85126], a_Tex[0,1], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[1]
-::draw.vertex[8]: a_Pos[473.1103,137.3693], a_Tex[0,0], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[2]
-::draw.vertex[9]: a_Pos[583.96155,201.3693], a_Tex[1,0], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[2]
-::draw.vertex[10]: a_Pos[519.96155,312.22055], a_Tex[1,1], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[2]
-::draw.vertex[11]: a_Pos[409.1103,248.22055], a_Tex[0,1], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[2]
 ::draw.shader.vertex=#SHADER-1: #version 100 compatibility
 #ifdef GL_ES
 	precision highp float;
@@ -109,6 +101,113 @@ void main() {
 	if ((gl_FragColor.a <= 0.0)) {
 		discard;
 	}
+}
+
+draw(vertexCount=6, instances=1, indices=Buffer[2], type=TRIANGLES, offset=0)
+::draw.program=Program(name=BatchBuilder2D.Premultiplied.Tinted.NoAdd, attributes=[a_Tex, a_TexIndex, a_Col, a_Col2, a_Pos], uniforms=[u_ProjMat, u_ViewMat, u_Tex0, u_Tex1, u_Tex2, u_Tex3])
+::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
+::draw.scissor=Scissor(x=0, y=0, width=200, height=200)
+::draw.stencil=StencilState(enabled=false, triangleFace=FRONT_AND_BACK, compareMode=ALWAYS, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=0, readMask=255, writeMask=255)
+::draw.blending=Blending(srcRGB=SOURCE_ALPHA, dstRGB=ONE_MINUS_SOURCE_ALPHA, srcA=ONE, dstA=ONE_MINUS_SOURCE_ALPHA, eqRGB=ADD, eqA=ADD)
+::draw.colorMask=ColorMaskState(red=true, green=true, blue=true, alpha=true)
+::draw.uniform.Uniform(u_ProjMat) = Matrix3D(
+  [ 0.01, 0, 0, -1 ],
+  [ 0, -0.01, 0, 1 ],
+  [ 0, 0, -1, 0 ],
+  [ 0, 0, 0, 1 ],
+)
+::draw.uniform.Uniform(u_ViewMat) = Matrix3D(
+  [ 1, 0, 0, 0 ],
+  [ 0, 1, 0, 0 ],
+  [ 0, 0, 1, 0 ],
+  [ 0, 0, 0, 1 ],
+)
+::draw.uniform.Uniform(u_Tex0) = TextureUnit(texture=Texture[1], linear=true, trilinear=null)
+::draw.uniform.Uniform(u_Tex1) = TextureUnit(texture=null, linear=true, trilinear=null)
+::draw.uniform.Uniform(u_Tex2) = TextureUnit(texture=null, linear=true, trilinear=null)
+::draw.uniform.Uniform(u_Tex3) = TextureUnit(texture=null, linear=true, trilinear=null)
+::draw.attribute[0][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
+::draw.attribute[0][1]=Attribute(a_Tex, type=Float2, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
+::draw.attribute[0][2]=Attribute(a_Col, type=Byte4, normalized=true, offset=null, active=true, precision=LOW, divisor=0)
+::draw.attribute[0][3]=Attribute(a_Col2, type=Byte4, normalized=true, offset=null, active=true, precision=DEFAULT, divisor=0)
+::draw.attribute[1][0]=Attribute(a_TexIndex, type=UByte1, normalized=false, offset=null, active=true, precision=LOW, divisor=0)
+::draw.indices=[0, 1, 2, 3, 0, 2]
+::draw.vertex[0]: a_Pos[0,0], a_Tex[0,0], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
+::draw.vertex[1]: a_Pos[200,0], a_Tex[0.78125,0], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
+::draw.vertex[2]: a_Pos[200,200], a_Tex[0.78125,0.78125], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
+::draw.vertex[3]: a_Pos[0,200], a_Tex[0,0.78125], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
+::draw.shader.vertex=#SHADER-1 (already shown)
+::draw.shader.fragment=#SHADER-2 (already shown)
+draw(vertexCount=6, instances=1, indices=Buffer[2], type=TRIANGLES, offset=0)
+::draw.program=Program(name=BatchBuilder2D.NoPremultiplied.Tinted.NoAdd, attributes=[a_Tex, a_TexIndex, a_Col, a_Col2, a_Pos], uniforms=[u_ProjMat, u_ViewMat, u_Tex0, u_Tex1, u_Tex2, u_Tex3])
+::draw.renderState=RenderState(depthFunc=ALWAYS, depthMask=true, depthNear=0.0, depthFar=1.0, lineWidth=1.0, frontFace=BOTH)
+::draw.scissor=Scissor(x=0, y=0, width=200, height=200)
+::draw.stencil=StencilState(enabled=false, triangleFace=FRONT_AND_BACK, compareMode=ALWAYS, actionOnBothPass=KEEP, actionOnDepthFail=KEEP, actionOnDepthPassStencilFail=KEEP, referenceValue=0, readMask=255, writeMask=255)
+::draw.blending=Blending(srcRGB=SOURCE_ALPHA, dstRGB=ONE_MINUS_SOURCE_ALPHA, srcA=ONE, dstA=ONE_MINUS_SOURCE_ALPHA, eqRGB=ADD, eqA=ADD)
+::draw.colorMask=ColorMaskState(red=true, green=true, blue=true, alpha=true)
+::draw.uniform.Uniform(u_ProjMat) = Matrix3D(
+  [ 0.01, 0, 0, -1 ],
+  [ 0, -0.01, 0, 1 ],
+  [ 0, 0, -1, 0 ],
+  [ 0, 0, 0, 1 ],
+)
+::draw.uniform.Uniform(u_ViewMat) = Matrix3D(
+  [ 1, 0, 0, 0 ],
+  [ 0, 1, 0, 0 ],
+  [ 0, 0, 1, 0 ],
+  [ 0, 0, 0, 1 ],
+)
+::draw.uniform.Uniform(u_Tex0) = TextureUnit(texture=Texture[2], linear=true, trilinear=null)
+::draw.uniform.Uniform(u_Tex1) = TextureUnit(texture=null, linear=true, trilinear=null)
+::draw.uniform.Uniform(u_Tex2) = TextureUnit(texture=null, linear=true, trilinear=null)
+::draw.uniform.Uniform(u_Tex3) = TextureUnit(texture=null, linear=true, trilinear=null)
+::draw.attribute[0][0]=Attribute(a_Pos, type=Float2, normalized=false, offset=null, active=true, precision=HIGH, divisor=0)
+::draw.attribute[0][1]=Attribute(a_Tex, type=Float2, normalized=false, offset=null, active=true, precision=MEDIUM, divisor=0)
+::draw.attribute[0][2]=Attribute(a_Col, type=Byte4, normalized=true, offset=null, active=true, precision=LOW, divisor=0)
+::draw.attribute[0][3]=Attribute(a_Col2, type=Byte4, normalized=true, offset=null, active=true, precision=DEFAULT, divisor=0)
+::draw.attribute[1][0]=Attribute(a_TexIndex, type=UByte1, normalized=false, offset=null, active=true, precision=LOW, divisor=0)
+::draw.indices=[0, 1, 2, 3, 0, 2]
+::draw.vertex[0]: a_Pos[473.1103,137.3693], a_Tex[0,0], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
+::draw.vertex[1]: a_Pos[583.96155,201.3693], a_Tex[1,0], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
+::draw.vertex[2]: a_Pos[519.96155,312.22055], a_Tex[1,1], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
+::draw.vertex[3]: a_Pos[409.1103,248.22055], a_Tex[0,1], a_Col[1,1,1,1], a_Col2[0.49803922,0.49803922,0.49803922,0.49803922], a_TexIndex[0]
+::draw.shader.vertex=#SHADER-1 (already shown)
+::draw.shader.fragment=#SHADER-3: #version 100 compatibility
+#ifdef GL_ES
+	precision highp float;
+	precision highp int;
+	precision lowp sampler2D;
+	precision lowp samplerCube;
+#else
+	  #define highp 
+	  #define mediump 
+	  #define lowp 
+#endif
+uniform sampler2D u_Tex0;
+uniform sampler2D u_Tex1;
+uniform sampler2D u_Tex2;
+uniform sampler2D u_Tex3;
+varying lowp float v_TexIndex;
+varying mediump vec2 v_Tex;
+varying vec4 v_Col;
+void main() {
+	if ((v_TexIndex <= 1.0)) {
+		if ((v_TexIndex == 0.0)) {
+			gl_FragColor = texture2D(u_Tex0, fract(v_Tex.xy));
+		}
+		else {
+			gl_FragColor = texture2D(u_Tex1, fract(v_Tex.xy));
+		}
+	}
+	else {
+		if ((v_TexIndex == 2.0)) {
+			gl_FragColor = texture2D(u_Tex2, fract(v_Tex.xy));
+		}
+		else {
+			gl_FragColor = texture2D(u_Tex3, fract(v_Tex.xy));
+		}
+	}
+	gl_FragColor = (gl_FragColor.rgba * v_Col.rgba);
 }
 
 Rectangle(x=115.129510429125, y=-18.74097914174999, width=267.74097914174996, height=267.74097914175)

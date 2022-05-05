@@ -1,7 +1,7 @@
-createBuffer(VERTEX):0
-createBuffer(VERTEX):1
-createBuffer(INDEX):2
-createBuffer(VERTEX):3
+createBuffer():0
+createBuffer():1
+createBuffer():2
+createBuffer():3
 RenderBuffer[0].setSize(1280, 720)
 createMainRenderBuffer():0
 RenderBuffer[0].set()
@@ -12,13 +12,13 @@ RenderBuffer[0].set()
 clear(#00000000, 1.0, 0, true, true, true)
 createTexture():0
 Texture[0].uploadedBitmap(SyncBitmapSource(rgba=true, width=1, height=1), 1, 1)
-createBuffer(VERTEX):4
+createBuffer():4
 Buffer[4].afterSetMem(mem[2048])
-createBuffer(VERTEX):5
+createBuffer():5
 Buffer[5].afterSetMem(mem[256])
-createBuffer(VERTEX):6
+createBuffer():6
 Buffer[6].afterSetMem(mem[16])
-createBuffer(VERTEX):7
+createBuffer():7
 Buffer[7].afterSetMem(mem[32])
 draw(vertexCount=4, instances=10, indices=null, type=TRIANGLE_FAN, offset=0)
 ::draw.program=Program(name=FSprites1, attributes=[a_uv1, a_uv0, a_colMul, a_texId, a_xy, a_rangle, a_scale, a_axy, a_rxy], uniforms=[u_texSize0, u_ProjMat, u_ViewMat, u_Tex0])

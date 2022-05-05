@@ -1,9 +1,9 @@
-createBuffer(VERTEX):0
-createBuffer(VERTEX):1
-createBuffer(INDEX):2
-createBuffer(VERTEX):3
-createBuffer(VERTEX):4
-createBuffer(INDEX):5
+createBuffer():0
+createBuffer():1
+createBuffer():2
+createBuffer():3
+createBuffer():4
+createBuffer():5
 createTexture():0
 RenderBuffer[0].setSize(16, 16)
 createMainRenderBuffer():0
