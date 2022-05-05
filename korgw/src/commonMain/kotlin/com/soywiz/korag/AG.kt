@@ -77,8 +77,8 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         contextVersion++
     }
 
-    val tempVertexBufferPool = Pool { createBuffer(AGBufferKind.VERTEX) }
-    val tempIndexBufferPool = Pool { createBuffer(AGBufferKind.INDEX) }
+    val tempVertexBufferPool = Pool { createBuffer() }
+    val tempIndexBufferPool = Pool { createBuffer() }
 
     open val maxTextureSize = Size(2048, 2048)
 
@@ -455,7 +455,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         }
     }
 
-    open class Buffer constructor(val kind: AGBufferKind, val list: AGList) {
+    open class Buffer constructor(val list: AGList) {
         enum class Kind { INDEX, VERTEX }
 
         var dirty = false
@@ -571,9 +571,11 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     open fun createTexture(premultiplied: Boolean, targetKind: TextureTargetKind = TextureTargetKind.TEXTURE_2D): Texture =
         Texture(premultiplied, targetKind)
 
-    open fun createBuffer(kind: AGBufferKind): Buffer = commandsNoWait { Buffer(kind, it) }
-    fun createIndexBuffer() = createBuffer(AGBufferKind.INDEX)
-    fun createVertexBuffer() = createBuffer(AGBufferKind.VERTEX)
+    open fun createBuffer(): Buffer = commandsNoWait { Buffer(it) }
+    @Deprecated("")
+    fun createIndexBuffer() = createBuffer()
+    @Deprecated("")
+    fun createVertexBuffer() = createBuffer()
 
     fun createVertexData(vararg attributes: Attribute, layoutSize: Int? = null) = AG.VertexData(createVertexBuffer(), VertexLayout(*attributes, layoutSize = layoutSize))
 
@@ -839,7 +841,6 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
         //println("SCISSOR: $scissor")
 
         //finalScissor.setTo(0, 0, backWidth, backHeight)
-        if (indices != null && indices.kind != AGBufferKind.INDEX) invalidOp("Not a IndexBuffer")
 
         commandsNoWait { list ->
             list.setScissorState(this, scissor)
@@ -1164,7 +1165,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
 
     inner class TextureDrawer {
         val VERTEX_COUNT = 4
-        val vertices = createBuffer(AGBufferKind.VERTEX)
+        val vertices = createBuffer()
         val vertexLayout = VertexLayout(DefaultShaders.a_Pos, DefaultShaders.a_Tex)
         val verticesData = FBuffer(VERTEX_COUNT * vertexLayout.totalSize)
         val program = Program(VertexShader {

@@ -125,7 +125,7 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
         buffers.tryGetAndDelete(id)?.let { gl.deleteBuffer(it.glId); it.glId = 0 }
     }
 
-    private fun bindBuffer(buffer: AG.Buffer, target: AGBufferKind = buffer.kind) {
+    private fun bindBuffer(buffer: AG.Buffer, target: AGBufferKind) {
         val bufferInfo = buffers[buffer.agId] ?: return
         if (bufferInfo.cachedVersion != globalState.contextVersion) {
             bufferInfo.cachedVersion = globalState.contextVersion
@@ -289,7 +289,7 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
                 val vattrs = vertexLayout.attributes
                 val vattrspos = vertexLayout.attributePositions
 
-                if (vertices.kind != AG.Buffer.Kind.VERTEX) invalidOp("Not a VertexBuffer")
+                //if (vertices.kind != AG.Buffer.Kind.VERTEX) invalidOp("Not a VertexBuffer")
 
                 bindBuffer(vertices, AGBufferKind.VERTEX)
                 val totalSize = vertexLayout.totalSize

@@ -36,10 +36,10 @@ class GpuShapeViewPaintShader {
         }
         is ColorPaint -> {
             PaintShader(AG.UniformValues(
+                GpuShapeViewPrograms.u_ProgramType to GpuShapeViewPrograms.PROGRAM_TYPE_COLOR.toFloat(),
                 GpuShapeViewPrograms.u_Color to FloatArray(4).also { paint.writeFloat(it) },
                 GpuShapeViewPrograms.u_GlobalAlpha to globalAlpha.toFloat(),
                 GpuShapeViewPrograms.u_LineWidth to lineWidth.toFloat(),
-                GpuShapeViewPrograms.u_ProgramType to GpuShapeViewPrograms.PROGRAM_TYPE_COLOR.toFloat(),
             ), AG.UniformValues())
 
         }
@@ -57,10 +57,10 @@ class GpuShapeViewPaintShader {
             //mat.scale(1.0 / paint.bitmap.width, 1.0 / paint.bitmap.height)
             //println("mat=$mat")
             PaintShader(AG.UniformValues(
+                GpuShapeViewPrograms.u_ProgramType to GpuShapeViewPrograms.PROGRAM_TYPE_BITMAP.toFloat(),
                 GpuShapeViewPrograms.u_Transform to mat.toMatrix3D(), // @TODO: Why is this transposed???
                 GpuShapeViewPrograms.u_GlobalAlpha to globalAlpha.toFloat(),
                 GpuShapeViewPrograms.u_LineWidth to lineWidth.toFloat(),
-                GpuShapeViewPrograms.u_ProgramType to GpuShapeViewPrograms.PROGRAM_TYPE_BITMAP.toFloat(),
             //}, GpuShapeView.PROGRAM_BITMAP)
             ), AG.UniformValues(
                 DefaultShaders.u_Tex to paint.bitmap
@@ -84,16 +84,16 @@ class GpuShapeViewPaintShader {
             }
             PaintShader(
                 AG.UniformValues(
-                    GpuShapeViewPrograms.u_Transform to mat.toMatrix3D(),
-                    GpuShapeViewPrograms.u_Gradientp0 to floatArrayOf(paint.x0.toFloat(), paint.y0.toFloat(), paint.r0.toFloat()),
-                    GpuShapeViewPrograms.u_Gradientp1 to floatArrayOf(paint.x1.toFloat(), paint.y1.toFloat(), paint.r1.toFloat()),
-                    GpuShapeViewPrograms.u_GlobalAlpha to globalAlpha.toFloat(),
-                    GpuShapeViewPrograms.u_LineWidth to lineWidth.toFloat(),
                     GpuShapeViewPrograms.u_ProgramType to when (paint.kind) {
                         GradientKind.RADIAL -> GpuShapeViewPrograms.PROGRAM_TYPE_GRADIENT_RADIAL
                         GradientKind.SWEEP -> GpuShapeViewPrograms.PROGRAM_TYPE_GRADIENT_SWEEP
                         else -> GpuShapeViewPrograms.PROGRAM_TYPE_GRADIENT_LINEAR
                     },
+                    GpuShapeViewPrograms.u_Transform to mat.toMatrix3D(),
+                    GpuShapeViewPrograms.u_Gradientp0 to floatArrayOf(paint.x0.toFloat(), paint.y0.toFloat(), paint.r0.toFloat()),
+                    GpuShapeViewPrograms.u_Gradientp1 to floatArrayOf(paint.x1.toFloat(), paint.y1.toFloat(), paint.r1.toFloat()),
+                    GpuShapeViewPrograms.u_GlobalAlpha to globalAlpha.toFloat(),
+                    GpuShapeViewPrograms.u_LineWidth to lineWidth.toFloat(),
                 ), AG.UniformValues(
                     DefaultShaders.u_Tex to gradientBitmap
                 )

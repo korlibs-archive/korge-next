@@ -16,7 +16,7 @@ class AgBufferManager(
     fun getBuffer(cached: AgCachedBuffer): AG.Buffer {
         referencedBuffersSinceGC.add(cached)
         return buffers.getOrPut(cached) {
-            ag.createBuffer(cached.kind).also {
+            ag.createBuffer().also {
                 it.upload(cached.data, cached.dataOffset, cached.dataLen)
             }
         }
@@ -57,4 +57,5 @@ class AgBufferManager(
     }
 }
 
-class AgCachedBuffer(val kind: AG.Buffer.Kind, val data: Any, val dataOffset: Int = 0, val dataLen: Int = -1)
+//class AgCachedBuffer(val kind: AG.Buffer.Kind, val data: Any, val dataOffset: Int = 0, val dataLen: Int = -1)
+class AgCachedBuffer(val data: Any, val dataOffset: Int = 0, val dataLen: Int = -1)

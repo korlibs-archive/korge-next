@@ -59,6 +59,7 @@ class AGGlobalState {
     fun createList(): AGList = AGList(this)
 }
 
+// @TODO: Support either calling other lists, or copying the contents of other list here
 class AGList(val globalState: AGGlobalState) {
     var contextVersion: Int by globalState::contextVersion
 

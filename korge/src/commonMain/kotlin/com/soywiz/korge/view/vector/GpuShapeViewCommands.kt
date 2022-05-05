@@ -59,7 +59,7 @@ class GpuShapeViewCommands {
         commands += ShapeCommand(
             drawType = drawType,
             vertexIndex = startIndex,
-            vertexCount = endIndex - startIndex,
+            vertexEnd = endIndex,
             paintShader = paintShader,
             colorMask = colorMask,
             stencil = stencil,
@@ -77,7 +77,7 @@ class GpuShapeViewCommands {
 
     fun finish() {
         vertices?.let { verticesToDelete += it }
-        vertices = AgCachedBuffer(AG.Buffer.Kind.VERTEX, bufferVertexData)
+        vertices = AgCachedBuffer(bufferVertexData)
     }
 
     private val decomposed = Matrix.Transform()
@@ -127,6 +127,7 @@ class GpuShapeViewCommands {
                                     }
                                     is ClearCommand -> {
                                         list.clearStencil(cmd.i)
+                                        list.stencilMask(0xFF)
                                         list.clear(false, false, true)
                                     }
                                     is ShapeCommand -> {
@@ -171,11 +172,13 @@ class GpuShapeViewCommands {
     data class ShapeCommand(
         var drawType: AG.DrawType = AG.DrawType.LINE_STRIP,
         var vertexIndex: Int = 0,
-        var vertexCount: Int = 0,
+        var vertexEnd: Int = 0,
         var paintShader: GpuShapeViewPaintShader.PaintShader?,
         var program: Program? = null,
         var colorMask: AG.ColorMaskState? = null,
         var stencil: AG.StencilState? = null,
         var blendMode: AG.Blending? = null,
-    ) : ICommand
+    ) : ICommand {
+        val vertexCount: Int get() = vertexEnd - vertexIndex
+    }
 }
