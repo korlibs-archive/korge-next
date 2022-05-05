@@ -51,7 +51,6 @@ open class GpuShapeView(
     private val pointsScope = PointPool(128)
     private val ab = SegmentInfo()
     private val bc = SegmentInfo()
-    val gpuShapeViewPaintShader = GpuShapeViewPaintShader()
     private var notifyAboutEvenOdd = false
 
     override var anchorX: Double = 0.0 ; set(value) { field = value; invalidate() }
@@ -321,7 +320,7 @@ open class GpuShapeView(
         //val data = strokeCache.getOrPut(cacheKey) {
         val data = run {
             //val pathList = strokePath.toPathPointList(m, emitClosePoint = false)
-            val pathList = strokePath.toPathPointList(Matrix(), emitClosePoint = false)
+            val pathList = strokePath.toPathPointList(null, emitClosePoint = false)
             //println(pathList.size)
             for (ppath in pathList) {
                 gpuShapeViewCommands.verticesStart()
@@ -367,13 +366,7 @@ open class GpuShapeView(
                                     val p1s = Point(p1, iangle, lineWidth * 1.5)
                                     val p0s = Point(p0, iangle, lineWidth * 1.5)
                                     pointsAddCubicOrLine(
-                                        this,
-                                        p0,
-                                        p0,
-                                        p0s,
-                                        p1s,
-                                        p1,
-                                        lineWidth,
+                                        this, p0, p0, p0s, p1s, p1, lineWidth,
                                         reverse = false,
                                         start = start
                                     )
@@ -439,9 +432,8 @@ open class GpuShapeView(
                     }
                 }
 
-                val info = gpuShapeViewPaintShader.paintToShaderInfo(
+                val info = GpuShapeViewPrograms.paintToShaderInfo(
                     stateTransform = stateTransform,
-                    matrix = null,
                     paint = paint,
                     globalAlpha = globalAlpha,
                     lineWidth = lineWidth,
@@ -475,11 +467,6 @@ open class GpuShapeView(
     }
 
     private fun renderFill(shape: FillShape) {
-        //val m = localMatrix
-        //val stage = stage!!
-        //val stageMatrix = stage.localMatrix
-        //println("stage=$stage, globalMatrix=$stageMatrix")
-
         if (shape.path.winding != Winding.EVEN_ODD) {
             if (!notifyAboutEvenOdd) {
                 notifyAboutEvenOdd = true
@@ -487,8 +474,8 @@ open class GpuShapeView(
             }
         }
 
-        val paintShader = gpuShapeViewPaintShader.paintToShaderInfo(
-            shape.transform, null, shape.paint, shape.globalAlpha,
+        val paintShader = GpuShapeViewPrograms.paintToShaderInfo(
+            shape.transform, shape.paint, shape.globalAlpha,
             lineWidth = 10000000.0,
         ) ?: return
 
@@ -539,8 +526,6 @@ open class GpuShapeView(
             stencilEqualsValue = 0b00000011
         }
 
-        writeFill(paintShader, stencilEqualsValue)
-
         // Antialias when we don't have clipping
         // @TODO: How should we handle clipping antialiasing? Should we render the mask into a buffer first, and then do the masking?
         if (antialiased && shape.clip == null) {
@@ -548,7 +533,6 @@ open class GpuShapeView(
         //if (false) {
             renderStroke(
                 stateTransform = shape.transform,
-                //stateTransform = Matrix(),
                 strokePath = shape.path,
                 paint = shape.paint,
                 globalAlpha = shape.globalAlpha,
@@ -568,6 +552,8 @@ open class GpuShapeView(
             )
         }
 
+        writeFill(paintShader, stencilEqualsValue)
+
         gpuShapeViewCommands.clearStencil(0)
 
         // renderFill
@@ -578,14 +564,14 @@ open class GpuShapeView(
             AG.DrawType.TRIANGLE_FAN,
             startIndex = pathDataStart,
             endIndex = pathDataEnd,
-            paintShader = gpuShapeViewPaintShader.stencilPaintShader,
+            paintShader = GpuShapeViewPrograms.stencilPaintShader,
             colorMask = AG.ColorMaskState(false, false, false, false),
             blendMode = BlendMode.NONE.factors,
             stencil = stencil
         )
     }
 
-    private fun writeFill(paintShader: GpuShapeViewPaintShader.PaintShader, stencilEqualsValue: Int) {
+    private fun writeFill(paintShader: GpuShapeViewPrograms.PaintShader, stencilEqualsValue: Int) {
         val x0 = 0f
         val y0 = 0f
         val x1 = bufferWidth.toFloat()

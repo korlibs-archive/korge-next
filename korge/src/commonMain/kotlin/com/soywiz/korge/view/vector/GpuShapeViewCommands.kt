@@ -49,7 +49,7 @@ class GpuShapeViewCommands {
 
     fun draw(
         drawType: AG.DrawType,
-        paintShader: GpuShapeViewPaintShader.PaintShader?,
+        paintShader: GpuShapeViewPrograms.PaintShader?,
         colorMask: AG.ColorMaskState? = null,
         stencil: AG.StencilState? = null,
         blendMode: AG.Blending? = null,
@@ -117,27 +117,32 @@ class GpuShapeViewCommands {
                                 )
                             )
                         ) {
-                            commands.fastForEach { cmd ->
-                                when (cmd) {
-                                    is ScissorCommand -> {
-                                        val rect = cmd.scissor.clone()
-                                        rect.applyTransform(globalMatrix)
-                                        list.setScissorState(ag, AG.Scissor().setTo(rect))
-                                        list.disableScissor()
-                                    }
-                                    is ClearCommand -> {
-                                        list.clearStencil(cmd.i)
-                                        list.stencilMask(0xFF)
-                                        list.clear(false, false, true)
-                                    }
-                                    is ShapeCommand -> {
-                                        val paintShader = cmd.paintShader
-                                        //println("cmd.vertexCount=${cmd.vertexCount}, cmd.vertexIndex=${cmd.vertexIndex}, paintShader=$paintShader")
-                                        batcher.simulateBatchStats(cmd.vertexCount)
-                                        //println(paintShader.uniforms)
-                                        paintShader?.uniforms?.let { resolve(ctx, it, paintShader.texUniforms) }
-                                        batcher.setTemporalUniforms(paintShader?.uniforms) {
-                                            list.uniformsSet(it) {
+                            list.uniformsSet(batcher.uniforms) {
+                                val ubo = list.uboCreate()
+                                try {
+                                    commands.fastForEach { cmd ->
+                                        when (cmd) {
+                                            is ScissorCommand -> {
+                                                val rect = cmd.scissor.clone()
+                                                rect.applyTransform(globalMatrix)
+                                                list.setScissorState(ag, AG.Scissor().setTo(rect))
+                                                list.disableScissor()
+                                            }
+                                            is ClearCommand -> {
+                                                list.clearStencil(cmd.i)
+                                                list.stencilMask(0xFF)
+                                                list.clear(false, false, true)
+                                            }
+                                            is ShapeCommand -> {
+                                                val paintShader = cmd.paintShader
+                                                //println("cmd.vertexCount=${cmd.vertexCount}, cmd.vertexIndex=${cmd.vertexIndex}, paintShader=$paintShader")
+                                                batcher.simulateBatchStats(cmd.vertexCount)
+                                                //println(paintShader.uniforms)
+                                                paintShader?.uniforms?.let { resolve(ctx, it, paintShader.texUniforms) }
+
+                                                paintShader?.uniforms?.let { list.uboSet(ubo, it) }
+                                                list.uboUse(ubo)
+
                                                 list.setStencilState(cmd.stencil)
                                                 list.setColorMaskState(cmd.colorMask)
                                                 list.setBlendingState(cmd.blendMode)
@@ -146,7 +151,10 @@ class GpuShapeViewCommands {
                                             }
                                         }
                                     }
+                                } finally {
+                                    list.uboDelete(ubo)
                                 }
+
                             }
                         }
                     }
@@ -173,7 +181,7 @@ class GpuShapeViewCommands {
         var drawType: AG.DrawType = AG.DrawType.LINE_STRIP,
         var vertexIndex: Int = 0,
         var vertexEnd: Int = 0,
-        var paintShader: GpuShapeViewPaintShader.PaintShader?,
+        var paintShader: GpuShapeViewPrograms.PaintShader?,
         var program: Program? = null,
         var colorMask: AG.ColorMaskState? = null,
         var stencil: AG.StencilState? = null,
