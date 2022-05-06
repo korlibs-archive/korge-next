@@ -5,71 +5,69 @@ import kotlin.random.Random
 
 typealias Padding = CipherPadding
 
-enum class CipherPadding {
-    NoPadding,
-    PKCS7Padding,
-    ANSIX923Padding,
-    ISO10126Padding,
-    ZeroPadding;
-
-    fun add(data: ByteArray, blockSize: Int): ByteArray = padding(data, blockSize, this)
-    fun remove(data: ByteArray): ByteArray = removePadding(data, this)
-
+abstract class CipherPadding {
     companion object {
-        fun padding(data: ByteArray, blockSize: Int, padding: Padding): ByteArray {
-            val paddingSize = if (padding == NoPadding) 0 else blockSize - data.size % blockSize
-            val result = ByteArray(data.size + paddingSize)
-            arraycopy(data, 0, result, 0, data.size)
-            return when (padding) {
-                NoPadding -> {
-                    result
-                }
-                PKCS7Padding -> {
-                    for (i in data.size until result.size) {
-                        result[i] = paddingSize.toByte()
-                    }
-                    result
-                }
-                ANSIX923Padding -> {
-                    result[result.size - 1] = paddingSize.toByte()
-                    result
-                }
-                ISO10126Padding -> {
-                    val randomBytes = Random.nextBytes(paddingSize)
-                    randomBytes[paddingSize - 1] = paddingSize.toByte()
-                    arraycopy(randomBytes, 0, result, data.size, randomBytes.size)
-                    result
-                }
-                ZeroPadding -> {
-                    result
-                }
-            }
-        }
+        val NoPadding: CipherPadding get() = CipherPaddingNo
+        val PKCS7Padding: CipherPadding get() = CipherPaddingPKCS7
+        val ANSIX923Padding: CipherPadding get() = CipherPaddingANSIX923
+        val ISO10126Padding: CipherPadding get() = CipherPaddingISO10126
+        val ZeroPadding: CipherPadding get() = CipherPaddingZero
 
-        fun removePadding(data: ByteArray, padding: Padding): ByteArray {
-            return when (padding) {
-                NoPadding -> {
-                    data
-                }
-                PKCS7Padding, ANSIX923Padding, ISO10126Padding -> {
-                    val paddingSize = data[data.size - 1].toInt() and 0xff
-                    val result = ByteArray(data.size - paddingSize)
-                    arraycopy(data, 0, result, 0, result.size)
-                    result
-                }
-                ZeroPadding -> {
-                    var paddingSize = 0
-                    for (i in data.size - 1 downTo 0) {
-                        if (data[i].toInt() != 0) {
-                            break
-                        }
-                        ++paddingSize
-                    }
-                    val result = ByteArray(data.size - paddingSize)
-                    arraycopy(data, 0, result, 0, result.size)
-                    result
-                }
+        fun padding(data: ByteArray, blockSize: Int, padding: Padding): ByteArray = padding.add(data, blockSize)
+        fun removePadding(data: ByteArray, padding: Padding): ByteArray = padding.remove(data)
+    }
+
+    fun add(data: ByteArray, blockSize: Int): ByteArray {
+        //padding(data, blockSize, this)
+        val paddingSize = paddingSize(data.size, blockSize)
+        val result = ByteArray(data.size + paddingSize)
+        arraycopy(data, 0, result, 0, data.size)
+        addInternal(result, data.size, paddingSize)
+        return result
+    }
+    fun remove(data: ByteArray): ByteArray {
+        val result = data.copyOf()
+        val size = removeInternal(data)
+        return result.copyOf(size)
+    }
+
+    protected open fun paddingSize(dataSize: Int, blockSize: Int): Int = blockSize - dataSize % blockSize
+    protected open fun addInternal(result: ByteArray, dataSize: Int, paddingSize: Int) : Unit = Unit
+    protected open fun removeInternal(data: ByteArray) : Int = data.size - (data[data.size - 1].toInt() and 0xFF)
+}
+
+
+object CipherPaddingNo : CipherPadding() {
+    override fun paddingSize(dataSize: Int, blockSize: Int): Int = 0
+    override fun addInternal(result: ByteArray, dataSize: Int, paddingSize: Int) = Unit
+    override fun removeInternal(data: ByteArray): Int = data.size
+}
+object CipherPaddingPKCS7 : CipherPadding() {
+    override fun addInternal(result: ByteArray, dataSize: Int, paddingSize: Int) {
+        for (i in dataSize until result.size) result[i] = paddingSize.toByte()
+    }
+}
+object CipherPaddingANSIX923 : CipherPadding() {
+    override fun addInternal(result: ByteArray, dataSize: Int, paddingSize: Int) {
+        result[result.size - 1] = paddingSize.toByte()
+    }
+}
+object CipherPaddingISO10126 : CipherPadding() {
+    override fun addInternal(result: ByteArray, dataSize: Int, paddingSize: Int) {
+        val randomBytes = Random.nextBytes(paddingSize)
+        randomBytes[paddingSize - 1] = paddingSize.toByte()
+        arraycopy(randomBytes, 0, result, dataSize, randomBytes.size)
+    }
+}
+object CipherPaddingZero : CipherPadding() {
+    override fun removeInternal(data: ByteArray): Int {
+        var paddingSize = 0
+        for (i in data.size - 1 downTo 0) {
+            if (data[i].toInt() != 0) {
+                break
             }
+            ++paddingSize
         }
+        return data.size - paddingSize
     }
 }

@@ -209,11 +209,11 @@ class AES(val keyWords: IntArray) : Cipher {
             return dstIV
         }
 
-        fun encryptAes128Cbc(data: ByteArray, key: ByteArray, iv: ByteArray = ByteArray(16), padding: Padding = Padding.NoPadding): ByteArray {
+        fun encryptAes128Cbc(data: ByteArray, key: ByteArray, iv: ByteArray = ByteArray(16), padding: Padding = CipherPadding.NoPadding): ByteArray {
             return encryptAesCbc(data, key, iv, padding)
         }
 
-        fun decryptAes128Cbc(data: ByteArray, key: ByteArray, iv: ByteArray = ByteArray(16), padding: Padding = Padding.NoPadding): ByteArray {
+        fun decryptAes128Cbc(data: ByteArray, key: ByteArray, iv: ByteArray = ByteArray(16), padding: Padding = CipherPadding.NoPadding): ByteArray {
             return decryptAesCbc(data, key, iv, padding)
         }
 
@@ -248,7 +248,7 @@ class AES(val keyWords: IntArray) : Cipher {
             val ivWords = getIV(iv).toIntArray()
 
             if (words.size % 4 != 0) {
-                throw IllegalArgumentException("Data is not multiple of $BLOCK_SIZE, and padding was set to ${Padding.NoPadding}")
+                throw IllegalArgumentException("Data is not multiple of $BLOCK_SIZE, and padding was set to ${CipherPadding.NoPadding}")
             }
 
             var s0 = ivWords[0]
@@ -367,7 +367,7 @@ class AES(val keyWords: IntArray) : Cipher {
             var pData = Padding.padding(data, BLOCK_SIZE, padding)
             val dataSize = pData.size
             if (dataSize % BLOCK_SIZE != 0) {
-                pData = Padding.padding(pData, BLOCK_SIZE, Padding.ZeroPadding)
+                pData = Padding.padding(pData, BLOCK_SIZE, CipherPadding.ZeroPadding)
             }
 
             val aes = AES(key)
@@ -402,7 +402,7 @@ class AES(val keyWords: IntArray) : Cipher {
             val dataSize = data.size
             var pData = data
             if (dataSize % BLOCK_SIZE != 0) {
-                pData = Padding.padding(data, BLOCK_SIZE, Padding.ZeroPadding)
+                pData = Padding.padding(data, BLOCK_SIZE, CipherPadding.ZeroPadding)
             }
 
             val aes = AES(key)
@@ -439,7 +439,7 @@ class AES(val keyWords: IntArray) : Cipher {
             var pData = Padding.padding(data, BLOCK_SIZE, padding)
             val dataSize = pData.size
             if (dataSize % BLOCK_SIZE != 0) {
-                pData = Padding.padding(pData, BLOCK_SIZE, Padding.ZeroPadding)
+                pData = Padding.padding(pData, BLOCK_SIZE, CipherPadding.ZeroPadding)
             }
 
             val aes = AES(key)
@@ -473,7 +473,7 @@ class AES(val keyWords: IntArray) : Cipher {
             val dataSize = data.size
             var pData = data
             if (dataSize % BLOCK_SIZE != 0) {
-                pData = Padding.padding(data, BLOCK_SIZE, Padding.ZeroPadding)
+                pData = Padding.padding(data, BLOCK_SIZE, CipherPadding.ZeroPadding)
             }
 
             val aes = AES(key)

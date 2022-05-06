@@ -15,9 +15,7 @@ object ECB : CipherMode {
     }
 
     override fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding): ByteArray {
-        for (n in data.indices step 16) {
-            cipher.decrypt(data, n)
-        }
+        for (n in data.indices step 16) cipher.decrypt(data, n)
         return Padding.removePadding(data, padding)
     }
 }
