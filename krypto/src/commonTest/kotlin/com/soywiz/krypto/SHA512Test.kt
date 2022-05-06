@@ -47,4 +47,15 @@ class SHA512Test {
         assertEquals("753c07c6245748d0002359efb1018687880219eb5f10b0015362ba80679589b1679e87dfdba276b2fbcbf8e48377270ddfe99c9ba7b4cbc6763ecd55f9fb1b7d", SHA512.digest(ASCII("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab")).hex)
     }
 
+    @Test
+    fun test4() {
+        assertEquals("c82fb0cc171015e9b1c95c912b17b30cfa76c637260cca09e78fdaf1d4dbe9b2d08501b7af8b48cb8bdb02d6e9ca2662971c0f23fd8c5c02c33e6a8f72df5028", "a".repeat(1311).encodeToByteArray().sha512().hex)
+    }
+
+    @Test
+    fun test5() {
+        for (n in 0 until 257) {
+            ByteArray(n) { n.toByte() }.sha512().hex
+        }
+    }
 }

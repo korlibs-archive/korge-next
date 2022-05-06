@@ -135,11 +135,11 @@ class SHA512 : SHA(chunkSize = 64, digestSize = 64) {
 
         this.buf[r++] = 0x80u
         if (r > 112) {
-            this.buf.fill(0u, r, 128 + 1)
+            this.buf.fill(0u, r, 128)
             r = 0
             processblock(buf)
         }
-        this.buf.fill(0u, r, 120 + 1)
+        this.buf.fill(0u, r, 120)
         this.len *= 8uL
         this.buf[120] = (this.len shr 56).toUByte()
         this.buf[121] = (this.len shr 48).toUByte()
