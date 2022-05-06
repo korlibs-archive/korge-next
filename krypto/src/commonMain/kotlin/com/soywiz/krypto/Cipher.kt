@@ -6,13 +6,13 @@ interface Cipher {
     fun decrypt(data: ByteArray, offset: Int = 0, len: Int = data.size - offset)
 }
 
-class CipherWithModeAndPadding(val cipher: Cipher, val mode: CipherMode, val padding: CipherPadding) {
+class CipherWithModeAndPadding(val cipher: Cipher, val mode: CipherMode, val padding: CipherPadding, val iv: ByteArray? = null) {
     fun encrypt(data: ByteArray, offset: Int = 0, len: Int = data.size - offset): ByteArray =
-        mode.encrypt(data.copyOfRange(offset, offset + len), cipher, padding)
+        mode.encrypt(data.copyOfRange(offset, offset + len), cipher, padding, iv)
 
     fun decrypt(data: ByteArray, offset: Int = 0, len: Int = data.size - offset): ByteArray =
-        mode.decrypt(data.copyOfRange(offset, offset + len), cipher, padding)
+        mode.decrypt(data.copyOfRange(offset, offset + len), cipher, padding, iv)
 }
 
-fun Cipher.with(mode: CipherMode, padding: CipherPadding): CipherWithModeAndPadding = CipherWithModeAndPadding(this, mode, padding)
-operator fun Cipher.get(mode: CipherMode, padding: CipherPadding): CipherWithModeAndPadding = with(mode, padding)
+fun Cipher.with(mode: CipherMode, padding: CipherPadding, iv: ByteArray? = null): CipherWithModeAndPadding = CipherWithModeAndPadding(this, mode, padding, iv)
+operator fun Cipher.get(mode: CipherMode, padding: CipherPadding, iv: ByteArray? = null): CipherWithModeAndPadding = with(mode, padding, iv)

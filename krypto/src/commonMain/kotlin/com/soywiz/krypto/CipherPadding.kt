@@ -36,30 +36,29 @@ abstract class CipherPadding {
     protected open fun removeInternal(data: ByteArray) : Int = data.size - (data[data.size - 1].toInt() and 0xFF)
 }
 
-
-object CipherPaddingNo : CipherPadding() {
+private object CipherPaddingNo : CipherPadding() {
     override fun paddingSize(dataSize: Int, blockSize: Int): Int = 0
     override fun addInternal(result: ByteArray, dataSize: Int, paddingSize: Int) = Unit
     override fun removeInternal(data: ByteArray): Int = data.size
 }
-object CipherPaddingPKCS7 : CipherPadding() {
+private object CipherPaddingPKCS7 : CipherPadding() {
     override fun addInternal(result: ByteArray, dataSize: Int, paddingSize: Int) {
         for (i in dataSize until result.size) result[i] = paddingSize.toByte()
     }
 }
-object CipherPaddingANSIX923 : CipherPadding() {
+private object CipherPaddingANSIX923 : CipherPadding() {
     override fun addInternal(result: ByteArray, dataSize: Int, paddingSize: Int) {
         result[result.size - 1] = paddingSize.toByte()
     }
 }
-object CipherPaddingISO10126 : CipherPadding() {
+private object CipherPaddingISO10126 : CipherPadding() {
     override fun addInternal(result: ByteArray, dataSize: Int, paddingSize: Int) {
         val randomBytes = Random.nextBytes(paddingSize)
         randomBytes[paddingSize - 1] = paddingSize.toByte()
         arraycopy(randomBytes, 0, result, dataSize, randomBytes.size)
     }
 }
-object CipherPaddingZero : CipherPadding() {
+private object CipherPaddingZero : CipherPadding() {
     override fun removeInternal(data: ByteArray): Int {
         var paddingSize = 0
         for (i in data.size - 1 downTo 0) {
