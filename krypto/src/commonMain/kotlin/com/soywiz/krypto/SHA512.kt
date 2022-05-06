@@ -63,6 +63,17 @@ class SHA512 : SHA(chunkSize = 64, digestSize = 64) {
         buf.fill(0u)
     }
 
+    // @TODO: The super update doesn't work with SHA512, do we have to fix something?
+    override fun update(data: ByteArray, offset: Int, count: Int): Hasher {
+        sha512_update(data.asUByteArray(), offset, count)
+        return this
+    }
+
+    override fun digestOut(out: ByteArray) {
+        sha512_sum(out.asUByteArray())
+        reset()
+    }
+
     override fun coreUpdate(chunk: ByteArray) {
         sha512_update(chunk.asUByteArray(), 0, chunk.size)
     }
@@ -71,18 +82,19 @@ class SHA512 : SHA(chunkSize = 64, digestSize = 64) {
         sha512_sum(out.asUByteArray())
     }
 
-    private fun processblock(buf: UByteArray, p: Int = 0) {
-        val W = ULongArray(80)
+    private val W = ULongArray(80)
 
+    private fun processblock(buf: UByteArray, p: Int = 0) {
         for (i in 0 until 16) {
-            var v = buf[p + 8 * i].toULong() shl 56
-            v = v or buf[p + 8 * i + 1].toULong() shl 48
-            v = v or buf[p + 8 * i + 2].toULong() shl 40
-            v = v or buf[p + 8 * i + 3].toULong() shl 32
-            v = v or buf[p + 8 * i + 4].toULong() shl 24
-            v = v or buf[p + 8 * i + 5].toULong() shl 16
-            v = v or buf[p + 8 * i + 6].toULong() shl 8
-            v = v or buf[p + 8 * i + 7].toULong()
+            var v = 0uL
+            v = v or (buf[p + 8 * i + 0].toULong() shl 56)
+            v = v or (buf[p + 8 * i + 1].toULong() shl 48)
+            v = v or (buf[p + 8 * i + 2].toULong() shl 40)
+            v = v or (buf[p + 8 * i + 3].toULong() shl 32)
+            v = v or (buf[p + 8 * i + 4].toULong() shl 24)
+            v = v or (buf[p + 8 * i + 5].toULong() shl 16)
+            v = v or (buf[p + 8 * i + 6].toULong() shl 8)
+            v = v or (buf[p + 8 * i + 7].toULong() shl 0)
             W[i] = v
         }
         for (i in 16 until 80) {
@@ -123,11 +135,11 @@ class SHA512 : SHA(chunkSize = 64, digestSize = 64) {
 
         this.buf[r++] = 0x80u
         if (r > 112) {
-            this.buf.fill(0u, r, 128)
+            this.buf.fill(0u, r, 128 + 1)
             r = 0
             processblock(buf)
         }
-        this.buf.fill(0u, r, 120)
+        this.buf.fill(0u, r, 120 + 1)
         this.len *= 8uL
         this.buf[120] = (this.len shr 56).toUByte()
         this.buf[121] = (this.len shr 48).toUByte()
@@ -161,7 +173,7 @@ class SHA512 : SHA(chunkSize = 64, digestSize = 64) {
     private fun sha512_update(m: UByteArray, p: Int, len: Int) {
         var len = len
         var p = p
-        val r = (len % 128)
+        val r = (this.len % 128uL).toInt()
 
         this.len += len.toULong()
         if (r != 0) {
@@ -169,7 +181,7 @@ class SHA512 : SHA(chunkSize = 64, digestSize = 64) {
                 arraycopy(m.asByteArray(), p, this.buf.asByteArray(), r, len)
                 return
             }
-            arraycopy(m.asByteArray(), p, buf.asByteArray(), r, 128-r)
+            arraycopy(m.asByteArray(), p, buf.asByteArray(), r, 128 - r)
             len -= 128 - r
             p += 128 - r
             processblock(this.buf)
@@ -183,3 +195,5 @@ class SHA512 : SHA(chunkSize = 64, digestSize = 64) {
     }
 
 }
+
+fun ByteArray.sha512() = hash(SHA512)

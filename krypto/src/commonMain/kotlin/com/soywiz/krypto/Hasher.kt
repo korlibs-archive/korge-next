@@ -30,7 +30,7 @@ abstract class Hasher(val chunkSize: Int, val digestSize: Int) {
         return this
     }
 
-    fun update(data: ByteArray, offset: Int, count: Int): Hasher {
+    open fun update(data: ByteArray, offset: Int, count: Int): Hasher {
         var curr = offset
         var left = count
         while (left > 0) {
@@ -49,7 +49,7 @@ abstract class Hasher(val chunkSize: Int, val digestSize: Int) {
         return this
     }
 
-    fun digestOut(out: ByteArray) {
+    open fun digestOut(out: ByteArray) {
         val pad = corePadding(totalWritten)
         var padPos = 0
         while (padPos < pad.size) {
