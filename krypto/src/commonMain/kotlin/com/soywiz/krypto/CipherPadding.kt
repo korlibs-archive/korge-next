@@ -3,12 +3,17 @@ package com.soywiz.krypto
 import com.soywiz.krypto.internal.arraycopy
 import kotlin.random.Random
 
-enum class Padding {
+typealias Padding = CipherPadding
+
+enum class CipherPadding {
     NoPadding,
     PKCS7Padding,
     ANSIX923Padding,
     ISO10126Padding,
     ZeroPadding;
+
+    fun add(data: ByteArray, blockSize: Int): ByteArray = padding(data, blockSize, this)
+    fun remove(data: ByteArray): ByteArray = removePadding(data, this)
 
     companion object {
         fun padding(data: ByteArray, blockSize: Int, padding: Padding): ByteArray {

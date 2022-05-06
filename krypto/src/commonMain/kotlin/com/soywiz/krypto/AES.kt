@@ -10,7 +10,9 @@ import com.soywiz.krypto.internal.ext8
  * (c) 2009-2013 by Jeff Mott. All rights reserved.
  * code.google.com/p/crypto-js/wiki/License
  */
-class AES(val keyWords: IntArray) {
+class AES(val keyWords: IntArray) : Cipher {
+    override val blockSize: Int get() = AES.BLOCK_SIZE
+
     private val keySize = keyWords.size
     private val numRounds = keySize + 6
     private val ksRows = (numRounds + 1) * 4
@@ -45,6 +47,18 @@ class AES(val keyWords: IntArray) {
     }
 
     constructor(key: ByteArray) : this(key.toIntArray())
+
+    override fun encrypt(data: ByteArray, offset: Int, len: Int) {
+        val chunk = data.copyOfRange(offset, offset + len).toIntArray()
+        encryptBlock(chunk, 0)
+        arraycopy(chunk.toByteArray(), 0, data, offset, len)
+    }
+
+    override fun decrypt(data: ByteArray, offset: Int, len: Int) {
+        val chunk = data.copyOfRange(offset, offset + len).toIntArray()
+        decryptBlock(chunk, 0)
+        arraycopy(chunk.toByteArray(), 0, data, offset, len)
+    }
 
     fun encryptBlock(M: IntArray, offset: Int) {
         this.doCryptBlock(M, offset, this.keySchedule, SUB_MIX_0, SUB_MIX_1, SUB_MIX_2, SUB_MIX_3, SBOX)
