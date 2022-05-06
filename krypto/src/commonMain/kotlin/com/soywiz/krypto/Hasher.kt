@@ -73,7 +73,7 @@ abstract class Hasher(val chunkSize: Int, val digestSize: Int) {
     fun digest(): Hash = Hash(ByteArray(digestSize).also { digestOut(it) })
 }
 
-data class Hash(val bytes: ByteArray) {
+class Hash(val bytes: ByteArray) {
     companion object {
         fun fromHex(hex: String): Hash = Hash(Hex.decode(hex))
         fun fromBase64(base64: String): Hash = Hash(Base64.decodeIgnoringSpaces(base64))
@@ -86,6 +86,7 @@ data class Hash(val bytes: ByteArray) {
 
     override fun equals(other: Any?): Boolean = other is Hash && this.bytes.contentEquals(other.bytes)
     override fun hashCode(): Int = bytes.contentHashCode()
+    override fun toString(): String = hexLower
 }
 
 fun ByteArray.hash(algo: HasherFactory): Hash = algo.digest(this)
