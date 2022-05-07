@@ -248,21 +248,16 @@ private object CipherModeCFB : CipherModeBase("CFB") {
 private object CipherModeOFB : CipherModeCoreDE("OFB") {
     override fun core(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
         val blockSize = cipher.blockSize
-        val words = pData.toIntArray()
-        val wordsLength = words.size
-        val ivWords = getIV(ivb, blockSize).toIntArray()
-        val cipherText = IntArray(4)
-
-        cipher.encryptBlock(ivWords, 0)
-        for (n in 0 until wordsLength step 4) {
-            arraycopy(words, n, cipherText, 0, 4)
-            arrayxor(cipherText, 0, ivWords)
-            arraycopy(cipherText, 0, words, n, 4)
-            if (n + 4 < wordsLength) {
-                cipher.encryptBlock(ivWords, 0)
+        val cipherText = ByteArray(blockSize)
+        cipher.encrypt(ivb)
+        for (n in pData.indices step blockSize) {
+            arraycopy(pData, n, cipherText, 0, blockSize)
+            arrayxor(cipherText, 0, ivb)
+            arraycopy(cipherText, 0, pData, n, blockSize)
+            if (n + blockSize < pData.size) {
+                cipher.encrypt(ivb)
             }
         }
-        arraycopy(words.toByteArray(), 0, pData, 0, pData.size)
     }
 }
 
