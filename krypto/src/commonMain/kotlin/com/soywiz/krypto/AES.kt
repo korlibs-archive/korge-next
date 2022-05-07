@@ -151,10 +151,7 @@ class AES(val keyWords: IntArray) : Cipher {
         private const val BLOCK_SIZE = 16
 
         init {
-            val d = IntArray(256) {
-                if (it >= 128) (it shl 1) xor 0x11b else (it shl 1)
-            }
-
+            val d = IntArray(256) { if (it >= 128) (it shl 1) xor 0x11b else (it shl 1) }
             var x = 0
             var xi = 0
             for (i in 0 until 256) {
@@ -165,17 +162,18 @@ class AES(val keyWords: IntArray) : Cipher {
                 val x2 = d[x]
                 val x4 = d[x2]
                 val x8 = d[x4]
-                var t: Int
-                t = (d[sx] * 0x101) xor (sx * 0x1010100)
-                SUB_MIX_0[x] = (t shl 24) or (t ushr 8)
-                SUB_MIX_1[x] = (t shl 16) or (t ushr 16)
-                SUB_MIX_2[x] = (t shl 8) or (t ushr 24)
-                SUB_MIX_3[x] = (t shl 0)
-                t = (x8 * 0x1010101) xor (x4 * 0x10001) xor (x2 * 0x101) xor (x * 0x1010100)
-                INV_SUB_MIX_0[sx] = (t shl 24) or (t ushr 8)
-                INV_SUB_MIX_1[sx] = (t shl 16) or (t ushr 16)
-                INV_SUB_MIX_2[sx] = (t shl 8) or (t ushr 24)
-                INV_SUB_MIX_3[sx] = (t shl 0)
+                ((d[sx] * 0x101) xor (sx * 0x1010100)).also { t ->
+                    SUB_MIX_0[x] = (t shl 24) or (t ushr 8)
+                    SUB_MIX_1[x] = (t shl 16) or (t ushr 16)
+                    SUB_MIX_2[x] = (t shl 8) or (t ushr 24)
+                    SUB_MIX_3[x] = (t shl 0)
+                }
+                ((x8 * 0x1010101) xor (x4 * 0x10001) xor (x2 * 0x101) xor (x * 0x1010100)).also { t ->
+                    INV_SUB_MIX_0[sx] = (t shl 24) or (t ushr 8)
+                    INV_SUB_MIX_1[sx] = (t shl 16) or (t ushr 16)
+                    INV_SUB_MIX_2[sx] = (t shl 8) or (t ushr 24)
+                    INV_SUB_MIX_3[sx] = (t shl 0)
+                }
 
                 if (x == 0) {
                     x = 1; xi = 1
@@ -218,72 +216,10 @@ class AES(val keyWords: IntArray) : Cipher {
         fun decryptAesCfb(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray =
             AES(key)[CipherMode.CFB, padding, iv].decrypt(data)
 
-        fun encryptAesOfb(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray {
-            var pData = Padding.padding(data, BLOCK_SIZE, padding)
-            val dataSize = pData.size
-            if (dataSize % BLOCK_SIZE != 0) {
-                pData = Padding.padding(pData, BLOCK_SIZE, CipherPadding.ZeroPadding)
-            }
+        fun encryptAesOfb(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray =
+            AES(key)[CipherMode.OFB, padding, iv].encrypt(data)
 
-            val aes = AES(key)
-            val words = pData.toIntArray()
-            val wordsLength = words.size
-            val ivWords = getIV(iv, BLOCK_SIZE).toIntArray()
-            val cipherText = IntArray(4)
-
-            aes.encryptBlock(ivWords, 0)
-            for (n in 0 until wordsLength step 4) {
-                cipherText[0] = ivWords[0] xor words[n + 0]
-                cipherText[1] = ivWords[1] xor words[n + 1]
-                cipherText[2] = ivWords[2] xor words[n + 2]
-                cipherText[3] = ivWords[3] xor words[n + 3]
-
-                arraycopy(cipherText, 0, words, n, 4)
-                if (n + 4 < wordsLength) {
-                    aes.encryptBlock(ivWords, 0)
-                }
-            }
-            val wordsData = words.toByteArray()
-            var result = wordsData
-            if (dataSize < wordsData.size) {
-                result = ByteArray(dataSize)
-                arraycopy(wordsData, 0, result, 0, result.size)
-            }
-            return result
-        }
-
-        fun decryptAesOfb(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray {
-            val dataSize = data.size
-            var pData = data
-            if (dataSize % BLOCK_SIZE != 0) {
-                pData = Padding.padding(data, BLOCK_SIZE, CipherPadding.ZeroPadding)
-            }
-
-            val aes = AES(key)
-            val words = pData.toIntArray()
-            val wordsLength = words.size
-            val ivWords = getIV(iv, BLOCK_SIZE).toIntArray()
-            val plainText = IntArray(4)
-
-            aes.encryptBlock(ivWords, 0)
-            for (n in 0 until wordsLength step 4) {
-                plainText[0] = ivWords[0] xor words[n + 0]
-                plainText[1] = ivWords[1] xor words[n + 1]
-                plainText[2] = ivWords[2] xor words[n + 2]
-                plainText[3] = ivWords[3] xor words[n + 3]
-
-                arraycopy(plainText, 0, words, n, 4)
-                if (n + 4 < wordsLength) {
-                    aes.encryptBlock(ivWords, 0)
-                }
-            }
-            val wordsData = words.toByteArray()
-            var result = wordsData
-            if (dataSize < wordsData.size) {
-                result = ByteArray(dataSize)
-                arraycopy(wordsData, 0, result, 0, result.size)
-            }
-            return Padding.removePadding(result, padding)
-        }
+        fun decryptAesOfb(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray =
+            AES(key)[CipherMode.OFB, padding, iv].decrypt(data)
     }
 }
