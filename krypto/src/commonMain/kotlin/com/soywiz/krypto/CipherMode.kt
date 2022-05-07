@@ -1,6 +1,6 @@
 package com.soywiz.krypto
 
-import com.soywiz.krypto.internal.arraycopy
+import com.soywiz.krypto.internal.*
 import com.soywiz.krypto.internal.getIV
 import com.soywiz.krypto.internal.getInt
 import com.soywiz.krypto.internal.setInt
@@ -8,7 +8,7 @@ import com.soywiz.krypto.internal.setInt
 interface CipherMode {
     companion object {
         val ECB: CipherMode get() = CipherModeECB
-        val CBC: CipherMode get() = CipherModeECB
+        val CBC: CipherMode get() = CipherModeCBC
     }
 
     fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray
@@ -33,7 +33,7 @@ private object CipherModeECB : BaseCipherMode() {
 
 private object CipherModeCBC : BaseCipherMode() {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
-        val pData = Padding.padding(data, cipher.blockSize, padding)
+        val pData = padding.add(data, cipher.blockSize)
         val ivWords = getIV(iv)
 
         if (pData.size % cipher.blockSize != 0) {
@@ -62,10 +62,7 @@ private object CipherModeCBC : BaseCipherMode() {
     }
 
     override fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
-        TODO()
-        /*
-        val dataWords = data.toIntArray()
-        val wordsLength = dataWords.size
+        val cdata = data.copyOf()
         val ivWords = getIV(iv).toIntArray()
 
         var s0 = ivWords[0]
@@ -73,26 +70,24 @@ private object CipherModeCBC : BaseCipherMode() {
         var s2 = ivWords[2]
         var s3 = ivWords[3]
 
-        for (n in 0 until wordsLength step 4) {
-            val t0 = dataWords[n + 0]
-            val t1 = dataWords[n + 1]
-            val t2 = dataWords[n + 2]
-            val t3 = dataWords[n + 3]
+        for (n in cdata.indices step cipher.blockSize) {
+            val t0 = cdata.getInt(n + 0 * 4)
+            val t1 = cdata.getInt(n + 1 * 4)
+            val t2 = cdata.getInt(n + 2 * 4)
+            val t3 = cdata.getInt(n + 3 * 4)
 
-            cipher.decrypt(dataWords, n, cipher.blockSize)
+            cipher.decrypt(cdata, n, cipher.blockSize)
 
-            dataWords[n + 0] = dataWords[n + 0] xor s0
-            dataWords[n + 1] = dataWords[n + 1] xor s1
-            dataWords[n + 2] = dataWords[n + 2] xor s2
-            dataWords[n + 3] = dataWords[n + 3] xor s3
+            cdata.setInt(n + 0 * 4, cdata.getInt(n + 0 * 4) xor s0)
+            cdata.setInt(n + 1 * 4, cdata.getInt(n + 1 * 4) xor s1)
+            cdata.setInt(n + 2 * 4, cdata.getInt(n + 2 * 4) xor s2)
+            cdata.setInt(n + 3 * 4, cdata.getInt(n + 3 * 4) xor s3)
 
             s0 = t0
             s1 = t1
             s2 = t2
             s3 = t3
         }
-        return Padding.removePadding(dataWords.toByteArray(), padding)
-        */
+        return Padding.removePadding(cdata, padding)
     }
-
 }
