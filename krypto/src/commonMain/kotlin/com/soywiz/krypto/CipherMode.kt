@@ -64,12 +64,12 @@ private abstract class BaseCipherMode : CipherMode {
 private object CipherModeECB : BaseCipherMode() {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         val pData = Padding.padding(data, cipher.blockSize, padding)
-        for (n in pData.indices step 16) cipher.encrypt(pData, n)
+        for (n in pData.indices step 16) cipher.encrypt(pData, n, 16)
         return pData
     }
 
     override fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
-        for (n in data.indices step 16) cipher.decrypt(data, n)
+        for (n in data.indices step 16) cipher.decrypt(data, n, 16)
         return Padding.removePadding(data, padding)
     }
 }
