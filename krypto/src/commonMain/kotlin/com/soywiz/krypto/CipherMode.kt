@@ -25,6 +25,7 @@ interface CipherMode {
 }
 
 private abstract class CipherModeBase(override val name: String) : CipherMode {
+    override fun toString(): String = name
 }
 
 private abstract class CipherModeCore(name: String) : CipherModeBase(name) {

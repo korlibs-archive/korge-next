@@ -12,7 +12,7 @@ class AESJvmTest {
         CipherMode.PCBC,
         CipherMode.CFB,
         CipherMode.OFB,
-        //CipherMode.CTR,
+        CipherMode.CTR,
     )
 
     @Test
@@ -39,11 +39,11 @@ class AESJvmTest {
             val encryptedCopy = encrypted.copyOf()
             val decrypted = encryptor.decrypt(encrypted)
 
-            assertEquals(encryptedCopy.hex, encrypted.hex)
-            assertEquals(plainCopy.hex, plain.hex)
-            assertEquals(ivCopy.hex, iv.hex)
+            assertEquals(encryptedCopy.hex, encrypted.hex, "encrypted shouldn't be modified")
+            assertEquals(plainCopy.hex, plain.hex, "plain shouldn't be modified")
+            assertEquals(ivCopy.hex, iv.hex, "iv shouldn't be modified")
 
-            assertEquals(plain.hex, decrypted.hex)
+            assertEquals(plain.hex, decrypted.hex, "Failed ${mode.name}")
         }
     }
 
