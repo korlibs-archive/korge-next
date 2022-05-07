@@ -221,5 +221,11 @@ class AES(val keyWords: IntArray) : Cipher {
 
         fun decryptAesOfb(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray =
             AES(key)[CipherMode.OFB, padding, iv].decrypt(data)
+
+        fun encryptAesCtr(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray =
+            AES(key)[CipherMode.CTR, padding, iv].encrypt(data)
+
+        fun decryptAesCtr(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray =
+            AES(key)[CipherMode.CTR, padding, iv].decrypt(data)
     }
 }

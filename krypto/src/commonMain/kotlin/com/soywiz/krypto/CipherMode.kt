@@ -2,6 +2,9 @@ package com.soywiz.krypto
 
 import com.soywiz.krypto.internal.*
 
+/**
+ * Symmetric Cipher Mode
+ */
 interface CipherMode {
     companion object {
         val ECB: CipherMode get() = CipherModeECB
@@ -9,6 +12,7 @@ interface CipherMode {
         val PCBC: CipherMode get() = CipherModePCBC
         val CFB: CipherMode get() = CipherModeCFB
         val OFB: CipherMode get() = CipherModeOFB
+        val CTR: CipherMode get() = CipherModeCTR
     }
 
     fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray
@@ -272,5 +276,17 @@ private object CipherModeOFB : BaseCipherMode() {
         }
         return Padding.removePadding(result, padding)
     }
+}
 
+// https://github.com/Jens-G/haxe-crypto/blob/dcf6d994773abba80b0720b2f5e9d5b26de0dbe3/src/com/hurlant/crypto/symmetric/mode/CTRMode.hx
+private object CipherModeCTR : BaseCipherMode() {
+    override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
+        //return CipherModeECB.encrypt(data, cipher, padding, iv)
+        TODO()
+    }
+
+    override fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
+        //return CipherModeECB.decrypt(data, cipher, padding, iv)
+        TODO()
+    }
 }

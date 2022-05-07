@@ -5,6 +5,9 @@ import kotlin.random.Random
 
 typealias Padding = CipherPadding
 
+/**
+ * Symmetric Cipher Padding
+ */
 abstract class CipherPadding {
     companion object {
         val NoPadding: CipherPadding get() = CipherPaddingNo
