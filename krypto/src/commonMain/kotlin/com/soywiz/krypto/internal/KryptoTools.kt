@@ -30,8 +30,8 @@ internal fun ByteArray.toIntArray(): IntArray =
 internal fun IntArray.toByteArray(): ByteArray =
     ByteArray(size * 4).also { for (n in indices) it.setInt(n * 4, this[n]) }
 
-internal fun getIV(srcIV: ByteArray?): ByteArray {
-    val dstIV = ByteArray(16)
+internal fun getIV(srcIV: ByteArray?, blockSize: Int): ByteArray {
+    val dstIV = ByteArray(blockSize)
     srcIV?.apply {
         val min = if (size < dstIV.size) size else dstIV.size
         arraycopy(srcIV, 0, dstIV, 0, min)

@@ -186,13 +186,11 @@ class AES(val keyWords: IntArray) : Cipher {
             }
         }
 
-        fun encryptAes128Cbc(data: ByteArray, key: ByteArray, iv: ByteArray = ByteArray(16), padding: Padding = CipherPadding.NoPadding): ByteArray {
-            return encryptAesCbc(data, key, iv, padding)
-        }
+        fun encryptAes128Cbc(data: ByteArray, key: ByteArray, iv: ByteArray = ByteArray(16), padding: Padding = CipherPadding.NoPadding): ByteArray =
+            encryptAesCbc(data, key, iv, padding)
 
-        fun decryptAes128Cbc(data: ByteArray, key: ByteArray, iv: ByteArray = ByteArray(16), padding: Padding = CipherPadding.NoPadding): ByteArray {
-            return decryptAesCbc(data, key, iv, padding)
-        }
+        fun decryptAes128Cbc(data: ByteArray, key: ByteArray, iv: ByteArray = ByteArray(16), padding: Padding = CipherPadding.NoPadding): ByteArray =
+            decryptAesCbc(data, key, iv, padding)
 
         fun encryptAesEcb(data: ByteArray, key: ByteArray, padding: Padding): ByteArray =
             AES(key)[CipherMode.ECB, padding].encrypt(data)
@@ -203,68 +201,14 @@ class AES(val keyWords: IntArray) : Cipher {
         fun encryptAesCbc(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray =
             AES(key)[CipherMode.CBC, padding, iv].encrypt(data)
 
-        fun decryptAesCbc(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray {
-            return AES(key)[CipherMode.CBC, padding, iv].decrypt(data)
-        }
+        fun decryptAesCbc(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray =
+            AES(key)[CipherMode.CBC, padding, iv].decrypt(data)
 
-        fun encryptAesPcbc(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray {
-            val pData = Padding.padding(data, BLOCK_SIZE, padding)
-            val aes = AES(key)
-            val words = pData.toIntArray()
-            val wordsLength = words.size
-            val ivWords = getIV(iv).toIntArray()
-            val plaintext = IntArray(4)
+        fun encryptAesPcbc(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray =
+            AES(key)[CipherMode.PCBC, padding, iv].encrypt(data)
 
-            var s0 = ivWords[0]
-            var s1 = ivWords[1]
-            var s2 = ivWords[2]
-            var s3 = ivWords[3]
-
-            for (n in 0 until wordsLength step 4) {
-                arraycopy(words, n, plaintext, 0, 4)
-                words[n + 0] = plaintext[0] xor s0
-                words[n + 1] = plaintext[1] xor s1
-                words[n + 2] = plaintext[2] xor s2
-                words[n + 3] = plaintext[3] xor s3
-
-                aes.encryptBlock(words, n)
-
-                s0 = words[n + 0] xor plaintext[0]
-                s1 = words[n + 1] xor plaintext[1]
-                s2 = words[n + 2] xor plaintext[2]
-                s3 = words[n + 3] xor plaintext[3]
-            }
-            return words.toByteArray()
-        }
-
-        fun decryptAesPcbc(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray {
-            val aes = AES(key)
-            val dataWords = data.toIntArray()
-            val wordsLength = dataWords.size
-            val ivWords = getIV(iv).toIntArray()
-            val cipherText = IntArray(4)
-
-            var s0 = ivWords[0]
-            var s1 = ivWords[1]
-            var s2 = ivWords[2]
-            var s3 = ivWords[3]
-
-            for (n in 0 until wordsLength step 4) {
-                arraycopy(dataWords, n, cipherText, 0, 4)
-                aes.decryptBlock(dataWords, n)
-
-                dataWords[n + 0] = dataWords[n + 0] xor s0
-                dataWords[n + 1] = dataWords[n + 1] xor s1
-                dataWords[n + 2] = dataWords[n + 2] xor s2
-                dataWords[n + 3] = dataWords[n + 3] xor s3
-
-                s0 = dataWords[n + 0] xor cipherText[0]
-                s1 = dataWords[n + 1] xor cipherText[1]
-                s2 = dataWords[n + 2] xor cipherText[2]
-                s3 = dataWords[n + 3] xor cipherText[3]
-            }
-            return Padding.removePadding(dataWords.toByteArray(), padding)
-        }
+        fun decryptAesPcbc(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray =
+            AES(key)[CipherMode.PCBC, padding, iv].decrypt(data)
 
         fun encryptAesCfb(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray {
             var pData = Padding.padding(data, BLOCK_SIZE, padding)
@@ -276,7 +220,7 @@ class AES(val keyWords: IntArray) : Cipher {
             val aes = AES(key)
             val words = pData.toIntArray()
             val wordsLength = words.size
-            val ivWords = getIV(iv).toIntArray()
+            val ivWords = getIV(iv, BLOCK_SIZE).toIntArray()
             val cipherText = IntArray(4)
 
             aes.encryptBlock(ivWords, 0)
@@ -311,7 +255,7 @@ class AES(val keyWords: IntArray) : Cipher {
             val aes = AES(key)
             val words = pData.toIntArray()
             val wordsLength = words.size
-            val ivWords = getIV(iv).toIntArray()
+            val ivWords = getIV(iv, BLOCK_SIZE).toIntArray()
             val plainText = IntArray(4)
             val cipherText = IntArray(4)
 
@@ -348,7 +292,7 @@ class AES(val keyWords: IntArray) : Cipher {
             val aes = AES(key)
             val words = pData.toIntArray()
             val wordsLength = words.size
-            val ivWords = getIV(iv).toIntArray()
+            val ivWords = getIV(iv, BLOCK_SIZE).toIntArray()
             val cipherText = IntArray(4)
 
             aes.encryptBlock(ivWords, 0)
@@ -382,7 +326,7 @@ class AES(val keyWords: IntArray) : Cipher {
             val aes = AES(key)
             val words = pData.toIntArray()
             val wordsLength = words.size
-            val ivWords = getIV(iv).toIntArray()
+            val ivWords = getIV(iv, BLOCK_SIZE).toIntArray()
             val plainText = IntArray(4)
 
             aes.encryptBlock(ivWords, 0)
