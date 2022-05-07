@@ -2,6 +2,10 @@ package com.soywiz.krypto
 
 import com.soywiz.krypto.internal.*
 
+// @TODO: This file could be simplified a lot.
+// @TODO: Instead of using words in some, we can use bytes and vector operations
+// @TODO: Then we can abstract base functionality so the core function of each mode keeps simple and DRY
+
 /**
  * Symmetric Cipher Mode
  */
@@ -316,10 +320,7 @@ private object CipherModeCTR : CipherModeCore() {
         for (n in pData.indices step blockSize) {
             cipher.encrypt(pData, n, blockSize)
             arrayxor(pData, n, ivb)
-            for (j in blockSize - 1 downTo 0) {
-                ivb[j]++
-                if (ivb[j].toInt() != 0) break
-            }
+            updateIV(ivb, blockSize)
         }
     }
 
@@ -328,10 +329,14 @@ private object CipherModeCTR : CipherModeCore() {
         for (n in pData.indices step blockSize) {
             arrayxor(pData, n, ivb)
             cipher.decrypt(pData, n, blockSize)
-            for (j in blockSize - 1 downTo 0) {
-                ivb[j]++
-                if (ivb[j].toInt() != 0) break
-            }
+            updateIV(ivb, blockSize)
+        }
+    }
+
+    private fun updateIV(ivb: ByteArray, blockSize: Int) {
+        for (j in blockSize - 1 downTo 0) {
+            ivb[j]++
+            if (ivb[j].toInt() != 0) break
         }
     }
 }
