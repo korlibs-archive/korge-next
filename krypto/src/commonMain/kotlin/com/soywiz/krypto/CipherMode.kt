@@ -25,9 +25,6 @@ private abstract class CipherModeBase : CipherMode {
 private abstract class CipherModeCore : CipherModeBase() {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         val ivb = getIV(iv, cipher.blockSize)
-        if (data.size % cipher.blockSize != 0) {
-            throw IllegalArgumentException("Data is not multiple of ${cipher.blockSize}, and padding was set to ${CipherPadding.NoPadding}")
-        }
         val pData = padding.add(data, cipher.blockSize)
         coreEncrypt(pData, cipher, ivb)
         return pData
@@ -35,9 +32,6 @@ private abstract class CipherModeCore : CipherModeBase() {
 
     override fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         val ivb = getIV(iv, cipher.blockSize)
-        if (data.size % cipher.blockSize != 0) {
-            throw IllegalArgumentException("Data is not multiple of ${cipher.blockSize}, and padding was set to ${CipherPadding.NoPadding}")
-        }
         val pData = data.copyOf()
         coreDecrypt(pData, cipher, ivb)
         return padding.remove(pData)
@@ -316,13 +310,28 @@ private object CipherModeOFB : CipherModeBase() {
 }
 
 // https://github.com/Jens-G/haxe-crypto/blob/dcf6d994773abba80b0720b2f5e9d5b26de0dbe3/src/com/hurlant/crypto/symmetric/mode/CTRMode.hx
-private object CipherModeCTR : CipherModeCoreDE() {
-    override fun core(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
-        TODO()
-        for (n in pData.indices step cipher.blockSize) {
+private object CipherModeCTR : CipherModeCore() {
+    override fun coreEncrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
+        val blockSize = cipher.blockSize
+        for (n in pData.indices step blockSize) {
+            cipher.encrypt(pData, n, blockSize)
             arrayxor(pData, n, ivb)
-            cipher.encrypt(pData, n, cipher.blockSize)
-            arraycopy(pData, n, ivb, 0, cipher.blockSize)
+            for (j in blockSize - 1 downTo 0) {
+                ivb[j]++
+                if (ivb[j].toInt() != 0) break
+            }
+        }
+    }
+
+    override fun coreDecrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
+        val blockSize = cipher.blockSize
+        for (n in pData.indices step blockSize) {
+            arrayxor(pData, n, ivb)
+            cipher.decrypt(pData, n, blockSize)
+            for (j in blockSize - 1 downTo 0) {
+                ivb[j]++
+                if (ivb[j].toInt() != 0) break
+            }
         }
     }
 }

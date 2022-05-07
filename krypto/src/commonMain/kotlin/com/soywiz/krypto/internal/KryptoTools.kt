@@ -32,13 +32,8 @@ internal fun ByteArray.toIntArray(): IntArray =
 internal fun IntArray.toByteArray(): ByteArray =
     ByteArray(size * 4).also { for (n in indices) it.setInt(n * 4, this[n]) }
 
-internal fun getIV(srcIV: ByteArray?, blockSize: Int): ByteArray {
-    val dstIV = ByteArray(blockSize)
-    srcIV?.apply {
-        val min = if (size < dstIV.size) size else dstIV.size
-        arraycopy(srcIV, 0, dstIV, 0, min)
-    }
-    return dstIV
+internal fun getIV(srcIV: ByteArray?, blockSize: Int): ByteArray = ByteArray(blockSize).also { dstIV ->
+    if (srcIV != null) arraycopy(srcIV, 0, dstIV, 0, kotlin.math.min(srcIV.size, dstIV.size))
 }
 
 internal fun arrayxor(data: ByteArray, offset: Int, xor: ByteArray) {
