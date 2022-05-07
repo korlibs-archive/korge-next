@@ -40,7 +40,12 @@ abstract class CipherPadding {
 }
 
 private object CipherPaddingNo : CipherPadding() {
-    override fun paddingSize(dataSize: Int, blockSize: Int): Int = 0
+    override fun paddingSize(dataSize: Int, blockSize: Int): Int {
+        if (dataSize % blockSize != 0) {
+            throw IllegalArgumentException("Data is not multiple of ${blockSize}, and padding was set to $NoPadding")
+        }
+        return 0
+    }
     override fun addInternal(result: ByteArray, dataSize: Int, paddingSize: Int) = Unit
     override fun removeInternal(data: ByteArray): Int = data.size
 }

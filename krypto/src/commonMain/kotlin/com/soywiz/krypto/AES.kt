@@ -1,10 +1,9 @@
 package com.soywiz.krypto
 
-import com.soywiz.krypto.internal.*
-import com.soywiz.krypto.internal.arraycopy
 import com.soywiz.krypto.internal.ext8
 import com.soywiz.krypto.internal.getInt
 import com.soywiz.krypto.internal.setInt
+import com.soywiz.krypto.internal.toIntArray
 
 @Suppress("UNUSED_CHANGED_VALUE")
 /**
@@ -67,10 +66,12 @@ class AES(val keyWords: IntArray) : Cipher {
         )
     }
 
+    @Deprecated("")
     fun encryptBlock(M: IntArray, offset: Int) {
         this.doCryptBlock(M, offset, this.keySchedule, SUB_MIX_0, SUB_MIX_1, SUB_MIX_2, SUB_MIX_3, SBOX)
     }
 
+    @Deprecated("")
     fun decryptBlock(M: IntArray, offset: Int) {
         this.doCryptBlock(
             M, offset,

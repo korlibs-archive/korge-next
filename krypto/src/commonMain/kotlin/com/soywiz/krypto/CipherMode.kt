@@ -29,14 +29,14 @@ private abstract class CipherModeBase(override val name: String) : CipherMode {
 }
 
 private abstract class CipherModeCore(name: String) : CipherModeBase(name) {
-    override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
+    final override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         val ivb = getIV(iv, cipher.blockSize)
         val pData = padding.add(data, cipher.blockSize)
         coreEncrypt(pData, cipher, ivb)
         return pData
     }
 
-    override fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
+    final override fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         val ivb = getIV(iv, cipher.blockSize)
         val pData = data.copyOf()
         coreDecrypt(pData, cipher, ivb)
@@ -72,36 +72,25 @@ private object CipherModeECB : CipherModeBase("ECB") {
     }
 }
 
-private object CipherModeCBC : CipherModeBase("CBC") {
-    override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
-        val pData = padding.add(data, cipher.blockSize)
-        val ivb = getIV(iv, cipher.blockSize)
-
-        if (pData.size % cipher.blockSize != 0) {
-            throw IllegalArgumentException("Data is not multiple of ${cipher.blockSize}, and padding was set to ${CipherPadding.NoPadding}")
-        }
-
+private object CipherModeCBC : CipherModeCore("CBC") {
+    override fun coreEncrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
         for (n in pData.indices step cipher.blockSize) {
             arrayxor(pData, n, ivb)
             cipher.encrypt(pData, n, cipher.blockSize)
             arraycopy(pData, n, ivb, 0, cipher.blockSize)
         }
-        return pData
     }
 
-    override fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
-        val cdata = data.copyOf()
+    override fun coreDecrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
         val blockSize = cipher.blockSize
-        val ivb = getIV(iv, blockSize)
         val tempBytes = ByteArray(blockSize)
 
-        for (n in cdata.indices step blockSize) {
-            arraycopy(cdata, n, tempBytes, 0, blockSize)
-            cipher.decrypt(cdata, n, blockSize)
-            arrayxor(cdata, n, ivb)
+        for (n in pData.indices step blockSize) {
+            arraycopy(pData, n, tempBytes, 0, blockSize)
+            cipher.decrypt(pData, n, blockSize)
+            arrayxor(pData, n, ivb)
             arraycopy(tempBytes, 0, ivb, 0, blockSize)
         }
-        return Padding.removePadding(cdata, padding)
     }
 }
 
