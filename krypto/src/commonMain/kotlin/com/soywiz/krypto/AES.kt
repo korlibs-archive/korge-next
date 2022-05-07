@@ -65,9 +65,6 @@ class AES(val keyWords: IntArray) : Cipher {
     }
 
     fun decryptBlock(M: IntArray, offset: Int) {
-        var t = M[offset + 1]
-        M[offset + 1] = M[offset + 3]
-        M[offset + 3] = t
         this.doCryptBlock(
             M,
             offset,
@@ -76,11 +73,9 @@ class AES(val keyWords: IntArray) : Cipher {
             INV_SUB_MIX_1,
             INV_SUB_MIX_2,
             INV_SUB_MIX_3,
-            INV_SBOX
+            INV_SBOX,
+            swap13 = true
         )
-        t = M[offset + 1]
-        M[offset + 1] = M[offset + 3]
-        M[offset + 3] = t
     }
 
     private fun doCryptBlock(
@@ -91,12 +86,15 @@ class AES(val keyWords: IntArray) : Cipher {
         SUB_MIX_1: IntArray,
         SUB_MIX_2: IntArray,
         SUB_MIX_3: IntArray,
-        SBOX: IntArray
+        SBOX: IntArray,
+        swap13: Boolean = false
     ) {
+        val O1 = if (!swap13) 1 else 3
+        val O3 = if (!swap13) 3 else 1
         var s0 = M[offset + 0] xor keySchedule[0]
-        var s1 = M[offset + 1] xor keySchedule[1]
+        var s1 = M[offset + O1] xor keySchedule[1]
         var s2 = M[offset + 2] xor keySchedule[2]
-        var s3 = M[offset + 3] xor keySchedule[3]
+        var s3 = M[offset + O3] xor keySchedule[3]
         var ksRow = 4
 
         for (round in 1 until numRounds) {
@@ -119,7 +117,7 @@ class AES(val keyWords: IntArray) : Cipher {
             ((SBOX[s2.ext8(24)] shl 24) or (SBOX[s3.ext8(16)] shl 16) or (SBOX[s0.ext8(8)] shl 8) or SBOX[s1.ext8(0)]) xor keySchedule[ksRow++]
         val t3 =
             ((SBOX[s3.ext8(24)] shl 24) or (SBOX[s0.ext8(16)] shl 16) or (SBOX[s1.ext8(8)] shl 8) or SBOX[s2.ext8(0)]) xor keySchedule[ksRow++]
-        M[offset + 0] = t0; M[offset + 1] = t1; M[offset + 2] = t2; M[offset + 3] = t3
+        M[offset + 0] = t0; M[offset + O1] = t1; M[offset + 2] = t2; M[offset + O3] = t3
     }
 
 
@@ -174,31 +172,23 @@ class AES(val keyWords: IntArray) : Cipher {
             }
         }
 
-        private fun ByteArray.toIntArray(): IntArray {
-            val out = IntArray(size / 4)
-            var m = 0
-            for (n in 0 until out.size) {
-                val v3 = this[m++].toInt() and 0xFF
-                val v2 = this[m++].toInt() and 0xFF
-                val v1 = this[m++].toInt() and 0xFF
-                val v0 = this[m++].toInt() and 0xFF
-                out[n] = (v0 shl 0) or (v1 shl 8) or (v2 shl 16) or (v3 shl 24)
-            }
-            return out
+        private fun ByteArray.getu(offset: Int): Int = (this[offset].toInt() and 0xFF)
+
+        private fun ByteArray.getInt(offset: Int): Int =
+            (getu(offset + 0) shl 24) or (getu(offset + 1) shl 16) or (getu(offset + 2) shl 8) or (getu(offset + 3) shl 0)
+
+        private fun ByteArray.setInt(offset: Int, value: Int) {
+            this[offset + 0] = ((value shr 24) and 0xFF).toByte()
+            this[offset + 1] = ((value shr 16) and 0xFF).toByte()
+            this[offset + 2] = ((value shr 8) and 0xFF).toByte()
+            this[offset + 3] = ((value shr 0) and 0xFF).toByte()
         }
 
-        private fun IntArray.toByteArray(): ByteArray {
-            val out = ByteArray(size * 4)
-            var m = 0
-            for (n in 0 until size) {
-                val v = this[n]
-                out[m++] = ((v shr 24) and 0xFF).toByte()
-                out[m++] = ((v shr 16) and 0xFF).toByte()
-                out[m++] = ((v shr 8) and 0xFF).toByte()
-                out[m++] = ((v shr 0) and 0xFF).toByte()
-            }
-            return out
-        }
+        private fun ByteArray.toIntArray(): IntArray =
+            IntArray(size / 4).also { for (n in it.indices) it[n] = getInt(n * 4) }
+
+        private fun IntArray.toByteArray(): ByteArray =
+            ByteArray(size * 4).also { for (n in indices) it.setInt(n * 4, this[n]) }
 
         private fun getIV(srcIV: ByteArray?): ByteArray {
             val dstIV = ByteArray(16)
