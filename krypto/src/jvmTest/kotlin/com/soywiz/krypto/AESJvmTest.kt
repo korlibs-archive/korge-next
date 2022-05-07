@@ -27,23 +27,30 @@ class AESJvmTest {
 
     @Test
     fun testCompareOurImpl() {
-        val key = SecureRandom.nextBytes(16)
-        val iv = SecureRandom.nextBytes(16)
+        val key = ByteArray(16) { (it * 3).toByte() }
+        val iv = ByteArray(16) { (it * 7).toByte() }
         val ivCopy = iv.copyOf()
         val plain = ByteArray(32) { it.toByte() }
         val plainCopy = plain.copyOf()
 
         for (mode in MODES) {
             val encryptor = AES(key)[mode, CipherPadding.NoPadding, iv]
-            val encrypted = encryptJava("AES", mode.name, "NoPadding", plain, key, iv)
-            val encryptedCopy = encrypted.copyOf()
-            val decrypted = encryptor.decrypt(encrypted)
+            val algo = "AES"
+            val padding = "NoPadding"
+            val encryptedJava = encryptJava(algo, mode.name, padding, plain, key, iv)
+            val encryptedOur = encryptor.decrypt(plain)
+            val encryptedCopy = encryptedOur.copyOf()
 
-            assertEquals(encryptedCopy.hex, encrypted.hex, "encrypted shouldn't be modified")
+            val decryptedJava = decryptJava(algo, mode.name, padding, encryptedJava, key, iv)
+            val decryptedOur = encryptor.decrypt(encryptedOur)
+
+            // No mutating inputs
+            assertEquals(encryptedCopy.hex, encryptedOur.hex, "encrypted shouldn't be modified")
             assertEquals(plainCopy.hex, plain.hex, "plain shouldn't be modified")
             assertEquals(ivCopy.hex, iv.hex, "iv shouldn't be modified")
 
-            assertEquals(plain.hex, decrypted.hex, "Failed ${mode.name}")
+            assertEquals(decryptedJava.hex, decryptedOur.hex, "Failed java-our ${mode.name}")
+            assertEquals(plain.hex, decryptedOur.hex, "Failed plain-decrypted ${mode.name}")
         }
     }
 
