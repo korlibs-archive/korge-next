@@ -19,10 +19,47 @@ interface CipherMode {
     fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray
 }
 
-private abstract class BaseCipherMode : CipherMode {
+private abstract class CipherModeBase : CipherMode {
 }
 
-private object CipherModeECB : BaseCipherMode() {
+private abstract class CipherModeCore : CipherModeBase() {
+    override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
+        val ivb = getIV(iv, cipher.blockSize)
+        if (data.size % cipher.blockSize != 0) {
+            throw IllegalArgumentException("Data is not multiple of ${cipher.blockSize}, and padding was set to ${CipherPadding.NoPadding}")
+        }
+        val pData = padding.add(data, cipher.blockSize)
+        coreEncrypt(pData, cipher, ivb)
+        return pData
+    }
+
+    override fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
+        val ivb = getIV(iv, cipher.blockSize)
+        if (data.size % cipher.blockSize != 0) {
+            throw IllegalArgumentException("Data is not multiple of ${cipher.blockSize}, and padding was set to ${CipherPadding.NoPadding}")
+        }
+        val pData = data.copyOf()
+        coreDecrypt(pData, cipher, ivb)
+        return padding.remove(pData)
+    }
+
+    protected abstract fun coreEncrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray)
+    protected abstract fun coreDecrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray)
+}
+
+private abstract class CipherModeCoreDE : CipherModeCore() {
+    final override fun coreEncrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
+        core(pData, cipher, ivb)
+    }
+
+    final override fun coreDecrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
+        core(pData, cipher, ivb)
+    }
+
+    protected abstract fun core(pData: ByteArray, cipher: Cipher, ivb: ByteArray)
+}
+
+private object CipherModeECB : CipherModeBase() {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         val pData = padding.add(data, cipher.blockSize)
         cipher.encrypt(pData, 0, pData.size)
@@ -35,7 +72,7 @@ private object CipherModeECB : BaseCipherMode() {
     }
 }
 
-private object CipherModeCBC : BaseCipherMode() {
+private object CipherModeCBC : CipherModeBase() {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         val pData = padding.add(data, cipher.blockSize)
         val ivb = getIV(iv, cipher.blockSize)
@@ -68,7 +105,7 @@ private object CipherModeCBC : BaseCipherMode() {
     }
 }
 
-private object CipherModePCBC : BaseCipherMode() {
+private object CipherModePCBC : CipherModeBase() {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         val pData = padding.add(data, cipher.blockSize)
         val ivWords = getIV(iv, cipher.blockSize).toIntArray()
@@ -132,7 +169,7 @@ private object CipherModePCBC : BaseCipherMode() {
     }
 }
 
-private object CipherModeCFB : BaseCipherMode() {
+private object CipherModeCFB : CipherModeBase() {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         var pData = padding.add(data, cipher.blockSize)
         val dataSize = pData.size
@@ -208,7 +245,7 @@ private object CipherModeCFB : BaseCipherMode() {
     }
 }
 
-private object CipherModeOFB : BaseCipherMode() {
+private object CipherModeOFB : CipherModeBase() {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         val blockSize = cipher.blockSize
         var pData = Padding.padding(data, blockSize, padding)
@@ -279,14 +316,13 @@ private object CipherModeOFB : BaseCipherMode() {
 }
 
 // https://github.com/Jens-G/haxe-crypto/blob/dcf6d994773abba80b0720b2f5e9d5b26de0dbe3/src/com/hurlant/crypto/symmetric/mode/CTRMode.hx
-private object CipherModeCTR : BaseCipherMode() {
-    override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
-        //return CipherModeECB.encrypt(data, cipher, padding, iv)
+private object CipherModeCTR : CipherModeCoreDE() {
+    override fun core(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
         TODO()
-    }
-
-    override fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
-        //return CipherModeECB.decrypt(data, cipher, padding, iv)
-        TODO()
+        for (n in pData.indices step cipher.blockSize) {
+            arrayxor(pData, n, ivb)
+            cipher.encrypt(pData, n, cipher.blockSize)
+            arraycopy(pData, n, ivb, 0, cipher.blockSize)
+        }
     }
 }
