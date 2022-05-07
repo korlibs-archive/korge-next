@@ -34,22 +34,23 @@ class AESJvmTest {
         val plainCopy = plain.copyOf()
 
         for (mode in MODES) {
-            val encryptor = AES(key)[mode, CipherPadding.NoPadding, iv]
+            val crypt = AES(key)[mode, CipherPadding.NoPadding, iv]
             val algo = "AES"
             val padding = "NoPadding"
             val encryptedJava = encryptJava(algo, mode.name, padding, plain, key, iv)
-            val encryptedOur = encryptor.decrypt(plain)
+            val encryptedOur = crypt.encrypt(plain)
             val encryptedCopy = encryptedOur.copyOf()
 
             val decryptedJava = decryptJava(algo, mode.name, padding, encryptedJava, key, iv)
-            val decryptedOur = encryptor.decrypt(encryptedOur)
+            val decryptedOur = crypt.decrypt(encryptedOur)
 
             // No mutating inputs
             assertEquals(encryptedCopy.hex, encryptedOur.hex, "encrypted shouldn't be modified")
             assertEquals(plainCopy.hex, plain.hex, "plain shouldn't be modified")
             assertEquals(ivCopy.hex, iv.hex, "iv shouldn't be modified")
 
-            assertEquals(decryptedJava.hex, decryptedOur.hex, "Failed java-our ${mode.name}")
+            assertEquals(encryptedJava.hex, encryptedOur.hex, "Failed encrypted java-our ${mode.name}")
+            assertEquals(decryptedJava.hex, decryptedOur.hex, "Failed decrypted java-our ${mode.name}")
             assertEquals(plain.hex, decryptedOur.hex, "Failed plain-decrypted ${mode.name}")
         }
     }
