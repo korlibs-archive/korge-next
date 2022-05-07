@@ -93,38 +93,27 @@ private object CipherModePCBC : CipherModeIV("PCBC") {
 
 private object CipherModeCFB : CipherModeBase("CFB") {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
-        var pData = padding.add(data, cipher.blockSize)
+        val blockSize = cipher.blockSize
+        var pData = padding.add(data, blockSize)
         val dataSize = pData.size
-        if (dataSize % cipher.blockSize != 0) {
-            pData = Padding.padding(pData, cipher.blockSize, CipherPadding.ZeroPadding)
+        if (dataSize % blockSize != 0) {
+            pData = Padding.padding(pData, blockSize, CipherPadding.ZeroPadding)
         }
 
-        val blockSizeD4 = cipher.blockSizeD4
-        val words = pData.toIntArray()
-        val wordsLength = words.size
-        val ivWords = getIV(iv, cipher.blockSize).toIntArray()
-        val cipherText = IntArray(blockSizeD4)
+        val ivd = getIV(iv, blockSize)
+        val cipherText = ByteArray(blockSize)
 
-        cipher.encryptBlock(ivWords, 0)
-        arraycopy(ivWords, 0, cipherText, 0, blockSizeD4)
-        for (n in 0 until wordsLength step blockSizeD4) {
-            cipherText[0] = cipherText[0] xor words[n + 0]
-            cipherText[1] = cipherText[1] xor words[n + 1]
-            cipherText[2] = cipherText[2] xor words[n + 2]
-            cipherText[3] = cipherText[3] xor words[n + 3]
+        cipher.encrypt(ivd)
+        arraycopy(ivd, 0, cipherText, 0, blockSize)
+        for (n in pData.indices step blockSize) {
+            arrayxor(cipherText, 0, blockSize, pData, n)
+            arraycopy(cipherText, 0, pData, n, blockSize)
 
-            arraycopy(cipherText, 0, words, n, blockSizeD4)
-            if (n + 4 < wordsLength) {
-                cipher.encryptBlock(cipherText, 0)
+            if (n + blockSize < pData.size) {
+                cipher.encrypt(cipherText)
             }
         }
-        val wordsData = words.toByteArray()
-        var result = wordsData
-        if (dataSize < wordsData.size) {
-            result = ByteArray(dataSize)
-            arraycopy(wordsData, 0, result, 0, result.size)
-        }
-        return result
+        return pData
     }
 
     override fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {

@@ -48,8 +48,8 @@ internal fun arrayxor(data: IntArray, offset: Int, xor: IntArray) {
     for (n in xor.indices) data[offset + n] = data[offset + n] xor xor[n]
 }
 
-internal fun arrayxor(data: ByteArray, offset: Int, size: Int, xor: ByteArray) {
-    for (n in 0 until size) data[offset + n] = data[offset + n] xor xor[n % xor.size]
+internal fun arrayxor(data: ByteArray, offset: Int, size: Int, xor: ByteArray, xoroffset: Int) {
+    for (n in 0 until size) data[offset + n] = data[offset + n] xor xor[xoroffset + n]
 }
 
 
