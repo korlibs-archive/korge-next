@@ -94,12 +94,7 @@ private object CipherModePCBC : CipherModeIV("PCBC") {
 private object CipherModeCFB : CipherModeBase("CFB") {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         val blockSize = cipher.blockSize
-        var pData = padding.add(data, blockSize)
-        val dataSize = pData.size
-        if (dataSize % blockSize != 0) {
-            pData = Padding.padding(pData, blockSize, CipherPadding.ZeroPadding)
-        }
-
+        val pData = padding.add(data, blockSize)
         val ivd = getIV(iv, blockSize)
         val cipherText = ByteArray(blockSize)
 
@@ -117,42 +112,25 @@ private object CipherModeCFB : CipherModeBase("CFB") {
     }
 
     override fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
-        val dataSize = data.size
-        var pData = data
-        if (dataSize % cipher.blockSize != 0) {
-            pData = Padding.padding(data, cipher.blockSize, CipherPadding.ZeroPadding)
-        }
+        val pData = data
+        val blockSize = cipher.blockSize
+        val ivd = getIV(iv, cipher.blockSize)
+        val plainText = ByteArray(blockSize)
+        val cipherText = ByteArray(blockSize)
 
-        val blockSizeD4 = cipher.blockSizeD4
-        val words = pData.toIntArray()
-        val wordsLength = words.size
-        val ivWords = getIV(iv, cipher.blockSize).toIntArray()
-        val plainText = IntArray(blockSizeD4)
-        val cipherText = IntArray(blockSizeD4)
+        cipher.encrypt(ivd)
+        arraycopy(ivd, 0, cipherText, 0, blockSize)
+        for (n in pData.indices step blockSize) {
+            arraycopy(cipherText, 0, plainText, 0, blockSize)
+            arrayxor(plainText, 0, blockSize, pData, n)
 
-        // @TODO: Is this correct?
-        cipher.encryptBlock(ivWords, 0)
-        arraycopy(ivWords, 0, cipherText, 0, blockSizeD4)
-        for (n in 0 until wordsLength step blockSizeD4) {
-            plainText[0] = cipherText[0] xor words[n + 0]
-            plainText[1] = cipherText[1] xor words[n + 1]
-            plainText[2] = cipherText[2] xor words[n + 2]
-            plainText[3] = cipherText[3] xor words[n + 3]
-
-            arraycopy(words, n, cipherText, 0, blockSizeD4)
-            arraycopy(plainText, 0, words, n, blockSizeD4)
-            if (n + 4 < wordsLength) {
-                // @TODO: Is this correct?
-                cipher.encryptBlock(cipherText, 0)
+            arraycopy(pData, n, cipherText, 0, blockSize)
+            arraycopy(plainText, 0, pData, n, blockSize)
+            if (n + blockSize < pData.size) {
+                cipher.encrypt(cipherText)
             }
         }
-        val wordsData = words.toByteArray()
-        var result = wordsData
-        if (dataSize < wordsData.size) {
-            result = ByteArray(dataSize)
-            arraycopy(wordsData, 0, result, 0, result.size)
-        }
-        return Padding.removePadding(result, padding)
+        return Padding.removePadding(pData, padding)
     }
 }
 
