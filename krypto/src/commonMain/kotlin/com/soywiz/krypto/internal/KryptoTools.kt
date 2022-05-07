@@ -1,5 +1,7 @@
 package com.soywiz.krypto.internal
 
+import kotlin.experimental.xor
+
 internal inline fun Int.ext8(offset: Int) = (this ushr offset) and 0xFF
 
 internal fun Int.rotateRight(amount: Int): Int = (this ushr amount) or (this shl (32 - amount))
@@ -37,6 +39,14 @@ internal fun getIV(srcIV: ByteArray?, blockSize: Int): ByteArray {
         arraycopy(srcIV, 0, dstIV, 0, min)
     }
     return dstIV
+}
+
+internal fun arrayxor(data: ByteArray, offset: Int, xor: ByteArray) {
+    for (n in xor.indices) data[offset + n] = data[offset + n] xor xor[n]
+}
+
+internal fun arrayxor(data: ByteArray, offset: Int, size: Int, xor: ByteArray) {
+    for (n in 0 until size) data[offset + n] = data[offset + n] xor xor[n % xor.size]
 }
 
 
