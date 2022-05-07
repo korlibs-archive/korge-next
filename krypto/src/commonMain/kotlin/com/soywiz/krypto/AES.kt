@@ -1,7 +1,10 @@
 package com.soywiz.krypto
 
+import com.soywiz.krypto.internal.*
 import com.soywiz.krypto.internal.arraycopy
 import com.soywiz.krypto.internal.ext8
+import com.soywiz.krypto.internal.getInt
+import com.soywiz.krypto.internal.setInt
 
 @Suppress("UNUSED_CHANGED_VALUE")
 /**
@@ -11,7 +14,7 @@ import com.soywiz.krypto.internal.ext8
  * code.google.com/p/crypto-js/wiki/License
  */
 class AES(val keyWords: IntArray) : Cipher {
-    override val blockSize: Int get() = AES.BLOCK_SIZE
+    override val blockSize: Int get() = BLOCK_SIZE
 
     private val keySize = keyWords.size
     private val numRounds = keySize + 6
@@ -183,33 +186,6 @@ class AES(val keyWords: IntArray) : Cipher {
             }
         }
 
-        private fun ByteArray.getu(offset: Int): Int = (this[offset].toInt() and 0xFF)
-
-        private fun ByteArray.getInt(offset: Int): Int =
-            (getu(offset + 0) shl 24) or (getu(offset + 1) shl 16) or (getu(offset + 2) shl 8) or (getu(offset + 3) shl 0)
-
-        private fun ByteArray.setInt(offset: Int, value: Int) {
-            this[offset + 0] = ((value shr 24) and 0xFF).toByte()
-            this[offset + 1] = ((value shr 16) and 0xFF).toByte()
-            this[offset + 2] = ((value shr 8) and 0xFF).toByte()
-            this[offset + 3] = ((value shr 0) and 0xFF).toByte()
-        }
-
-        private fun ByteArray.toIntArray(): IntArray =
-            IntArray(size / 4).also { for (n in it.indices) it[n] = getInt(n * 4) }
-
-        private fun IntArray.toByteArray(): ByteArray =
-            ByteArray(size * 4).also { for (n in indices) it.setInt(n * 4, this[n]) }
-
-        private fun getIV(srcIV: ByteArray?): ByteArray {
-            val dstIV = ByteArray(16)
-            srcIV?.apply {
-                val min = if (size < dstIV.size) size else dstIV.size
-                arraycopy(srcIV, 0, dstIV, 0, min)
-            }
-            return dstIV
-        }
-
         fun encryptAes128Cbc(data: ByteArray, key: ByteArray, iv: ByteArray = ByteArray(16), padding: Padding = CipherPadding.NoPadding): ByteArray {
             return encryptAesCbc(data, key, iv, padding)
         }
@@ -229,33 +205,31 @@ class AES(val keyWords: IntArray) : Cipher {
             //TODO()
             val pData = Padding.padding(data, BLOCK_SIZE, padding)
             val aes = AES(key)
-            val words = pData.toIntArray()
-            val wordsLength = words.size
-            val ivWords = getIV(iv).toIntArray()
+            val ivWords = getIV(iv)
 
-            if (words.size % 4 != 0) {
+            if (pData.size % BLOCK_SIZE != 0) {
                 throw IllegalArgumentException("Data is not multiple of $BLOCK_SIZE, and padding was set to ${CipherPadding.NoPadding}")
             }
 
-            var s0 = ivWords[0]
-            var s1 = ivWords[1]
-            var s2 = ivWords[2]
-            var s3 = ivWords[3]
+            var s0 = ivWords.getInt(0 * 4)
+            var s1 = ivWords.getInt(1 * 4)
+            var s2 = ivWords.getInt(2 * 4)
+            var s3 = ivWords.getInt(3 * 4)
 
-            for (n in 0 until wordsLength step 4) {
-                words[n + 0] = words[n + 0] xor s0
-                words[n + 1] = words[n + 1] xor s1
-                words[n + 2] = words[n + 2] xor s2
-                words[n + 3] = words[n + 3] xor s3
+            for (n in pData.indices step BLOCK_SIZE) {
+                pData.setInt(n + 0 * 4, pData.getInt(n + 0 * 4) xor s0)
+                pData.setInt(n + 1 * 4, pData.getInt(n + 1 * 4) xor s1)
+                pData.setInt(n + 2 * 4, pData.getInt(n + 2 * 4) xor s2)
+                pData.setInt(n + 3 * 4, pData.getInt(n + 3 * 4) xor s3)
 
-                aes.encryptBlock(words, n)
+                aes.encryptBlock(pData, n)
 
-                s0 = words[n + 0]
-                s1 = words[n + 1]
-                s2 = words[n + 2]
-                s3 = words[n + 3]
+                s0 = pData.getInt(n + 0 * 4)
+                s1 = pData.getInt(n + 1 * 4)
+                s2 = pData.getInt(n + 2 * 4)
+                s3 = pData.getInt(n + 3 * 4)
             }
-            return words.toByteArray()
+            return pData
         }
 
         fun decryptAesCbc(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray {
