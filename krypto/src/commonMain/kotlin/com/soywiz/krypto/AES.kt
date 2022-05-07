@@ -201,7 +201,7 @@ class AES(val keyWords: IntArray) : Cipher {
             AES(key)[CipherMode.ECB, padding].decrypt(data)
 
         fun encryptAesCbc(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray {
-            //return AES(key)[CipherMode.CBC, padding].encrypt(data, iv = iv)
+            //return AES(key)[CipherMode.CBC, padding, iv].encrypt(data)
             //TODO()
             val pData = Padding.padding(data, BLOCK_SIZE, padding)
             val aes = AES(key)
