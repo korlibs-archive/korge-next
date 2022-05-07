@@ -78,31 +78,15 @@ private object CipherModePCBC : CipherModeIV("PCBC") {
     }
 
     override fun coreDecrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
-        val ivWords = ivb.toIntArray()
-        val cipherText = IntArray(4)
-
-        var s0 = ivWords[0]
-        var s1 = ivWords[1]
-        var s2 = ivWords[2]
-        var s3 = ivWords[3]
+        val blockSize = cipher.blockSize
+        val cipherText = ByteArray(cipher.blockSize)
 
         for (n in pData.indices step cipher.blockSize) {
-            cipherText[0] = pData.getInt(n + 0 * 4)
-            cipherText[1] = pData.getInt(n + 1 * 4)
-            cipherText[2] = pData.getInt(n + 2 * 4)
-            cipherText[3] = pData.getInt(n + 3 * 4)
-
+            arraycopy(pData, n, cipherText, 0, blockSize)
             cipher.decrypt(pData, n, cipher.blockSize)
-
-            pData.setInt(n + 0 * 4, pData.getInt(n + 0 * 4) xor s0)
-            pData.setInt(n + 1 * 4, pData.getInt(n + 1 * 4) xor s1)
-            pData.setInt(n + 2 * 4, pData.getInt(n + 2 * 4) xor s2)
-            pData.setInt(n + 3 * 4, pData.getInt(n + 3 * 4) xor s3)
-
-            s0 = pData.getInt(n + 0 * 4) xor cipherText[0]
-            s1 = pData.getInt(n + 1 * 4) xor cipherText[1]
-            s2 = pData.getInt(n + 2 * 4) xor cipherText[2]
-            s3 = pData.getInt(n + 3 * 4) xor cipherText[3]
+            arrayxor(pData, n, ivb)
+            arraycopy(pData, n, ivb, 0, blockSize)
+            arrayxor(ivb, 0, cipherText)
         }
     }
 }
