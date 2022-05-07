@@ -316,21 +316,14 @@ private object CipherModeOFB : CipherModeBase("OFB") {
 }
 
 // https://github.com/Jens-G/haxe-crypto/blob/dcf6d994773abba80b0720b2f5e9d5b26de0dbe3/src/com/hurlant/crypto/symmetric/mode/CTRMode.hx
-private object CipherModeCTR : CipherModeCore("CTR") {
-    override fun coreEncrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
+private object CipherModeCTR : CipherModeCoreDE("CTR") {
+    override fun core(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
         val blockSize = cipher.blockSize
+        val temp = ByteArray(ivb.size)
         for (n in pData.indices step blockSize) {
-            cipher.encrypt(pData, n, blockSize)
-            arrayxor(pData, n, ivb)
-            updateIV(ivb, blockSize)
-        }
-    }
-
-    override fun coreDecrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
-        val blockSize = cipher.blockSize
-        for (n in pData.indices step blockSize) {
-            arrayxor(pData, n, ivb)
-            cipher.decrypt(pData, n, blockSize)
+            arraycopy(ivb, 0, temp, 0, temp.size)
+            cipher.encrypt(temp, 0, blockSize)
+            arrayxor(pData, n, temp)
             updateIV(ivb, blockSize)
         }
     }
