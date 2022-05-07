@@ -10,6 +10,7 @@ interface CipherMode {
         val ECB: CipherMode get() = CipherModeECB
         val CBC: CipherMode get() = CipherModeCBC
         val PCBC: CipherMode get() = CipherModePCBC
+        val CFB: CipherMode get() = CipherModeCFB
     }
 
     fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray
@@ -154,5 +155,78 @@ private object CipherModePCBC : BaseCipherMode() {
             s3 = cdata.getInt(n + 3 * 4) xor cipherText[3]
         }
         return Padding.removePadding(cdata, padding)
+    }
+}
+
+private object CipherModeCFB : BaseCipherMode() {
+    override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
+        var pData = Padding.padding(data, cipher.blockSize, padding)
+        val dataSize = pData.size
+        if (dataSize % cipher.blockSize != 0) {
+            pData = Padding.padding(pData, cipher.blockSize, CipherPadding.ZeroPadding)
+        }
+
+        val words = pData.toIntArray()
+        val wordsLength = words.size
+        val ivWords = getIV(iv, cipher.blockSize).toIntArray()
+        val cipherText = IntArray(cipher.blockSizeD4)
+
+        cipher.encryptBlock(ivWords, 0)
+        arraycopy(ivWords, 0, cipherText, 0, cipher.blockSizeD4)
+        for (n in 0 until wordsLength step cipher.blockSizeD4) {
+            cipherText[0] = cipherText[0] xor words[n + 0]
+            cipherText[1] = cipherText[1] xor words[n + 1]
+            cipherText[2] = cipherText[2] xor words[n + 2]
+            cipherText[3] = cipherText[3] xor words[n + 3]
+
+            arraycopy(cipherText, 0, words, n, cipher.blockSizeD4)
+            if (n + 4 < wordsLength) {
+                cipher.encryptBlock(cipherText, 0)
+            }
+        }
+        val wordsData = words.toByteArray()
+        var result = wordsData
+        if (dataSize < wordsData.size) {
+            result = ByteArray(dataSize)
+            arraycopy(wordsData, 0, result, 0, result.size)
+        }
+        return result
+    }
+
+    override fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
+        val dataSize = data.size
+        var pData = data
+        if (dataSize % cipher.blockSize != 0) {
+            pData = Padding.padding(data, cipher.blockSize, CipherPadding.ZeroPadding)
+        }
+
+        val blockSizeD4 = cipher.blockSizeD4
+        val words = pData.toIntArray()
+        val wordsLength = words.size
+        val ivWords = getIV(iv, cipher.blockSize).toIntArray()
+        val plainText = IntArray(blockSizeD4)
+        val cipherText = IntArray(blockSizeD4)
+
+        cipher.encryptBlock(ivWords, 0)
+        arraycopy(ivWords, 0, cipherText, 0, blockSizeD4)
+        for (n in 0 until wordsLength step blockSizeD4) {
+            plainText[0] = cipherText[0] xor words[n + 0]
+            plainText[1] = cipherText[1] xor words[n + 1]
+            plainText[2] = cipherText[2] xor words[n + 2]
+            plainText[3] = cipherText[3] xor words[n + 3]
+
+            arraycopy(words, n, cipherText, 0, blockSizeD4)
+            arraycopy(plainText, 0, words, n, blockSizeD4)
+            if (n + 4 < wordsLength) {
+                cipher.encryptBlock(cipherText, 0)
+            }
+        }
+        val wordsData = words.toByteArray()
+        var result = wordsData
+        if (dataSize < wordsData.size) {
+            result = ByteArray(dataSize)
+            arraycopy(wordsData, 0, result, 0, result.size)
+        }
+        return Padding.removePadding(result, padding)
     }
 }

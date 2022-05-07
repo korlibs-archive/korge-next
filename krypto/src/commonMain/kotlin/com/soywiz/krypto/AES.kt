@@ -186,9 +186,11 @@ class AES(val keyWords: IntArray) : Cipher {
             }
         }
 
+        @Deprecated("IV is set to a specific value")
         fun encryptAes128Cbc(data: ByteArray, key: ByteArray, iv: ByteArray = ByteArray(16), padding: Padding = CipherPadding.NoPadding): ByteArray =
             encryptAesCbc(data, key, iv, padding)
 
+        @Deprecated("IV is set to a specific value")
         fun decryptAes128Cbc(data: ByteArray, key: ByteArray, iv: ByteArray = ByteArray(16), padding: Padding = CipherPadding.NoPadding): ByteArray =
             decryptAesCbc(data, key, iv, padding)
 
@@ -210,77 +212,11 @@ class AES(val keyWords: IntArray) : Cipher {
         fun decryptAesPcbc(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray =
             AES(key)[CipherMode.PCBC, padding, iv].decrypt(data)
 
-        fun encryptAesCfb(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray {
-            var pData = Padding.padding(data, BLOCK_SIZE, padding)
-            val dataSize = pData.size
-            if (dataSize % BLOCK_SIZE != 0) {
-                pData = Padding.padding(pData, BLOCK_SIZE, CipherPadding.ZeroPadding)
-            }
+        fun encryptAesCfb(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray =
+            AES(key)[CipherMode.CFB, padding, iv].encrypt(data)
 
-            val aes = AES(key)
-            val words = pData.toIntArray()
-            val wordsLength = words.size
-            val ivWords = getIV(iv, BLOCK_SIZE).toIntArray()
-            val cipherText = IntArray(4)
-
-            aes.encryptBlock(ivWords, 0)
-            arraycopy(ivWords, 0, cipherText, 0, 4)
-            for (n in 0 until wordsLength step 4) {
-                cipherText[0] = cipherText[0] xor words[n + 0]
-                cipherText[1] = cipherText[1] xor words[n + 1]
-                cipherText[2] = cipherText[2] xor words[n + 2]
-                cipherText[3] = cipherText[3] xor words[n + 3]
-
-                arraycopy(cipherText, 0, words, n, 4)
-                if (n + 4 < wordsLength) {
-                    aes.encryptBlock(cipherText, 0)
-                }
-            }
-            val wordsData = words.toByteArray()
-            var result = wordsData
-            if (dataSize < wordsData.size) {
-                result = ByteArray(dataSize)
-                arraycopy(wordsData, 0, result, 0, result.size)
-            }
-            return result
-        }
-
-        fun decryptAesCfb(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray {
-            val dataSize = data.size
-            var pData = data
-            if (dataSize % BLOCK_SIZE != 0) {
-                pData = Padding.padding(data, BLOCK_SIZE, CipherPadding.ZeroPadding)
-            }
-
-            val aes = AES(key)
-            val words = pData.toIntArray()
-            val wordsLength = words.size
-            val ivWords = getIV(iv, BLOCK_SIZE).toIntArray()
-            val plainText = IntArray(4)
-            val cipherText = IntArray(4)
-
-            aes.encryptBlock(ivWords, 0)
-            arraycopy(ivWords, 0, cipherText, 0, 4)
-            for (n in 0 until wordsLength step 4) {
-                plainText[0] = cipherText[0] xor words[n + 0]
-                plainText[1] = cipherText[1] xor words[n + 1]
-                plainText[2] = cipherText[2] xor words[n + 2]
-                plainText[3] = cipherText[3] xor words[n + 3]
-
-                arraycopy(words, n, cipherText, 0, 4)
-                arraycopy(plainText, 0, words, n, 4)
-                if (n + 4 < wordsLength) {
-                    aes.encryptBlock(cipherText, 0)
-                }
-            }
-            val wordsData = words.toByteArray()
-            var result = wordsData
-            if (dataSize < wordsData.size) {
-                result = ByteArray(dataSize)
-                arraycopy(wordsData, 0, result, 0, result.size)
-            }
-            return Padding.removePadding(result, padding)
-        }
+        fun decryptAesCfb(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray =
+            AES(key)[CipherMode.CFB, padding, iv].decrypt(data)
 
         fun encryptAesOfb(data: ByteArray, key: ByteArray, iv: ByteArray, padding: Padding): ByteArray {
             var pData = Padding.padding(data, BLOCK_SIZE, padding)
