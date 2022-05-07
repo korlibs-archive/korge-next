@@ -19,14 +19,15 @@ interface CipherMode {
         val CTR: CipherMode get() = CipherModeCTR
     }
 
+    val name: String
     fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray
     fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray
 }
 
-private abstract class CipherModeBase : CipherMode {
+private abstract class CipherModeBase(override val name: String) : CipherMode {
 }
 
-private abstract class CipherModeCore : CipherModeBase() {
+private abstract class CipherModeCore(name: String) : CipherModeBase(name) {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         val ivb = getIV(iv, cipher.blockSize)
         val pData = padding.add(data, cipher.blockSize)
@@ -45,7 +46,7 @@ private abstract class CipherModeCore : CipherModeBase() {
     protected abstract fun coreDecrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray)
 }
 
-private abstract class CipherModeCoreDE : CipherModeCore() {
+private abstract class CipherModeCoreDE(name: String) : CipherModeCore(name) {
     final override fun coreEncrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
         core(pData, cipher, ivb)
     }
@@ -57,7 +58,7 @@ private abstract class CipherModeCoreDE : CipherModeCore() {
     protected abstract fun core(pData: ByteArray, cipher: Cipher, ivb: ByteArray)
 }
 
-private object CipherModeECB : CipherModeBase() {
+private object CipherModeECB : CipherModeBase("ECB") {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         val pData = padding.add(data, cipher.blockSize)
         cipher.encrypt(pData, 0, pData.size)
@@ -70,7 +71,7 @@ private object CipherModeECB : CipherModeBase() {
     }
 }
 
-private object CipherModeCBC : CipherModeBase() {
+private object CipherModeCBC : CipherModeBase("CBC") {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         val pData = padding.add(data, cipher.blockSize)
         val ivb = getIV(iv, cipher.blockSize)
@@ -103,7 +104,7 @@ private object CipherModeCBC : CipherModeBase() {
     }
 }
 
-private object CipherModePCBC : CipherModeBase() {
+private object CipherModePCBC : CipherModeBase("PCBC") {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         val pData = padding.add(data, cipher.blockSize)
         val ivWords = getIV(iv, cipher.blockSize).toIntArray()
@@ -167,7 +168,7 @@ private object CipherModePCBC : CipherModeBase() {
     }
 }
 
-private object CipherModeCFB : CipherModeBase() {
+private object CipherModeCFB : CipherModeBase("CFB") {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         var pData = padding.add(data, cipher.blockSize)
         val dataSize = pData.size
@@ -243,7 +244,7 @@ private object CipherModeCFB : CipherModeBase() {
     }
 }
 
-private object CipherModeOFB : CipherModeBase() {
+private object CipherModeOFB : CipherModeBase("OFB") {
     override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
         val blockSize = cipher.blockSize
         var pData = Padding.padding(data, blockSize, padding)
@@ -314,7 +315,7 @@ private object CipherModeOFB : CipherModeBase() {
 }
 
 // https://github.com/Jens-G/haxe-crypto/blob/dcf6d994773abba80b0720b2f5e9d5b26de0dbe3/src/com/hurlant/crypto/symmetric/mode/CTRMode.hx
-private object CipherModeCTR : CipherModeCore() {
+private object CipherModeCTR : CipherModeCore("CTR") {
     override fun coreEncrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
         val blockSize = cipher.blockSize
         for (n in pData.indices step blockSize) {
