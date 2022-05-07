@@ -2,10 +2,6 @@ package com.soywiz.krypto
 
 import com.soywiz.krypto.internal.*
 
-// @TODO: This file could be simplified a lot.
-// @TODO: Instead of using words in some, we can use bytes and vector operations
-// @TODO: Then we can abstract base functionality so the core function of each mode keeps simple and DRY
-
 /**
  * Symmetric Cipher Mode
  */
@@ -91,15 +87,13 @@ private object CipherModePCBC : CipherModeIV("PCBC") {
     }
 }
 
-private object CipherModeCFB : CipherModeBase("CFB") {
-    override fun encrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
+private object CipherModeCFB : CipherModeIV("CFB") {
+    override fun coreEncrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
         val blockSize = cipher.blockSize
-        val pData = padding.add(data, blockSize)
-        val ivd = getIV(iv, blockSize)
         val cipherText = ByteArray(blockSize)
 
-        cipher.encrypt(ivd)
-        arraycopy(ivd, 0, cipherText, 0, blockSize)
+        cipher.encrypt(ivb)
+        arraycopy(ivb, 0, cipherText, 0, blockSize)
         for (n in pData.indices step blockSize) {
             arrayxor(cipherText, 0, blockSize, pData, n)
             arraycopy(cipherText, 0, pData, n, blockSize)
@@ -108,18 +102,15 @@ private object CipherModeCFB : CipherModeBase("CFB") {
                 cipher.encrypt(cipherText)
             }
         }
-        return pData
     }
 
-    override fun decrypt(data: ByteArray, cipher: Cipher, padding: Padding, iv: ByteArray?): ByteArray {
-        val pData = data
+    override fun coreDecrypt(pData: ByteArray, cipher: Cipher, ivb: ByteArray) {
         val blockSize = cipher.blockSize
-        val ivd = getIV(iv, cipher.blockSize)
         val plainText = ByteArray(blockSize)
         val cipherText = ByteArray(blockSize)
 
-        cipher.encrypt(ivd)
-        arraycopy(ivd, 0, cipherText, 0, blockSize)
+        cipher.encrypt(ivb)
+        arraycopy(ivb, 0, cipherText, 0, blockSize)
         for (n in pData.indices step blockSize) {
             arraycopy(cipherText, 0, plainText, 0, blockSize)
             arrayxor(plainText, 0, blockSize, pData, n)
@@ -130,7 +121,6 @@ private object CipherModeCFB : CipherModeBase("CFB") {
                 cipher.encrypt(cipherText)
             }
         }
-        return Padding.removePadding(pData, padding)
     }
 }
 
