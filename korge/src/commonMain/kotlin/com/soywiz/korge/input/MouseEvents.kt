@@ -1,23 +1,32 @@
 package com.soywiz.korge.input
 
-import com.soywiz.kds.*
-import com.soywiz.klock.*
-import com.soywiz.korge.bitmapfont.*
-import com.soywiz.korge.component.*
+import com.soywiz.kds.Extra
+import com.soywiz.kds.extraProperty
+import com.soywiz.klock.DateTime
+import com.soywiz.klock.PerformanceCounter
+import com.soywiz.klock.TimeSpan
+import com.soywiz.klock.seconds
+import com.soywiz.korev.MouseButton
+import com.soywiz.korev.MouseEvent
+import com.soywiz.korev.preventDefault
+import com.soywiz.korge.bitmapfont.drawText
+import com.soywiz.korge.component.MouseComponent
+import com.soywiz.korge.component.UpdateComponentWithViews
+import com.soywiz.korge.component.attach
+import com.soywiz.korge.component.detach
+import com.soywiz.korge.internal.KorgeInternal
 import com.soywiz.korge.view.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.util.*
-import com.soywiz.korma.geom.*
-import com.soywiz.korev.*
-import com.soywiz.korge.internal.*
-import com.soywiz.korge.scene.*
-import com.soywiz.korgw.*
-import com.soywiz.korio.lang.*
+import com.soywiz.korgw.GameWindow
+import com.soywiz.korim.bitmap.Bitmaps
+import com.soywiz.korim.color.RGBA
+import com.soywiz.korio.async.Signal
+import com.soywiz.korio.async.launchImmediately
+import com.soywiz.korio.lang.Closeable
+import com.soywiz.korio.util.Once
+import com.soywiz.korma.geom.Point
 import kotlin.math.max
 import kotlin.native.concurrent.ThreadLocal
-import kotlin.reflect.*
+import kotlin.reflect.KProperty1
 
 @OptIn(KorgeInternal::class)
 class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixin() {
@@ -214,14 +223,14 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
         _mouseEvent(MouseEvents::scrollOutside, handler)
 
 
-    // Returns the MouseEvent and the Closeable after adding the handler to the
-    // corresponding Signal.
+    // Returns the Closeable after adding the handler to the corresponding Signal
+    // in the MouseEvents.
     @PublishedApi
     internal inline fun _mouseEventCloseable(
         prop: KProperty1<MouseEvents, Signal<MouseEvents>>,
         noinline handler: suspend (MouseEvents) -> Unit
-    ): Pair<MouseEvents, Closeable> {
-        return this to prop.get(this)
+    ): Closeable {
+        return prop.get(this)
             .add { launchImmediately(this.coroutineContext) { handler(it) } }
     }
 

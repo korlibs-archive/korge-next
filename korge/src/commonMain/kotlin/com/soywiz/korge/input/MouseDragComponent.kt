@@ -129,9 +129,9 @@ private fun <T : View> T.onMouseDragInternal(
     lateinit var onUpAnywhereCloseable: Closeable
     lateinit var onMoveAnywhereCloseable: Closeable
     this.mouse {
-        onDownCloseable = onDownCloseable { handle(it, MouseDragState.START) }.second
-        onUpAnywhereCloseable = onUpAnywhereCloseable { handle(it, MouseDragState.END) }.second
-        onMoveAnywhereCloseable = onMoveAnywhereCloseable { handle(it, MouseDragState.DRAG) }.second
+        onDownCloseable = onDownCloseable { handle(it, MouseDragState.START) }
+        onUpAnywhereCloseable = onUpAnywhereCloseable { handle(it, MouseDragState.END) }
+        onMoveAnywhereCloseable = onMoveAnywhereCloseable { handle(it, MouseDragState.DRAG) }
     }
     return this to OnMouseDragCloseable(
         onDownCloseable,
