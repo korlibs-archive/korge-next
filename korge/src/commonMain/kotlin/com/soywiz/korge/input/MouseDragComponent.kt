@@ -1,7 +1,11 @@
 package com.soywiz.korge.input
 
-import com.soywiz.klock.*
-import com.soywiz.korge.view.*
+import com.soywiz.klock.DateTime
+import com.soywiz.klock.TimeProvider
+import com.soywiz.klock.TimeSpan
+import com.soywiz.korge.view.View
+import com.soywiz.korge.view.Views
+import com.soywiz.korge.view.xy
 import com.soywiz.korio.lang.Closeable
 import com.soywiz.korma.geom.Point
 
@@ -75,7 +79,7 @@ data class OnMouseDragCloseable(
     }
 }
 
-fun <T : View> T.onMouseDragCloseable(
+private fun <T : View> T.onMouseDragInternal(
     timeProvider: TimeProvider = TimeProvider, info:
     MouseDragInfo = MouseDragInfo(this), callback: Views.(MouseDragInfo) -> Unit
 ): Pair<T, OnMouseDragCloseable> {
@@ -136,11 +140,16 @@ fun <T : View> T.onMouseDragCloseable(
     )
 }
 
+fun <T : View> T.onMouseDragCloseable(
+    timeProvider: TimeProvider = TimeProvider, info:
+    MouseDragInfo = MouseDragInfo(this), callback: Views.(MouseDragInfo) -> Unit
+): OnMouseDragCloseable = onMouseDragInternal(timeProvider, info, callback).second
+
 fun <T : View> T.onMouseDrag(
     timeProvider: TimeProvider = TimeProvider,
     info: MouseDragInfo = MouseDragInfo(this),
     callback: Views.(MouseDragInfo) -> Unit
-): T = onMouseDragCloseable(timeProvider, info, callback).first
+): T = onMouseDragInternal(timeProvider, info, callback).first
 
 open class DraggableInfo(view: View) : MouseDragInfo(view) {
     val viewStartXY = Point()
@@ -204,14 +213,14 @@ data class DraggableCloseable(
     }
 }
 
-fun <T : View> T.draggableCloseable(
+private fun <T : View> T.draggableInternal(
     selector: View = this,
     autoMove: Boolean = true,
     onDrag: ((DraggableInfo) -> Unit)? = null
 ): Pair<T, DraggableCloseable> {
     val view = this
     val info = DraggableInfo(view)
-    val (_, onMouseDragCloseable) = selector.onMouseDragCloseable(info = info) {
+    val onMouseDragCloseable = selector.onMouseDragCloseable(info = info) {
         if (info.start) {
             info.viewStartXY.copyFrom(view.pos)
         }
@@ -231,8 +240,14 @@ fun <T : View> T.draggableCloseable(
     return this to DraggableCloseable(onMouseDragCloseable)
 }
 
+fun <T : View> T.draggableCloseable(
+    selector: View = this,
+    autoMove: Boolean = true,
+    onDrag: ((DraggableInfo) -> Unit)? = null
+): DraggableCloseable = draggableInternal(selector, autoMove, onDrag).second
+
 fun <T : View> T.draggable(
     selector: View = this,
     autoMove: Boolean = true,
     onDrag: ((DraggableInfo) -> Unit)? = null
-): T = draggableCloseable(selector, autoMove, onDrag).first
+): T = draggableInternal(selector, autoMove, onDrag).first

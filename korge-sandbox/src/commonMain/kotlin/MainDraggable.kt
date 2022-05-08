@@ -13,7 +13,7 @@ suspend fun Stage.mainDraggable() {
     uiCheckBox(text = "Toggle dragging") {
         onChange {
             if (it.checked) {
-                closeable = draggableRect.draggableCloseable().second
+                closeable = draggableRect.draggableCloseable()
             } else {
                 closeable?.close()
             }
