@@ -112,18 +112,15 @@ inline operator fun KMutableProperty0<IPoint>.get(path: VectorPath): V2<IPoint> 
 inline operator fun KMutableProperty0<IPoint>.get(range: IPointArrayList): V2<IPoint> {
     val temp = Point()
     return V2(
-        this, this.get(), range.getIPoint(range.size - 1), { ratio, start, end ->
+        this, temp, temp, { ratio, _, _ ->
             val ratioIndex = ratio * (range.size - 1)
             val index = ratioIndex.toIntFloor()
+            val index1 = (index + 1).coerceAtMost(range.size)
             val sratio = fract(ratioIndex)
-            val p0 = range.getIPoint(index)
-            val p1 = range.getIPoint((index + 1).coerceAtMost(range.size))
             temp.setTo(
-                sratio.interpolate(p0.x, p1.x),
-                sratio.interpolate(p0.y, p1.y)
+                sratio.interpolate(range.getX(index), range.getX(index1)),
+                sratio.interpolate(range.getY(index), range.getY(index1))
             )
-            //println("ratio: $ratio, start=$start, end=$end")
-            temp
         }, includeStart = false
     )
 }
