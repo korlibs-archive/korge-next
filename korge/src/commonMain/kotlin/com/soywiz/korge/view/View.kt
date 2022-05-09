@@ -253,7 +253,11 @@ abstract class View internal constructor(
     }
 
     /** Position of the view. **@NOTE**: If [pos] coordinates are manually changed, you should call [View.invalidateMatrix] later to keep the matrix in sync */
-    var pos: Point
+    var pos: IPoint
+        get() = Point(x, y)
+        set(value) = setXY(value.x, value.y)
+
+    var posOpt: Point
         get() {
             _pos.setTo(x, y)
             return _pos
