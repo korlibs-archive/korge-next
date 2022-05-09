@@ -1,8 +1,12 @@
 package com.soywiz.korge.tween
 
 import com.soywiz.klock.*
+import com.soywiz.kmem.fract
+import com.soywiz.kmem.toIntFloor
 import com.soywiz.korim.color.*
 import com.soywiz.korma.geom.*
+import com.soywiz.korma.geom.shape.getPoints2
+import com.soywiz.korma.geom.vector.VectorPath
 import com.soywiz.korma.interpolation.*
 import kotlin.jvm.*
 import kotlin.reflect.*
@@ -102,6 +106,27 @@ internal fun _interpolateTimeSpan(ratio: Double, l: TimeSpan, r: TimeSpan): Time
 //inline operator fun KMutableProperty0<Float>.get(end: Number) = V2(this, this.get(), end.toFloat(), ::_interpolateFloat)
 //inline operator fun KMutableProperty0<Float>.get(initial: Number, end: Number) =
 //	V2(this, initial.toFloat(), end.toFloat(), ::_interpolateFloat)
+
+inline operator fun KMutableProperty0<IPoint>.get(path: VectorPath): V2<IPoint> = this[path.getPoints2()]
+
+inline operator fun KMutableProperty0<IPoint>.get(range: IPointArrayList): V2<IPoint> {
+    val temp = Point()
+    return V2(
+        this, this.get(), range.getIPoint(range.size - 1), { ratio, start, end ->
+            val ratioIndex = ratio * (range.size - 1)
+            val index = ratioIndex.toIntFloor()
+            val sratio = fract(ratioIndex)
+            val p0 = range.getIPoint(index)
+            val p1 = range.getIPoint((index + 1).coerceAtMost(range.size))
+            temp.setTo(
+                sratio.interpolate(p0.x, p1.x),
+                sratio.interpolate(p0.y, p1.y)
+            )
+            //println("ratio: $ratio, start=$start, end=$end")
+            temp
+        }, includeStart = false
+    )
+}
 
 inline operator fun KMutableProperty0<Double>.get(end: Double) = V2(this, this.get(), end, ::_interpolate, includeStart = false)
 inline operator fun KMutableProperty0<Double>.get(initial: Double, end: Double) = V2(this, initial, end, ::_interpolate, true)
