@@ -10,9 +10,8 @@ import com.soywiz.korge.view.filter.ComposedFilter
 import com.soywiz.korge.view.filter.Filter
 import com.soywiz.korim.color.ColorAdd
 import com.soywiz.korim.color.Colors
-import com.soywiz.korma.geom.Matrix
 
-// @TODO: WIP. Fails when resizing the window
+// @TODO: WIP. We should only read/render/clip the masked AABB area
 var View.backdropFilter: Filter?
     get() = getRenderPhaseOfTypeOrNull<ViewRenderPhaseBackdropFilter>()?.filter
     set(value) {
@@ -54,9 +53,7 @@ class ViewRenderPhaseBackdropFilter(var filter: Filter) : ViewRenderPhase {
         ctx.renderToTexture(bgrtex!!.width, bgrtex!!.height, {
             ctx.useBatcher { batcher ->
                 ctx.renderToTexture(bgrtex!!.width, bgrtex!!.height, {
-                    //println(ctx.batch.viewMat2D)
-                    //batcher.setViewMatrixTemp(view.parent!!.globalMatrix) {
-                    batcher.setViewMatrixTemp(Matrix()) {
+                    batcher.setViewMatrixTemp(view.parent!!.globalMatrixInv) {
                         super.render(view, ctx)
                     }
                 }) { mask ->
@@ -72,7 +69,7 @@ class ViewRenderPhaseBackdropFilter(var filter: Filter) : ViewRenderPhase {
                 }
             }
         }) {
-            filter.render(ctx, Matrix(), it, it.width, it.height, ColorAdd.NEUTRAL, Colors.WHITE, BlendMode.NORMAL, filter.recommendedFilterScale)
+            filter.render(ctx, view.parent!!.globalMatrix, it, it.width, it.height, ColorAdd.NEUTRAL, Colors.WHITE, BlendMode.NORMAL, filter.recommendedFilterScale)
         }
     }
 

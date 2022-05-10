@@ -1172,7 +1172,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     }
 
     fun pushRenderBuffer(renderBuffer: BaseRenderBuffer) {
-        renderBufferStack.add(currentRenderBufferOrMain)
+        renderBufferStack.add(currentRenderBuffer)
         setRenderBuffer(renderBuffer)
     }
 
