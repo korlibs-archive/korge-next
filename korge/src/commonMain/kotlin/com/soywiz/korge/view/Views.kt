@@ -129,29 +129,25 @@ class Views constructor(
         get() = virtualHeight.toDouble()
         set(value) { virtualHeight = value.toInt() }
 
-    @KorgeExperimental
-	var actualVirtualLeft = 0; private set
-    @KorgeExperimental
-	var actualVirtualTop = 0; private set
+    val actualVirtualBounds = Rectangle()
+
+    @KorgeExperimental val actualVirtualLeft: Int get() = actualVirtualBounds.left.toIntRound()
+    @KorgeExperimental val actualVirtualTop: Int get() = actualVirtualBounds.top.toIntRound()
+    @KorgeExperimental val actualVirtualWidth: Int get() = actualVirtualBounds.width.toIntRound()
+    @KorgeExperimental val actualVirtualHeight: Int get() = actualVirtualBounds.height.toIntRound()
+    //@KorgeExperimental var actualVirtualWidth = DefaultViewport.WIDTH; private set
+    //@KorgeExperimental var actualVirtualHeight = DefaultViewport.HEIGHT; private set
+
+
+	override val virtualLeft: Double get() = actualVirtualBounds.left
+	override val virtualTop: Double get() = actualVirtualBounds.top
+	override val virtualRight: Double get() = actualVirtualBounds.right
+	override val virtualBottom: Double get() = actualVirtualBounds.bottom
 
     @KorgeExperimental
-	var actualVirtualWidth = DefaultViewport.WIDTH; private set
+    val actualVirtualRight: Double get() = actualVirtualBounds.right
     @KorgeExperimental
-	var actualVirtualHeight = DefaultViewport.HEIGHT; private set
-
-    //@KorgeExperimental
-	override val virtualLeft get() = -actualVirtualLeft * views.stage.scaleX
-    //@KorgeExperimental
-	override val virtualTop get() = -actualVirtualTop * views.stage.scaleY
-    //@KorgeExperimental
-	override val virtualRight get() = virtualLeft + virtualWidth * views.stage.scaleX
-    //@KorgeExperimental
-	override val virtualBottom get() = virtualTop + virtualHeight * views.stage.scaleY
-
-    @KorgeExperimental
-    val actualVirtualRight get() = actualVirtualWidth
-    @KorgeExperimental
-    val actualVirtualBottom get() = actualVirtualHeight
+    val actualVirtualBottom: Double get() = actualVirtualBounds.bottom
 
 	private val closeables = arrayListOf<AsyncCloseable>()
 
@@ -246,8 +242,12 @@ class Views constructor(
         installFpsDebugOverlay()
     }
 
-    val windowToGlobalMatrix: Matrix get() = renderContext.projectionMatrixTransformInv
-    val globalToWindowMatrix: Matrix get() = renderContext.projectionMatrixTransform
+    val windowToGlobalMatrix: Matrix = Matrix()
+    val globalToWindowMatrix: Matrix = Matrix()
+
+    val windowToGlobalScaleX: Double get() = windowToGlobalMatrix.a
+    val windowToGlobalScaleY: Double get() = windowToGlobalMatrix.d
+    val windowToGlobalScaleAvg: Double get() = (windowToGlobalScaleX + windowToGlobalScaleY) * 0.5
 
     fun windowToGlobalCoords(pos: IPoint, out: Point = Point()): Point = windowToGlobalMatrix.transform(pos, out)
     fun windowToGlobalCoords(x: Double, y: Double, out: Point = Point()): Point = windowToGlobalMatrix.transform(x, y, out)
@@ -334,9 +334,12 @@ class Views constructor(
         stage.renderDebug(renderContext)
 
 		if (debugViews) {
-			debugHandlers.fastForEach { debugHandler ->
-				this.debugHandler(renderContext)
-			}
+            //renderContext.setTemporalProjectionMatrixTransform(Matrix()) {
+            run {
+                debugHandlers.fastForEach { debugHandler ->
+                    this.debugHandler(renderContext)
+                }
+            }
 		}
 
         onAfterRender(renderContext)
@@ -401,26 +404,25 @@ class Views constructor(
 		val ratioX = targetSize.width.toDouble() / virtualWidth.toDouble()
 		val ratioY = targetSize.height.toDouble() / virtualHeight.toDouble()
 
-		actualVirtualWidth = (actualSize.width / ratioX).toIntRound()
-		actualVirtualHeight = (actualSize.height / ratioY).toIntRound()
+		val actualVirtualWidth = (actualSize.width / ratioX).toIntRound()
+        val actualVirtualHeight = (actualSize.height / ratioY).toIntRound()
 
         // @TODO: Create a parent to stage that is "invisible" in code but that affect the matrix so we don't adjust stage stuff?
-        renderContext.projectionMatrixTransform.identity()
-        renderContext.projectionMatrixTransform.prescale(ratioX, ratioY)
-        renderContext.projectionMatrixTransform.pretranslate(
+        globalToWindowMatrix.identity()
+        globalToWindowMatrix.prescale(ratioX, ratioY)
+        globalToWindowMatrix.pretranslate(
             ((actualVirtualWidth - virtualWidth) * anchor.sx).toIntRound().toDouble(),
             ((actualVirtualHeight - virtualHeight) * anchor.sy).toIntRound().toDouble(),
         )
-        renderContext.projectionMatrixTransformInv.invert(renderContext.projectionMatrixTransform)
-        /*
-		stage.scaleX = ratioX
-		stage.scaleY = ratioY
-		stage.x = (((actualVirtualWidth - virtualWidth) * anchor.sx) * ratioX).toIntRound().toDouble()
-		stage.y = (((actualVirtualHeight - virtualHeight) * anchor.sy) * ratioY).toIntRound().toDouble()
-        */
+        windowToGlobalMatrix.invert(globalToWindowMatrix)
+        renderContext.projectionMatrixTransform.copyFrom(globalToWindowMatrix)
+        renderContext.projectionMatrixTransformInv.copyFrom(windowToGlobalMatrix)
 
-		actualVirtualLeft = -(stage.x / ratioX).toIntRound()
-		actualVirtualTop = -(stage.y / ratioY).toIntRound()
+        val tl = windowToGlobalCoords(0.0, 0.0)
+        val br = windowToGlobalCoords(actualSize.width.toDouble(), actualSize.height.toDouble())
+        actualVirtualBounds.setToBounds(tl.x, tl.y, br.x, br.y)
+
+        //println("virtualSize=$virtualSize, targetSize=$targetSize, actualVirtualBounds=${actualVirtualBounds}")
 
         resizedEvent.apply {
             this.width = actualSize.width

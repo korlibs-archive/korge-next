@@ -462,6 +462,11 @@ suspend fun mainCompression() {
 }
 
 suspend fun Stage.mainUIImageTester() {
+    solidRect(10, 10, Colors.RED).anchor(Anchor.TOP_LEFT).dockedTo(Anchor.TOP_LEFT)
+    solidRect(10, 10, Colors.GREEN).anchor(Anchor.TOP_RIGHT).dockedTo(Anchor.TOP_RIGHT)
+    solidRect(10, 10, Colors.BLUE).anchor(Anchor.BOTTOM_RIGHT).dockedTo(Anchor.BOTTOM_RIGHT)
+    solidRect(10, 10, Colors.PURPLE).anchor(Anchor.BOTTOM_LEFT).dockedTo(Anchor.BOTTOM_LEFT)
+
     val korimPng = resourcesVfs["korim.png"].readBitmapSlice()
     val bunnysPng = resourcesVfs["bunnys.png"].readBitmapSlice()
     val vampireAse = resourcesVfs["vampire.ase"].readBitmap(ASE).slice()

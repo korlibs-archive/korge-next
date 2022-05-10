@@ -58,8 +58,13 @@ class RenderContext constructor(
 
     inline fun <T> setTemporalProjectionMatrixTransform(m: Matrix, block: () -> T): T =
         this.projectionMatrixTransform.keepMatrix {
+            flush()
             this.projectionMatrixTransform.copyFrom(m)
-            block()
+            try {
+                block()
+            } finally {
+                flush()
+            }
         }
 
     var flipRenderTexture = true

@@ -45,7 +45,7 @@ internal fun ViewsContainer.installFpsDebugOverlay() {
         instanceCount += it
     }
 
-    views.addDebugRenderer { ctx -> ctx.setTemporalProjectionMatrixTransform(Matrix()) {
+    views.addDebugRenderer { ctx ->
         val scale = ctx.ag.computedPixelRatio * ctx.debugExtraFontScale
 
         val fontSize = 8.0 * scale
@@ -148,7 +148,7 @@ internal fun ViewsContainer.installFpsDebugOverlay() {
                 }
             }
         }
-    } }
+    }
 }
 
 private class TimeSlidingWindow(val capacity: Int) {
