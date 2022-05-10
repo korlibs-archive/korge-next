@@ -9,6 +9,7 @@ import com.soywiz.korge.internal.*
 import com.soywiz.korge.render.*
 import com.soywiz.korim.color.*
 import com.soywiz.korio.util.OS
+import com.soywiz.korma.geom.Matrix
 import com.soywiz.korma.math.*
 
 @OptIn(KorgeInternal::class)
@@ -44,7 +45,7 @@ internal fun ViewsContainer.installFpsDebugOverlay() {
         instanceCount += it
     }
 
-    views.addDebugRenderer { ctx ->
+    views.addDebugRenderer { ctx -> ctx.setTemporalProjectionMatrixTransform(Matrix()) {
         val scale = ctx.ag.computedPixelRatio * ctx.debugExtraFontScale
 
         val fontSize = 8.0 * scale
@@ -147,7 +148,7 @@ internal fun ViewsContainer.installFpsDebugOverlay() {
                 }
             }
         }
-    }
+    } }
 }
 
 private class TimeSlidingWindow(val capacity: Int) {

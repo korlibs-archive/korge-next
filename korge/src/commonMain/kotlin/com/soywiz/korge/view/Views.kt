@@ -246,6 +246,15 @@ class Views constructor(
         installFpsDebugOverlay()
     }
 
+    val windowToGlobalMatrix: Matrix get() = renderContext.projectionMatrixTransformInv
+    val globalToWindowMatrix: Matrix get() = renderContext.projectionMatrixTransform
+
+    fun windowToGlobalCoords(pos: IPoint, out: Point = Point()): Point = windowToGlobalMatrix.transform(pos, out)
+    fun windowToGlobalCoords(x: Double, y: Double, out: Point = Point()): Point = windowToGlobalMatrix.transform(x, y, out)
+
+    fun globalToWindowCoords(pos: IPoint, out: Point = Point()): Point = globalToWindowMatrix.transform(pos, out)
+    fun globalToWindowCoords(x: Double, y: Double, out: Point = Point()): Point = globalToWindowMatrix.transform(x, y, out)
+
 	fun dumpStats() {
 		stats.dump()
 	}
@@ -378,6 +387,7 @@ class Views constructor(
 		resized()
 	}
 
+
 	fun resized() {
 		//println("$e : ${views.ag.backWidth}x${views.ag.backHeight}")
 		val virtualWidth = virtualWidth
@@ -395,11 +405,19 @@ class Views constructor(
 		actualVirtualHeight = (actualSize.height / ratioY).toIntRound()
 
         // @TODO: Create a parent to stage that is "invisible" in code but that affect the matrix so we don't adjust stage stuff?
+        renderContext.projectionMatrixTransform.identity()
+        renderContext.projectionMatrixTransform.prescale(ratioX, ratioY)
+        renderContext.projectionMatrixTransform.pretranslate(
+            ((actualVirtualWidth - virtualWidth) * anchor.sx).toIntRound().toDouble(),
+            ((actualVirtualHeight - virtualHeight) * anchor.sy).toIntRound().toDouble(),
+        )
+        renderContext.projectionMatrixTransformInv.invert(renderContext.projectionMatrixTransform)
+        /*
 		stage.scaleX = ratioX
 		stage.scaleY = ratioY
-
 		stage.x = (((actualVirtualWidth - virtualWidth) * anchor.sx) * ratioX).toIntRound().toDouble()
 		stage.y = (((actualVirtualHeight - virtualHeight) * anchor.sy) * ratioY).toIntRound().toDouble()
+        */
 
 		actualVirtualLeft = -(stage.x / ratioX).toIntRound()
 		actualVirtualTop = -(stage.y / ratioY).toIntRound()

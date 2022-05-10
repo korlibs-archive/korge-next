@@ -54,6 +54,7 @@ suspend fun main() = Korge(
     //mainBitmapTexId()
     //mainFiltersSample()
     //mainKorviSample()
+    mainUIImageTester()
 
     /*
     val atlas = MutableAtlasUnit(4096)
