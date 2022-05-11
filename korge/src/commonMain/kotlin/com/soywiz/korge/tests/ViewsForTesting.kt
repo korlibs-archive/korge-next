@@ -105,8 +105,12 @@ open class ViewsForTesting(
 
     suspend fun mouseMoveTo(point: IPoint) = mouseMoveTo(point.x, point.y)
 
+    /**
+     * x, y in global/virtual coordinates
+     */
     suspend fun mouseMoveTo(x: Int, y: Int) {
-        gameWindow.dispatch(MouseEvent(type = MouseEvent.Type.MOVE, id = 0, x = x, y = y))
+        val pos = views.globalToWindowMatrix.transform(x, y)
+        gameWindow.dispatch(MouseEvent(type = MouseEvent.Type.MOVE, id = 0, x = pos.x.toInt(), y = pos.y.toInt()))
         //views.update(frameTime)
         simulateFrame(count = 2)
     }

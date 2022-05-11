@@ -35,7 +35,8 @@ suspend fun main() = Korge(
     multithreaded = true,
     //debugAg = true,
 ) {
-    mainGifAnimation()
+    mainClipping()
+    //mainGifAnimation()
     //mainDraggable()
     //mainSkybox()
     //mainHaptic()
@@ -54,7 +55,7 @@ suspend fun main() = Korge(
     //mainBitmapTexId()
     //mainFiltersSample()
     //mainKorviSample()
-    mainUIImageTester()
+    //mainUIImageTester()
 
     /*
     val atlas = MutableAtlasUnit(4096)

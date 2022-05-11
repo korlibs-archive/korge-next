@@ -25,6 +25,6 @@ class ViewFixedSizeContainerTest : ViewsForTesting(
         }) {
             stage.render(it)
         }
-        assertEquals("Scissor(x=235, y=105, width=150, height=150)", log.joinToString(","))
+        assertEquals("Scissor(x=234, y=105, width=150, height=150)", log.joinToString(","))
     }
 }

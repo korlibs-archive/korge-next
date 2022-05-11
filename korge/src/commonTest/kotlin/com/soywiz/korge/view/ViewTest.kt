@@ -61,7 +61,8 @@ class ViewTest {
                 [5]:Rectangle(x=540, y=300, w=448, h=480)
                 [6]:Rectangle(x=540, y=300, w=448, h=480)
                 [7]:Rectangle(x=2180, y=610, w=1792, h=960)
-                [8]:Rectangle(x=2180, y=610, w=1792, h=960)
+                [8]:null
+                [9]:Rectangle(x=540, y=300, w=448, h=480)
             """.trimIndent(),
             """
                 [1]:${leaf.getLocalBoundsOptimizedAnchored().toStringCompat()}
@@ -71,7 +72,8 @@ class ViewTest {
                 [5]:${leaf.getBounds(root).toStringCompat()}
                 [6]:${leaf.getGlobalBounds().toStringCompat()}
                 [7]:${leaf.getBounds(root, inclusive = true).toStringCompat()}
-                [8]:${leaf.getWindowBounds().toStringCompat()}
+                [8]:${leaf.getWindowBoundsOrNull()?.toStringCompat()}
+                [9]:${leaf.getWindowBounds().toStringCompat()}
             """.trimIndent()
         )
     }

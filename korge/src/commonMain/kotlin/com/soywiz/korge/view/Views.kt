@@ -131,6 +131,10 @@ class Views constructor(
 
     val actualVirtualBounds = Rectangle()
 
+    init {
+        actualVirtualBounds.setTo(0, 0, DefaultViewport.WIDTH, DefaultViewport.HEIGHT)
+    }
+
     @KorgeExperimental val actualVirtualLeft: Int get() = actualVirtualBounds.left.toIntRound()
     @KorgeExperimental val actualVirtualTop: Int get() = actualVirtualBounds.top.toIntRound()
     @KorgeExperimental val actualVirtualWidth: Int get() = actualVirtualBounds.width.toIntRound()
@@ -243,11 +247,17 @@ class Views constructor(
     }
 
     val windowToGlobalMatrix: Matrix = Matrix()
+    val windowToGlobalTransform: Matrix.Transform = Matrix.Transform()
     val globalToWindowMatrix: Matrix = Matrix()
+    val globalToWindowTransform: Matrix.Transform = Matrix.Transform()
 
-    val windowToGlobalScaleX: Double get() = windowToGlobalMatrix.a
-    val windowToGlobalScaleY: Double get() = windowToGlobalMatrix.d
-    val windowToGlobalScaleAvg: Double get() = (windowToGlobalScaleX + windowToGlobalScaleY) * 0.5
+    val windowToGlobalScaleX: Double get() = windowToGlobalTransform.scaleX
+    val windowToGlobalScaleY: Double get() = windowToGlobalTransform.scaleY
+    val windowToGlobalScaleAvg: Double get() = windowToGlobalTransform.scaleAvg
+
+    val globalToWindowScaleX: Double get() = globalToWindowTransform.scaleX
+    val globalToWindowScaleY: Double get() = globalToWindowTransform.scaleY
+    val globalToWindowScaleAvg: Double get() = globalToWindowTransform.scaleAvg
 
     fun windowToGlobalCoords(pos: IPoint, out: Point = Point()): Point = windowToGlobalMatrix.transform(pos, out)
     fun windowToGlobalCoords(x: Double, y: Double, out: Point = Point()): Point = windowToGlobalMatrix.transform(x, y, out)
@@ -417,6 +427,10 @@ class Views constructor(
         windowToGlobalMatrix.invert(globalToWindowMatrix)
         renderContext.projectionMatrixTransform.copyFrom(globalToWindowMatrix)
         renderContext.projectionMatrixTransformInv.copyFrom(windowToGlobalMatrix)
+
+        //
+        globalToWindowMatrix.decompose(globalToWindowTransform)
+        windowToGlobalMatrix.decompose(windowToGlobalTransform)
 
         val tl = windowToGlobalCoords(0.0, 0.0)
         val br = windowToGlobalCoords(actualSize.width.toDouble(), actualSize.height.toDouble())

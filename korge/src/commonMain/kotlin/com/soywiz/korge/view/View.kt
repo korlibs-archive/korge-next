@@ -1292,7 +1292,13 @@ abstract class View internal constructor(
     val windowBounds: Rectangle get() = getWindowBounds()
 
     /** Returns the global bounds of this object. Allows to specify an [out] [Rectangle] to prevent allocations. */
-    fun getWindowBounds(out: Rectangle = Rectangle()): Rectangle = getBounds(root, out, inclusive = true)
+    fun getWindowBounds(out: Rectangle = Rectangle()): Rectangle = getWindowBoundsOrNull() ?: getGlobalBounds(out)
+
+    fun getWindowBoundsOrNull(out: Rectangle = Rectangle()): Rectangle? {
+        val stage = root
+        if (stage !is Stage) return null
+        return getBounds(stage, out, inclusive = true).applyTransform(stage.views.globalToWindowMatrix)
+    }
 
     /** Returns the global bounds of this object. Note this incurs in allocations. Use [getGlobalBounds] (out) to avoid it */
     val globalBounds: Rectangle get() = getGlobalBounds()
