@@ -26,7 +26,8 @@ class Atlas(val textures: Map<String, BitmapSlice<Bitmap>>, val info: AtlasInfo 
                 virtFrame = when {
                     info.trimmed -> RectangleInt(info.spriteSourceSize.x, info.spriteSourceSize.y, info.sourceSize.width, info.sourceSize.height)
                     else -> null
-                }
+                },
+                bmpCoords = info.bmpCoords
             )
         }
         val name get() = info.name
