@@ -74,6 +74,7 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
                     //val scale = 2.0
 
                     val space = max(1 * scale, 2.0)
+                    val matrix = views.windowToGlobalMatrix
                     //println(scale)
 
 
@@ -99,7 +100,9 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
                                 x = 0,
                                 y = yy.toInt(),
                                 filtering = false,
-                                colMul = ctx.debugExtraFontColor
+                                colMul = ctx.debugExtraFontColor,
+                                blendMode = BlendMode.INVERT,
+                                m = matrix
                             )
                         }
                         yy += lineHeight
@@ -128,7 +131,9 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
                                     x = 0,
                                     y = yy.toInt(),
                                     filtering = false,
-                                    colMul = ctx.debugExtraFontColor
+                                    colMul = ctx.debugExtraFontColor,
+                                    blendMode = BlendMode.INVERT,
+                                    m = matrix
                                 )
                                 vview = vview.parent
                                 yy += lineHeight

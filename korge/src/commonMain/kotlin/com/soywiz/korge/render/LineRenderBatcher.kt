@@ -21,7 +21,11 @@ import kotlin.native.concurrent.ThreadLocal
 val RenderContext.debugLineRenderContext: LineRenderBatcher by Extra.PropertyThis<RenderContext, LineRenderBatcher> { LineRenderBatcher(this) }
 
 @Suppress("DEPRECATION")
-inline fun RenderContext.useLineBatcher(block: (LineRenderBatcher) -> Unit) = debugLineRenderContext.use(block)
+inline fun RenderContext.useLineBatcher(matrix: Matrix? = null, block: (LineRenderBatcher) -> Unit) = debugLineRenderContext.use { batcher ->
+    debugLineRenderContext.drawWithGlobalMatrix(matrix) {
+        block(batcher)
+    }
+}
 
 typealias DebugLineRenderContext = LineRenderBatcher
 
@@ -180,11 +184,9 @@ class LineRenderBatcher(
     @PublishedApi
     internal val currentMatrix: Matrix = Matrix()
 
-    fun <T> drawWithGlobalMatrix(matrix: Matrix, block: () -> T): T {
-        return currentMatrix.keepMatrix {
-            it.copyFrom(matrix)
-            block()
-        }
+    inline fun <T> drawWithGlobalMatrix(matrix: Matrix?, block: () -> T): T = currentMatrix.keepMatrix {
+        if (matrix != null) it.copyFrom(matrix)
+        block()
     }
 
     private fun addVertex(x: Float, y: Float, color: RGBA = this.color, m: Matrix = currentMatrix) {
