@@ -35,7 +35,8 @@ suspend fun main() = Korge(
     multithreaded = true,
     //debugAg = true,
 ) {
-    mainClipping()
+    //mainTransition()
+    //mainClipping()
     //mainGifAnimation()
     //mainDraggable()
     //mainSkybox()
@@ -43,7 +44,7 @@ suspend fun main() = Korge(
     //mainMasks()
     //mainGpuVectorRendering()
     //mainFiltersRenderToBitmap()
-    //mainBlur()
+    mainBlur()
     //mainCustomSolidRectShader()
     //mainMipmaps()
     //mainColorTransformFilter()
