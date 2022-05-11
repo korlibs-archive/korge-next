@@ -130,14 +130,17 @@ data class AtlasInfo(
     companion object {
         private fun Any?.toRect() = KDynamic(this) { Rect(it["x"].int, it["y"].int, it["w"].int, it["h"].int) }
         private fun Any?.toSize() = KDynamic(this) { Size(it["w"].int, it["h"].int) }
-        private fun KDynamic.createEntry(name: String, it: Any?) = Region(
-            name = name,
-            frame = it["frame"].toRect(),
-            rotated = it["rotated"].bool,
-            sourceSize = it["sourceSize"].toSize(),
-            spriteSourceSize = it["spriteSourceSize"].toRect(),
-            trimmed = it["trimmed"].bool
-        )
+        private fun KDynamic.createEntry(name: String, it: Any?): Region {
+            val rotated = it["rotated"].bool
+            return Region(
+                name = name,
+                frame = it["frame"].toRect(),
+                rotated = rotated,
+                sourceSize = it["sourceSize"].toSize(),
+                spriteSourceSize = it["spriteSourceSize"].toRect(),
+                trimmed = it["trimmed"].bool
+            )
+        }
 
         // @TODO: kotlinx-serialization?
         fun loadJsonSpriter(json: String): AtlasInfo {
@@ -207,7 +210,23 @@ data class AtlasInfo(
                     }
                 )
             }
-            return info.copy(pages = info.pages.map { it.copy(regions = it.regions.map { it.apply { } }) })
+            val w = info.size.width.toFloat()
+            val h = info.size.height.toFloat()
+            return info.copy(pages = info.pages.map { it.copy(regions = it.regions.map { r ->
+                if (r.rotated) {
+                    val f = r.frame
+                    r.copy(bmpCoords = createBmpCoords(
+                        tl_x = (f.x + f.h) / w, tl_y = f.y / h,
+                        tr_x = (f.x + f.h) / w, tr_y = (f.y + f.w) / h,
+                        br_x = f.x / w, br_y = (f.y + f.w) / h,
+                        bl_x = f.x / w, bl_y = f.y / h
+                    ),
+                        rotated = false
+                    )
+                } else {
+                    r
+                }
+            }) })
         }
 
         fun loadXml(content: String): AtlasInfo {
