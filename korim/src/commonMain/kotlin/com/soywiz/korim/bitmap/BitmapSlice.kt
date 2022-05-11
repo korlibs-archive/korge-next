@@ -30,16 +30,16 @@ interface BmpCoords {
     val bl_y: Float
 }
 
-fun createBmpCoords(tl_x: Float, tl_y: Float, tr_x: Float, tr_y: Float, br_x: Float, br_y: Float, bl_x: Float, bl_y: Float) = object: BmpCoords {
-    override val tl_x: Float = tl_x
-    override val tl_y: Float = tl_y
-    override val tr_x: Float = tr_x
-    override val tr_y: Float = tr_y
-    override val br_x: Float = br_x
-    override val br_y: Float = br_y
-    override val bl_x: Float = bl_x
-    override val bl_y: Float = bl_y
-}
+data class TextureCoords(
+    override val tl_x: Float,
+    override val tl_y: Float,
+    override val tr_x: Float,
+    override val tr_y: Float,
+    override val br_x: Float,
+    override val br_y: Float,
+    override val bl_x: Float,
+    override val bl_y: Float,
+): BmpCoords
 
 interface BmpCoordsWithT<T : ISizeInt> : BmpCoords, Closeable, Resourceable<BmpCoordsWithT<T>> {
     override fun getOrNull(): BmpCoordsWithT<T>? = this
@@ -265,7 +265,8 @@ abstract class BmpSlice(
     val bounds: RectangleInt,
     override val name: String? = null,
     val rotated: Boolean = false,
-    val virtFrame: RectangleInt? = null
+    val virtFrame: RectangleInt? = null,
+    val textureCoords: TextureCoords? = null
 ) : Extra, BitmapCoords {
     override val base get() = bmpBase
     open val bmp: Bitmap = bmpBase
@@ -300,14 +301,14 @@ abstract class BmpSlice(
 
 	var parent: Any? = null
 
-    override val tl_x = p0.x.toFloat()
-    override val tl_y = p0.y.toFloat()
-    override val tr_x = p1.x.toFloat()
-    override val tr_y = p1.y.toFloat()
-    override val br_x = p2.x.toFloat()
-    override val br_y = p2.y.toFloat()
-    override val bl_x = p3.x.toFloat()
-    override val bl_y = p3.y.toFloat()
+    override val tl_x = textureCoords?.tl_x ?: p0.x.toFloat()
+    override val tl_y = textureCoords?.tl_y ?: p0.y.toFloat()
+    override val tr_x = textureCoords?.tr_x ?: p1.x.toFloat()
+    override val tr_y = textureCoords?.tr_y ?: p1.y.toFloat()
+    override val br_x = textureCoords?.br_x ?: p2.x.toFloat()
+    override val br_y = textureCoords?.br_y ?: p2.y.toFloat()
+    override val bl_x = textureCoords?.bl_x ?: p3.x.toFloat()
+    override val bl_y = textureCoords?.bl_y ?: p3.y.toFloat()
 
     val rotatedAngle: Int = 0
 
@@ -343,8 +344,9 @@ class BitmapSlice<out T : Bitmap>(
     bounds: RectangleInt,
     name: String? = null,
     rotated: Boolean = false,
-    virtFrame: RectangleInt? = null
-) : BmpSlice(bmp, bounds, name, rotated, virtFrame), Extra by Extra.Mixin() {
+    virtFrame: RectangleInt? = null,
+    textureCoords: TextureCoords? = null
+) : BmpSlice(bmp, bounds, name, rotated, virtFrame, textureCoords), Extra by Extra.Mixin() {
 	val premultiplied get() = bmp.premultiplied
 
 	fun extract(): T = bmp.extract(bounds.x, bounds.y, bounds.width, bounds.height)
@@ -380,8 +382,9 @@ inline fun <T : Bitmap> BitmapSlice<T>.copy(
     bounds: RectangleInt = this.bounds,
     name: String? = this.name,
     rotated: Boolean = this.rotated,
-    virtFrame: RectangleInt? = this.virtFrame
-) = BitmapSlice(bmp, bounds, name, rotated, virtFrame)
+    virtFrame: RectangleInt? = this.virtFrame,
+    textureCoords: TextureCoords? = this.textureCoords
+) = BitmapSlice(bmp, bounds, name, rotated, virtFrame, textureCoords)
 
 // http://pixijs.download/dev/docs/PIXI.Texture.html#Texture
 fun BitmapSliceCompat(
