@@ -17,4 +17,10 @@ class GIFTest {
         assertEquals(10.milliseconds, data.frames[2].duration)
         //for (frame in data.frames) frame.bitmap.showImageAndWait()
     }
+
+    @Test
+    fun testIssue636() = suspendTestNoBrowser {
+        val data = resourcesVfs["200.gif"].readImageData(GIF)
+        //for (frame in data.frames) frame.bitmap.showImageAndWait()
+    }
 }
