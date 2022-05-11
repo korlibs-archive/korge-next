@@ -75,7 +75,7 @@ open class ViewsForTesting(
 	val views get() = viewsLog.views
     val stage get() = views.stage
 	val stats get() = views.stats
-	val mouse get() = input.mouse
+	val mouse: IPoint get() = input.mouse
 
     fun resizeGameWindow(width: Int, height: Int, scaleMode: ScaleMode = views.scaleMode, scaleAnchor: Anchor = views.scaleAnchor) {
         logAgOrNull?.backWidth = width
@@ -147,8 +147,8 @@ open class ViewsForTesting(
             MouseEvent(
                 type = type,
                 id = 0,
-                x = input.mouse.x.toInt(),
-                y = input.mouse.y.toInt(),
+                x = views.windowMouseX.toInt(),
+                y = views.windowMouseY.toInt(),
                 button = button,
                 buttons = mouseButtons
             )

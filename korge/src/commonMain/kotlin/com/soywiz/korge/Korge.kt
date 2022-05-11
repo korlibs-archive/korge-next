@@ -297,8 +297,8 @@ object Korge {
 
         fun mouseDown(type: String, x: Double, y: Double, button: MouseButton) {
             input.toggleButton(button, true)
-            input.mouse.setTo(x, y)
-            input.mouseDown.setTo(x, y)
+            input.setMouseGlobalXY(x, y, down = false)
+            input.setMouseGlobalXY(x, y, down = true)
             views.mouseUpdated()
             downPos.copyFrom(input.mouse)
             downTime = DateTime.now()
@@ -308,13 +308,13 @@ object Korge {
         fun mouseUp(type: String, x: Double, y: Double, button: MouseButton) {
             //Console.log("mouseUp: $name")
             input.toggleButton(button, false)
-            input.mouse.setTo(x, y)
+            input.setMouseGlobalXY(x, y, down = false)
             views.mouseUpdated()
             upPos.copyFrom(views.input.mouse)
         }
 
         fun mouseMove(type: String, x: Double, y: Double, inside: Boolean) {
-            views.input.mouse.setTo(x, y)
+            views.input.setMouseGlobalXY(x, y, down = false)
             views.input.mouseInside = inside
             if (!inside) {
                 moveMouseOutsideInNextFrame = true
@@ -324,7 +324,7 @@ object Korge {
         }
 
         fun mouseDrag(type: String, x: Double, y: Double) {
-            views.input.mouse.setTo(x, y)
+            views.input.setMouseGlobalXY(x, y, down = false)
             views.mouseUpdated()
             moveTime = DateTime.now()
         }
