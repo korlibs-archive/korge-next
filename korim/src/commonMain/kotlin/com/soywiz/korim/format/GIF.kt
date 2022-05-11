@@ -465,14 +465,14 @@ object GifDec {
     fun dispose(gif: gd_GIF) {
         when (gif.gce.disposal) {
             2 -> { /* Restore to background color. */
-                val bgcolor = gif.palette.colors[gif.bgindex]
+                //val bgcolor = gif.palette.colors[gif.bgindex]
                 //gif.palette.colors[gif.bgindex] = Colors.TRANSPARENT_BLACK
                 var i = gif.fy * gif.width+gif.fx;
                 for (j in 0 until gif.fh) {
                     for (k in 0 until gif.fw) {
-                        gif.canvas[i+k] = bgcolor
+                        gif.canvas[i+k] = Colors.TRANSPARENT_BLACK
                     }
-                    i += gif.width;
+                    i += gif.width
                 }
             }
             3 -> { /* Restore to previous, i.e., don't update canvas.*/
