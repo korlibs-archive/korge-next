@@ -161,14 +161,14 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
     }
 
     data class Scissor(
-        var x: Double = 0.0, var y: Double = 0.0,
-        var width: Double = 0.0, var height: Double = 0.0
-    ) {
         val rect: Rectangle = Rectangle()
-            get() {
-                field.setTo(x, y, width, height)
-                return field
-            }
+    ) {
+        constructor(x: Double, y: Double, width: Double, height: Double) : this(Rectangle(x, y, width, height))
+
+        var x: Double by rect::x
+        var y: Double by rect::y
+        var width: Double by rect::width
+        var height: Double by rect::height
 
         val top get() = y
         val left get() = x
