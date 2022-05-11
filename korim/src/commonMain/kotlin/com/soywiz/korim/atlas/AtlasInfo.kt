@@ -323,6 +323,8 @@ data class AtlasInfo(
             var currentEntryList = arrayListOf<Region>()
             val pages = arrayListOf<Page>()
 
+            var w = 1f
+            var h = 1f
             while (r.hasMore) {
                 val line = r.read().trim()
                 if (line.isEmpty()) {
@@ -335,10 +337,16 @@ data class AtlasInfo(
                     var filterMag = false
                     var repeatX = false
                     var repeatY = false
+                    w = 1f
+                    h = 1f
                     while (r.hasMore && r.peek().contains(':')) {
                         val (key, value) = r.read().trim().keyValue()
                         when (key) {
-                            "size" -> size = value.size()
+                            "size" -> {
+                                size = value.size()
+                                w = size.width.toFloat()
+                                h = size.height.toFloat()
+                            }
                             "format" -> format = value
                             "filter" -> {
                                 val filter = value.split(",").map { it.trim().toLowerCase() }
@@ -370,11 +378,21 @@ data class AtlasInfo(
                             "offset" -> offset = value.point()
                         }
                     }
-                    if (rotate) {
-                        size = Size(size.height, size.width)
-                    }
                     val rect = Rect(xy.x.toInt(), xy.y.toInt(), size.width, size.height)
-                    currentEntryList.add(Region(name, rect, rotate, size, rect, false, orig, offset))
+                    val spriteSourceSize = Rect(offset.x.toInt(), offset.y.toInt(), size.width, size.height)
+
+                    currentEntryList.add(Region(name, rect, false, orig, spriteSourceSize, orig != size || (offset.x != 0.0 && offset.y != 0.0), orig, offset,
+                        bmpCoords = if (rotate) {
+                            createBmpCoords(
+                                tl_x = rect.x / w, tl_y = (rect.y + rect.w) / h,
+                                tr_x = rect.x / w, tr_y = rect.y / h,
+                                br_x = (rect.x + rect.h) / w, br_y = rect.y / h,
+                                bl_x = (rect.x + rect.h) / w, bl_y = (rect.y + rect.w) / h
+                            )
+                        } else {
+                            null
+                        }
+                    ))
                 }
             }
             val firstPage = pages.first()
