@@ -24,7 +24,7 @@ class AtlasInfoTest {
         assertEquals(Rectangle(993, 319, 41, 28), firstFrame.frame.rect)
         assertEquals(Size(55, 47), firstFrame.sourceSize.size)
         assertEquals(Rectangle(8, 7, 41, 28), firstFrame.spriteSourceSize.rect)
-        assertEquals(true, firstFrame.rotated)
+        assertEquals(false, firstFrame.rotated)
         assertEquals(true, firstFrame.trimmed)
     }
 }
