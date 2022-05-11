@@ -1,11 +1,14 @@
 package com.soywiz.korge
 
-import com.soywiz.korge.view.*
-import com.soywiz.korgw.awt.*
-import com.soywiz.korio.async.*
+import com.soywiz.korge.view.Stage
+import com.soywiz.korgw.awt.GLCanvas
+import com.soywiz.korgw.awt.GLCanvasGameWindow
+import com.soywiz.korio.async.launchImmediately
 import com.soywiz.korma.geom.SizeInt
-import kotlinx.coroutines.*
-import java.io.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import java.io.Closeable
 
 fun GLCanvasWithKorge(
     config: Korge.Config,
