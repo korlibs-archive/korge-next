@@ -67,6 +67,7 @@ open class ViewsForTesting(
 	val viewsLog by lazy { ViewsLog(gameWindow, ag = ag, gameWindow = gameWindow, timeProvider = timeProvider).also { viewsLog ->
         viewsLog.views.virtualWidth = virtualSize.width
         viewsLog.views.virtualHeight = virtualSize.height
+        viewsLog.views.resized(windowSize.width, windowSize.height)
     } }
 	val injector get() = viewsLog.injector
     val logAgOrNull get() = ag as? LogAG?
