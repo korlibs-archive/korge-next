@@ -1,8 +1,7 @@
 package com.soywiz.korim.atlas
 
 import com.soywiz.kds.*
-import com.soywiz.korim.bitmap.BmpCoords
-import com.soywiz.korim.bitmap.createBmpCoords
+import com.soywiz.korim.bitmap.TextureCoords
 import com.soywiz.korio.dynamic.*
 import com.soywiz.korio.serialization.json.*
 import com.soywiz.korio.serialization.xml.*
@@ -100,7 +99,7 @@ data class AtlasInfo(
         val trimmed: Boolean,
         val orig: Size = Size(0, 0),
         val offset: Point = Point(),
-        val bmpCoords: BmpCoords? = null,
+        val textureCoords: TextureCoords? = null,
     ) {
         // @TODO: Rename to path or name
         val filename get() = name
@@ -215,7 +214,7 @@ data class AtlasInfo(
             return info.copy(pages = info.pages.map { it.copy(regions = it.regions.map { r ->
                 if (r.rotated) {
                     val f = r.frame
-                    r.copy(bmpCoords = createBmpCoords(
+                    r.copy(textureCoords = TextureCoords(
                         tl_x = (f.x + f.h) / w, tl_y = f.y / h,
                         tr_x = (f.x + f.h) / w, tr_y = (f.y + f.w) / h,
                         br_x = f.x / w, br_y = (f.y + f.w) / h,
@@ -269,8 +268,8 @@ data class AtlasInfo(
                         ),
                         spriteSourceSize = offRect,
                         trimmed = it.hasAttribute("frameX"),
-                        bmpCoords = if (rotated) {
-                            createBmpCoords(
+                        textureCoords = if (rotated) {
+                            TextureCoords(
                                 tl_x = (rect.x + rect.h) / w, tl_y = rect.y / h,
                                 tr_x = (rect.x + rect.h) / w, tr_y = (rect.y + rect.w) / h,
                                 br_x = rect.x / w, br_y = (rect.y + rect.w) / h,
@@ -382,8 +381,8 @@ data class AtlasInfo(
                     val spriteSourceSize = Rect(offset.x.toInt(), offset.y.toInt(), size.width, size.height)
 
                     currentEntryList.add(Region(name, rect, false, orig, spriteSourceSize, orig != size || (offset.x != 0.0 && offset.y != 0.0), orig, offset,
-                        bmpCoords = if (rotate) {
-                            createBmpCoords(
+                        textureCoords = if (rotate) {
+                            TextureCoords(
                                 tl_x = rect.x / w, tl_y = (rect.y + rect.w) / h,
                                 tr_x = rect.x / w, tr_y = rect.y / h,
                                 br_x = (rect.x + rect.h) / w, br_y = rect.y / h,
