@@ -232,29 +232,60 @@ data class AtlasInfo(
         fun loadXml(content: String): AtlasInfo {
             val xml = Xml(content)
             val imagePath = xml.str("imagePath")
+            val size = Size(xml.int("width", -1), xml.int("height", -1))
+            val w = size.width.toFloat()
+            val h = size.height.toFloat()
 
             return AtlasInfo(
                 (xml.children("SubTexture") + xml.children("sprite")).map {
+                    val rotated = it.boolean("rotated", false)
                     val rect = Rect(
                         it.int("x"),
                         it.int("y"),
-                        it.intNull("width") ?: it.int("w"),
-                        it.intNull("height") ?: it.int("h")
+                        if (rotated) {
+                            it.intNull("height") ?: it.int("w")
+                        } else {
+                            it.intNull("width") ?: it.int("h")
+                        },
+                        if (rotated) {
+                            it.intNull("width") ?: it.int("w")
+                        } else {
+                            it.intNull("height") ?: it.int("h")
+                        }
+                    )
+                    val offRect = Rect(
+                        it.int("frameX") * -1,
+                        it.int("frameY") * -1,
+                        rect.w,
+                        rect.h
                     )
                     Region(
                         name = it.strNull("name") ?: it.str("n"),
                         frame = rect,
                         rotated = false,
-                        sourceSize = Size(rect.w, rect.h),
-                        spriteSourceSize = rect,
-                        trimmed = false
+                        sourceSize = Size(
+                            it.int("frameWidth", rect.w),
+                            it.int("frameHeight", rect.h)
+                        ),
+                        spriteSourceSize = offRect,
+                        trimmed = it.hasAttribute("frameX"),
+                        bmpCoords = if (rotated) {
+                            createBmpCoords(
+                                tl_x = (rect.x + rect.h) / w, tl_y = rect.y / h,
+                                tr_x = (rect.x + rect.h) / w, tr_y = (rect.y + rect.w) / h,
+                                br_x = rect.x / w, br_y = (rect.y + rect.w) / h,
+                                bl_x = rect.x / w, bl_y = rect.y / h
+                           )
+                        } else {
+                            null
+                        }
                     )
                 }, Meta(
                     app = "Unknown",
                     format = "xml",
                     image = imagePath,
                     scale = 1.0,
-                    size = Size(-1, -1),
+                    size = size,
                     version = "1.0"
                 )
             )
