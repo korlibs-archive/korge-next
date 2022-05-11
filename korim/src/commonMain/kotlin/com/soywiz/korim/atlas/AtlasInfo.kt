@@ -1,6 +1,8 @@
 package com.soywiz.korim.atlas
 
 import com.soywiz.kds.*
+import com.soywiz.korim.bitmap.BmpCoords
+import com.soywiz.korim.bitmap.createBmpCoords
 import com.soywiz.korio.dynamic.*
 import com.soywiz.korio.serialization.json.*
 import com.soywiz.korio.serialization.xml.*
@@ -98,6 +100,7 @@ data class AtlasInfo(
         val trimmed: Boolean,
         val orig: Size = Size(0, 0),
         val offset: Point = Point(),
+        val bmpCoords: BmpCoords? = null,
     ) {
         // @TODO: Rename to path or name
         val filename get() = name
