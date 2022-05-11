@@ -6,7 +6,7 @@ class SpineRegion(val entry: Atlas.Entry) {
     val bmpSlice = entry.slice
     val bmp = bmpSlice.bmpBase
     val texture = bmp
-    var rotate = entry.info.bmpCoords != null
+    var rotate = entry.info.textureCoords != null
     val u: Float = bmpSlice.tl_x
     val u2: Float = bmpSlice.br_x
     val v: Float = if (rotate) bmpSlice.br_y else bmpSlice.tl_y
