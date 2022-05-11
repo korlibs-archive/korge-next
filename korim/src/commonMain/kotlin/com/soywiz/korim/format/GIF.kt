@@ -542,11 +542,4 @@ object GifDec {
         }
         return fd.position
     }
-
-    val O_RDONLY = 0
-    suspend fun open(name: String, mode: Int): SyncStream {
-        return name.uniVfs.readAll().openSync()
-    }
 }
-
-private inline class GifPtr(val pos: Int)
