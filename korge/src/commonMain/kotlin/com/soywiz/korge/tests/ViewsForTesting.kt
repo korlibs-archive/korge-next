@@ -11,6 +11,7 @@ import com.soywiz.korge.*
 import com.soywiz.korge.input.*
 import com.soywiz.korge.input.MouseEvents
 import com.soywiz.korge.internal.*
+import com.soywiz.korge.render.RenderContext
 import com.soywiz.korge.scene.*
 import com.soywiz.korge.view.*
 import com.soywiz.korgw.*
@@ -362,4 +363,11 @@ open class ViewsForTesting(
 
 		override fun toString(): String = "FastGameWindowCoroutineDispatcher"
 	}
+
+    inline fun <T : AG> testRenderContext(ag: T, block: (RenderContext) -> Unit): T {
+        val ctx = RenderContext(ag, views)
+        block(ctx)
+        ctx.flush()
+        return ag
+    }
 }
