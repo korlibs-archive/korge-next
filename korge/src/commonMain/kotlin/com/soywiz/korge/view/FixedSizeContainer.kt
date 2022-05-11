@@ -62,7 +62,7 @@ open class FixedSizeContainer(
                 return
             }
             ctx.useCtx2d { c2d ->
-                val bounds = getWindowBounds(tempBounds)
+                val bounds = getWindowBounds(ctx, tempBounds)
                 @Suppress("DEPRECATION")
                 bounds.applyTransform(ctx.batch.viewMat2D) // @TODO: Should viewMat2D be in the context instead?
                 bounds.normalize() // If width or height are negative, because scale was negative

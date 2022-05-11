@@ -19,6 +19,7 @@ class Stage(override val views: Views) : Container()
     , EventDispatcher by EventDispatcher.Mixin()
     , ViewsContainer
     , ResourcesContainer
+    , BoundsProvider by views.bp
 {
     val keys get() = views.input.keys
     val input get() = views.input

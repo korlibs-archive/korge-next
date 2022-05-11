@@ -48,6 +48,7 @@ class Input : Extra by Extra.Mixin() {
     /** Configures the distance from down to up to consider a finger up event a tap */
     var clickDistance = 20.0 // @TODO: We should take into account pointSize/DPI
 
+    // Mouse coordinates relative to the Stage
     val mouse = Point(-1000.0, -1000.0)
     val mouseDown = Point(-1000.0, -1000.0)
 

@@ -34,7 +34,7 @@ import kotlin.coroutines.*
 class RenderContext constructor(
     /** The Accelerated Graphics object that allows direct rendering */
 	val ag: AG,
-	val bp: BoundsProvider = BoundsProvider.Dummy,
+	val bp: BoundsProvider = BoundsProvider.Base(),
     /** Object storing all the rendering [Stats] like number of batches, number of vertices etc. */
 	val stats: Stats = Stats(),
 	val coroutineContext: CoroutineContext = EmptyCoroutineContext,

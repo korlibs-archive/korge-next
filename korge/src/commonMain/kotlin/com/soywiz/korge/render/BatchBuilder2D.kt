@@ -55,7 +55,7 @@ class BatchBuilder2D constructor(
     val maxQuads: Int = min(reqMaxQuads, MAX_BATCH_QUADS)
 
     val texManager = ctx.agBitmapTextureManager
-    constructor(ag: AG, maxQuads: Int = DEFAULT_BATCH_QUADS) : this(RenderContext(ag), maxQuads)
+    //constructor(ag: AG, maxQuads: Int = DEFAULT_BATCH_QUADS) : this(RenderContext(ag), maxQuads)
     val ag: AG = ctx.ag
 	init {
         logger.trace { "BatchBuilder2D[0]" }

@@ -44,7 +44,7 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
             if (!views.input.mouseHitSearch) {
                 views.input.mouseHitSearch = true
                 views.input.mouseHitResult =
-                    views.stage.mouseHitTest(views.nativeMouseX, views.nativeMouseY)
+                    views.stage.mouseHitTest(views.globalMouseX, views.globalMouseY)
 
                 var view: View? = views.input.mouseHitResult
                 while (view != null) {
@@ -96,7 +96,7 @@ class MouseEvents(override val view: View) : MouseComponent, Extra by Extra.Mixi
                             renderContext.drawText(
                                 debugBmpFont,
                                 lineHeight,
-                                "$mouseHit : ${views.nativeMouseX},${views.nativeMouseY}",
+                                "$mouseHit : ${views.globalMouseX},${views.globalMouseY}",
                                 x = 0,
                                 y = yy.toInt(),
                                 filtering = false,
