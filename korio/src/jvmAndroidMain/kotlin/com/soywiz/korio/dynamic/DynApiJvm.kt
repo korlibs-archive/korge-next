@@ -24,10 +24,10 @@ internal actual object DynamicInternal : DynApi {
             else -> {
                 if (args != null) {
                     val methodsSameArity = methods.filter { it.parameterTypes.size == args.size }
-                    val argTypes = args.map { it!!::class.javaObjectType }
+                    val argTypes = args.map { if (it == null) null else it::class.javaObjectType }
                     methodsSameArity.firstOrNull {
                         it.parameterTypes.toList().zip(argTypes).all {
-                            it.first.kotlin.javaObjectType.isAssignableFrom(it.second)
+                            (it.second == null) || it.first.kotlin.javaObjectType.isAssignableFrom(it.second)
                         }
                     }
                 } else {
