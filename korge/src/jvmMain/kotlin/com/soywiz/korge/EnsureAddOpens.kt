@@ -1,7 +1,10 @@
 package com.soywiz.korge
 
 import com.soywiz.kmem.Platform
+import com.soywiz.korio.dynamic.*
+import java.util.*
 import kotlin.system.exitProcess
+import kotlin.text.contains
 
 private fun getJavaVersion(): Int {
     val version = System.getProperty("java.version")
@@ -14,10 +17,10 @@ private fun getJavaVersion(): Int {
 fun jvmEnsureAddOpens() {
     val javaVersion = getJavaVersion()
     if (javaVersion <= 8) return
-    val processInfo = ProcessHandle.current().info()
-    val cli = processInfo.commandLine().orElse(null) ?: return
-    val command = processInfo.command().orElse(null) ?: return
-    val arguments = processInfo.arguments().orElse(null) ?: return
+    val processInfo = Dyn.global["java.lang.ProcessHandle"].dynamicInvoke("current").dynamicInvoke("info")
+    val cli = processInfo.dynamicInvoke("commandLine").casted<Optional<String>>().orElse(null) ?: return
+    val command = processInfo.dynamicInvoke("command").casted<Optional<String>>().orElse(null) ?: return
+    val arguments = processInfo.dynamicInvoke("arguments").casted<Optional<Array<String>>>().orElse(null) ?: return
     if (!cli.contains("--add-opens")) {
         println("Java Version $javaVersion, not included --add-opens. Creating a new process...")
         println("CLI: $cli")
