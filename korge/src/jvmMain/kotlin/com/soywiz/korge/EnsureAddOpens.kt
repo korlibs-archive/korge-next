@@ -15,9 +15,9 @@ fun jvmEnsureAddOpens() {
     val javaVersion = getJavaVersion()
     if (javaVersion <= 8) return
     val processInfo = ProcessHandle.current().info()
-    val cli = processInfo.commandLine().get()
-    val command = processInfo.command().get()
-    val arguments = processInfo.arguments().get()
+    val cli = processInfo.commandLine().orElse(null) ?: return
+    val command = processInfo.command().orElse(null) ?: return
+    val arguments = processInfo.arguments().orElse(null) ?: return
     if (!cli.contains("--add-opens")) {
         println("Java Version $javaVersion, not included --add-opens. Creating a new process...")
         println("CLI: $cli")
