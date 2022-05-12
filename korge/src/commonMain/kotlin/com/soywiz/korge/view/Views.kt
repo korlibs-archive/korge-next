@@ -69,7 +69,7 @@ class Views constructor(
 
     var rethrowRenderError = false
 
-    val devicePixelRatio get() = ag.devicePixelRatio
+    val devicePixelRatio: Double get() = ag.devicePixelRatio
 
     val keys get() = input.keys
 
@@ -403,6 +403,8 @@ class Views constructor(
             val br = bp.windowToGlobalCoords(actualSize.width.toDouble(), actualSize.height.toDouble())
             bp.actualVirtualBounds.setToBounds(tl.x, tl.y, br.x, br.y)
         }
+
+        //println("RESIZED: $virtualSize, $actualSize, $targetSize")
 
         renderContext.projectionMatrixTransform.copyFrom(bp.globalToWindowMatrix)
         renderContext.projectionMatrixTransformInv.copyFrom(bp.windowToGlobalMatrix)

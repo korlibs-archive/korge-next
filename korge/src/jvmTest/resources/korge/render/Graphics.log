@@ -7,7 +7,7 @@ Buffer[0].afterSetMem(mem[393216])
 Buffer[1].afterSetMem(mem[4])
 Buffer[2].afterSetMem(mem[49152])
 enable: SCISSOR
-scissor: 0, 100, 100, 100
+scissor: 0, 0, 200, 200
 programCreate: 1, Program(name=BatchBuilder2D.Premultiplied.Tinted.NoAdd, attributes=[a_Tex, a_TexIndex, a_Col, a_Col2, a_Pos], uniforms=[u_ProjMat, u_ViewMat, u_Tex0, u_Tex1, u_Tex2, u_Tex3]), ProgramConfig(externalTextureSampler=false)
 programCreate.fragment:#version 100 compatibility
 #ifdef GL_ES
@@ -1081,7 +1081,7 @@ Buffer[0].afterSetMem(mem[393216])
 Buffer[1].afterSetMem(mem[4])
 Buffer[2].afterSetMem(mem[49152])
 enable: SCISSOR
-scissor: 0, 100, 100, 100
+scissor: 0, 0, 200, 200
 programUse: 1
 vaoCreate: 1
 vaoSet: 1, VertexArrayObject(list=[VertexData(_buffer=Buffer[0], layout=VertexLayout[a_Pos, a_Tex, a_Col, a_Col2]), VertexData(_buffer=Buffer[1], layout=VertexLayout[a_TexIndex])])
@@ -1132,7 +1132,7 @@ Buffer[0].afterSetMem(mem[393216])
 Buffer[1].afterSetMem(mem[4])
 Buffer[2].afterSetMem(mem[49152])
 enable: SCISSOR
-scissor: 0, 100, 100, 100
+scissor: 0, 0, 200, 200
 programCreate: 3, Program(name=BatchBuilder2D.NoPremultiplied.Tinted.NoAdd, attributes=[a_Tex, a_TexIndex, a_Col, a_Col2, a_Pos], uniforms=[u_ProjMat, u_ViewMat, u_Tex0, u_Tex1, u_Tex2, u_Tex3]), ProgramConfig(externalTextureSampler=false)
 programCreate.fragment:#version 100 compatibility
 #ifdef GL_ES

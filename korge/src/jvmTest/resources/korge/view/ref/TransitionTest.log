@@ -78,7 +78,7 @@ Buffer[0].afterSetMem(mem[393216])
 Buffer[1].afterSetMem(mem[4])
 Buffer[2].afterSetMem(mem[49152])
 enable: SCISSOR
-scissor: 0, 88, 512, 512
+scissor: 100, 0, 600, 600
 vaoCreate: 1
 vaoSet: 1, VertexArrayObject(list=[VertexData(_buffer=Buffer[0], layout=VertexLayout[a_Pos, a_Tex, a_Col, a_Col2]), VertexData(_buffer=Buffer[1], layout=VertexLayout[a_TexIndex])])
 vaoUse: 1
