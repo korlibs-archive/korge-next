@@ -1,20 +1,38 @@
 package com.soywiz.korio.compression.deflate
 
-import com.soywiz.kds.*
-import com.soywiz.klock.*
-import kotlinx.cinterop.*
-import platform.posix.*
-import platform.zlib.*
-import kotlin.math.*
-import com.soywiz.kmem.*
-import com.soywiz.kmem.*
-import com.soywiz.korio.compression.*
-import com.soywiz.korio.compression.util.*
-import com.soywiz.korio.stream.*
-import com.soywiz.korio.experimental.*
-import com.soywiz.korio.lang.*
-import kotlin.assert
-import kotlin.math.*
+import com.soywiz.klock.measureTime
+import com.soywiz.klock.milliseconds
+import com.soywiz.korio.compression.CompressionContext
+import com.soywiz.korio.compression.CompressionMethod
+import com.soywiz.korio.compression.util.BitReader
+import com.soywiz.korio.experimental.KorioExperimentalApi
+import com.soywiz.korio.lang.Environment
+import com.soywiz.korio.stream.AsyncOutputStream
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.convert
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.sizeOf
+import kotlinx.cinterop.toKString
+import kotlinx.cinterop.usePinned
+import platform.zlib.Z_DATA_ERROR
+import platform.zlib.Z_FINISH
+import platform.zlib.Z_MEM_ERROR
+import platform.zlib.Z_NEED_DICT
+import platform.zlib.Z_NO_FLUSH
+import platform.zlib.Z_OK
+import platform.zlib.Z_STREAM_END
+import platform.zlib.Z_STREAM_ERROR
+import platform.zlib.deflate
+import platform.zlib.deflateEnd
+import platform.zlib.deflateInit2_
+import platform.zlib.inflate
+import platform.zlib.inflateEnd
+import platform.zlib.inflateInit2_
+import platform.zlib.z_stream
+import platform.zlib.zlibVersion
 
 //actual fun Deflate(windowBits: Int): CompressionMethod = DeflatePortable(windowBits)
 actual fun Deflate(windowBits: Int): CompressionMethod = DeflateNative(windowBits)

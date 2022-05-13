@@ -1,7 +1,8 @@
 package com.soywiz.korio.runtime.browser
 
-import org.w3c.dom.url.*
-import org.w3c.files.*
+import org.w3c.dom.url.URL
+import org.w3c.files.Blob
+import org.w3c.files.BlobPropertyBag
 
 fun createURLForData(data: ByteArray, contentType: String): String {
 	return URL.createObjectURL(Blob(arrayOf(data), BlobPropertyBag(contentType)))

@@ -3,11 +3,12 @@ package com.soywiz.korio
 import com.soywiz.korio.runtime.browser.JsRuntimeBrowser
 import com.soywiz.korio.runtime.deno.JsRuntimeDeno
 import com.soywiz.korio.runtime.node.JsRuntimeNode
-import com.soywiz.korio.util.OS
-import org.w3c.dom.*
-import org.w3c.dom.events.*
-import org.w3c.performance.*
-import kotlinx.browser.*
+import org.w3c.dom.Element
+import org.w3c.dom.HTMLCollection
+import org.w3c.dom.WindowOrWorkerGlobalScope
+import org.w3c.dom.events.EventTarget
+import org.w3c.dom.get
+import org.w3c.performance.GlobalPerformance
 import kotlin.collections.set
 
 abstract external class GlobalScope : EventTarget, WindowOrWorkerGlobalScope, GlobalPerformance {

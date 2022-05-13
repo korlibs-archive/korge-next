@@ -1,6 +1,6 @@
 package com.soywiz.korio.net
 
-import com.soywiz.korio.net.ssl.*
+import com.soywiz.korio.net.ssl.AsyncClientSSLProcessor
 
 internal actual val asyncSocketFactory: AsyncSocketFactory by lazy {
 	object : AsyncSocketFactory() {

@@ -1,12 +1,9 @@
 package com.soywiz.korio.net.ws
 
-import com.soywiz.klock.seconds
 import com.soywiz.korio.async.Signal
 import com.soywiz.korio.async.suspendTest
 import com.soywiz.korio.async.waitOne
 import com.soywiz.korio.net.http.createHttpServer
-import kotlinx.coroutines.cancel
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

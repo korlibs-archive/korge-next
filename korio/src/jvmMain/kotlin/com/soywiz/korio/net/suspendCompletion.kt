@@ -1,8 +1,10 @@
 package com.soywiz.korio.net
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.nio.channels.CompletionHandler
-import kotlin.coroutines.*
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 fun <T> CancellableContinuation<T>.getCompletionHandler(): CompletionHandler<T, Unit> {
     val continuation = this

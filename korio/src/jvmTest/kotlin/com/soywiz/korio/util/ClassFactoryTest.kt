@@ -1,9 +1,10 @@
 package com.soywiz.korio.util
 
-import com.soywiz.korio.dynamic.mapper.*
-import com.soywiz.korio.dynamic.serialization.*
-import com.soywiz.korio.serialization.json.*
-import kotlin.test.*
+import com.soywiz.korio.dynamic.mapper.ObjectMapper
+import com.soywiz.korio.dynamic.serialization.stringifyTyped
+import com.soywiz.korio.serialization.json.Json
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class ClassFactoryTest {
 	@Test

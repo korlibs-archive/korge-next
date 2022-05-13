@@ -1,16 +1,41 @@
 package com.soywiz.korio.net
 
-import com.soywiz.korio.util.*
-import com.soywiz.krypto.encoding.*
+import com.soywiz.korio.util.GetErrorAsString
+import com.soywiz.krypto.encoding.hex
 import kotlinx.cinterop.*
-import kotlinx.coroutines.*
-import platform.posix.*
+import kotlinx.coroutines.delay
 import platform.posix.AF_INET
+import platform.posix.EWOULDBLOCK
+import platform.posix.SOCKET
 import platform.posix.SOCK_STREAM
-import platform.windows.*
+import platform.posix.WSAConnect
+import platform.posix.WSAData
+import platform.posix.WSASocket
+import platform.posix.init_sockets
+import platform.posix.posix_errno
+import platform.posix.send
+import platform.posix.sockaddr
+import platform.posix.sockaddr_in
+import platform.posix.u_longVar
+import platform.posix.wchar_tVar
+import platform.windows.AI_PASSIVE
+import platform.windows.InitCommonControls
+import platform.windows.LPADDRINFOVar
 import platform.windows.WSAGetLastError
 import platform.windows.WSAStartup
-import win32ssl.*
+import platform.windows.addrinfo
+import platform.windows.getaddrinfo
+import win32ssl.SSL_SOCKET
+import win32ssl.SSL_alloc
+import win32ssl.SSL_close
+import win32ssl.SSL_free
+import win32ssl.SSL_inDequeue
+import win32ssl.SSL_outDequeue
+import win32ssl.SSL_process
+import win32ssl.SSL_setDebug
+import win32ssl.SSL_setDestinationName
+import win32ssl.SSL_writeReceived
+import win32ssl.SSL_writeToSend
 
 
 class NativeSocket private constructor(

@@ -1,7 +1,20 @@
 package com.soywiz.korio.posix
 
-import platform.posix.*
-import kotlinx.cinterop.*
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.CValuesRef
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.convert
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import platform.posix.FILE
+import platform.posix.S_IFDIR
+import platform.posix.fclose
+import platform.posix.fread
+import platform.posix.fseek
+import platform.posix.ftell
+import platform.posix.fwrite
+import platform.posix.stat
+import platform.posix.truncate
 
 actual fun posixFread(__ptr: CValuesRef<*>?, __size: Long, __nitems: Long, __stream: CValuesRef<FILE>?): ULong {
     return fread(__ptr, __size.convert(), __nitems.convert(), __stream).convert()

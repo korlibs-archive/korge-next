@@ -1,8 +1,9 @@
 package com.soywiz.korio.stream
 
-import com.soywiz.kmem.*
-import com.soywiz.korio.concurrent.*
-import java.io.*
+import com.soywiz.kmem.unsigned
+import java.io.File
+import java.io.InputStream
+import java.io.RandomAccessFile
 
 class FileSyncStreamBase(val file: java.io.File, val mode: String = "r") : SyncStreamBase() {
 	val ra = RandomAccessFile(file, mode)

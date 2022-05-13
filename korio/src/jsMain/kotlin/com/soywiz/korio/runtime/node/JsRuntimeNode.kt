@@ -1,13 +1,26 @@
 package com.soywiz.korio.runtime.node
 
-import com.soywiz.korio.*
 import com.soywiz.korio.async.AsyncByteArrayDeque
 import com.soywiz.korio.async.AsyncQueue
 import com.soywiz.korio.async.launchImmediately
 import com.soywiz.korio.async.withContext
-import com.soywiz.korio.file.*
+import com.soywiz.korio.file.VfsFile
+import com.soywiz.korio.file.VfsOpenMode
+import com.soywiz.korio.file.VfsProcessHandler
+import com.soywiz.korio.file.normalize
+import com.soywiz.korio.file.pathInfo
 import com.soywiz.korio.file.std.LocalVfs
 import com.soywiz.korio.file.std.ShellArgs
+import com.soywiz.korio.jsEmptyArray
+import com.soywiz.korio.jsEmptyObj
+import com.soywiz.korio.jsEnsureInt
+import com.soywiz.korio.jsEnsureString
+import com.soywiz.korio.jsGlobal
+import com.soywiz.korio.jsObject
+import com.soywiz.korio.jsObjectToMap
+import com.soywiz.korio.jsRuntime
+import com.soywiz.korio.jsToArray
+import com.soywiz.korio.jsToObjectMap
 import com.soywiz.korio.lang.FileAlreadyExistsException
 import com.soywiz.korio.lang.FileNotFoundException
 import com.soywiz.korio.lang.IOException
@@ -17,7 +30,13 @@ import com.soywiz.korio.net.http.Http
 import com.soywiz.korio.net.http.HttpClient
 import com.soywiz.korio.net.http.HttpServer
 import com.soywiz.korio.runtime.JsRuntime
-import com.soywiz.korio.stream.*
+import com.soywiz.korio.stream.AsyncInputStreamWithLength
+import com.soywiz.korio.stream.AsyncStream
+import com.soywiz.korio.stream.AsyncStreamBase
+import com.soywiz.korio.stream.openAsync
+import com.soywiz.korio.stream.readAll
+import com.soywiz.korio.stream.toAsyncStream
+import com.soywiz.korio.toJsObject
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -25,7 +44,12 @@ import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int8Array
 import org.khronos.webgl.Uint8Array
 import org.khronos.webgl.get
-import kotlin.coroutines.*
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.coroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

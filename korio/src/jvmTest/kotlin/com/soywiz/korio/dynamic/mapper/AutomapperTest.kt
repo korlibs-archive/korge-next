@@ -1,9 +1,11 @@
 package com.soywiz.korio.dynamic.mapper
 
-import com.soywiz.korio.dynamic.serialization.*
-import com.soywiz.korio.serialization.json.*
-import com.soywiz.korio.util.*
-import kotlin.test.*
+import com.soywiz.korio.dynamic.serialization.parseTyped
+import com.soywiz.korio.dynamic.serialization.stringifyTyped
+import com.soywiz.korio.serialization.json.Json
+import com.soywiz.korio.util.jvmFallback
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class AutomapperTest {
 	@Test

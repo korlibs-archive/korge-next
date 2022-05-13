@@ -1,12 +1,19 @@
 package com.soywiz.korio.file
 
-import com.soywiz.kmem.*
-import com.soywiz.korio.stream.*
-import com.soywiz.korio.util.*
-import kotlinx.coroutines.*
-import org.khronos.webgl.*
-import org.w3c.files.*
-import kotlin.math.*
+import com.soywiz.kmem.arraycopy
+import com.soywiz.kmem.size
+import com.soywiz.korio.stream.AsyncStream
+import com.soywiz.korio.stream.AsyncStreamBase
+import com.soywiz.korio.stream.buffered
+import com.soywiz.korio.stream.toAsyncStream
+import com.soywiz.korio.util.toByteArray
+import kotlinx.coroutines.CompletableDeferred
+import org.khronos.webgl.ArrayBuffer
+import org.khronos.webgl.Int8Array
+import org.w3c.files.Blob
+import org.w3c.files.File
+import org.w3c.files.FileReader
+import kotlin.math.min
 
 fun Blob.openAsync(): AsyncStream = BlobAsyncBaseStream(this).toAsyncStream().buffered(0x10_000, 0x10)
 

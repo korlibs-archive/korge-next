@@ -1,7 +1,9 @@
 package com.soywiz.korio.lang
 
-import com.soywiz.kmem.*
-import org.khronos.webgl.*
+import com.soywiz.kmem.ByteArrayBuilder
+import org.khronos.webgl.ArrayBufferView
+import org.khronos.webgl.Int8Array
+import org.khronos.webgl.Uint8Array
 
 actual val UTF8: Charset = object : UTC8CharsetBase("UTF-8") {
 	val textDecoder: TextDecoder? = try {

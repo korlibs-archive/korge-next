@@ -1,7 +1,12 @@
 package com.soywiz.korio.lang
 
-import kotlinx.cinterop.*
-import platform.posix.*
+import kotlinx.cinterop.get
+import kotlinx.cinterop.toKString
+import kotlin.collections.LinkedHashMap
+import kotlin.collections.Map
+import kotlin.collections.associate
+import kotlin.collections.getOrElse
+import kotlin.collections.set
 
 internal actual object EnvironmentInternal {
 	private fun getEnvs(): Map<String, String> {

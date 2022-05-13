@@ -1,6 +1,6 @@
 package com.soywiz.korio.async
 
-import com.soywiz.klock.*
+import com.soywiz.klock.measureTime
 
 // @TODO: Use select when waiting for sockets, and integrate it in the eventloop?
 suspend fun <T> kotlin.native.concurrent.Future<T>.await(): T {

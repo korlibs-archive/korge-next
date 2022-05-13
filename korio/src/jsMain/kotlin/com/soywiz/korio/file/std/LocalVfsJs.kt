@@ -1,9 +1,7 @@
 package com.soywiz.korio.file.std
 
-import com.soywiz.korio.*
-import com.soywiz.korio.file.*
-import com.soywiz.korio.lang.Environment
-import com.soywiz.korio.lang.tempPath
+import com.soywiz.korio.file.VfsFile
+import com.soywiz.korio.jsRuntime
 
 actual val resourcesVfs: VfsFile by lazy { applicationVfs.jail() }
 actual val rootLocalVfs: VfsFile by lazy { localVfs(".") }
