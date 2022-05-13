@@ -67,12 +67,12 @@ data class IntArray2(override val width: Int, override val height: Int, val data
     }
 
     operator fun get(x: Int, y: Int): Int = data[index(x, y)]
-    operator fun set(x: Int, y: Int, value: Int): Unit {
+    operator fun set(x: Int, y: Int, value: Int) {
         data[index(x, y)] = value
     }
 
     fun tryGet(x: Int, y: Int): Int? = if (inside(x, y)) data[index(x, y)] else null
-    fun trySet(x: Int, y: Int, value: Int): Unit {
+    fun trySet(x: Int, y: Int, value: Int) {
         if (inside(x, y)) data[index(x, y)] = value
     }
 

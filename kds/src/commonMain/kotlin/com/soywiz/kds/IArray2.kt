@@ -27,7 +27,7 @@ interface IArray2<E> : Iterable<E> {
 
     fun getAt(x: Int, y: Int) = getAt(index(x, y))
 
-    fun setAt(x: Int, y: Int, value: E): Unit {
+    fun setAt(x: Int, y: Int, value: E) {
         setAt(index(x, y), value)
     }
 

@@ -6,16 +6,16 @@ data class ByteArray2(override val width: Int, override val height: Int, val dat
     IArray2<Byte> {
     companion object {
         inline operator fun invoke(width: Int, height: Int, fill: Byte): ByteArray2 =
-            ByteArray2(width, height, ByteArray(width * height) { fill } as ByteArray)
+            ByteArray2(width, height, ByteArray(width * height) { fill })
 
         inline operator fun invoke(width: Int, height: Int, gen: (n: Int) -> Byte): ByteArray2 =
-            ByteArray2(width, height, ByteArray(width * height) { gen(it) } as ByteArray)
+            ByteArray2(width, height, ByteArray(width * height) { gen(it) })
 
         inline fun withGen(width: Int, height: Int, gen: (x: Int, y: Int) -> Byte): ByteArray2 =
             ByteArray2(
                 width,
                 height,
-                ByteArray(width * height) { gen(it % width, it / width) } as ByteArray)
+                ByteArray(width * height) { gen(it % width, it / width) })
 
         inline operator fun invoke(rows: List<List<Byte>>): ByteArray2 {
             val width = rows[0].size
@@ -39,7 +39,7 @@ data class ByteArray2(override val width: Int, override val height: Int, val dat
                     }
                 }
                 .filter { it.isNotEmpty() }
-            val width = lines.map { it.length }.maxOrNull() ?: 0
+            val width = lines.maxOfOrNull { it.length } ?: 0
             val height = lines.size
 
             return ByteArray2(width, height) { n ->
@@ -54,7 +54,7 @@ data class ByteArray2(override val width: Int, override val height: Int, val dat
             default: Byte,
             transform: Map<Char, Byte>
         ): ByteArray2 {
-            return invoke(map) { c, x, y -> transform[c] ?: default }
+            return invoke(map) { c, _, _ -> transform[c] ?: default }
         }
 
         inline fun fromString(
@@ -68,12 +68,12 @@ data class ByteArray2(override val width: Int, override val height: Int, val dat
     }
 
     operator fun get(x: Int, y: Int): Byte = data[index(x, y)]
-    operator fun set(x: Int, y: Int, value: Byte): Unit {
+    operator fun set(x: Int, y: Int, value: Byte) {
         data[index(x, y)] = value
     }
 
     fun tryGet(x: Int, y: Int): Byte? = if (inside(x, y)) data[index(x, y)] else null
-    fun trySet(x: Int, y: Int, value: Byte): Unit {
+    fun trySet(x: Int, y: Int, value: Byte) {
         if (inside(x, y)) data[index(x, y)] = value
     }
 

@@ -68,12 +68,12 @@ data class LongArray2(override val width: Int, override val height: Int, val dat
     }
 
     operator fun get(x: Int, y: Int): Long = data[index(x, y)]
-    operator fun set(x: Int, y: Int, value: Long): Unit {
+    operator fun set(x: Int, y: Int, value: Long) {
         data[index(x, y)] = value
     }
 
     fun tryGet(x: Int, y: Int): Long? = if (inside(x, y)) data[index(x, y)] else null
-    fun trySet(x: Int, y: Int, value: Long): Unit {
+    fun trySet(x: Int, y: Int, value: Long) {
         if (inside(x, y)) data[index(x, y)] = value
     }
 

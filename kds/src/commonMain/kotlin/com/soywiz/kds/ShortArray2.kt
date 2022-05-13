@@ -68,12 +68,12 @@ data class ShortArray2(override val width: Int, override val height: Int, val da
     }
 
     operator fun get(x: Int, y: Int): Short = data[index(x, y)]
-    operator fun set(x: Int, y: Int, value: Short): Unit {
+    operator fun set(x: Int, y: Int, value: Short) {
         data[index(x, y)] = value
     }
 
     fun tryGet(x: Int, y: Int): Short? = if (inside(x, y)) data[index(x, y)] else null
-    fun trySet(x: Int, y: Int, value: Short): Unit {
+    fun trySet(x: Int, y: Int, value: Short) {
         if (inside(x, y)) data[index(x, y)] = value
     }
 

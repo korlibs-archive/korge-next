@@ -5,10 +5,10 @@ data class FloatArray2(override val width: Int, override val height: Int, val da
     IArray2<Float> {
     companion object {
         inline operator fun invoke(width: Int, height: Int, fill: Float): FloatArray2 =
-            FloatArray2(width, height, FloatArray(width * height) { fill } as FloatArray)
+            FloatArray2(width, height, FloatArray(width * height) { fill })
 
         inline operator fun invoke(width: Int, height: Int, gen: (n: Int) -> Float): FloatArray2 =
-            FloatArray2(width, height, FloatArray(width * height) { gen(it) } as FloatArray)
+            FloatArray2(width, height, FloatArray(width * height) { gen(it) })
 
         inline fun withGen(width: Int, height: Int, gen: (x: Int, y: Int) -> Float): FloatArray2 =
             FloatArray2(
@@ -67,12 +67,12 @@ data class FloatArray2(override val width: Int, override val height: Int, val da
     }
 
     operator fun get(x: Int, y: Int): Float = data[index(x, y)]
-    operator fun set(x: Int, y: Int, value: Float): Unit {
+    operator fun set(x: Int, y: Int, value: Float) {
         data[index(x, y)] = value
     }
 
     fun tryGet(x: Int, y: Int): Float? = if (inside(x, y)) data[index(x, y)] else null
-    fun trySet(x: Int, y: Int, value: Float): Unit {
+    fun trySet(x: Int, y: Int, value: Float) {
         if (inside(x, y)) data[index(x, y)] = value
     }
 

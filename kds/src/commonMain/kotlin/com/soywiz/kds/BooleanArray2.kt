@@ -67,12 +67,12 @@ data class BooleanArray2(override val width: Int, override val height: Int, val 
     }
 
     operator fun get(x: Int, y: Int): Boolean = data[index(x, y)]
-    operator fun set(x: Int, y: Int, value: Boolean): Unit {
+    operator fun set(x: Int, y: Int, value: Boolean) {
         data[index(x, y)] = value
     }
 
     fun tryGet(x: Int, y: Int): Boolean? = if (inside(x, y)) data[index(x, y)] else null
-    fun trySet(x: Int, y: Int, value: Boolean): Unit {
+    fun trySet(x: Int, y: Int, value: Boolean) {
         if (inside(x, y)) data[index(x, y)] = value
     }
 

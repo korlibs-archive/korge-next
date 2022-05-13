@@ -1,10 +1,10 @@
 package com.soywiz.kds
 
-inline fun <TGen : Any, RGen : Any> Array2<TGen>.map2(gen: (x: Int, y: Int, v: TGen) -> RGen): Array2<RGen> =
+inline fun <TGen : Any, RGen : Any> IArray2<TGen>.map2(gen: (x: Int, y: Int, v: TGen) -> RGen) =
     Array2<RGen>(width, height) {
         val x = it % width
         val y = it / width
-        gen(x, y, this[x, y])
+        gen(x, y, this.getAt(x, y))
     }
 
 inline fun IntArray2.map2(gen: (x: Int, y: Int, v: Int) -> Int): IntArray2 =
@@ -89,7 +89,7 @@ data class Array2<TGen>(override val width: Int, override val height: Int, val d
             default: TGen,
             transform: Map<Char, TGen>
         ): Array2<TGen> {
-            return invoke(map) { c, x, y -> transform[c] ?: default }
+            return invoke(map) { c, _, _ -> transform[c] ?: default }
         }
 
         inline fun <TGen : Any> fromString(
@@ -123,12 +123,12 @@ data class Array2<TGen>(override val width: Int, override val height: Int, val d
     }
 
     operator fun get(x: Int, y: Int): TGen = data[index(x, y)]
-    operator fun set(x: Int, y: Int, value: TGen): Unit {
+    operator fun set(x: Int, y: Int, value: TGen) {
         data[index(x, y)] = value
     }
 
     fun tryGet(x: Int, y: Int): TGen? = if (inside(x, y)) data[index(x, y)] else null
-    fun trySet(x: Int, y: Int, value: TGen): Unit {
+    fun trySet(x: Int, y: Int, value: TGen) {
         if (inside(x, y)) data[index(x, y)] = value
     }
 
