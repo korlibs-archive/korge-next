@@ -1,19 +1,9 @@
 package com.soywiz.korma.geom.shape.ops.internal
 
-import com.soywiz.korma.geom.IPoint
-import com.soywiz.korma.geom.IPointArrayList
-import com.soywiz.korma.geom.PointArrayList
-import com.soywiz.korma.geom.shape.Shape2d
-import com.soywiz.korma.geom.shape.buildPath
-import com.soywiz.korma.geom.shape.toPathList
-import com.soywiz.korma.geom.toPoints
-import com.soywiz.korma.geom.vector.LineCap
-import com.soywiz.korma.geom.vector.LineJoin
-import com.soywiz.korma.geom.vector.VectorPath
-import com.soywiz.korma.geom.vector.lineTo
-import com.soywiz.korma.geom.vector.moveTo
-import kotlin.math.max
-import kotlin.math.min
+import com.soywiz.korma.geom.*
+import com.soywiz.korma.geom.shape.*
+import com.soywiz.korma.geom.vector.*
+import kotlin.math.*
 
 fun Path.toPoints(): List<IPoint> = (0 until this.size).map { this@toPoints[it] }
 

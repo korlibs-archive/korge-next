@@ -1,13 +1,10 @@
 package com.soywiz.korge3d
 
-import com.soywiz.korge.render.RenderContext
-import com.soywiz.korge.view.Container
-import com.soywiz.korge.view.View
-import com.soywiz.korge.view.addTo
-import com.soywiz.korim.color.Colors
-import com.soywiz.korim.color.RGBA
-import com.soywiz.korim.color.setToColorPremultiplied
-import com.soywiz.korma.geom.invert
+import com.soywiz.kds.iterators.*
+import com.soywiz.korge.render.*
+import com.soywiz.korge.view.*
+import com.soywiz.korim.color.*
+import com.soywiz.korma.geom.*
 
 @Korge3DExperimental
 inline fun Container.scene3D(views: Views3D = Views3D(), callback: Stage3D.() -> Unit = {}): Stage3DView {

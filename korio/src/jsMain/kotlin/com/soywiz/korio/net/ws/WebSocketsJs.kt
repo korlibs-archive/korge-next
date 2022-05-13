@@ -1,15 +1,10 @@
 package com.soywiz.korio.net.ws
 
-import com.soywiz.korio.async.waitOne
+import com.soywiz.korio.async.*
 import com.soywiz.korio.net.http.Http
-import com.soywiz.korio.util.toByteArray
-import com.soywiz.korio.util.toInt8Array
-import org.khronos.webgl.ArrayBuffer
-import org.w3c.dom.ARRAYBUFFER
-import org.w3c.dom.BinaryType
-import org.w3c.dom.CloseEvent
-import org.w3c.dom.MessageEvent
-import org.w3c.dom.WebSocket
+import com.soywiz.korio.util.*
+import org.khronos.webgl.*
+import org.w3c.dom.*
 
 actual suspend fun WebSocketClient(
 	url: String,

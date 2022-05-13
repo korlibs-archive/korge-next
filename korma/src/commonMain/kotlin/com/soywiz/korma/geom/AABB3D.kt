@@ -1,7 +1,7 @@
 package com.soywiz.korma.geom
 
-import kotlin.math.max
-import kotlin.math.min
+import com.soywiz.korma.geom.ds.*
+import kotlin.math.*
 
 
 data class AABB3D(val min: Vector3 = Vector3(), val max: Vector3) {

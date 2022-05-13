@@ -1,11 +1,8 @@
 package com.soywiz.korui.native
 
-import com.soywiz.korma.geom.BoundsBuilder
-import com.soywiz.korma.geom.RectangleInt
-import java.awt.Dimension
-import javax.swing.JPanel
-import javax.swing.JScrollPane
-import javax.swing.ScrollPaneConstants
+import com.soywiz.korma.geom.*
+import java.awt.*
+import javax.swing.*
 
 open class AwtScrollPanel(
     factory: BaseAwtUiFactory,

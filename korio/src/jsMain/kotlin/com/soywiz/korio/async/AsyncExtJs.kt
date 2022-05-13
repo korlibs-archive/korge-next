@@ -1,7 +1,7 @@
 package com.soywiz.korio.async
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.promise
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 
 /*
 actual fun asyncEntryPoint(callback: suspend () -> Unit): dynamic = kotlin.js.Promise<dynamic> { resolve, reject ->

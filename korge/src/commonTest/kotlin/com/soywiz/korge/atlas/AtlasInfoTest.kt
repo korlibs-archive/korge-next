@@ -1,13 +1,11 @@
 package com.soywiz.korge.atlas
 
-import com.soywiz.korim.atlas.AtlasInfo
-import com.soywiz.korio.async.suspendTest
-import com.soywiz.korio.file.std.resourcesVfs
+import com.soywiz.korim.atlas.*
+import com.soywiz.korio.async.*
+import com.soywiz.korio.file.std.*
 import com.soywiz.korio.util.OS
-import com.soywiz.korma.geom.Rectangle
-import com.soywiz.korma.geom.Size
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korma.geom.*
+import kotlin.test.*
 
 class AtlasInfoTest {
     @Test

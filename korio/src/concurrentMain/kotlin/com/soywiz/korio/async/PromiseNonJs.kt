@@ -1,7 +1,7 @@
 package com.soywiz.korio.async
 
-import kotlinx.coroutines.CompletableDeferred
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 
 actual fun <T> Promise(coroutineContext: CoroutineContext, executor: (resolve: (T) -> Unit, reject: (Throwable) -> Unit) -> Unit): Promise<T> {
     val deferred = CompletableDeferred<T>()

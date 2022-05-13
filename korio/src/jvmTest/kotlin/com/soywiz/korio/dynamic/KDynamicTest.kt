@@ -1,7 +1,7 @@
 package com.soywiz.korio.dynamic
 
 import org.junit.Test
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class KDynamicTest {
 	@Test

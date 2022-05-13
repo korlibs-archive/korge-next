@@ -1,37 +1,16 @@
 package com.soywiz.korge.gradle.targets.ios
 
-import com.soywiz.korge.gradle.getCompilationKorgeProcessedResourcesFolder
-import com.soywiz.korge.gradle.getKorgeProcessResourcesTaskName
-import com.soywiz.korge.gradle.korge
-import com.soywiz.korge.gradle.kotlin
-import com.soywiz.korge.gradle.targets.GROUP_KORGE_INSTALL
-import com.soywiz.korge.gradle.targets.GROUP_KORGE_RUN
-import com.soywiz.korge.gradle.targets.desktop.prepareKotlinNativeBootstrap
-import com.soywiz.korge.gradle.targets.getIconBytes
-import com.soywiz.korge.gradle.targets.getResourceString
-import com.soywiz.korge.gradle.targets.native.configureKotlinNativeTarget
-import com.soywiz.korge.gradle.targets.native.getCompileTask
-import com.soywiz.korge.gradle.targets.native.getLinkTask
-import com.soywiz.korge.gradle.util.FileList
-import com.soywiz.korge.gradle.util.Indenter
-import com.soywiz.korge.gradle.util.Json
-import com.soywiz.korge.gradle.util.KDynamic
-import com.soywiz.korge.gradle.util.createTyped
-import com.soywiz.korge.gradle.util.ensureParents
-import com.soywiz.korge.gradle.util.execLogger
-import com.soywiz.korge.gradle.util.execOutput
+import com.soywiz.korge.gradle.*
+import com.soywiz.korge.gradle.targets.*
+import com.soywiz.korge.gradle.targets.desktop.*
+import com.soywiz.korge.gradle.targets.native.*
+import com.soywiz.korge.gradle.util.*
 import com.soywiz.korge.gradle.util.get
-import com.soywiz.korge.gradle.util.quoted
-import com.soywiz.korge.gradle.util.takeIfExists
-import org.gradle.api.Project
-import org.gradle.api.Task
-import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.Copy
-import org.gradle.api.tasks.Exec
-import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
-import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
-import org.jetbrains.kotlin.gradle.plugin.mpp.NativeOutputKind
-import java.io.File
+import org.gradle.api.*
+import org.gradle.api.file.*
+import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.plugin.mpp.*
+import java.io.*
 
 fun Project.configureNativeIos() {
 	val prepareKotlinNativeBootstrapIos = tasks.create("prepareKotlinNativeBootstrapIos") {

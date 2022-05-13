@@ -1,6 +1,6 @@
 package com.soywiz.korio.util.i18n
 
-import com.soywiz.korio.concurrent.atomic.KorAtomicRef
+import com.soywiz.korio.concurrent.atomic.*
 
 internal expect val systemLanguageStrings: List<String>
 

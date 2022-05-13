@@ -1,7 +1,6 @@
 package com.soywiz.korio.net
 
-import java.net.InetSocketAddress
-import java.net.SocketAddress
+import java.net.*
 
 fun SocketAddress?.toAsyncAddress(): AsyncAddress {
     if (this is InetSocketAddress) {

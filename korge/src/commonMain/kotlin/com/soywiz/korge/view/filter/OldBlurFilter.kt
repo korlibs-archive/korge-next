@@ -1,22 +1,13 @@
 package com.soywiz.korge.view.filter
 
-import com.soywiz.kmem.clamp
-import com.soywiz.kmem.toIntCeil
-import com.soywiz.korge.debug.uiEditableValue
-import com.soywiz.korge.render.RenderContext
-import com.soywiz.korge.render.Texture
-import com.soywiz.korge.view.BlendMode
-import com.soywiz.korge.view.Views
-import com.soywiz.korim.color.ColorAdd
-import com.soywiz.korim.color.RGBA
-import com.soywiz.korma.geom.Matrix
-import com.soywiz.korma.geom.Matrix3D
-import com.soywiz.korma.geom.MutableMarginInt
-import com.soywiz.korma.geom.setToInterpolated
-import com.soywiz.korui.UiContainer
-import kotlin.math.ceil
-import kotlin.math.log2
-import kotlin.math.sqrt
+import com.soywiz.kmem.*
+import com.soywiz.korge.debug.*
+import com.soywiz.korge.render.*
+import com.soywiz.korge.view.*
+import com.soywiz.korim.color.*
+import com.soywiz.korma.geom.*
+import com.soywiz.korui.*
+import kotlin.math.*
 
 class OldBlurFilter(radius: Double = 4.0) : Filter {
     companion object {

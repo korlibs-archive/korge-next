@@ -2,40 +2,10 @@ package com.soywiz.korio.net
 
 import com.soywiz.klogger.Console
 import com.soywiz.korio.async.await
-import kotlinx.cinterop.CFunction
-import kotlinx.cinterop.COpaquePointer
-import kotlinx.cinterop.CPointed
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.addressOf
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.convert
-import kotlinx.cinterop.cstr
-import kotlinx.cinterop.get
-import kotlinx.cinterop.invoke
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.pointed
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.reinterpret
-import kotlinx.cinterop.sizeOf
-import kotlinx.cinterop.usePinned
+import kotlinx.cinterop.*
 import platform.linux.inet_addr
-import platform.posix.AF_INET
-import platform.posix.RTLD_LAZY
-import platform.posix.SOCK_STREAM
-import platform.posix.close
-import platform.posix.connect
-import platform.posix.dlclose
-import platform.posix.dlopen
-import platform.posix.dlsym
-import platform.posix.gethostbyname
-import platform.posix.htons
-import platform.posix.sockaddr_in
-import platform.posix.socket
-import kotlin.native.concurrent.AtomicInt
-import kotlin.native.concurrent.AtomicReference
-import kotlin.native.concurrent.TransferMode
-import kotlin.native.concurrent.Worker
-import kotlin.native.concurrent.freeze
+import platform.posix.*
+import kotlin.native.concurrent.*
 import kotlin.reflect.KProperty
 
 private object OSSL {

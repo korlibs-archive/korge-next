@@ -1,6 +1,6 @@
 package com.soywiz.korev
 
-import kotlin.test.Test
+import kotlin.test.*
 
 class KorevTest {
     @Test

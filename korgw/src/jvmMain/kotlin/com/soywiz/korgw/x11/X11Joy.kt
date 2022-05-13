@@ -1,21 +1,11 @@
 package com.soywiz.korgw.x11
 
 import com.soywiz.kds.iterators.fastForEach
-import com.soywiz.kmem.Endian
-import com.soywiz.kmem.arraycopy
-import com.soywiz.kmem.clamp
-import com.soywiz.kmem.hasFlags
-import com.soywiz.kmem.readS16
-import com.soywiz.kmem.readS32
-import com.soywiz.kmem.readU8
-import com.soywiz.kmem.setBits
-import com.soywiz.korev.EventDispatcher
-import com.soywiz.korev.GamePadConnectionEvent
-import com.soywiz.korev.GamePadUpdateEvent
-import com.soywiz.korev.GamepadInfo
-import com.soywiz.korev.dispatch
+import com.soywiz.kgl.internal.*
+import com.soywiz.kmem.*
+import com.soywiz.korev.*
 import java.io.RandomAccessFile
-import kotlin.math.max
+import kotlin.math.*
 
 /*
 fun main() {

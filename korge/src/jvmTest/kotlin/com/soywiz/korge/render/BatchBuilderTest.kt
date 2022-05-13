@@ -1,8 +1,8 @@
 package com.soywiz.korge.render
 
-import com.soywiz.korag.log.LogAG
-import com.soywiz.korge.test.assertEqualsFileReference
-import kotlin.test.Test
+import com.soywiz.korag.log.*
+import com.soywiz.korge.test.*
+import kotlin.test.*
 
 class BatchBuilderTest {
 	val ag = LogAG(16, 16)

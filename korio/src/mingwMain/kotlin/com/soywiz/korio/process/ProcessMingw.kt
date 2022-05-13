@@ -1,19 +1,14 @@
 package com.soywiz.korio.process
 
-import com.soywiz.kds.concurrent.ConcurrentDeque
-import com.soywiz.klock.milliseconds
-import com.soywiz.korio.async.delay
+import com.soywiz.kds.concurrent.*
+import com.soywiz.klock.*
+import com.soywiz.korio.async.*
 import com.soywiz.korio.file.VfsProcessHandler
-import com.soywiz.korio.file.std.ShellArgs
-import kotlinx.cinterop.addressOf
-import kotlinx.cinterop.convert
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.usePinned
-import platform.posix._pclose
-import platform.posix._popen
-import platform.posix.fread
-import kotlin.native.concurrent.TransferMode
-import kotlin.native.concurrent.Worker
+import com.soywiz.korio.file.std.*
+import kotlinx.cinterop.*
+import platform.posix.*
+import platform.windows.*
+import kotlin.native.concurrent.*
 
 actual suspend fun posixExec(
     path: String, cmdAndArgs: List<String>, env: Map<String, String>, handler: VfsProcessHandler

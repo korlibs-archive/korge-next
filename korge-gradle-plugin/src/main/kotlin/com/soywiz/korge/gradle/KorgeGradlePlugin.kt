@@ -1,22 +1,17 @@
 package com.soywiz.korge.gradle
 
-import com.soywiz.korge.gradle.targets.isLinux
-import com.soywiz.korge.gradle.targets.linux.LDLibraries
-import com.soywiz.korge.gradle.util.SemVer
-import com.soywiz.korge.gradle.util.get
-import com.soywiz.korge.gradle.util.invoke
-import com.soywiz.korge.gradle.util.projectExtension
-import groovy.lang.GroovySystem
-import org.gradle.api.Plugin
+import com.soywiz.korge.gradle.targets.*
+import com.soywiz.korge.gradle.targets.linux.*
+import com.soywiz.korge.gradle.util.*
+import groovy.lang.*
+import org.gradle.api.*
 import org.gradle.api.Project
-import org.gradle.api.Task
-import org.gradle.api.plugins.ExtraPropertiesExtension
-import org.gradle.api.tasks.Copy
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.plugins.ide.idea.model.IdeaModel
-import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import java.io.File
+import org.gradle.api.plugins.*
+import org.gradle.api.tasks.*
+import org.gradle.plugins.ide.idea.model.*
+import org.gradle.util.*
+import org.jetbrains.kotlin.gradle.dsl.*
+import java.io.*
 
 class KorgeGradleApply(val project: Project) {
 	fun apply(includeIndirectAndroid: Boolean = true) = project {

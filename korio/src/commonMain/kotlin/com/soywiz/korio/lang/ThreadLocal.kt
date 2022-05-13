@@ -1,6 +1,6 @@
 package com.soywiz.korio.lang
 
-import kotlin.reflect.KProperty
+import kotlin.reflect.*
 
 class threadLocal<T>(val gen: () -> T) {
 	val local = object : NativeThreadLocal<T>() {

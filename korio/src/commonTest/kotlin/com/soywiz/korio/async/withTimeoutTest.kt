@@ -1,5 +1,9 @@
 package com.soywiz.korio.async
 
+import com.soywiz.klock.*
+import kotlinx.coroutines.*
+import kotlin.test.*
+
 class withTimeoutTest {
 	//@Test
 	//// Flaky

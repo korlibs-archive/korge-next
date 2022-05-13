@@ -1,8 +1,7 @@
 package com.soywiz.korio.compression.util
 
-import com.soywiz.kmem.extractBool
-import com.soywiz.kmem.fill
-import com.soywiz.korio.experimental.KorioExperimentalApi
+import com.soywiz.kmem.*
+import com.soywiz.korio.experimental.*
 
 @OptIn(KorioExperimentalApi::class)
 internal class HuffmanTree {

@@ -1,6 +1,6 @@
 package com.soywiz.korio.dynamic
 
-import kotlin.native.concurrent.ThreadLocal
+import kotlin.native.concurrent.*
 
 interface DynApi {
     val global: Any? get() = null

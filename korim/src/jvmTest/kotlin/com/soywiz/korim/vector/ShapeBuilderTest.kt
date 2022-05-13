@@ -1,8 +1,11 @@
 package com.soywiz.korim.vector
 
-import com.soywiz.korim.vector.chart.ChartBars
+import com.soywiz.korim.color.*
+import com.soywiz.korim.format.*
+import com.soywiz.korim.vector.chart.*
 import com.soywiz.korim.vector.format.SVG
-import kotlin.test.Test
+import com.soywiz.korma.geom.vector.*
+import kotlin.test.*
 
 class ShapeBuilderTest {
     @Test

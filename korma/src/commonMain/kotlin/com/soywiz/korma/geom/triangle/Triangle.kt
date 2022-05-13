@@ -1,11 +1,7 @@
 package com.soywiz.korma.geom.triangle
 
-import com.soywiz.korma.geom.IPoint
-import com.soywiz.korma.geom.Orientation
-import com.soywiz.korma.geom.Point
-import com.soywiz.korma.geom.PointArrayList
-import com.soywiz.korma.geom.getPoint
-import kotlin.math.abs
+import com.soywiz.korma.geom.*
+import kotlin.math.*
 
 val Triangle.center get() = Point((p0.x + p1.x + p2.x) / 3, (p0.y + p1.y + p2.y) / 3)
 

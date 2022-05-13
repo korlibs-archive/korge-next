@@ -1,8 +1,6 @@
 package com.soywiz.korma.geom.triangle
 
-import com.soywiz.korma.geom.IPoint
-import com.soywiz.korma.geom.Point
-import com.soywiz.korma.geom.compare
+import com.soywiz.korma.geom.*
 
 data class Edge internal constructor(
     val dummy: Boolean,

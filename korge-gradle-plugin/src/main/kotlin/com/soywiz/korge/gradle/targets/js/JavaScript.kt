@@ -1,25 +1,16 @@
 package com.soywiz.korge.gradle.targets.js
 
-import com.soywiz.korge.gradle.BuildVersions
-import com.soywiz.korge.gradle.gkotlin
-import com.soywiz.korge.gradle.korge
-import com.soywiz.korge.gradle.kotlin
-import com.soywiz.korge.gradle.targets.KorgeIconProvider
-import com.soywiz.korge.gradle.targets.windows.ICO2
-import com.soywiz.korge.gradle.util.decodeImage
-import com.soywiz.korge.gradle.util.get
-import org.gradle.api.DefaultTask
-import org.gradle.api.Project
-import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.Copy
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.TaskAction
+import com.soywiz.korge.gradle.*
+import com.soywiz.korge.gradle.targets.*
+import com.soywiz.korge.gradle.targets.windows.*
+import com.soywiz.korge.gradle.util.*
+import org.gradle.api.*
+import org.gradle.api.file.*
+import org.gradle.api.tasks.*
 import org.gradle.kotlin.dsl.the
 import org.gradle.kotlin.dsl.withType
-import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import java.io.File
+import org.jetbrains.kotlin.gradle.plugin.*
+import java.io.*
 
 private object JavaScriptClass
 

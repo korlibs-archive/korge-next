@@ -1,20 +1,13 @@
 package com.soywiz.korge.view.animation
 
 import com.soywiz.kds.*
-import com.soywiz.kds.iterators.fastForEach
-import com.soywiz.klock.milliseconds
-import com.soywiz.kmem.umod
-import com.soywiz.korge.view.Container
-import com.soywiz.korge.view.Image
-import com.soywiz.korge.view.SmoothedBmpSlice
-import com.soywiz.korge.view.View
-import com.soywiz.korge.view.ViewDslMarker
-import com.soywiz.korge.view.addTo
-import com.soywiz.korge.view.addUpdater
+import com.soywiz.kds.iterators.*
+import com.soywiz.klock.*
+import com.soywiz.kmem.*
+import com.soywiz.korge.view.*
 import com.soywiz.korge.view.tiles.SingleTile
-import com.soywiz.korge.view.xy
-import com.soywiz.korim.bitmap.Bitmaps
-import com.soywiz.korim.format.ImageAnimation
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korim.format.*
 
 inline fun Container.imageAnimationView(
     animation: ImageAnimation? = null,

@@ -1,7 +1,6 @@
 package com.soywiz.korgw.osx
 
-import com.soywiz.kmem.dyn.KPointer
-import com.soywiz.kmem.dyn.KStructure
+import com.soywiz.kmem.dyn.*
 
 class MyNSRect(pointer: KPointer? = null) : KStructure(pointer) {
     var x by nativeFloat()

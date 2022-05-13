@@ -1,8 +1,8 @@
 package com.soywiz.korge.ui
 
-import com.soywiz.korge.tests.ViewsForTesting
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korge.tests.*
+import com.soywiz.korge.view.*
+import kotlin.test.*
 
 class UIButtonToggleableGroupTest : ViewsForTesting() {
     @Test

@@ -1,7 +1,6 @@
 package com.soywiz.korge.view
 
-import com.soywiz.korge.render.MaskStates
-import com.soywiz.korge.render.RenderContext
+import com.soywiz.korge.render.*
 
 @Deprecated("Use View.mask property instead")
 class MaskedView : Container() {

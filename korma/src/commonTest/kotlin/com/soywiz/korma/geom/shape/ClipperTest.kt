@@ -1,12 +1,9 @@
 package com.soywiz.korma.geom.shape
 
-import com.soywiz.korma.geom.IPoint
-import com.soywiz.korma.geom.shape.ops.internal.Clipper
-import com.soywiz.korma.geom.shape.ops.internal.DefaultClipper
-import com.soywiz.korma.geom.shape.ops.internal.Path
-import com.soywiz.korma.geom.shape.ops.internal.Paths
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korma.geom.*
+import com.soywiz.korma.geom.shape.ops.internal.*
+import com.soywiz.korma.geom.vector.*
+import kotlin.test.*
 
 class ClipperTest {
     @Test

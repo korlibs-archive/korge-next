@@ -1,12 +1,9 @@
 package com.soywiz.korge.component.length
 
-import com.soywiz.korge.test.assertEqualsFileReference
-import com.soywiz.korge.tests.ViewsForTesting
-import com.soywiz.korge.view.View
-import com.soywiz.korge.view.fixedSizeContainer
-import com.soywiz.korge.view.solidRect
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korge.test.*
+import com.soywiz.korge.tests.*
+import com.soywiz.korge.view.*
+import kotlin.test.*
 
 class BindLengthComponentJvmTest : ViewsForTesting(log = true) {
     @Test

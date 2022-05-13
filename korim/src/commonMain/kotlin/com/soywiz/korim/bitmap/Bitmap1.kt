@@ -1,9 +1,7 @@
 package com.soywiz.korim.bitmap
 
-import com.soywiz.kmem.divCeil
-import com.soywiz.korim.color.Colors
-import com.soywiz.korim.color.RGBA
-import com.soywiz.korim.color.RgbaArray
+import com.soywiz.kmem.*
+import com.soywiz.korim.color.*
 
 class Bitmap1(
 	width: Int,

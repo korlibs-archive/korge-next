@@ -1,7 +1,8 @@
 package com.soywiz.korui
 
-import com.soywiz.korev.MouseEvent
-import com.soywiz.korui.native.NativeUiFactory
+import com.soywiz.korev.*
+import com.soywiz.korio.util.*
+import com.soywiz.korui.native.*
 
 open class UiButton(app: UiApplication, val button: NativeUiFactory.NativeButton = app.factory.createButton()) : UiComponent(app, button) {
     var icon by button::icon

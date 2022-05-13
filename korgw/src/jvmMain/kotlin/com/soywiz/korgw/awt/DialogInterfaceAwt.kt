@@ -1,17 +1,14 @@
 package com.soywiz.korgw.awt
 
-import com.soywiz.korgw.DialogInterface
-import com.soywiz.korgw.FileFilter
-import com.soywiz.korio.file.VfsFile
-import com.soywiz.korio.file.std.localVfs
+import com.soywiz.korgw.*
+import com.soywiz.korio.file.*
+import com.soywiz.korio.file.std.*
+import com.soywiz.korio.net.*
 import com.soywiz.korio.net.URL
-import kotlinx.coroutines.CompletableDeferred
-import java.awt.Component
-import java.awt.Desktop
-import java.awt.EventQueue
-import java.awt.FileDialog
-import java.net.URI
-import javax.swing.JOptionPane
+import kotlinx.coroutines.*
+import java.awt.*
+import java.net.*
+import javax.swing.*
 
 class DialogInterfaceAwt(val componentProvider: () -> Component?) : DialogInterface {
     val component get() = componentProvider()

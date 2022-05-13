@@ -1,5 +1,7 @@
 package com.soywiz.korev
 
+import com.soywiz.korev.*
+import java.awt.event.*
 import java.awt.event.KeyEvent
 
 fun awtKeyCodeToKey(keyCode: Int): Key {

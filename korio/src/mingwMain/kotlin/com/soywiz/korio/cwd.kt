@@ -1,9 +1,7 @@
 package com.soywiz.korio
 
-import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.convert
-import kotlinx.cinterop.reinterpret
-import kotlinx.cinterop.toKString
+import kotlinx.cinterop.*
+import platform.posix.*
 
 fun getExecutablePath(): String = kotlinx.cinterop.memScoped {
 	val maxSize = 4096

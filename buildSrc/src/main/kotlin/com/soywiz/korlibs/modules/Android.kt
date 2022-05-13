@@ -1,7 +1,7 @@
 package com.soywiz.korlibs.modules
 
-import org.gradle.api.Project
-import java.io.File
+import org.gradle.api.*
+import java.io.*
 
 fun guessAndroidSdkPath(): String? {
     val userHome = System.getProperty("user.home")

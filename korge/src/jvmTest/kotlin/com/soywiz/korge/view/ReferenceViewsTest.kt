@@ -1,9 +1,9 @@
 package com.soywiz.korge.view
 
-import com.soywiz.korge.test.assertEqualsFileReference
-import com.soywiz.korge.tests.ViewsForTesting
-import com.soywiz.korma.geom.SizeInt
-import org.junit.Test
+import com.soywiz.korge.test.*
+import com.soywiz.korge.tests.*
+import com.soywiz.korma.geom.*
+import org.junit.*
 
 class ReferenceViewsTest : ViewsForTesting(
     windowSize = SizeInt(200, 200),

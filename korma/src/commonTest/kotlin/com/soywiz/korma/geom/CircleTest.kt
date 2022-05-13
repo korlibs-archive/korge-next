@@ -1,6 +1,6 @@
 package com.soywiz.korma.geom
 
-import kotlin.test.Test
+import kotlin.test.*
 
 class CircleTest {
     @Test

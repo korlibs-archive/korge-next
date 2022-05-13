@@ -1,6 +1,6 @@
 package com.soywiz.korge.ui
 
-import kotlin.reflect.KProperty
+import kotlin.reflect.*
 
 inline fun <T> uiObservable(value: T, noinline observe: (T) -> Unit) = UIObservable(value, observe)
 

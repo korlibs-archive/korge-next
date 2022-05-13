@@ -1,7 +1,7 @@
 package com.soywiz.korge.view
 
-import com.soywiz.korge.annotations.KorgeExperimental
-import com.soywiz.korge.render.RenderContext2D
+import com.soywiz.korge.annotations.*
+import com.soywiz.korge.render.*
 
 @KorgeExperimental
 inline fun Container.renderableView(

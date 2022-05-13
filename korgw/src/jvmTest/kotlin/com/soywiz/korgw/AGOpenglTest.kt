@@ -1,9 +1,9 @@
 package com.soywiz.korgw
 
-import com.soywiz.kgl.KmlGlProxyLogToString
-import com.soywiz.korag.gl.SimpleAGOpengl
-import com.soywiz.korio.test.assertEqualsJvmFileReference
-import kotlin.test.Test
+import com.soywiz.kgl.*
+import com.soywiz.korag.gl.*
+import com.soywiz.korio.test.*
+import kotlin.test.*
 
 class AGOpenglTest {
     @Test

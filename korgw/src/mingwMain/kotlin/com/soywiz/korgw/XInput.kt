@@ -1,24 +1,8 @@
 package com.soywiz.korgw
 
 import com.soywiz.kmem.convertRangeClamped
-import com.soywiz.korev.EventDispatcher
-import com.soywiz.korev.GameButton
-import com.soywiz.korev.GamePadConnectionEvent
-import com.soywiz.korev.GamePadUpdateEvent
-import com.soywiz.korev.GamepadInfo
-import com.soywiz.korev.GamepadMapping
-import com.soywiz.korev.dispatch
-import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.ByteVarOf
-import kotlinx.cinterop.CFunction
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.IntVar
-import kotlinx.cinterop.ShortVar
-import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.get
-import kotlinx.cinterop.invoke
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.reinterpret
+import com.soywiz.korev.*
+import kotlinx.cinterop.*
 import platform.windows.GetProcAddress
 import platform.windows.LoadLibraryA
 

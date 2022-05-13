@@ -1,20 +1,17 @@
 package com.soywiz.korgw.platform
 
-import com.soywiz.korag.AG
-import com.soywiz.korgw.GameWindowConfig
-import com.soywiz.korgw.osx.MacAWTOpenglContext
+import com.soywiz.korag.*
+import com.soywiz.korgw.*
+import com.soywiz.korgw.osx.*
 import com.soywiz.korgw.win32.Win32OpenglContext
 import com.soywiz.korgw.x11.X
 import com.soywiz.korgw.x11.X11OpenglContext
-import com.soywiz.korio.lang.Disposable
+import com.soywiz.korio.lang.*
 import com.soywiz.korio.util.OS
-import com.soywiz.korma.geom.RectangleInt
+import com.soywiz.korma.geom.*
 import com.sun.jna.Native
 import com.sun.jna.platform.unix.X11
-import java.awt.Component
-import java.awt.Frame
-import java.awt.Graphics
-import java.awt.GraphicsEnvironment
+import java.awt.*
 import java.lang.reflect.Method
 
 interface BaseOpenglContext : Disposable {

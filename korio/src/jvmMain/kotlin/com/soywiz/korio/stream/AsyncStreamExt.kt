@@ -1,7 +1,7 @@
 package com.soywiz.korio.stream
 
-import com.soywiz.korio.lang.unsupported
-import java.io.InputStream
+import com.soywiz.korio.lang.*
+import java.io.*
 
 fun InputStream.toAsync(length: Long? = null): AsyncInputStream {
 	val syncIS = this

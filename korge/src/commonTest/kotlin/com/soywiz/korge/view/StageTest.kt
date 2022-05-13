@@ -1,10 +1,9 @@
 package com.soywiz.korge.view
 
-import com.soywiz.korge.input.mouse
-import com.soywiz.korge.tests.ViewsForTesting
-import com.soywiz.korma.geom.Point
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korge.input.*
+import com.soywiz.korge.tests.*
+import com.soywiz.korma.geom.*
+import kotlin.test.*
 
 class StageTest : ViewsForTesting() {
     @Test

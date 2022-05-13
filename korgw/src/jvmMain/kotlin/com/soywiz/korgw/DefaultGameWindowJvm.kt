@@ -1,14 +1,13 @@
 package com.soywiz.korgw
 
-//import com.soywiz.korgw.jogl.JoglGameWindow
 import SdlGameWindowJvm
 import com.soywiz.korag.AG
 import com.soywiz.korag.AGConfig
 import com.soywiz.korag.AGFactory
 import com.soywiz.korag.AGWindow
-import com.soywiz.korev.MouseEvent
-import com.soywiz.korev.addEventListener
+import com.soywiz.korev.*
 import com.soywiz.korgw.awt.AwtGameWindow
+//import com.soywiz.korgw.jogl.JoglGameWindow
 import com.soywiz.korgw.osx.MacGameWindow
 import com.soywiz.korgw.osx.initializeMacOnce
 import com.soywiz.korgw.osx.isOSXMainThread

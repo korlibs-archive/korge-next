@@ -1,13 +1,10 @@
 package com.soywiz.korge.view
 
-import com.soywiz.kds.FastArrayList
-import com.soywiz.kds.toFastList
-import com.soywiz.klock.TimeSpan
+import com.soywiz.kds.*
+import com.soywiz.klock.*
 import com.soywiz.kmem.umod
-import com.soywiz.korim.atlas.Atlas
-import com.soywiz.korim.bitmap.Bitmap
-import com.soywiz.korim.bitmap.BmpSlice
-import com.soywiz.korim.bitmap.slice
+import com.soywiz.korim.atlas.*
+import com.soywiz.korim.bitmap.*
 
 class SpriteAnimation constructor(
     val sprites: List<BmpSlice>,

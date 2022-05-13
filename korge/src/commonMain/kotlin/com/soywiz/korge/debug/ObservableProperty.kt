@@ -1,8 +1,7 @@
 package com.soywiz.korge.debug
 
-import com.soywiz.korio.async.Signal
-import com.soywiz.korui.UiComponent
-import com.soywiz.korui.UiContainer
+import com.soywiz.korio.async.*
+import com.soywiz.korui.*
 
 class ObservableProperty<T>(
     val name: String,

@@ -1,5 +1,7 @@
 package com.soywiz.korio.net.http
 
+import com.soywiz.korio.*
+
 internal actual val httpFactory: HttpFactory by lazy {
 	object : HttpFactory {
 		init {

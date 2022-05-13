@@ -1,19 +1,11 @@
 package com.soywiz.korge.service.storage
 
-import com.soywiz.kds.CopyOnWriteFrozenMap
+import com.soywiz.kds.*
 import com.soywiz.kds.atomic.KdsAtomicRef
-import com.soywiz.korge.native.KorgeSimpleNativeSyncIO
-import com.soywiz.korge.view.Views
-import com.soywiz.korio.lang.UTF8
-import com.soywiz.korio.lang.toByteArray
-import com.soywiz.korio.lang.toString
-import com.soywiz.korio.serialization.json.fromJson
-import com.soywiz.korio.serialization.json.toJson
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.emptyList
-import kotlin.collections.set
-import kotlin.collections.toList
+import com.soywiz.korge.native.*
+import com.soywiz.korge.view.*
+import com.soywiz.korio.lang.*
+import com.soywiz.korio.serialization.json.*
 
 actual class NativeStorage actual constructor(val views: Views) : IStorage {
     val gameStorageFolder = views.realSettingsFolder.also { KorgeSimpleNativeSyncIO.mkdirs(it) }

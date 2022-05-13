@@ -1,9 +1,8 @@
 package com.soywiz.korio.util
 
-import com.soywiz.korio.async.suspendTest
-import com.soywiz.korio.file.std.MemoryVfsMix
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korio.async.*
+import com.soywiz.korio.file.std.*
+import kotlin.test.*
 
 class PropsTest {
 	@Test

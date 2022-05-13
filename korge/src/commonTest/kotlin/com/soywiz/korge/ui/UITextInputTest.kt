@@ -1,10 +1,9 @@
 package com.soywiz.korge.ui
 
-import com.soywiz.korev.Key
-import com.soywiz.korge.annotations.KorgeExperimental
-import com.soywiz.korge.tests.ViewsForTesting
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korev.*
+import com.soywiz.korge.annotations.*
+import com.soywiz.korge.tests.*
+import kotlin.test.*
 
 @OptIn(KorgeExperimental::class)
 class UITextInputTest : ViewsForTesting() {

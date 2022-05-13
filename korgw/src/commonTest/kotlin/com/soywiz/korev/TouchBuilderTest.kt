@@ -1,7 +1,7 @@
 package com.soywiz.korev
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korio.util.*
+import kotlin.test.*
 
 class TouchBuilderTest {
     val builder = TouchBuilder()

@@ -7,17 +7,7 @@ import com.soywiz.korev.Key
 import com.soywiz.korev.KeyEvent
 import com.soywiz.korev.MouseButton
 import com.soywiz.korev.MouseEvent
-import com.soywiz.korgw.sdl2.SDL
-import com.soywiz.korgw.sdl2.SDLKeyCode
-import com.soywiz.korgw.sdl2.SDL_DisplayMode
-import com.soywiz.korgw.sdl2.SDL_Event
-import com.soywiz.korgw.sdl2.SDL_EventType
-import com.soywiz.korgw.sdl2.SDL_INIT
-import com.soywiz.korgw.sdl2.SDL_Keycode_Table
-import com.soywiz.korgw.sdl2.SDL_MouseButton
-import com.soywiz.korgw.sdl2.SDL_RendererFlags
-import com.soywiz.korgw.sdl2.SDL_WindowEventID
-import com.soywiz.korgw.sdl2.SDL_WindowFlags
+import com.soywiz.korgw.sdl2.*
 
 private val sdl by lazy { SDL() }
 

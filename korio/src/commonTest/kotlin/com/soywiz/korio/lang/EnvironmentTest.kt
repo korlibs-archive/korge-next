@@ -1,7 +1,6 @@
 package com.soywiz.korio.lang
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class EnvironmentTest {
 	@Test

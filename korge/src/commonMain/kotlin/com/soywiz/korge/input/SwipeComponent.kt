@@ -1,9 +1,8 @@
 package com.soywiz.korge.input
 
-import com.soywiz.korge.view.View
-import com.soywiz.korge.view.Views
-import com.soywiz.korma.geom.Point
-import kotlin.math.abs
+import com.soywiz.korge.view.*
+import com.soywiz.korma.geom.*
+import kotlin.math.*
 
 data class SwipeInfo(
     var dx: Double = 0.0,

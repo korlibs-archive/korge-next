@@ -1,7 +1,7 @@
 package com.soywiz.korio.net.ssl
 
-import com.soywiz.korio.net.AsyncAddress
-import com.soywiz.korio.net.AsyncClient
+import com.soywiz.korio.lang.*
+import com.soywiz.korio.net.*
 
 expect fun DefaultSSLProcessor(): SSLProcessor
 

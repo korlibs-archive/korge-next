@@ -1,12 +1,9 @@
 package com.soywiz.korge.render
 
-import com.soywiz.kmem.FBuffer
-import com.soywiz.kmem.get
-import com.soywiz.kmem.toIntRound
-import com.soywiz.korim.color.Colors
-import com.soywiz.korim.color.RGBA
-import com.soywiz.korio.util.niceStr
-import com.soywiz.korma.geom.Point
+import com.soywiz.kmem.*
+import com.soywiz.korim.color.*
+import com.soywiz.korio.util.*
+import com.soywiz.korma.geom.*
 
 data class VertexInfo(
     var x: Float = 0f,

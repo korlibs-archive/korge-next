@@ -1,20 +1,11 @@
 package com.soywiz.korge.gradle.targets.android
 
-import com.android.build.gradle.internal.dsl.BaseAppModuleExtension
-import com.soywiz.korge.gradle.BuildVersions
-import com.soywiz.korge.gradle.korge
-import com.soywiz.korge.gradle.kotlin
-import org.gradle.api.JavaVersion
-import org.gradle.api.Project
-import kotlin.collections.LinkedHashMap
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.iterator
-import kotlin.collections.listOf
-import kotlin.collections.map
-import kotlin.collections.mapOf
-import kotlin.collections.set
-import kotlin.collections.toTypedArray
+import com.android.build.gradle.internal.dsl.*
+import com.android.builder.core.*
+import com.soywiz.korge.gradle.*
+import com.soywiz.korge.gradle.targets.*
+import com.soywiz.korge.gradle.util.*
+import org.gradle.api.*
 
 fun Project.configureAndroidDirect() {
     project.ensureAndroidLocalPropertiesWithSdkDir()

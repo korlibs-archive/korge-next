@@ -1,13 +1,8 @@
 package com.soywiz.korgw.win32
 
 import com.soywiz.kmem.convertRangeClamped
-import com.soywiz.korev.EventDispatcher
-import com.soywiz.korev.GameButton
-import com.soywiz.korev.GamePadConnectionEvent
-import com.soywiz.korev.GamePadUpdateEvent
-import com.soywiz.korev.GamepadInfo
-import com.soywiz.korev.GamepadMapping
-import com.soywiz.korev.dispatch
+import com.soywiz.korev.*
+import com.soywiz.korio.util.toStringUnsigned
 import com.sun.jna.Library
 import com.sun.jna.Native
 import com.sun.jna.Structure

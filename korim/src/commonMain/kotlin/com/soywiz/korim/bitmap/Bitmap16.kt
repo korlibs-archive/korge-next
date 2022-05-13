@@ -1,12 +1,8 @@
 package com.soywiz.korim.bitmap
 
-import com.soywiz.kmem.arraycopy
-import com.soywiz.korim.color.ColorFormat
-import com.soywiz.korim.color.RGBA
-import com.soywiz.korim.color.RGBA_4444
-import com.soywiz.korim.color.packRGBA
-import com.soywiz.korim.color.unpackToRGBA
-import com.soywiz.korio.lang.assert
+import com.soywiz.kmem.*
+import com.soywiz.korim.color.*
+import com.soywiz.korio.lang.*
 
 class Bitmap16(
     width: Int,

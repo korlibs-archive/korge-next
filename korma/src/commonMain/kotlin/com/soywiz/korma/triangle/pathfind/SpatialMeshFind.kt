@@ -4,13 +4,7 @@ import com.soywiz.kds.*
 import com.soywiz.korma.geom.IPoint
 import com.soywiz.korma.geom.IPointArrayList
 import com.soywiz.korma.geom.PointArrayList
-import com.soywiz.korma.geom.triangle.Edge
-import com.soywiz.korma.geom.triangle.Triangle
-import com.soywiz.korma.geom.triangle.containsPoint
-import com.soywiz.korma.geom.triangle.point
-import com.soywiz.korma.geom.triangle.pointCCW
-import com.soywiz.korma.geom.triangle.pointCW
-import com.soywiz.korma.geom.triangle.pointInsideTriangle
+import com.soywiz.korma.geom.triangle.*
 import kotlin.math.hypot
 
 private typealias SpatialNode = SpatialMesh.Node

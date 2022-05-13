@@ -1,6 +1,6 @@
 package com.soywiz.korge.stat
 
-import com.soywiz.kds.iterators.fastForEach
+import com.soywiz.kds.iterators.*
 
 class Stats {
 	interface Named {

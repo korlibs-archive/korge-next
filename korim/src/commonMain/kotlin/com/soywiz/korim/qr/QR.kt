@@ -29,18 +29,15 @@ package com.soywiz.korim.qr
  * @see <a href="http://jeromeetienne.github.com/jquery-qrcode/" target="_blank">http://jeromeetienne.github.com/jquery-qrcode/</a>
  */
 
-import com.soywiz.kds.IntArrayList
-import com.soywiz.klock.DateFormat
-import com.soywiz.klock.DateTime
-import com.soywiz.klock.format
-import com.soywiz.kmem.UByteArrayInt
-import com.soywiz.korim.bitmap.Bitmap32
-import com.soywiz.korim.color.Colors
-import com.soywiz.korim.color.RGBA
-import com.soywiz.korio.lang.UTF8
-import com.soywiz.korio.lang.toByteArray
-import kotlin.math.abs
-import kotlin.math.max
+import com.soywiz.kds.*
+import com.soywiz.klock.*
+import com.soywiz.kmem.*
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korim.color.*
+import com.soywiz.korim.internal.*
+
+import com.soywiz.korio.lang.*
+import kotlin.math.*
 
 @Suppress("unused")
 open class QR(

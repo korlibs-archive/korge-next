@@ -1,10 +1,9 @@
 package com.soywiz.korge3d
 
-import com.soywiz.korge.resources.ResourceProcessor
-import com.soywiz.korge3d.format.ColladaParser
-import com.soywiz.korge3d.format.writeKs3d
-import com.soywiz.korio.file.VfsFile
-import com.soywiz.korio.serialization.xml.readXml
+import com.soywiz.korge.resources.*
+import com.soywiz.korge3d.format.*
+import com.soywiz.korio.file.*
+import com.soywiz.korio.serialization.xml.*
 
 open class ColladaResourceProcessor : ResourceProcessor("dae") {
 	companion object : ColladaResourceProcessor()

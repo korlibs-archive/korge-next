@@ -1,8 +1,9 @@
 package com.soywiz.korui.native
 
-import com.soywiz.korim.bitmap.Bitmap
-import com.soywiz.korui.native.util.toAwtIcon
-import javax.swing.JLabel
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korui.native.util.*
+import java.awt.*
+import javax.swing.*
 
 open class AwtCanvas(factory: BaseAwtUiFactory, val label: JLabel = JLabel()) : AwtComponent(factory, label), NativeUiFactory.NativeCanvas {
     override var image: Bitmap? = null

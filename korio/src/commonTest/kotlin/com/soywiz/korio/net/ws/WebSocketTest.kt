@@ -1,5 +1,8 @@
 package com.soywiz.korio.net.ws
 
+import com.soywiz.korio.async.*
+import kotlin.test.*
+
 class WebSocketTest {
 	//@Test
 	//fun testWebSocket() = suspendTest {

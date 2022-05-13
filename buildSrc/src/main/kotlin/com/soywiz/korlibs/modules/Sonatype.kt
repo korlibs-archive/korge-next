@@ -1,11 +1,8 @@
 package com.soywiz.korlibs.modules
 
-import com.soywiz.korlibs.util.SimpleHttpClient
-import com.soywiz.korlibs.util.SimpleHttpException
-import com.soywiz.korlibs.util.get
-import com.soywiz.korlibs.util.list
-import org.gradle.api.Project
-import java.io.File
+import com.soywiz.korlibs.util.*
+import org.gradle.api.*
+import java.io.*
 import java.util.*
 
 val Project.customMavenUser: String? get() = System.getenv("KORLIBS_CUSTOM_MAVEN_USER") ?: rootProject.findProperty("KORLIBS_CUSTOM_MAVEN_USER")?.toString()

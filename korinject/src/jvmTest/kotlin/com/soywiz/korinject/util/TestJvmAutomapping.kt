@@ -1,14 +1,11 @@
 package com.soywiz.korinject.util
 
-import com.soywiz.korinject.AsyncInjector
-import com.soywiz.korinject.Prototype
-import com.soywiz.korinject.Singleton
-import com.soywiz.korinject.jvmAutomapping
-import kotlinx.coroutines.runBlocking
+import com.soywiz.korinject.*
+import kotlinx.coroutines.*
+import org.junit.*
 import org.junit.Test
-import java.io.File
-import kotlin.test.assertNotSame
-import kotlin.test.assertSame
+import java.io.*
+import kotlin.test.*
 
 @Suppress("RemoveExplicitTypeArguments")
 class JvmAutomappingTest {

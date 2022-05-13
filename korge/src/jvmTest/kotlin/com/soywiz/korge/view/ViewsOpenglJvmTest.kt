@@ -1,16 +1,15 @@
 package com.soywiz.korge.view
 
-import com.soywiz.kgl.KmlGl
-import com.soywiz.kgl.KmlGlProxyLogToString
-import com.soywiz.korag.AG
-import com.soywiz.korag.gl.AGOpengl
-import com.soywiz.korge.render.RenderContext
-import com.soywiz.korge.test.assertEqualsFileReference
-import com.soywiz.korge.tests.ViewsForTesting
-import com.soywiz.korge.view.filter.IdentityFilter
-import com.soywiz.korim.bitmap.NativeImage
-import com.soywiz.korim.color.Colors
-import org.junit.Test
+import com.soywiz.kgl.*
+import com.soywiz.korag.*
+import com.soywiz.korag.gl.*
+import com.soywiz.korge.render.*
+import com.soywiz.korge.test.*
+import com.soywiz.korge.tests.*
+import com.soywiz.korge.view.filter.*
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korim.color.*
+import org.junit.*
 
 class ViewsOpenglJvmTest : ViewsForTesting(log = true) {
     val logGl: KmlGlProxyLogToString = object : KmlGlProxyLogToString() {

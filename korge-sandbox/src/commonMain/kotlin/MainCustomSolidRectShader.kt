@@ -1,15 +1,8 @@
-import com.soywiz.klock.seconds
-import com.soywiz.korag.DefaultShaders
-import com.soywiz.korag.shader.Uniform
-import com.soywiz.korag.shader.VarType
-import com.soywiz.korag.shader.appendingVertex
-import com.soywiz.korag.shader.replacingFragment
-import com.soywiz.korge.view.Stage
-import com.soywiz.korge.view.addUpdater
-import com.soywiz.korge.view.getDefaultProgram
-import com.soywiz.korge.view.solidRect
-import com.soywiz.korge.view.xy
-import com.soywiz.korim.color.Colors
+import com.soywiz.klock.*
+import com.soywiz.korag.*
+import com.soywiz.korag.shader.*
+import com.soywiz.korge.view.*
+import com.soywiz.korim.color.*
 
 suspend fun Stage.mainCustomSolidRectShader() {
     val solidRect = solidRect(200, 200, Colors.RED).xy(100, 100)

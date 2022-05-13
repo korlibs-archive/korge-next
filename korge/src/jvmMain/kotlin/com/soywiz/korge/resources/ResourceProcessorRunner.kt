@@ -1,21 +1,12 @@
 package com.soywiz.korge.resources
 
-import com.soywiz.korge.plugin.KorgePluginExtension
-import com.soywiz.korio.file.std.toVfs
-import kotlinx.coroutines.runBlocking
-import java.io.File
+import com.soywiz.korge.plugin.*
+import com.soywiz.korio.file.std.*
+import kotlinx.coroutines.*
+import java.io.*
 import java.util.*
-import java.util.logging.Logger
+import java.util.logging.*
 import kotlin.collections.LinkedHashMap
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.filter
-import kotlin.collections.filterNotNull
-import kotlin.collections.isNotEmpty
-import kotlin.collections.listOfNotNull
-import kotlin.collections.map
-import kotlin.collections.set
-import kotlin.collections.toList
 
 @Suppress("unused")
 object ResourceProcessorRunner {

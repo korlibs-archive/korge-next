@@ -1,10 +1,6 @@
 package com.soywiz.korgw.awt
 
-import com.soywiz.kgl.KmlGl
-import com.soywiz.kgl.KmlGlFastProxy
-import com.soywiz.kgl.LogKmlGlProxy
-import com.soywiz.kgl.cachedIf
-import com.soywiz.kgl.checkedIf
+import com.soywiz.kgl.*
 import com.soywiz.korag.gl.AGOpengl
 import com.soywiz.korgw.osx.MacKmlGL
 import com.soywiz.korgw.win32.Win32KmlGl

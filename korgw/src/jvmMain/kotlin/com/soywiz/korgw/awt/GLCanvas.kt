@@ -1,14 +1,11 @@
 package com.soywiz.korgw.awt
 
-import com.soywiz.kgl.KmlGl
-import com.soywiz.korgw.GameWindow
-import com.soywiz.korgw.GameWindowConfig
-import com.soywiz.korgw.platform.BaseOpenglContext
-import com.soywiz.korgw.platform.glContextFromComponent
-import java.awt.Canvas
-import java.awt.Graphics
-import java.awt.GraphicsConfiguration
-import java.io.Closeable
+import com.soywiz.kgl.*
+import com.soywiz.korgw.*
+import com.soywiz.korgw.platform.*
+import com.sun.jna.*
+import java.awt.*
+import java.io.*
 
 open class GLCanvas constructor(checkGl: Boolean = true, logGl: Boolean = false, cacheGl: Boolean = false) : Canvas(), GameWindowConfig, Closeable {
     val ag: AwtAg = AwtAg(this, checkGl, logGl, cacheGl)

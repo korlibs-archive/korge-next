@@ -1,7 +1,7 @@
 package com.soywiz.korio.util
 
-import com.soywiz.kmem.extract
-import com.soywiz.krypto.encoding.Hex
+import com.soywiz.kmem.*
+import com.soywiz.krypto.encoding.*
 
 fun String.escape(): String {
 	val out = StringBuilder()

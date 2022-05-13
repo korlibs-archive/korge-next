@@ -1,7 +1,7 @@
 package com.soywiz.korio.util
 
-import com.soywiz.korio.lang.portableSimpleName
-import kotlin.reflect.KClass
+import com.soywiz.korio.lang.*
+import kotlin.reflect.*
 
 suspend fun <T : Throwable> expectException(clazz: KClass<T>, callback: suspend () -> Unit) {
 	var thrown: Throwable? = null

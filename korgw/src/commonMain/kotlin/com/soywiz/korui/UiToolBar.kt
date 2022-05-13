@@ -1,6 +1,8 @@
 package com.soywiz.korui
 
-import com.soywiz.korui.native.NativeUiFactory
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korui.layout.*
+import com.soywiz.korui.native.*
 
 open class UiToolBar(app: UiApplication, val canvas: NativeUiFactory.NativeToolbar = app.factory.createToolbar()) : UiComponent(app, canvas) {
 }

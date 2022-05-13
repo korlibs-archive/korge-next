@@ -1,9 +1,10 @@
 package com.soywiz.korio.file.std
 
-import com.soywiz.korio.async.suspendTest
-import com.soywiz.korio.lang.currentThreadId
+import com.soywiz.korio.async.*
+import com.soywiz.korio.lang.*
+import org.junit.*
 import org.junit.Test
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class SingleThreadedIoTest {
 	@Test

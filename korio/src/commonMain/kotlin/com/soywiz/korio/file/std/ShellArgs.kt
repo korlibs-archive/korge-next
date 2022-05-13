@@ -1,6 +1,6 @@
 package com.soywiz.korio.file.std
 
-import com.soywiz.korio.util.OS
+import com.soywiz.korio.util.*
 
 // @TODO: DRY, try to use buildShellExecCommandLineArray
 // @TODO: NodeJS fails on windows with special characters like & echo &

@@ -1,7 +1,7 @@
 package com.soywiz.korge.component
 
-import com.soywiz.korge.input.mouse
-import com.soywiz.korge.view.View
+import com.soywiz.korge.input.*
+import com.soywiz.korge.view.*
 
 @Deprecated("Use decorateOutOverSimple")
 fun <T : View> T.decorateOutOver(onOver: (T) -> Unit = { }, onOut: (T) -> Unit = { }): T {

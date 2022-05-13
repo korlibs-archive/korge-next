@@ -1,7 +1,6 @@
 package com.soywiz.korio.dynamic
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class DynCommonTest {
     val data1 = mapOf("a" to mapOf("b" to 10)).dyn

@@ -1,12 +1,8 @@
 package com.soywiz.korio.lang
 
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.get
-import kotlinx.cinterop.plus
-import kotlinx.cinterop.toKString
-import platform.windows.FreeEnvironmentStringsW
-import platform.windows.GetEnvironmentStringsW
-import platform.windows.WCHARVar
+import kotlinx.cinterop.*
+import platform.posix.*
+import platform.windows.*
 
 internal actual object EnvironmentInternal {
 	private fun readStringsz(ptr: CPointer<WCHARVar>?): List<String> {

@@ -1,21 +1,16 @@
 package com.soywiz.korge.view
 
-import com.soywiz.korge.test.assertEqualsFileReference
-import com.soywiz.korge.tests.ViewsForTesting
-import com.soywiz.korge.view.filter.ColorMatrixFilter
-import com.soywiz.korge.view.filter.Convolute3Filter
-import com.soywiz.korim.bitmap.Bitmap32
-import com.soywiz.korim.color.Colors
-import com.soywiz.korim.font.readFont
-import com.soywiz.korim.font.renderTextToBitmap
-import com.soywiz.korim.format.readBitmap
-import com.soywiz.korim.text.DefaultStringTextRenderer
-import com.soywiz.korio.file.std.resourcesVfs
-import com.soywiz.korma.geom.Rectangle
-import com.soywiz.korma.geom.RectangleInt
-import com.soywiz.korma.geom.Size
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korge.test.*
+import com.soywiz.korge.tests.*
+import com.soywiz.korge.view.filter.*
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korim.color.*
+import com.soywiz.korim.font.*
+import com.soywiz.korim.format.*
+import com.soywiz.korim.text.*
+import com.soywiz.korio.file.std.*
+import com.soywiz.korma.geom.*
+import kotlin.test.*
 
 class ViewsJvmTest : ViewsForTesting(log = true) {
 	val tex = Bitmap32(10, 10)

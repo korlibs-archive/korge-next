@@ -1,28 +1,9 @@
-import com.soywiz.korge.ui.UIEditableNumberPropsList
-import com.soywiz.korge.ui.UIPropertyRow
-import com.soywiz.korge.ui.UIRadioButtonGroup
-import com.soywiz.korge.ui.UISkin
-import com.soywiz.korge.ui.textColor
-import com.soywiz.korge.ui.textFont
-import com.soywiz.korge.ui.uiCheckBox
-import com.soywiz.korge.ui.uiContainer
-import com.soywiz.korge.ui.uiPropertyNumberRow
-import com.soywiz.korge.ui.uiRadioButton
-import com.soywiz.korge.ui.uiSkin
-import com.soywiz.korge.ui.uiSpacing
-import com.soywiz.korge.ui.uiText
-import com.soywiz.korge.ui.uiTextInput
-import com.soywiz.korge.ui.uiVerticalStack
-import com.soywiz.korge.ui.uiWindow
+import com.soywiz.korge.ui.*
 import com.soywiz.korge.view.*
-import com.soywiz.korim.color.Colors
-import com.soywiz.korim.font.CharacterSet
-import com.soywiz.korim.font.DefaultTtfFont
-import com.soywiz.korim.font.Font
-import com.soywiz.korim.font.toBitmapFont
-import com.soywiz.korim.text.DefaultStringTextRenderer
-import com.soywiz.korma.geom.Anchor
-import com.soywiz.korma.geom.degrees
+import com.soywiz.korim.color.*
+import com.soywiz.korim.font.*
+import com.soywiz.korim.text.*
+import com.soywiz.korma.geom.*
 
 suspend fun Stage.mainEditor() {
 

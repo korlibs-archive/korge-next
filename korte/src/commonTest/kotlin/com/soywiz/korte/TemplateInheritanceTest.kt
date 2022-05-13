@@ -1,7 +1,6 @@
 package com.soywiz.korte
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class TemplateInheritanceTest {
     @Test

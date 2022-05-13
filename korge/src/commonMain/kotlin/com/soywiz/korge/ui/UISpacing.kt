@@ -1,9 +1,6 @@
 package com.soywiz.korge.ui
 
-import com.soywiz.korge.view.Container
-import com.soywiz.korge.view.ViewDslMarker
-import com.soywiz.korge.view.ViewLeaf
-import com.soywiz.korge.view.addTo
+import com.soywiz.korge.view.*
 
 inline fun Container.uiSpacing(
     width: Double = UI_DEFAULT_WIDTH,

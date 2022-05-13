@@ -1,7 +1,6 @@
 package com.soywiz.korma.math
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class ArrayExtTest {
     @Test

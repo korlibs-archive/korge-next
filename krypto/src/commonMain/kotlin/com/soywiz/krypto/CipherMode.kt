@@ -1,8 +1,6 @@
 package com.soywiz.krypto
 
-import com.soywiz.krypto.internal.arraycopy
-import com.soywiz.krypto.internal.arrayxor
-import com.soywiz.krypto.internal.getIV
+import com.soywiz.krypto.internal.*
 
 /**
  * Symmetric Cipher Mode

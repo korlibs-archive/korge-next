@@ -1,6 +1,7 @@
 package com.soywiz.korui
 
-import com.soywiz.korui.native.NativeUiFactory
+import com.soywiz.korio.util.*
+import com.soywiz.korui.native.*
 
 open class UiScrollPanel(app: UiApplication, val panel: NativeUiFactory.NativeScrollPanel = app.factory.createScrollPanel()) : UiContainer(app, panel) {
     var xbar by panel::xbar

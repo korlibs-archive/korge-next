@@ -1,12 +1,9 @@
 package com.soywiz.korim.font
 
-import com.soywiz.kds.iterators.fastForEach
-import com.soywiz.korim.bitmap.Bitmap
-import com.soywiz.korim.vector.Context2d
-import com.soywiz.korim.vector.Drawable
-import com.soywiz.korim.vector.GraphicsPath
-import com.soywiz.korma.geom.Matrix
-import com.soywiz.korma.geom.Point
+import com.soywiz.kds.iterators.*
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korim.vector.*
+import com.soywiz.korma.geom.*
 
 data class GlyphPath(
     var path: GraphicsPath = GraphicsPath(),

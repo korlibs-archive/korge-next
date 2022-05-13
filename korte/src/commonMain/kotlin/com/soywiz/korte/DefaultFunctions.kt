@@ -1,6 +1,6 @@
 package com.soywiz.korte
 
-import com.soywiz.korte.internal.umod
+import com.soywiz.korte.internal.*
 
 @Suppress("unused")
 object DefaultFunctions {

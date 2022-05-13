@@ -1,8 +1,7 @@
 package com.soywiz.korge3d
 
-import com.soywiz.korge3d.internal.toFast
-import com.soywiz.korma.geom.Matrix3D
-import com.soywiz.korma.geom.invert
+import com.soywiz.korge3d.internal.*
+import com.soywiz.korma.geom.*
 
 @Korge3DExperimental
 open class Joint3D constructor(

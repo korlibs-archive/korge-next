@@ -1,10 +1,7 @@
 package com.soywiz.korte.util
 
-import com.soywiz.korte.internal.KorteLock
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.startCoroutine
-import kotlin.coroutines.suspendCoroutine
+import com.soywiz.korte.internal.*
+import kotlin.coroutines.*
 
 class KorteDeferred<T> {
 	private val lock = KorteLock()

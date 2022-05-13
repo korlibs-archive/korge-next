@@ -1,11 +1,6 @@
 package com.soywiz.korgw.sdl2
 
-import kotlinx.cinterop.ByteVarOf
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.IntVar
-import kotlinx.cinterop.ShortVar
-import kotlinx.cinterop.get
-import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.*
 
 class SDL_DisplayMode {
     companion object {

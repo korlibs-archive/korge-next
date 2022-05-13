@@ -1,9 +1,8 @@
 package com.soywiz.korge.gradle.targets
 
 import org.apache.tools.ant.taskdefs.condition.Os
-import org.gradle.api.NamedDomainObjectContainer
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
+import org.gradle.api.*
+import org.jetbrains.kotlin.gradle.plugin.*
 
 val supportKotlinNative: Boolean get() {
     // Linux and Windows ARM hosts doesn't have K/N toolchains

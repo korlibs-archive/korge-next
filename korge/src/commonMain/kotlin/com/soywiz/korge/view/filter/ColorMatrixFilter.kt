@@ -1,15 +1,10 @@
 package com.soywiz.korge.view.filter
 
-import com.soywiz.korag.shader.FragmentShader
-import com.soywiz.korag.shader.Uniform
-import com.soywiz.korag.shader.VarType
-import com.soywiz.korag.shader.storageFor
-import com.soywiz.korag.shader.storageForMatrix3D
-import com.soywiz.korge.debug.uiEditableValue
-import com.soywiz.korge.view.Views
-import com.soywiz.korma.geom.Matrix3D
-import com.soywiz.korma.geom.fromColumns
-import com.soywiz.korui.UiContainer
+import com.soywiz.korag.shader.*
+import com.soywiz.korge.debug.*
+import com.soywiz.korge.view.*
+import com.soywiz.korma.geom.*
+import com.soywiz.korui.*
 
 /**
  * A [Filter] applying a complex color transformation to the view.

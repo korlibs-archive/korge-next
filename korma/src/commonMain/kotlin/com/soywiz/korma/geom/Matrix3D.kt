@@ -1,12 +1,8 @@
 package com.soywiz.korma.geom
 
-import com.soywiz.korma.interpolation.interpolate
-import kotlin.math.abs
-import kotlin.math.floor
-import kotlin.math.sign
-import kotlin.math.sqrt
-import kotlin.math.tan
-import kotlin.native.concurrent.ThreadLocal
+import com.soywiz.korma.interpolation.*
+import kotlin.math.*
+import kotlin.native.concurrent.*
 
 enum class MajorOrder { ROW, COLUMN }
 

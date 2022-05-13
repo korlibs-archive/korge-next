@@ -1,10 +1,8 @@
 package com.soywiz.korge.gradle.util
 
-import groovy.lang.Closure
-import groovy.lang.GroovyObject
-import org.gradle.api.Project
-import java.lang.reflect.Field
-import java.lang.reflect.Method
+import groovy.lang.*
+import org.gradle.api.*
+import java.lang.reflect.*
 
 fun <T> Project.closure(callback: () -> T) = GroovyClosure(this, callback)
 

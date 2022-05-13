@@ -1,9 +1,6 @@
 package com.soywiz.korge.gradle
 
-import kotlin.test.Test
-import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class KorgeExtensionTest {
     @Test

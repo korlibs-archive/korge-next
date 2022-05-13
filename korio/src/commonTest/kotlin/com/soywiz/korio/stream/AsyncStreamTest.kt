@@ -1,10 +1,8 @@
 package com.soywiz.korio.stream
 
-import com.soywiz.korio.async.suspendTest
-import com.soywiz.korio.lang.toByteArray
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import com.soywiz.korio.async.*
+import com.soywiz.korio.lang.*
+import kotlin.test.*
 
 class AsyncStreamTest {
 	@Test

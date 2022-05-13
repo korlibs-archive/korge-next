@@ -1,9 +1,6 @@
 package com.soywiz.korge.view
 
-import com.soywiz.korag.AG
-import com.soywiz.korge.view.BlendMode.ADD
-import com.soywiz.korge.view.BlendMode.MULTIPLY
-import com.soywiz.korge.view.BlendMode.NORMAL
+import com.soywiz.korag.*
 
 /**
  * Determines how pixels should be blended. The most common blend modes are: [NORMAL] (normal mix) and [ADD] (additive blending) along with [MULTIPLY] and others.

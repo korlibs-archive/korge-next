@@ -1,11 +1,13 @@
 package com.soywiz.korui.native
 
-import com.soywiz.korma.geom.RectangleInt
-import com.soywiz.korui.UiMenu
-import com.soywiz.korui.native.util.toJMenuBar
+import com.soywiz.korev.*
+import com.soywiz.korio.lang.*
+import com.soywiz.korma.geom.*
+import com.soywiz.korui.*
+import com.soywiz.korui.native.util.*
 import java.awt.Rectangle
-import javax.swing.JFrame
-import javax.swing.WindowConstants
+import java.awt.event.*
+import javax.swing.*
 
 open class AwtWindow(factory: BaseAwtUiFactory, val frame: JFrame = JFrame()) : AwtContainer(factory, frame, frame.contentPane), NativeUiFactory.NativeWindow {
     init {

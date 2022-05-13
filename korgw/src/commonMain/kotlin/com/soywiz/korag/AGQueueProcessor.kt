@@ -1,11 +1,9 @@
 package com.soywiz.korag
 
-import com.soywiz.kmem.FBuffer
-import com.soywiz.korag.shader.Program
-import com.soywiz.korag.shader.ProgramConfig
-import com.soywiz.korag.shader.UniformLayout
-import com.soywiz.korim.bitmap.Bitmap
-import com.soywiz.korio.annotations.KorInternal
+import com.soywiz.kmem.*
+import com.soywiz.korag.shader.*
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korio.annotations.*
 
 @KorInternal
 interface AGQueueProcessor {

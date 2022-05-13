@@ -4,13 +4,21 @@ import cnames.structs.SSLContext
 import com.soywiz.korio.async.*
 import com.soywiz.korio.posix.*
 import kotlinx.cinterop.*
+import kotlinx.cinterop.ByteVar
 import platform.CoreFoundation.*
 import platform.Security.*
 import platform.darwin.*
 import platform.posix.*
 import platform.posix.sockaddr_in
 import kotlin.ByteArray
+import kotlin.Int
+import kotlin.String
+import kotlin.TODO
+import kotlin.UByte
+import kotlin.UShort
+import kotlin.error
 import kotlin.native.concurrent.*
+import kotlin.toUShort
 
 class DarwinSSLSocket {
     val arena = Arena()

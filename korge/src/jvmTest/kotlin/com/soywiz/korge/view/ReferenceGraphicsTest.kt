@@ -1,28 +1,20 @@
 package com.soywiz.korge.view
 
 import com.soywiz.korag.log.LogBaseAG
-import com.soywiz.korge.annotations.KorgeExperimental
+import com.soywiz.korge.annotations.*
 import com.soywiz.korge.test.assertEqualsFileReference
 import com.soywiz.korge.tests.ViewsForTesting
-import com.soywiz.korge.view.fast.FSprites
-import com.soywiz.korge.view.filter.BlurFilter
-import com.soywiz.korge.view.vector.gpuShapeView
-import com.soywiz.korim.bitmap.Bitmap32
-import com.soywiz.korim.bitmap.BitmapSlice
-import com.soywiz.korim.bitmap.slice
+import com.soywiz.korge.view.fast.*
+import com.soywiz.korge.view.filter.*
+import com.soywiz.korge.view.vector.*
+import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.Colors
-import com.soywiz.korim.format.readBitmap
-import com.soywiz.korim.paint.BitmapPaint
-import com.soywiz.korim.vector.CycleMethod
-import com.soywiz.korio.file.std.resourcesVfs
-import com.soywiz.korma.geom.Matrix
-import com.soywiz.korma.geom.RectangleInt
-import com.soywiz.korma.geom.SizeInt
-import com.soywiz.korma.geom.degrees
-import com.soywiz.korma.geom.vector.circle
-import com.soywiz.korma.geom.vector.rect
-import com.soywiz.korma.geom.vector.rectHole
-import com.soywiz.korma.geom.vector.regularPolygon
+import com.soywiz.korim.format.*
+import com.soywiz.korim.paint.*
+import com.soywiz.korim.vector.*
+import com.soywiz.korio.file.std.*
+import com.soywiz.korma.geom.*
+import com.soywiz.korma.geom.vector.*
 import kotlin.test.Test
 
 class ReferenceGraphicsTest : ViewsForTesting(

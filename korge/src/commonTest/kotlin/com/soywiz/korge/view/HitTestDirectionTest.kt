@@ -1,8 +1,7 @@
 package com.soywiz.korge.view
 
-import com.soywiz.korma.geom.degrees
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korma.geom.*
+import kotlin.test.*
 
 class HitTestDirectionTest {
     @Test

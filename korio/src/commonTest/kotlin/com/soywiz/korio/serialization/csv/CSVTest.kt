@@ -1,7 +1,6 @@
 package com.soywiz.korio.serialization.csv
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class CSVTest {
     val csvStr = """

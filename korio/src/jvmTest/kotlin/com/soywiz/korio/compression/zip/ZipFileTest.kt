@@ -1,11 +1,8 @@
 package com.soywiz.korio.compression.zip
 
-import com.soywiz.korio.async.suspendTest
-import com.soywiz.korio.async.useIt
-import com.soywiz.korio.file.std.openAsZip
-import com.soywiz.korio.file.std.resourcesVfs
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korio.async.*
+import com.soywiz.korio.file.std.*
+import kotlin.test.*
 
 class ZipFileTest {
     @Test

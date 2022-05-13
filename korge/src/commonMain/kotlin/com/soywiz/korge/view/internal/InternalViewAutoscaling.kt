@@ -1,8 +1,8 @@
 package com.soywiz.korge.view.internal
 
-import com.soywiz.korma.geom.Matrix
-import kotlin.math.abs
-import kotlin.math.max
+import com.soywiz.korge.internal.*
+import com.soywiz.korma.geom.*
+import kotlin.math.*
 
 internal class InternalViewAutoscaling {
     var renderedAtScaleXInv = 1.0; private set

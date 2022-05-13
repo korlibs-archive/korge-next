@@ -1,28 +1,18 @@
 @file:Suppress("UNCHECKED_CAST")
 package com.soywiz.korlibs
 
-import groovy.util.Node
+import groovy.util.*
 import groovy.xml.XmlUtil
-import org.apache.tools.ant.taskdefs.condition.Os
-import org.gradle.api.NamedDomainObjectCollection
-import org.gradle.api.NamedDomainObjectContainer
-import org.gradle.api.Project
-import org.gradle.api.Task
-import org.gradle.api.artifacts.dsl.DependencyHandler
-import org.gradle.api.tasks.TaskContainer
-import org.gradle.kotlin.dsl.extra
-import org.gradle.kotlin.dsl.getByType
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
-import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinCommonCompilation
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmCompilation
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinOnlyTarget
-import java.io.File
-import java.io.FileOutputStream
-import java.io.OutputStream
-import java.net.URL
+import org.apache.tools.ant.taskdefs.condition.*
+import org.gradle.api.*
+import org.gradle.api.artifacts.dsl.*
+import org.gradle.api.tasks.*
+import org.gradle.kotlin.dsl.*
+import org.jetbrains.kotlin.gradle.dsl.*
+import org.jetbrains.kotlin.gradle.plugin.*
+import org.jetbrains.kotlin.gradle.plugin.mpp.*
+import java.io.*
+import java.net.*
 
 class MultiOutputStream(val outs: List<OutputStream>) : OutputStream() {
     override fun write(b: Int) { for (out in outs) out.write(b) }

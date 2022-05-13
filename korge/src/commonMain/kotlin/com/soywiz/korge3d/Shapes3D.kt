@@ -4,9 +4,7 @@ import com.soywiz.korge3d.internal.vector3DTemps
 import com.soywiz.korma.geom.Matrix3D
 import com.soywiz.korma.geom.Vector3D
 import com.soywiz.korma.geom.scale
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
+import kotlin.math.*
 
 @Korge3DExperimental
 fun Container3D.shape3D(width: Double=1.0, height: Double=1.0, depth: Double=1.0, drawCommands: MeshBuilder3D.() -> Unit): Shape3D {

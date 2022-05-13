@@ -1,7 +1,8 @@
 package com.soywiz.korui
 
-import com.soywiz.korev.MouseEvent
-import com.soywiz.korui.native.NativeUiFactory
+import com.soywiz.korev.*
+import com.soywiz.korio.util.*
+import com.soywiz.korui.native.*
 
 open class UiToggleButton(app: UiApplication, val button: NativeUiFactory.NativeToggleButton = app.factory.createToggleButton()) : UiComponent(app, button) {
     var icon by button::icon

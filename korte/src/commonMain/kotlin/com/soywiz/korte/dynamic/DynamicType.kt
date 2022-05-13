@@ -1,14 +1,6 @@
 package com.soywiz.korte.dynamic
 
-import kotlin.reflect.KCallable
-import kotlin.reflect.KFunction0
-import kotlin.reflect.KFunction1
-import kotlin.reflect.KFunction2
-import kotlin.reflect.KFunction3
-import kotlin.reflect.KFunction4
-import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
+import kotlin.reflect.*
 
 interface DynamicShapeRegister<T> {
     fun register(prop: KProperty<*>): DynamicShapeRegister<T>

@@ -1,8 +1,7 @@
 package com.soywiz.korim.bitmap
 
-import com.soywiz.korio.lang.invalidOp
-import kotlin.math.log10
-import kotlin.math.sqrt
+import com.soywiz.korio.lang.*
+import kotlin.math.*
 
 object PSNR {
     fun MSE(a: Bitmap32, b: Bitmap32, c: BitmapChannel): Double {

@@ -1,6 +1,6 @@
 package com.soywiz.korio.net
 
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class QueryStringTest {
 	private fun assertIdem(str: String) {

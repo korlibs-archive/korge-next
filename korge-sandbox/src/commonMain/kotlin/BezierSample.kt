@@ -1,27 +1,13 @@
-import com.soywiz.korge.input.draggable
-import com.soywiz.korge.input.mouse
-import com.soywiz.korge.view.Container
-import com.soywiz.korge.view.Stage
-import com.soywiz.korge.view.Text
-import com.soywiz.korge.view.View
-import com.soywiz.korge.view.centered
-import com.soywiz.korge.view.circle
-import com.soywiz.korge.view.container
-import com.soywiz.korge.view.filter
-import com.soywiz.korge.view.filter.ColorTransformFilter
-import com.soywiz.korge.view.position
-import com.soywiz.korge.view.sgraphics
-import com.soywiz.korge.view.text
-import com.soywiz.korim.color.ColorAdd
-import com.soywiz.korim.color.ColorTransform
-import com.soywiz.korim.color.Colors
-import com.soywiz.korim.paint.Paint
-import com.soywiz.korim.vector.StrokeInfo
-import com.soywiz.korma.geom.Point
-import com.soywiz.korma.geom.bezier.Bezier
-import com.soywiz.korma.geom.vector.cubic
-import com.soywiz.korma.geom.vector.lineTo
-import com.soywiz.korma.geom.vector.moveTo
+import com.soywiz.korge.*
+import com.soywiz.korge.input.*
+import com.soywiz.korge.view.*
+import com.soywiz.korge.view.filter.*
+import com.soywiz.korim.color.*
+import com.soywiz.korim.paint.*
+import com.soywiz.korim.vector.*
+import com.soywiz.korma.geom.*
+import com.soywiz.korma.geom.bezier.*
+import com.soywiz.korma.geom.vector.*
 
 suspend fun Stage.bezierSample() {
     val p0 = Point(109, 135)

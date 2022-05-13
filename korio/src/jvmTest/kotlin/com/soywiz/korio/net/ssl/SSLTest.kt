@@ -1,10 +1,8 @@
 package com.soywiz.korio.net.ssl
 
-import com.soywiz.korio.async.suspendTest
-import com.soywiz.korio.net.http.Http
-import com.soywiz.korio.net.http.createHttpClient
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korio.async.*
+import com.soywiz.korio.net.http.*
+import kotlin.test.*
 
 class SSLTest {
     @Test

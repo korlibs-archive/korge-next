@@ -1,6 +1,6 @@
 package com.soywiz.korge3d
 
-import com.soywiz.kds.iterators.fastForEach
+import com.soywiz.kds.iterators.*
 
 @Korge3DExperimental
 open class Container3D : View3D() {

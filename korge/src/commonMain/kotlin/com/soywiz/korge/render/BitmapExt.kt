@@ -1,8 +1,7 @@
 package com.soywiz.korge.render
 
-import com.soywiz.kmem.isPowerOfTwo
-import com.soywiz.kmem.nextPowerOfTwo
-import com.soywiz.korim.bitmap.Bitmap32
+import com.soywiz.kmem.*
+import com.soywiz.korim.bitmap.*
 
 /**
  * Returns [this] same bitmap if it is already power of two,

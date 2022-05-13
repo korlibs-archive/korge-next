@@ -1,6 +1,6 @@
 package com.soywiz.korio.compression.util
 
-import com.soywiz.kmem.unsigned
+import com.soywiz.kmem.*
 
 internal class SlidingWindow(val nbits: Int) {
 	val data = ByteArray(1 shl nbits)

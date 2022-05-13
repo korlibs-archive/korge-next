@@ -1,12 +1,7 @@
 package com.soywiz.korge.time
 
-import com.soywiz.klock.Frequency
-import com.soywiz.klock.measure
-import com.soywiz.klock.milliseconds
-import com.soywiz.klock.timesPerSecond
-import com.soywiz.korge.view.View
-import com.soywiz.korge.view.Views
-import com.soywiz.korge.view.views
+import com.soywiz.klock.*
+import com.soywiz.korge.view.*
 
 /**
  * Introduces a block, where a `frame()` function is available

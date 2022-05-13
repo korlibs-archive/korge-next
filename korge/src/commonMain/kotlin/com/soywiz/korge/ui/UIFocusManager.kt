@@ -1,14 +1,10 @@
 package com.soywiz.korge.ui
 
-import com.soywiz.kds.getCyclicOrNull
-import com.soywiz.korev.Key
-import com.soywiz.korev.KeyEvent
-import com.soywiz.korge.annotations.KorgeExperimental
-import com.soywiz.korge.component.KeyComponent
-import com.soywiz.korge.view.Stage
-import com.soywiz.korge.view.View
-import com.soywiz.korge.view.Views
-import com.soywiz.korge.view.descendantsOfType
+import com.soywiz.kds.*
+import com.soywiz.korev.*
+import com.soywiz.korge.annotations.*
+import com.soywiz.korge.component.*
+import com.soywiz.korge.view.*
 
 @KorgeExperimental
 interface UIFocusable {

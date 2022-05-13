@@ -4,12 +4,7 @@ import com.soywiz.korev.Key
 import com.sun.jna.Native
 import com.sun.jna.Pointer
 import com.sun.jna.Structure
-import com.sun.jna.platform.win32.GDI32
-import com.sun.jna.platform.win32.Kernel32
-import com.sun.jna.platform.win32.OpenGL32
-import com.sun.jna.platform.win32.User32
-import com.sun.jna.platform.win32.WinDef
-import com.sun.jna.platform.win32.WinGDI
+import com.sun.jna.platform.win32.*
 import com.sun.jna.ptr.PointerByReference
 import com.sun.jna.win32.W32APIOptions
 import java.nio.Buffer

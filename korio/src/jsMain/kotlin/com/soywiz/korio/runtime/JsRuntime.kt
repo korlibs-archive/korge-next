@@ -1,13 +1,9 @@
 package com.soywiz.korio.runtime
 
+import com.soywiz.korio.*
 import com.soywiz.korio.file.VfsFile
 import com.soywiz.korio.file.std.MemoryVfs
 import com.soywiz.korio.file.std.localVfs
-import com.soywiz.korio.isDenoJs
-import com.soywiz.korio.isNodeJs
-import com.soywiz.korio.isShell
-import com.soywiz.korio.isWeb
-import com.soywiz.korio.isWorker
 import com.soywiz.korio.lang.Environment
 import com.soywiz.korio.lang.tempPath
 import com.soywiz.korio.net.AsyncClient

@@ -1,6 +1,6 @@
 package com.soywiz.korim.format
 
-import com.soywiz.korio.stream.AsyncStream
+import com.soywiz.korio.stream.*
 
 object JPEGInfo : ImageFormatSuspend("jpeg") {
     override suspend fun decodeHeaderSuspend(s: AsyncStream, props: ImageDecodingProps): ImageInfo? {

@@ -1,17 +1,11 @@
 package com.soywiz.korge.view
 
-import com.soywiz.korge.tests.ViewsForTesting
-import com.soywiz.korim.bitmap.Bitmap32
-import com.soywiz.korim.color.Colors
-import com.soywiz.korma.geom.Anchor
-import com.soywiz.korma.geom.Point
-import com.soywiz.korma.geom.Rectangle
-import com.soywiz.korma.geom.ScaleMode
-import com.soywiz.korma.geom.SizeInt
-import kotlin.math.absoluteValue
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import com.soywiz.korge.tests.*
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korim.color.*
+import com.soywiz.korma.geom.*
+import kotlin.math.*
+import kotlin.test.*
 
 class Views2Test : ViewsForTesting(
     windowSize = SizeInt(1280, 720),

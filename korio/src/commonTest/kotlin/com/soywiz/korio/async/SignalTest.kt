@@ -1,7 +1,8 @@
 package com.soywiz.korio.async
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
+import kotlin.test.*
 
 class SignalTest {
 	@Test

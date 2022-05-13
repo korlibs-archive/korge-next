@@ -1,12 +1,8 @@
 package com.soywiz.korio.util
 
-import com.soywiz.klock.milliseconds
-import com.soywiz.korio.async.AsyncCache
-import com.soywiz.korio.async.AsyncCacheGen
-import com.soywiz.korio.async.delay
-import com.soywiz.korio.async.suspendTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.klock.*
+import com.soywiz.korio.async.*
+import kotlin.test.*
 
 class AsyncCacheTest {
 	@Test

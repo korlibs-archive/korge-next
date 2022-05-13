@@ -1,9 +1,8 @@
 package com.soywiz.korgw
 
-import com.soywiz.korev.MouseEvent
-import com.soywiz.korev.addEventListener
-import com.soywiz.korim.color.Colors
-import com.soywiz.korio.Korio
+import com.soywiz.korev.*
+import com.soywiz.korim.color.*
+import com.soywiz.korio.*
 
 fun main(args: Array<String>) = Korio {
     CreateDefaultGameWindow().loop {

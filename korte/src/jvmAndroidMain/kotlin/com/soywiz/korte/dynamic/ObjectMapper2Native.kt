@@ -1,14 +1,11 @@
 package com.soywiz.korte.dynamic
 
-import com.soywiz.korte.util.KorteDeferred
-import java.lang.reflect.Field
-import java.lang.reflect.Method
+import com.soywiz.korte.util.*
+import java.lang.reflect.*
 import java.util.*
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.coroutineContext
-import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
-import kotlin.reflect.KClass
-import kotlin.reflect.KProperty
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
+import kotlin.reflect.*
 
 open class JvmObjectMapper2 : ObjectMapper2() {
     class ClassReflectCache<T : Any>(val clazz: KClass<T>) {

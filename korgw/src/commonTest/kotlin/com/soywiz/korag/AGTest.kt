@@ -1,9 +1,8 @@
 package com.soywiz.korag
 
-import com.soywiz.korag.software.AGFactorySoftware
-import com.soywiz.korio.async.suspendTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korag.software.*
+import com.soywiz.korio.async.*
+import kotlin.test.*
 
 class AGTest {
 	@Test

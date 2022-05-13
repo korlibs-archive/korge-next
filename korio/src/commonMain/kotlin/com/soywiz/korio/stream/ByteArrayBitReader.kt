@@ -1,8 +1,8 @@
 package com.soywiz.korio.stream
 
-import com.soywiz.kmem.extract
-import com.soywiz.korio.experimental.KorioExperimentalApi
-import com.soywiz.korio.lang.invalidOp
+import com.soywiz.kmem.*
+import com.soywiz.korio.experimental.*
+import com.soywiz.korio.lang.*
 
 @KorioExperimentalApi
 class ByteArrayBitReader(val data: ByteArray) {

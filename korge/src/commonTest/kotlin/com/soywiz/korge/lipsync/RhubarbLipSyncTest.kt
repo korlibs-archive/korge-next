@@ -1,5 +1,7 @@
 package com.soywiz.korge.lipsync
 
+import com.soywiz.korio.async.suspendTest
+
 class RhubarbLipSyncTest {
     /*
 	@Test

@@ -7,12 +7,7 @@ import com.soywiz.korma.interpolation.Interpolable
 import com.soywiz.korma.interpolation.MutableInterpolable
 import com.soywiz.korma.interpolation.interpolate
 import com.soywiz.korma.math.isAlmostZero
-import kotlin.math.absoluteValue
-import kotlin.math.acos
-import kotlin.math.ceil
-import kotlin.math.floor
-import kotlin.math.hypot
-import kotlin.math.round
+import kotlin.math.*
 
 interface IPoint {
     val x: Double

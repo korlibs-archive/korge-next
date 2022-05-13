@@ -1,7 +1,7 @@
 package com.soywiz.korte
 
-import com.soywiz.korte.internal.AsyncCache
-import com.soywiz.korte.util.AsyncTextWriterContainer
+import com.soywiz.korte.internal.*
+import com.soywiz.korte.util.*
 
 open class Templates(
     var root: NewTemplateProvider,

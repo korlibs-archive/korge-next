@@ -1,8 +1,7 @@
 package com.soywiz.korma.geom.vector
 
-import com.soywiz.korma.geom.int
-import com.soywiz.korma.geom.shape.buildPath
-import com.soywiz.korma.geom.shape.getPoints2
+import com.soywiz.korma.geom.*
+import com.soywiz.korma.geom.shape.*
 
 class StrokeToFillTest {
     private inline fun path(stroke: Double = 2.0, crossinline block: VectorPath.() -> Unit) =

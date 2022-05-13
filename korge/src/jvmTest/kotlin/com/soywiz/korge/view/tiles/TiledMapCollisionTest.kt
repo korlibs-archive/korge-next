@@ -1,15 +1,10 @@
 package com.soywiz.korge.view.tiles
 
-import com.soywiz.korge.tiled.TiledMapView
-import com.soywiz.korge.tiled.readTiledMap
-import com.soywiz.korge.tiled.readTiledSet
-import com.soywiz.korge.view.HitTestDirection
-import com.soywiz.korge.view.hitTestAny
-import com.soywiz.korio.async.suspendTest
-import com.soywiz.korio.file.std.resourcesVfs
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import com.soywiz.korge.tiled.*
+import com.soywiz.korge.view.*
+import com.soywiz.korio.async.*
+import com.soywiz.korio.file.std.*
+import kotlin.test.*
 
 class TiledMapCollisionTest {
     @Test

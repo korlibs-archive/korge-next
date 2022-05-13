@@ -1,6 +1,6 @@
 package com.soywiz.korte
 
-import com.soywiz.korte.internal.htmlspecialchars
+import com.soywiz.korte.internal.*
 
 class AutoEscapeMode(val transform: (String) -> String) {
     companion object {

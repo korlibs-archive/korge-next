@@ -1,10 +1,10 @@
 package com.soywiz.korui.native
 
+import com.soywiz.korev.*
 import com.soywiz.korev.KeyEvent
-import com.soywiz.korev.awtKeyCodeToKey
-import com.soywiz.korio.lang.Disposable
-import java.awt.event.KeyAdapter
-import javax.swing.JTextField
+import com.soywiz.korio.lang.*
+import java.awt.event.*
+import javax.swing.*
 
 open class AwtTextField(factory: BaseAwtUiFactory, val textField: JTextField = JTextField()) : AwtComponent(factory, textField), NativeUiFactory.NativeTextField {
     override var text: String

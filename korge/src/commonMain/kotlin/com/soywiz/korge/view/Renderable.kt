@@ -1,6 +1,6 @@
 package com.soywiz.korge.view
 
-import com.soywiz.korge.render.RenderContext
+import com.soywiz.korge.render.*
 
 /**
  * Represents something that can be rendered. Usually a [View].

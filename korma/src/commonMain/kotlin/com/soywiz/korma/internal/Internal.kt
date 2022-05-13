@@ -1,8 +1,7 @@
 package com.soywiz.korma.internal
 
-import com.soywiz.korma.math.almostEquals
-import kotlin.math.ceil
-import kotlin.math.floor
+import com.soywiz.korma.math.*
+import kotlin.math.*
 
 internal val Float.niceStr: String get() = if (almostEquals(this.toLong().toFloat(), this)) "${this.toLong()}" else "$this"
 internal val Double.niceStr: String get() = if (almostEquals(this.toLong().toDouble(), this)) "${this.toLong()}" else "$this"

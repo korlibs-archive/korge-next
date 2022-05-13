@@ -1,9 +1,6 @@
 package com.soywiz.korio.file.std
 
-import com.soywiz.korio.file.Vfs
-import com.soywiz.korio.file.VfsFile
-import com.soywiz.korio.file.normalize
-import com.soywiz.korio.file.pathInfo
+import com.soywiz.korio.file.*
 
 class JailVfs private constructor(val jailRoot: VfsFile, dummy: Unit) : Vfs.Proxy() {
     companion object {

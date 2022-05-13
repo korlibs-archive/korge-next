@@ -1,6 +1,6 @@
 package com.soywiz.korte.internal
 
-import com.soywiz.korte.util.ListReader
+import com.soywiz.korte.util.*
 
 internal object Yaml {
     fun decode(str: String) = read(ListReader(tokenize(str)), level = 0)

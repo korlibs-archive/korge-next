@@ -1,14 +1,12 @@
-import com.soywiz.korge.time.delayFrame
-import com.soywiz.korge.ui.changed
-import com.soywiz.korge.ui.uiSlider
-import com.soywiz.korge.view.Stage
-import com.soywiz.korge.view.filter.Convolute3Filter
-import com.soywiz.korge.view.filterScale
-import com.soywiz.korge.view.filters
-import com.soywiz.korge.view.image
-import com.soywiz.korge.view.xy
-import com.soywiz.korim.format.readBitmap
-import com.soywiz.korio.file.std.resourcesVfs
+import com.soywiz.klock.*
+import com.soywiz.korge.time.*
+import com.soywiz.korge.tween.*
+import com.soywiz.korge.ui.*
+import com.soywiz.korge.view.*
+import com.soywiz.korge.view.filter.*
+import com.soywiz.korim.color.*
+import com.soywiz.korim.format.*
+import com.soywiz.korio.file.std.*
 
 suspend fun Stage.mainFilterScale() {
     val image = image(resourcesVfs["korge.png"].readBitmap()).xy(100, 100)

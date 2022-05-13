@@ -1,8 +1,9 @@
 package com.soywiz.korlibs.modules
 
-import org.gradle.api.Project
-import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.gradle.api.*
+import org.gradle.kotlin.dsl.*
+import org.jetbrains.kotlin.gradle.plugin.*
+import org.jetbrains.kotlin.gradle.plugin.mpp.*
 
 val Project.supportKotlinNative: Boolean get() {
     // Linux and Windows ARM hosts doesn't have K/N toolchains

@@ -1,8 +1,8 @@
 package com.soywiz.korge.gradle.util
 
-import com.soywiz.korge.gradle.ext
-import org.gradle.api.Project
-import kotlin.reflect.KProperty
+import com.soywiz.korge.gradle.*
+import org.gradle.api.*
+import kotlin.reflect.*
 
 class projectExtension<T : Any>(val overrideName: String? = null, val gen: Project.() -> T) {
     val KProperty<*>.extensionName get() = "extension.${overrideName ?: name}"

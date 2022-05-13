@@ -1,8 +1,8 @@
 package com.soywiz.kgl
 
-import com.soywiz.kmem.FBuffer
-import com.soywiz.korim.bitmap.NativeImage
-import com.soywiz.korio.lang.unsupported
+import com.soywiz.kmem.*
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korio.lang.*
 
 interface IKmlGl {
 	fun startFrame() = Unit

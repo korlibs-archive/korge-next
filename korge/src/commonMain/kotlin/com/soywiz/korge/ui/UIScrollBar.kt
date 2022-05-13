@@ -1,21 +1,13 @@
 package com.soywiz.korge.ui
 
-import com.soywiz.kmem.clamp
-import com.soywiz.kmem.clamp01
-import com.soywiz.korge.input.onClick
-import com.soywiz.korge.input.onDown
-import com.soywiz.korge.input.onMouseDrag
-import com.soywiz.korge.render.RenderContext
-import com.soywiz.korge.ui.UIScrollBar.Direction
-import com.soywiz.korge.view.Container
-import com.soywiz.korge.view.ViewDslMarker
-import com.soywiz.korge.view.addTo
-import com.soywiz.korge.view.position
-import com.soywiz.korge.view.size
-import com.soywiz.korge.view.solidRect
-import com.soywiz.korio.async.Signal
-import com.soywiz.korma.geom.Point
-import kotlin.math.sign
+import com.soywiz.kmem.*
+import com.soywiz.korge.input.*
+import com.soywiz.korge.render.*
+import com.soywiz.korge.ui.UIScrollBar.*
+import com.soywiz.korge.view.*
+import com.soywiz.korio.async.*
+import com.soywiz.korma.geom.*
+import kotlin.math.*
 
 @Deprecated("Use UINewScrollable")
 inline fun Container.uiScrollBar(

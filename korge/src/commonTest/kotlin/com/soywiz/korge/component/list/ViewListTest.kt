@@ -1,12 +1,10 @@
 package com.soywiz.korge.component.list
 
-import com.soywiz.korge.tests.ViewsForTesting
-import com.soywiz.korge.view.SolidRect
-import com.soywiz.korge.view.xy
-import com.soywiz.korim.color.Colors
-import com.soywiz.korma.geom.Rectangle
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korge.tests.*
+import com.soywiz.korge.view.*
+import com.soywiz.korim.color.*
+import com.soywiz.korma.geom.*
+import kotlin.test.*
 
 class ViewListTest : ViewsForTesting() {
 	@Test

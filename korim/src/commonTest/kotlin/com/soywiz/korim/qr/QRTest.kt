@@ -1,8 +1,7 @@
 package com.soywiz.korim.qr
 
-import com.soywiz.korma.geom.Size
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korma.geom.*
+import kotlin.test.*
 
 class QRTest {
 	@Test

@@ -1,6 +1,6 @@
 package com.soywiz.korio.lang
 
-import kotlin.reflect.KProperty
+import kotlin.reflect.*
 
 class lazyVar<T : Any>(val callback: () -> T) {
 	var current: T? = null

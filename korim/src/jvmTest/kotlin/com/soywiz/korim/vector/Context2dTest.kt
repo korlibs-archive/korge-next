@@ -1,15 +1,11 @@
 package com.soywiz.korim.vector
 
-import com.soywiz.korim.bitmap.NativeImage
-import com.soywiz.korim.color.Colors
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korim.color.*
 import com.soywiz.korim.vector.format.SVG
-import com.soywiz.korio.async.suspendTest
-import com.soywiz.korma.geom.vector.LineCap
-import com.soywiz.korma.geom.vector.lineTo
-import com.soywiz.korma.geom.vector.moveTo
-import com.soywiz.korma.geom.vector.rect
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korio.async.*
+import com.soywiz.korma.geom.vector.*
+import kotlin.test.*
 
 class Context2dTest {
 	init {

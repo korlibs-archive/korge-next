@@ -1,20 +1,11 @@
 package com.soywiz.korim.bitmap
 
-import com.soywiz.kds.Extra
-import com.soywiz.kds.getCyclic
+import com.soywiz.kds.*
 import com.soywiz.kmem.clamp
-import com.soywiz.korim.color.RGBA
-import com.soywiz.korim.color.RgbaArray
+import com.soywiz.korim.color.*
 import com.soywiz.korio.lang.Closeable
-import com.soywiz.korio.resources.Resourceable
-import com.soywiz.korma.geom.ISizeInt
-import com.soywiz.korma.geom.Matrix
-import com.soywiz.korma.geom.Matrix3D
-import com.soywiz.korma.geom.Point
-import com.soywiz.korma.geom.Rectangle
-import com.soywiz.korma.geom.RectangleInt
-import com.soywiz.korma.geom.SizeInt
-import com.soywiz.korma.geom.setTo
+import com.soywiz.korio.resources.*
+import com.soywiz.korma.geom.*
 
 interface BmpCoords {
     val tl_x: Float

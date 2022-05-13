@@ -2,12 +2,11 @@
 
 package com.soywiz.korio.compression
 
-import com.soywiz.kmem.readIntArrayLE
-import com.soywiz.korio.async.suspendTest
 import com.soywiz.korio.compression.deflate.GZIP
-import com.soywiz.krypto.encoding.fromBase64
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.kmem.*
+import com.soywiz.korio.async.*
+import com.soywiz.krypto.encoding.*
+import kotlin.test.*
 
 class CompressionTest {
 	@Test

@@ -1,7 +1,7 @@
 package com.soywiz.korim.color
 
-import com.soywiz.kmem.clamp01
-import com.soywiz.korio.util.niceStr
+import com.soywiz.kmem.*
+import com.soywiz.korio.util.*
 
 class RGBAf(
     private var _r: Float = 1f,

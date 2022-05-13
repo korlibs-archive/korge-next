@@ -1,7 +1,7 @@
 package com.soywiz.korio.test
 
-import com.soywiz.korio.dynamic.Dyn
-import java.io.File
+import com.soywiz.korio.dynamic.*
+import java.io.*
 
 /**
  * Checks that a string matches a file in `src/jvmTest/resources`.

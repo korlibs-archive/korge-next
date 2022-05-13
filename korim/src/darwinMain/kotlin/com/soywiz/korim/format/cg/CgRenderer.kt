@@ -5,10 +5,10 @@ package com.soywiz.korim.format.cg
 import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.color.*
 import com.soywiz.korim.font.*
+import com.soywiz.korim.vector.*
 import com.soywiz.korim.format.*
 import com.soywiz.korim.internal.*
 import com.soywiz.korim.paint.*
-import com.soywiz.korim.vector.*
 import com.soywiz.korma.geom.*
 import com.soywiz.korma.geom.vector.*
 import kotlinx.cinterop.*

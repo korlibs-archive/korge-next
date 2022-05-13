@@ -1,10 +1,6 @@
-import com.soywiz.korge.view.Stage
-import com.soywiz.korge.view.filter
-import com.soywiz.korge.view.filter.ColorTransformFilter
-import com.soywiz.korge.view.solidRect
-import com.soywiz.korim.color.ColorAdd
-import com.soywiz.korim.color.ColorTransform
-import com.soywiz.korim.color.Colors
+import com.soywiz.korge.view.*
+import com.soywiz.korge.view.filter.*
+import com.soywiz.korim.color.*
 
 suspend fun Stage.mainColorTransformFilter() {
     //val rect = solidRect(100, 100, )

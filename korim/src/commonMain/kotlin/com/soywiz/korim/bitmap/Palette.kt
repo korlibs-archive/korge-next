@@ -1,6 +1,6 @@
 package com.soywiz.korim.bitmap
 
-import com.soywiz.korim.color.RgbaArray
+import com.soywiz.korim.color.*
 
 open class Palette(
     val colors: RgbaArray,

@@ -1,39 +1,22 @@
 package com.soywiz.korgw
 
 import com.soywiz.klock.PerformanceCounter
-import com.soywiz.korag.AGConfig
-import com.soywiz.korag.gl.AGWebgl
-import com.soywiz.korag.gl.isCanvasCreatedAndHandled
-import com.soywiz.korev.DropFileEvent
-import com.soywiz.korev.GameButton
-import com.soywiz.korev.GamePadConnectionEvent
-import com.soywiz.korev.GamepadInfo
-import com.soywiz.korev.GamepadMapping
-import com.soywiz.korev.Key
-import com.soywiz.korev.KeyEvent
-import com.soywiz.korev.MouseButton
-import com.soywiz.korev.StandardGamepadMapping
+import com.soywiz.korag.*
+import com.soywiz.korag.gl.*
+import com.soywiz.korev.*
 import com.soywiz.korev.Touch
-import com.soywiz.korev.TouchBuilder
-import com.soywiz.korev.dispatch
-import com.soywiz.korev.invoke
-import com.soywiz.korim.bitmap.Bitmap
-import com.soywiz.korim.format.toHtmlNative
-import com.soywiz.korio.async.launchImmediately
-import com.soywiz.korio.file.toVfs
-import com.soywiz.korio.util.OS
-import kotlinx.browser.document
-import kotlinx.browser.window
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancelAndJoin
-import org.w3c.dom.HTMLLinkElement
-import org.w3c.dom.TouchEvent
-import org.w3c.dom.events.KeyboardEvent
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korim.format.*
+import com.soywiz.korio.async.*
+import com.soywiz.korio.file.*
+import com.soywiz.korio.util.*
+import kotlinx.coroutines.*
+import org.w3c.dom.events.*
 import org.w3c.dom.events.MouseEvent
-import org.w3c.dom.events.WheelEvent
-import org.w3c.dom.get
-import kotlin.coroutines.CoroutineContext
+import kotlinx.browser.*
+import org.w3c.dom.*
+import org.w3c.dom.TouchEvent
+import kotlin.coroutines.*
 
 private external val navigator: dynamic
 

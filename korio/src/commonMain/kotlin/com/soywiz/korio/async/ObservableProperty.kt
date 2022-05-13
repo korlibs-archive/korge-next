@@ -1,8 +1,7 @@
 package com.soywiz.korio.async
 
 import com.soywiz.kds.iterators.fastForEach
-import kotlin.reflect.KMutableProperty0
-import kotlin.reflect.KProperty
+import kotlin.reflect.*
 
 class ObservableProperty<T>(initial: T) {
     private var observers = ArrayList<(T) -> Unit>()

@@ -1,12 +1,9 @@
 package com.soywiz.korui.layout
 
-import com.soywiz.kds.Extra
-import com.soywiz.korma.geom.RectangleInt
-import com.soywiz.korma.geom.SizeInt
-import com.soywiz.korma.geom.size
-import com.soywiz.korui.UiComponent
-import com.soywiz.korui.UiContainer
-import kotlin.math.max
+import com.soywiz.kds.*
+import com.soywiz.korma.geom.*
+import com.soywiz.korui.*
+import kotlin.math.*
 
 interface UiLayout {
     fun computePreferredSize(container: UiContainer, available: SizeInt): SizeInt

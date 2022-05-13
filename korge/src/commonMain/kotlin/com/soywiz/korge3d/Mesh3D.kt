@@ -1,10 +1,9 @@
 package com.soywiz.korge3d
 
-import com.soywiz.kds.FastArrayList
-import com.soywiz.kmem.FBuffer
-import com.soywiz.korag.AG
-import com.soywiz.korag.shader.Program
-import com.soywiz.korag.shader.VertexLayout
+import com.soywiz.kds.*
+import com.soywiz.kmem.*
+import com.soywiz.korag.*
+import com.soywiz.korag.shader.*
 
 data class BufferWithVertexLayout(
     val buffer: FBuffer,

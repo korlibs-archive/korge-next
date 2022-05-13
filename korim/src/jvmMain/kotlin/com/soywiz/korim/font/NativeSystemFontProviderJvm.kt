@@ -1,5 +1,13 @@
 package com.soywiz.korim.font
 
+import com.soywiz.korim.awt.*
+import com.soywiz.korim.vector.*
+import com.soywiz.korma.geom.*
+import java.awt.*
+import java.awt.font.*
+import java.awt.geom.*
+import java.awt.image.*
+
 actual val nativeSystemFontProvider: NativeSystemFontProvider = FolderBasedNativeSystemFontProvider()
 
 /*

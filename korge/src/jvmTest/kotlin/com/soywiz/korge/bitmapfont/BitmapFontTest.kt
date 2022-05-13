@@ -1,14 +1,14 @@
 package com.soywiz.korge.bitmapfont
 
-import com.soywiz.korag.log.LogAG
-import com.soywiz.korge.render.RenderContext
-import com.soywiz.korge.test.assertEqualsFileReference
-import com.soywiz.korim.font.readBitmapFont
-import com.soywiz.korio.async.suspendTest
-import com.soywiz.korio.file.std.resourcesVfs
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korag.log.*
+import com.soywiz.korge.*
+import com.soywiz.korge.render.*
+import com.soywiz.korge.test.*
+import com.soywiz.korim.font.*
+import com.soywiz.korio.async.*
+import com.soywiz.korio.file.std.*
+import kotlin.coroutines.*
+import kotlin.test.*
 
 class BitmapFontTest {
 	val ag = object : LogAG() {

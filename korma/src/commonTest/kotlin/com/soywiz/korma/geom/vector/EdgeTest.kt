@@ -1,10 +1,7 @@
 package com.soywiz.korma.geom.vector
 
-import com.soywiz.korma.geom.Point
-import com.soywiz.korma.geom.assertEquals
-import com.soywiz.korma.geom.degrees
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korma.geom.*
+import kotlin.test.*
 
 class EdgeTest {
     @Test

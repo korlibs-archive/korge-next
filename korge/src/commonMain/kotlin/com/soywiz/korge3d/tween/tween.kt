@@ -2,13 +2,10 @@
 
 package com.soywiz.korge3d.tween
 
-import com.soywiz.klock.TimeSpan
-import com.soywiz.korge.tween.DEFAULT_EASING
-import com.soywiz.korge.tween.DEFAULT_TIME
-import com.soywiz.korge.tween.get
-import com.soywiz.korge.tween.tween
+import com.soywiz.klock.*
+import com.soywiz.korge.tween.*
 import com.soywiz.korge3d.View3D
-import com.soywiz.korma.interpolation.Easing
+import com.soywiz.korma.interpolation.*
 
 //suspend fun View3D.show(time: TimeSpan = DEFAULT_TIME, easing: Easing = DEFAULT_EASING) =
 //	tween(this::alpha[1.0], time = time, easing = easing) { this.visible = true }

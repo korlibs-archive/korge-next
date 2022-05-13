@@ -1,9 +1,8 @@
 package com.soywiz.korio.stream
 
-import com.soywiz.kmem.ByteArrayBuilder
-import com.soywiz.korio.async.suspendTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.kmem.*
+import com.soywiz.korio.async.*
+import kotlin.test.*
 
 class SyncStreamTest2 {
 	@Test

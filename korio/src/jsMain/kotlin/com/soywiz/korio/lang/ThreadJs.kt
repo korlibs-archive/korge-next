@@ -1,6 +1,6 @@
 package com.soywiz.korio.lang
 
-import com.soywiz.klock.PerformanceCounter
+import com.soywiz.klock.*
 
 actual val currentThreadId: Long get() = 1L
 

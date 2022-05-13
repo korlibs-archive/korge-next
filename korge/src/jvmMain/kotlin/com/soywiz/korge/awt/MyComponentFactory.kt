@@ -1,36 +1,24 @@
 package com.soywiz.korge.awt
 
-import com.soywiz.korge.particle.ParticleEmitter
-import com.soywiz.korge.particle.ParticleEmitterView
-import com.soywiz.korge.scene.Module
-import com.soywiz.korge.scene.Scene
-import com.soywiz.korge.tiled.TiledMapViewRef
-import com.soywiz.korge.view.AnimationViewRef
+import com.soywiz.korge.debug.*
+import com.soywiz.korge.particle.*
+import com.soywiz.korge.resources.*
+import com.soywiz.korge.scene.*
+import com.soywiz.korge.tiled.*
+import com.soywiz.korge.ui.*
+import com.soywiz.korge.view.*
 import com.soywiz.korge.view.Container
-import com.soywiz.korge.view.Ellipse
 import com.soywiz.korge.view.Image
-import com.soywiz.korge.view.NinePatchEx
-import com.soywiz.korge.view.SolidRect
-import com.soywiz.korge.view.VectorImage
-import com.soywiz.korge.view.View
-import com.soywiz.korge.view.Views
-import com.soywiz.korge.view.center
-import com.soywiz.korge.view.ktree.TreeViewRef
-import com.soywiz.korge.view.ktree.ktreeSerializer
+import com.soywiz.korge.view.ktree.*
 import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.Colors
-import com.soywiz.korim.color.RGBA
-import com.soywiz.korio.file.VfsFile
-import java.awt.Component
+import com.soywiz.korim.color.*
+import com.soywiz.korim.vector.*
+import com.soywiz.korinject.*
+import com.soywiz.korio.file.*
+import com.soywiz.korma.geom.vector.*
+import java.awt.*
 import java.util.*
-import javax.swing.Icon
-import javax.swing.JComboBox
-import javax.swing.JList
-import javax.swing.JMenuItem
-import javax.swing.JPopupMenu
-import javax.swing.JScrollPane
-import javax.swing.JSeparator
-import javax.swing.JTabbedPane
+import javax.swing.*
 
 var myComponentFactory = MyComponentFactory()
 

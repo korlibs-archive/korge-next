@@ -1,7 +1,6 @@
 package com.soywiz.korio.util.i18n
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class LanguageTest {
 	@Test

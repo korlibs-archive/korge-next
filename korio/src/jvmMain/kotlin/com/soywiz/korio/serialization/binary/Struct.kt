@@ -1,36 +1,11 @@
 package com.soywiz.korio.serialization.binary
 
-import com.soywiz.kmem.readByteArray
-import com.soywiz.kmem.readDoubleArray
-import com.soywiz.kmem.readF32
-import com.soywiz.kmem.readF64
-import com.soywiz.kmem.readFloatArray
-import com.soywiz.kmem.readIntArray
-import com.soywiz.kmem.readLongArray
-import com.soywiz.kmem.readS16
-import com.soywiz.kmem.readS32
-import com.soywiz.kmem.readS64
-import com.soywiz.kmem.readS8
-import com.soywiz.kmem.readShortArray
-import com.soywiz.kmem.write16
-import com.soywiz.kmem.write32
-import com.soywiz.kmem.write64
-import com.soywiz.kmem.write8
-import com.soywiz.kmem.writeBytes
-import com.soywiz.kmem.writeF32
-import com.soywiz.kmem.writeF64
-import com.soywiz.korio.lang.Charset
-import com.soywiz.korio.lang.toByteArray
-import com.soywiz.korio.lang.toString
-import com.soywiz.korio.stream.AsyncStream
-import com.soywiz.korio.stream.SyncStream
-import com.soywiz.korio.stream.readBytes
-import com.soywiz.korio.stream.readBytesExact
-import com.soywiz.korio.stream.writeBytes
-import com.soywiz.korio.util.ClassFactory
-import com.soywiz.korio.util.indexOf
+import com.soywiz.kmem.*
+import com.soywiz.korio.lang.*
+import com.soywiz.korio.stream.*
+import com.soywiz.korio.util.*
 import java.lang.reflect.*
-import java.nio.ByteOrder
+import java.nio.*
 
 interface Struct {
 	sealed class Type(val size: Int) {

@@ -1,10 +1,8 @@
 package com.soywiz.korge.i18n
 
-import com.soywiz.kds.getExtra
-import com.soywiz.kds.setExtra
-import com.soywiz.korge.view.Views
-import com.soywiz.korge.view.foreachDescendant
-import com.soywiz.korio.util.i18n.Language
+import com.soywiz.kds.*
+import com.soywiz.korge.view.*
+import com.soywiz.korio.util.i18n.*
 
 private var Views.extraLanguage: Language
     get() = getExtra("extraLanguage") as? Language ?: Language.CURRENT

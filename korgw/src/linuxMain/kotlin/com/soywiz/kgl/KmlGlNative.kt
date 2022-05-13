@@ -4,21 +4,9 @@
 
 package com.soywiz.kgl
 
-import X11Embed.Display
-import X11Embed.Window
-import com.soywiz.kmem.dyn.DynamicLibrary
-import com.soywiz.kmem.dyn.func
-import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.COpaquePointer
-import kotlinx.cinterop.CPointed
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.IntVar
-import kotlinx.cinterop.ULongVar
-import kotlinx.cinterop.cstr
-import kotlinx.cinterop.interpretCPointer
-import kotlinx.cinterop.invoke
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.placeTo
+import X11Embed.*
+import com.soywiz.kmem.dyn.*
+import kotlinx.cinterop.*
 
 typealias XVisualInfo = ULongVar // Only used as pointer
 typealias GLXDrawable = COpaquePointer

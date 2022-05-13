@@ -1,31 +1,22 @@
 package com.soywiz.korim.awt
 
-import com.soywiz.kmem.arraycopy
-import com.soywiz.korim.bitmap.Bitmap
-import com.soywiz.korim.bitmap.Bitmap32
-import com.soywiz.korim.color.BGRA
-import com.soywiz.korio.async.executeInWorkerJVM
+import com.soywiz.kmem.*
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korim.color.*
+import com.soywiz.korim.vector.Context2d
+import com.soywiz.korio.async.*
 import com.soywiz.korma.geom.Anchor
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.ScaleMode
 import com.soywiz.korma.geom.Size
-import kotlinx.coroutines.suspendCancellableCoroutine
-import java.awt.Container
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.RenderingHints
-import java.awt.event.WindowAdapter
-import java.awt.event.WindowEvent
-import java.awt.image.BufferedImage
-import java.awt.image.DataBufferInt
-import java.io.ByteArrayInputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.InputStream
-import javax.imageio.ImageIO
-import javax.swing.JFrame
-import kotlin.coroutines.resume
+import kotlinx.coroutines.*
+import java.awt.*
+import java.awt.event.*
+import java.awt.image.*
+import java.io.*
+import javax.imageio.*
+import javax.swing.*
+import kotlin.coroutines.*
 
 fun Bitmap32.toAwt(
 	out: BufferedImage = BufferedImage(

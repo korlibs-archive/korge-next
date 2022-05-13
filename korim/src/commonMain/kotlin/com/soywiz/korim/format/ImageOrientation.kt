@@ -1,15 +1,11 @@
 package com.soywiz.korim.format
 
-import com.soywiz.kds.Extra
+import com.soywiz.kds.*
 import com.soywiz.korim.atlas.MutableAtlasUnit
-import com.soywiz.korim.bitmap.BitmapCoords
-import com.soywiz.korim.bitmap.BmpCoordsWithT
-import com.soywiz.korim.bitmap.flippedX
-import com.soywiz.korim.bitmap.flippedY
-import com.soywiz.korim.bitmap.rotatedRight
+import com.soywiz.korim.bitmap.*
 import com.soywiz.korio.file.VfsFile
 import com.soywiz.korma.geom.ISizeInt
-import kotlin.native.concurrent.ThreadLocal
+import kotlin.native.concurrent.*
 
 data class ImageOrientation(
     val rotation: Rotation = Rotation.R0,

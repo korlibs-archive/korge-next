@@ -1,7 +1,8 @@
 package com.soywiz.korge.gradle.targets.windows
 
 import com.soywiz.korge.gradle.KorgeExtension
-import com.soywiz.korge.gradle.util.quoted
+import java.io.*
+import com.soywiz.korge.gradle.util.*
 
 object WindowsRC {
     fun generate(info: KorgeExtension): String = kotlin.text.buildString {

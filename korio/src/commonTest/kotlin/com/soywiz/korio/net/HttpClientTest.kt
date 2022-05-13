@@ -1,10 +1,8 @@
 package com.soywiz.korio.net
 
-import com.soywiz.korio.async.suspendTest
-import com.soywiz.korio.net.http.Http
-import com.soywiz.korio.net.http.LogHttpClient
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korio.async.*
+import com.soywiz.korio.net.http.*
+import kotlin.test.*
 
 class HttpClientTest {
 	@Test

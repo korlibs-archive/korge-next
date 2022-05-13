@@ -1,12 +1,9 @@
 package com.soywiz.korge.view
 
-import com.soywiz.korge.scene.EmptyScene
-import com.soywiz.korge.scene.Scene
-import com.soywiz.korge.scene.sceneContainer
-import com.soywiz.korge.tests.ViewsForTesting
-import com.soywiz.korinject.injector
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korge.scene.*
+import com.soywiz.korge.tests.*
+import com.soywiz.korinject.*
+import kotlin.test.*
 
 class ViewsInjectorTest : ViewsForTesting() {
     @Test

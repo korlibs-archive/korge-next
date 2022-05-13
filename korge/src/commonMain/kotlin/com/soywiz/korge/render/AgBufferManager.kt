@@ -1,11 +1,8 @@
 package com.soywiz.korge.render
 
-import com.soywiz.kds.FastIdentityMap
-import com.soywiz.kds.getAndRemove
-import com.soywiz.kds.getOrPut
-import com.soywiz.kds.iterators.fastForEach
-import com.soywiz.korag.AG
-import com.soywiz.korag.AGList
+import com.soywiz.kds.*
+import com.soywiz.kds.iterators.*
+import com.soywiz.korag.*
 
 /**
  * Class to handle cached buffers, that are freed after a few frames of not being used

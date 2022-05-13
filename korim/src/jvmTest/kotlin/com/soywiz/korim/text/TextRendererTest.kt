@@ -1,10 +1,9 @@
 package com.soywiz.korim.text
 
-import com.soywiz.korim.font.readBitmapFont
-import com.soywiz.korio.async.suspendTest
-import com.soywiz.korio.file.std.resourcesVfs
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korim.font.*
+import com.soywiz.korio.async.*
+import com.soywiz.korio.file.std.*
+import kotlin.test.*
 
 class TextRendererTest {
     @Test

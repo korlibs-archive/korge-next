@@ -1,7 +1,6 @@
 package com.soywiz.korio.stream
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class FillSyncStreamTest {
 	@Test

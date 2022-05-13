@@ -1,7 +1,8 @@
 package com.soywiz.korma.geom
 
-import kotlin.math.max
-import kotlin.math.min
+import com.soywiz.korma.internal.*
+import kotlin.math.*
+import kotlin.native.concurrent.ThreadLocal
 
 class ScaleMode(
     val transform: (c: Int, iw: Double, ih: Double, cw: Double, ch: Double) -> Double

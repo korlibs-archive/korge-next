@@ -1,14 +1,12 @@
 package com.soywiz.korgw
 
-import com.soywiz.korio.file.VfsFile
-import com.soywiz.korio.file.toVfs
-import com.soywiz.korio.net.URL
-import kotlinx.browser.document
-import kotlinx.browser.window
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
-import org.w3c.dom.HTMLInputElement
-import org.w3c.files.get
+import com.soywiz.korio.async.*
+import com.soywiz.korio.file.*
+import com.soywiz.korio.net.*
+import kotlinx.browser.*
+import kotlinx.coroutines.*
+import org.w3c.dom.*
+import org.w3c.files.*
 
 class DialogInterfaceJs : DialogInterface {
 

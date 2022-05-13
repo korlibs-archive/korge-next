@@ -1,13 +1,8 @@
 package com.soywiz.korio.file.std
 
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.pointed
-import kotlinx.cinterop.toKString
-import kotlinx.cinterop.wcstr
-import kotlinx.coroutines.flow.flow
-import platform.posix._wclosedir
-import platform.posix._wopendir
-import platform.posix._wreaddir
+import kotlinx.cinterop.*
+import kotlinx.coroutines.flow.*
+import platform.posix.*
 
 actual open class LocalVfsNative actual constructor(async: Boolean) : LocalVfsNativeBase(async) {
     override suspend fun listFlow(path: String) = flow {

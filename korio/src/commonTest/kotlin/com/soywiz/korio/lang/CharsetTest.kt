@@ -1,8 +1,7 @@
 package com.soywiz.korio.lang
 
-import com.soywiz.krypto.encoding.unhex
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.krypto.encoding.*
+import kotlin.test.*
 
 class CharsetTest {
     @Test

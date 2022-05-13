@@ -1,9 +1,7 @@
 package com.soywiz.korte
 
 import com.soywiz.korte.dynamic.Dynamic2
-import com.soywiz.korte.internal.Json
-import com.soywiz.korte.internal.format
-import com.soywiz.korte.internal.quote
+import com.soywiz.korte.internal.*
 import kotlin.math.absoluteValue
 import kotlin.math.ceil
 import kotlin.math.floor

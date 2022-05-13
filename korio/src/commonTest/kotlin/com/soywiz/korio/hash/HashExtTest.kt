@@ -1,10 +1,9 @@
 package com.soywiz.korio.hash
 
-import com.soywiz.korio.async.suspendTest
-import com.soywiz.korio.file.std.MemoryVfsMix
-import com.soywiz.korio.stream.MemorySyncStream
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korio.async.*
+import com.soywiz.korio.file.std.*
+import com.soywiz.korio.stream.*
+import kotlin.test.*
 
 class HashExtTest {
     @Test

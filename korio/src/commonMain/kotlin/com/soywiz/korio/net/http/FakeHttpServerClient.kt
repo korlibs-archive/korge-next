@@ -1,10 +1,8 @@
 package com.soywiz.korio.net.http
 
-import com.soywiz.korio.net.URL
-import com.soywiz.korio.stream.MemorySyncStream
-import com.soywiz.korio.stream.openAsync
-import com.soywiz.korio.stream.toByteArray
-import kotlinx.coroutines.CompletableDeferred
+import com.soywiz.korio.net.*
+import com.soywiz.korio.stream.*
+import kotlinx.coroutines.*
 
 open class FakeHttpServer : HttpServer() {
     var errorHandler: (suspend (Throwable) -> Unit)? = null

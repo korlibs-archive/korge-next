@@ -1,6 +1,6 @@
 package com.soywiz.korim.text
 
-import com.soywiz.korma.geom.Anchor
+import com.soywiz.korma.geom.*
 
 data class TextAlignment(
     val horizontal: HorizontalAlign,

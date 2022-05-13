@@ -1,8 +1,10 @@
 package com.soywiz.korim.bitmap
 
-import com.soywiz.korim.color.Colors
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korim.color.*
+import com.soywiz.korim.format.*
+import com.soywiz.korio.file.std.*
+import kotlinx.coroutines.*
+import kotlin.test.*
 
 class Bitmap32JvmTest {
     @Test

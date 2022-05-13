@@ -1,8 +1,8 @@
 package com.soywiz.korge.spike
 
-import com.soywiz.korge.Korge
-import com.soywiz.korge.view.solidRect
-import com.soywiz.korim.color.Colors
+import com.soywiz.korge.*
+import com.soywiz.korge.view.*
+import com.soywiz.korim.color.*
 
 object Spike1 {
 	@JvmStatic suspend fun main(args: Array<String>) {

@@ -1,6 +1,6 @@
 package com.soywiz.korio.util
 
-import java.nio.ByteBuffer
+import java.nio.*
 
 fun ByteBuffer.toByteArray(): ByteArray {
 	val out = ByteArray(this.limit())

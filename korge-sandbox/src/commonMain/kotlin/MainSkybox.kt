@@ -1,14 +1,10 @@
-import com.soywiz.korev.Key
-import com.soywiz.korev.KeyEvent
-import com.soywiz.korge.input.keys
-import com.soywiz.korge.view.Stage
-import com.soywiz.korge3d.Korge3DExperimental
-import com.soywiz.korge3d.readCubeMap
-import com.soywiz.korge3d.scene3D
-import com.soywiz.korge3d.skyBox
-import com.soywiz.korio.file.std.resourcesVfs
-import com.soywiz.korma.geom.degrees
-import com.soywiz.korma.geom.times
+import com.soywiz.korev.*
+import com.soywiz.korge.*
+import com.soywiz.korge.input.*
+import com.soywiz.korge.view.*
+import com.soywiz.korge3d.*
+import com.soywiz.korio.file.std.*
+import com.soywiz.korma.geom.*
 
 @OptIn(Korge3DExperimental::class)
 suspend fun Stage.mainSkybox() {

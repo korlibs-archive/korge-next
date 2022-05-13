@@ -1,11 +1,9 @@
 package com.soywiz.korge.particle
 
 import com.soywiz.kmem.*
-import com.soywiz.korim.color.RGBA
-import com.soywiz.korio.util.toStringDecimal
-import com.soywiz.korma.geom.Angle
-import com.soywiz.korma.geom.degrees
-import com.soywiz.korma.geom.radians
+import com.soywiz.korim.color.*
+import com.soywiz.korio.util.*
+import com.soywiz.korma.geom.*
 
 internal const val PARTICLE_STRIDE = 27
 

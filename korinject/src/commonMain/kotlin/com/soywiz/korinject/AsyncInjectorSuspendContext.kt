@@ -1,8 +1,7 @@
 package com.soywiz.korinject
 
-import kotlinx.coroutines.withContext
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 
 suspend fun <T> withInjector(injector: AsyncInjector, block: suspend () -> T): T =
     withContext(AsyncInjectorContext(injector)) {

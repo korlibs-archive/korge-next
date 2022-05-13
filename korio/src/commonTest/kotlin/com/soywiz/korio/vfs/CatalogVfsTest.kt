@@ -1,12 +1,10 @@
 package com.soywiz.korio.vfs
 
-import com.soywiz.korio.async.suspendTest
-import com.soywiz.korio.file.fullPathNormalized
-import com.soywiz.korio.file.std.MemoryVfsMix
-import com.soywiz.korio.file.std.withCatalog
-import kotlinx.coroutines.flow.toList
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korio.async.*
+import com.soywiz.korio.file.*
+import com.soywiz.korio.file.std.*
+import kotlinx.coroutines.flow.*
+import kotlin.test.*
 
 class CatalogVfsTest {
     @Test

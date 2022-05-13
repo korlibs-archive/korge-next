@@ -1,10 +1,13 @@
 package com.soywiz.korim.bitmap.effect
 
 import com.soywiz.korim.bitmap.Bitmap32
+import com.soywiz.korim.bitmap.BitmapSlice
+import com.soywiz.korim.bitmap.BmpSlice
+import com.soywiz.korim.bitmap.slice
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
-import kotlin.math.absoluteValue
-import kotlin.math.max
+import com.soywiz.korim.internal.*
+import kotlin.math.*
 
 data class BitmapEffect(
     // Blur

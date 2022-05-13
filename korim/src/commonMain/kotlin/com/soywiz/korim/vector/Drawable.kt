@@ -1,7 +1,6 @@
 package com.soywiz.korim.vector
 
-import com.soywiz.korim.bitmap.Bitmap
-import com.soywiz.korim.bitmap.context2d
+import com.soywiz.korim.bitmap.*
 import com.soywiz.korma.geom.Rectangle
 
 interface Drawable {

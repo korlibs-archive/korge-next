@@ -1,7 +1,6 @@
 package com.soywiz.korio.util
 
-import java.lang.reflect.Field
-import java.lang.reflect.Method
+import java.lang.reflect.*
 
 val Class<*>.allDeclaredFields: List<Field>
 	get() = this.declaredFields.toList() + (this.superclass?.allDeclaredFields?.toList() ?: listOf<Field>())

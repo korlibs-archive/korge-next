@@ -1,13 +1,9 @@
 import com.soywiz.korge.scene.MaskTransition
 import com.soywiz.korge.scene.TransitionView
-import com.soywiz.korge.view.SolidRect
-import com.soywiz.korge.view.Stage
-import com.soywiz.korge.view.addTo
+import com.soywiz.korge.view.*
+import com.soywiz.korge.view.filter.BlurFilter
 import com.soywiz.korge.view.filter.DropshadowFilter
 import com.soywiz.korge.view.filter.TransitionFilter
-import com.soywiz.korge.view.filters
-import com.soywiz.korge.view.solidRect
-import com.soywiz.korge.view.xy
 import com.soywiz.korim.color.Colors
 
 suspend fun Stage.mainTransition() {

@@ -1,8 +1,7 @@
 package com.soywiz.korim.vector.svg
 
-import com.soywiz.korim.vector.format.SVG
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korim.vector.format.*
+import kotlin.test.*
 
 class SvgCssTest {
     @Test

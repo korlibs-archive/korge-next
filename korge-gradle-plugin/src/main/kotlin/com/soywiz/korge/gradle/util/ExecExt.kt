@@ -1,10 +1,9 @@
 package com.soywiz.korge.gradle.util
 
-import org.apache.tools.ant.taskdefs.condition.Os
-import org.gradle.api.Project
-import org.gradle.process.ExecResult
-import org.gradle.process.ExecSpec
-import java.io.ByteArrayOutputStream
+import org.apache.tools.ant.taskdefs.condition.*
+import org.gradle.api.*
+import org.gradle.process.*
+import java.io.*
 
 fun Project.debugExecSpec(exec: ExecSpec) {
 	logger.info("COMMAND: ${exec.commandLine.joinToString(" ")}")

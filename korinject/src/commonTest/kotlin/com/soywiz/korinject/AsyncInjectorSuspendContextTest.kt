@@ -1,9 +1,7 @@
 package com.soywiz.korinject
 
-import com.soywiz.korinject.util.expectException
-import com.soywiz.korinject.util.suspendTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korinject.util.*
+import kotlin.test.*
 
 class AsyncInjectorSuspendContextTest {
     @Test

@@ -1,8 +1,7 @@
 package com.soywiz.korge.debug
 
-import com.soywiz.korge.view.views
-import com.soywiz.korui.UiApplication
-import com.soywiz.korui.UiContainer
+import com.soywiz.korge.view.*
+import com.soywiz.korui.*
 
 open class UiEditableValue<T>(app: UiApplication, override val prop: ObservableProperty<T>) : UiContainer(app), ObservablePropertyHolder<T> {
     fun completedEditing() {

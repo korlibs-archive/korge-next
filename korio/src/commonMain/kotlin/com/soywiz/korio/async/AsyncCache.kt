@@ -1,7 +1,7 @@
 package com.soywiz.korio.async
 
-import kotlinx.coroutines.Deferred
-import kotlin.coroutines.coroutineContext
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 
 class AsyncCache {
 	@PublishedApi

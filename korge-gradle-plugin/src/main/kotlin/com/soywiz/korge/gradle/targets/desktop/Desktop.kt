@@ -1,43 +1,19 @@
 package com.soywiz.korge.gradle.targets.desktop
 
-import com.soywiz.korge.gradle.gkotlin
-import com.soywiz.korge.gradle.korge
-import com.soywiz.korge.gradle.kotlin
-import com.soywiz.korge.gradle.targets.GROUP_KORGE
-import com.soywiz.korge.gradle.targets.GROUP_KORGE_PACKAGE
-import com.soywiz.korge.gradle.targets.GROUP_KORGE_RUN
-import com.soywiz.korge.gradle.targets.apple.IcnsBuilder
-import com.soywiz.korge.gradle.targets.apple.InfoPlistBuilder
-import com.soywiz.korge.gradle.targets.getIconBytes
-import com.soywiz.korge.gradle.targets.isArm
-import com.soywiz.korge.gradle.targets.isLinux
-import com.soywiz.korge.gradle.targets.isMacos
-import com.soywiz.korge.gradle.targets.isWindows
-import com.soywiz.korge.gradle.targets.native.configureKotlinNativeTarget
-import com.soywiz.korge.gradle.targets.native.executableFolder
-import com.soywiz.korge.gradle.targets.native.getCompileTask
-import com.soywiz.korge.gradle.targets.native.getLinkTask
-import com.soywiz.korge.gradle.targets.windows.ICO2
-import com.soywiz.korge.gradle.targets.windows.WindowsRC
-import com.soywiz.korge.gradle.targets.windows.compileWindowsRES
-import com.soywiz.korge.gradle.targets.windows.replaceExeWithRes
-import com.soywiz.korge.gradle.targets.windows.stripWindowsExe
-import com.soywiz.korge.gradle.util.Indenter
-import com.soywiz.korge.gradle.util.addTask
-import com.soywiz.korge.gradle.util.createOnce
-import com.soywiz.korge.gradle.util.decodeImage
+import com.soywiz.korge.gradle.*
+import com.soywiz.korge.gradle.targets.*
+import com.soywiz.korge.gradle.targets.apple.*
+import com.soywiz.korge.gradle.targets.native.*
+import com.soywiz.korge.gradle.targets.windows.*
+import com.soywiz.korge.gradle.util.*
 import com.soywiz.korge.gradle.util.get
-import org.gradle.api.Project
-import org.gradle.api.Task
-import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.Copy
-import org.gradle.api.tasks.Exec
-import org.jetbrains.kotlin.gradle.plugin.mpp.AbstractKotlinNativeTargetPreset
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCompilation
-import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
-import org.jetbrains.kotlin.gradle.plugin.mpp.NativeOutputKind
-import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
-import java.io.File
+import org.gradle.api.*
+import org.gradle.api.file.*
+import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.plugin.*
+import org.jetbrains.kotlin.gradle.plugin.mpp.*
+import org.jetbrains.kotlin.gradle.targets.native.tasks.*
+import java.io.*
 
 private val RELEASE = NativeBuildType.RELEASE
 private val DEBUG = NativeBuildType.DEBUG

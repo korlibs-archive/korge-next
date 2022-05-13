@@ -1,38 +1,22 @@
 package com.soywiz.korgw.awt
 
-import com.soywiz.korev.DropFileEvent
+import com.soywiz.korev.*
 import com.soywiz.korgw.GameWindowCreationConfig
-import com.soywiz.korgw.internal.MicroDynamic
+import com.soywiz.korgw.internal.*
 import com.soywiz.korgw.internal.MicroDynamic.invoke
-import com.soywiz.korgw.platform.BaseOpenglContext
-import com.soywiz.korgw.platform.glContextFromComponent
-import com.soywiz.korim.awt.toAwt
-import com.soywiz.korim.bitmap.Bitmap
-import com.soywiz.korio.file.std.toVfs
-import com.soywiz.korio.util.OS
-import com.soywiz.korma.geom.RectangleInt
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.EventQueue
-import java.awt.Graphics
-import java.awt.GraphicsEnvironment
-import java.awt.Image
-import java.awt.Window
-import java.awt.datatransfer.DataFlavor
-import java.awt.dnd.DnDConstants
-import java.awt.dnd.DropTarget
-import java.awt.dnd.DropTargetAdapter
-import java.awt.dnd.DropTargetDragEvent
-import java.awt.dnd.DropTargetDropEvent
-import java.awt.dnd.DropTargetEvent
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
-import java.awt.event.WindowAdapter
-import java.awt.event.WindowEvent
-import java.io.File
-import javax.imageio.ImageIO
-import javax.swing.JFrame
-import javax.swing.WindowConstants
+import com.soywiz.korgw.platform.*
+import com.soywiz.korim.awt.*
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korio.file.std.*
+import com.soywiz.korio.util.*
+import com.soywiz.korma.geom.*
+import java.awt.*
+import java.awt.datatransfer.*
+import java.awt.dnd.*
+import java.awt.event.*
+import java.io.*
+import javax.imageio.*
+import javax.swing.*
 
 class AwtGameWindow(checkGl: Boolean, logGl: Boolean, config: GameWindowCreationConfig) : BaseAwtGameWindow(config) {
     override val ag: AwtAg = AwtAg(this, checkGl, logGl)

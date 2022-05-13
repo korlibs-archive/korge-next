@@ -1,14 +1,7 @@
 package com.soywiz.korio.serialization.binary
 
-import com.soywiz.korio.stream.MemorySyncStream
-import com.soywiz.korio.stream.readS32BE
-import com.soywiz.korio.stream.readS32LE
-import com.soywiz.korio.stream.write32BE
-import com.soywiz.korio.stream.write32LE
-import com.soywiz.korio.stream.write8
-import com.soywiz.korio.stream.writeStringz
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korio.stream.*
+import kotlin.test.*
 
 class StructTest {
 	@Size(8)

@@ -1,7 +1,7 @@
 package com.soywiz.korui
 
-import com.soywiz.korio.util.RedirectMutableField
-import com.soywiz.korui.native.NativeUiFactory
+import com.soywiz.korio.util.*
+import com.soywiz.korui.native.*
 
 open class UiLabel(app: UiApplication, val label: NativeUiFactory.NativeLabel = app.factory.createLabel()) : UiComponent(app, label) {
     var text by RedirectMutableField(label::text)

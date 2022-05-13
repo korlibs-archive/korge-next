@@ -1,10 +1,8 @@
 package com.soywiz.korim.vector
 
-import com.soywiz.korma.geom.shape.buildPath
-import com.soywiz.korma.geom.vector.moveTo
-import com.soywiz.korma.geom.vector.quadTo
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korma.geom.shape.*
+import com.soywiz.korma.geom.vector.*
+import kotlin.test.*
 
 class VectorPathCrossModuleTest {
     @Test

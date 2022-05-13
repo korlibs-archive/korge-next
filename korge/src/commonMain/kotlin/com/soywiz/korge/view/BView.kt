@@ -1,6 +1,6 @@
 package com.soywiz.korge.view
 
-import com.soywiz.kds.iterators.fastForEach
+import com.soywiz.kds.iterators.*
 
 interface BView {
     val bview: View

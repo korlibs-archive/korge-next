@@ -1,7 +1,7 @@
 package com.soywiz.korge.gradle.util
 
-import java.io.IOException
-import kotlin.math.min
+import java.io.*
+import kotlin.math.*
 
 
 object Json {

@@ -1,20 +1,16 @@
 package com.soywiz.korge.view.camera
 
-import com.soywiz.klock.seconds
-import com.soywiz.korge.Korge
-import com.soywiz.korge.input.onClick
-import com.soywiz.korge.time.delay
-import com.soywiz.korge.view.View
-import com.soywiz.korge.view.centerOn
-import com.soywiz.korge.view.polygon
-import com.soywiz.korge.view.position
-import com.soywiz.korge.view.solidRect
-import com.soywiz.korge.view.tween.moveBy
-import com.soywiz.korgw.GameWindow
-import com.soywiz.korim.color.Colors
-import com.soywiz.korma.geom.degrees
-import kotlinx.coroutines.runBlocking
-import kotlin.math.abs
+import com.soywiz.klock.*
+import com.soywiz.korge.*
+import com.soywiz.korge.input.*
+import com.soywiz.korge.time.*
+import com.soywiz.korge.view.*
+import com.soywiz.korge.view.tween.*
+import com.soywiz.korgw.*
+import com.soywiz.korim.color.*
+import com.soywiz.korma.geom.*
+import kotlinx.coroutines.*
+import kotlin.math.*
 
 fun main(): Unit = runBlocking { korge() }
 

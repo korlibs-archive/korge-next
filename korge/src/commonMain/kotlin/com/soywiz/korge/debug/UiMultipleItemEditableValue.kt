@@ -1,8 +1,7 @@
 package com.soywiz.korge.debug
 
-import com.soywiz.korui.UiApplication
-import com.soywiz.korui.layout.HorizontalUiLayout
-import com.soywiz.korui.layout.preferredWidth
+import com.soywiz.korui.*
+import com.soywiz.korui.layout.*
 
 class UiMultipleItemEditableValue<T>(app: UiApplication, items: List<UiEditableValue<T>>) : UiEditableValue<T>(app, items.first().prop) {
     init {

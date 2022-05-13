@@ -1,10 +1,8 @@
 package com.soywiz.korge.gradle.targets.ios
 
-import com.soywiz.korge.gradle.korgeCacheDir
-import com.soywiz.korge.gradle.util.execLogger
-import com.soywiz.korge.gradle.util.get
-import com.soywiz.korge.gradle.util.projectExtension
-import org.gradle.api.Project
+import com.soywiz.korge.gradle.*
+import com.soywiz.korge.gradle.util.*
+import org.gradle.api.*
 
 val Project.iosDeployExt by projectExtension {
     IosDeploy(this)

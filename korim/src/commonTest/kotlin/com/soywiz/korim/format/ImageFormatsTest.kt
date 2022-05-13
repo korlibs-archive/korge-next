@@ -1,10 +1,11 @@
 package com.soywiz.korim.format
 
-import com.soywiz.korim.bitmap.Bitmap32
-import com.soywiz.korio.async.suspendTestNoBrowser
-import com.soywiz.korio.file.std.resourcesVfs
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korio.async.*
+import com.soywiz.korio.file.*
+import com.soywiz.korio.file.std.*
+import com.soywiz.korio.util.*
+import kotlin.test.*
 
 class ImageFormatsTest {
 	val imageFormats = ImageFormats(PNG, SVG, ICO, TGA, BMP)

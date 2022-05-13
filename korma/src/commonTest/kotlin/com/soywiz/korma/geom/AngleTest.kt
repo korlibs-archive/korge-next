@@ -1,10 +1,8 @@
 package com.soywiz.korma.geom
 
 import com.soywiz.korma.math.isAlmostZero
-import kotlin.math.abs
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import kotlin.math.*
+import kotlin.test.*
 
 class AngleTest {
     @Test

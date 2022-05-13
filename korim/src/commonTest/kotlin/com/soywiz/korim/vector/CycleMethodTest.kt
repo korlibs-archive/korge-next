@@ -1,9 +1,8 @@
 package com.soywiz.korim.vector
 
-import com.soywiz.korio.util.niceStr
-import com.soywiz.korma.math.roundDecimalPlaces
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korio.util.*
+import com.soywiz.korma.math.*
+import kotlin.test.*
 
 class CycleMethodTest {
     @Test

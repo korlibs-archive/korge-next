@@ -1,20 +1,12 @@
 package com.soywiz.korio.internal
 
-import com.soywiz.korio.async.await
-import com.soywiz.korio.async.suspendTest
-import com.soywiz.korio.compression.compress
-import com.soywiz.korio.compression.deflate.ZLib
-import com.soywiz.korio.compression.uncompress
-import com.soywiz.korio.stream.MemorySyncStream
-import com.soywiz.korio.stream.readS16LE
-import com.soywiz.korio.stream.toAsync
-import com.soywiz.korio.stream.write16LE
-import kotlinx.coroutines.runBlocking
-import kotlin.native.concurrent.TransferMode
-import kotlin.native.concurrent.Worker
-import kotlin.native.concurrent.freeze
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korio.async.*
+import com.soywiz.korio.compression.*
+import com.soywiz.korio.compression.deflate.*
+import com.soywiz.korio.stream.*
+import kotlinx.coroutines.*
+import kotlin.native.concurrent.*
+import kotlin.test.*
 
 class TempBytesNativeTest {
     @Test

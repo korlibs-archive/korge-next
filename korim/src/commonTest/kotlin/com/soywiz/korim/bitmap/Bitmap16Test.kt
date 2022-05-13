@@ -1,8 +1,6 @@
 package com.soywiz.korim.bitmap
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class Bitmap16Test {
     @Test

@@ -1,16 +1,13 @@
 package com.soywiz.korge.debug
 
 import com.soywiz.kmem.convertRange
-import com.soywiz.korev.Key
-import com.soywiz.korge.view.views
-import com.soywiz.korio.async.runBlockingNoSuspensions
+import com.soywiz.korev.*
+import com.soywiz.korge.view.*
+import com.soywiz.korio.async.*
 import com.soywiz.korio.util.toStringDecimal
 import com.soywiz.korte.Template
-import com.soywiz.korui.UiApplication
-import com.soywiz.korui.UiLabel
-import com.soywiz.korui.UiStandardCursor
-import com.soywiz.korui.UiTextField
-import com.soywiz.korui.layout.UiFillLayout
+import com.soywiz.korui.*
+import com.soywiz.korui.layout.*
 import kotlin.math.absoluteValue
 import kotlin.math.withSign
 

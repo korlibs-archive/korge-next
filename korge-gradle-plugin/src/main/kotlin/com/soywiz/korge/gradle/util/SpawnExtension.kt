@@ -1,7 +1,7 @@
 package com.soywiz.korge.gradle.util
 
-import org.gradle.api.Project
-import java.io.File
+import org.gradle.api.*
+import java.io.*
 
 open class SpawnExtension {
     open fun spawn(dir: File, command: List<String>) {

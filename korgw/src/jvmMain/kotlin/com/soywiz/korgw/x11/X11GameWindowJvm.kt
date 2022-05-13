@@ -12,35 +12,8 @@ import com.soywiz.korgw.DialogInterface
 import com.soywiz.korgw.EventLoopGameWindow
 import com.soywiz.korgw.ZenityDialogs
 import com.soywiz.korim.bitmap.Bitmap
-import com.sun.jna.Callback
-import com.sun.jna.CallbackReference
-import com.sun.jna.Memory
-import com.sun.jna.NativeLong
-import com.sun.jna.Pointer
-import com.sun.jna.platform.unix.X11.ButtonMotionMask
-import com.sun.jna.platform.unix.X11.ButtonPress
-import com.sun.jna.platform.unix.X11.ButtonPressMask
-import com.sun.jna.platform.unix.X11.ButtonRelease
-import com.sun.jna.platform.unix.X11.ButtonReleaseMask
-import com.sun.jna.platform.unix.X11.ClientMessage
-import com.sun.jna.platform.unix.X11.ConfigureNotify
-import com.sun.jna.platform.unix.X11.DestroyNotify
-import com.sun.jna.platform.unix.X11.Display
-import com.sun.jna.platform.unix.X11.EnterWindowMask
-import com.sun.jna.platform.unix.X11.Expose
-import com.sun.jna.platform.unix.X11.ExposureMask
-import com.sun.jna.platform.unix.X11.KeyPress
-import com.sun.jna.platform.unix.X11.KeyPressMask
-import com.sun.jna.platform.unix.X11.KeyRelease
-import com.sun.jna.platform.unix.X11.KeyReleaseMask
-import com.sun.jna.platform.unix.X11.LeaveWindowMask
-import com.sun.jna.platform.unix.X11.MotionNotify
-import com.sun.jna.platform.unix.X11.PointerMotionMask
-import com.sun.jna.platform.unix.X11.PropModeReplace
-import com.sun.jna.platform.unix.X11.StructureNotifyMask
-import com.sun.jna.platform.unix.X11.Window
-import com.sun.jna.platform.unix.X11.XA_CARDINAL
-import com.sun.jna.platform.unix.X11.XEvent
+import com.sun.jna.*
+import com.sun.jna.platform.unix.X11.*
 
 //class X11Ag(val window: X11GameWindow, override val gl: KmlGl = LogKmlGlProxy(X11KmlGl())) : AGOpengl() {
 class X11Ag(val window: X11GameWindow, val checkGl: Boolean, override val gl: KmlGl = X11KmlGl().checkedIf(checkGl)) : AGOpengl() {

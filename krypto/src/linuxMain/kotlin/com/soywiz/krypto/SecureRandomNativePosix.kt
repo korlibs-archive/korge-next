@@ -1,13 +1,7 @@
 package com.soywiz.krypto
 
-import kotlinx.cinterop.addressOf
-import kotlinx.cinterop.convert
-import kotlinx.cinterop.get
-import kotlinx.cinterop.usePinned
-import platform.posix.fclose
-import platform.posix.fopen
-import platform.posix.fread
-import platform.posix.fwrite
+import kotlinx.cinterop.*
+import platform.posix.*
 
 actual fun fillRandomBytes(array: ByteArray) {
     if (array.isEmpty()) return

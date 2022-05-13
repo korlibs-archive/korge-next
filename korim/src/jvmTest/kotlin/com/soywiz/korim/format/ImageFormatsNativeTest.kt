@@ -1,11 +1,10 @@
 package com.soywiz.korim.format
 
-import com.soywiz.klogger.Console
-import com.soywiz.korio.async.suspendTest
-import com.soywiz.korio.file.std.resourcesVfs
-import com.soywiz.korma.geom.Size
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.klogger.*
+import com.soywiz.korio.async.*
+import com.soywiz.korio.file.std.*
+import com.soywiz.korma.geom.*
+import kotlin.test.*
 
 class ImageFormatsNativeTest {
     val formats = ImageFormats(PNG, ICO, SVG)

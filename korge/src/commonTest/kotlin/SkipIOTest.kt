@@ -1,4 +1,4 @@
-import com.soywiz.korio.util.OS
+import com.soywiz.korio.util.*
 
 //val skipIOTest get() = OS.isJsBrowser
 val skipIOTest get() = OS.isJsBrowserOrWorker || OS.isJsNodeJs

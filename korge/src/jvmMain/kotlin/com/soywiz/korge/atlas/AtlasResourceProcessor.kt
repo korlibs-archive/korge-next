@@ -1,19 +1,16 @@
 package com.soywiz.korge.atlas
 
 import com.soywiz.korge.resources.ResourceProcessor
-import com.soywiz.korim.atlas.AtlasPacker
+import com.soywiz.korim.atlas.*
 import com.soywiz.korim.bitmap.slice
 import com.soywiz.korim.format.ImageEncodingProps
 import com.soywiz.korim.format.PNG
 import com.soywiz.korim.format.readBitmap
-import com.soywiz.korio.dynamic.mapper.ObjectMapper
+import com.soywiz.korio.dynamic.mapper.*
 import com.soywiz.korio.dynamic.serialization.stringifyTyped
-import com.soywiz.korio.file.VfsFile
-import com.soywiz.korio.file.baseName
-import com.soywiz.korio.file.baseNameWithoutExtension
-import com.soywiz.korio.file.extensionLC
+import com.soywiz.korio.file.*
 import com.soywiz.korio.serialization.json.Json
-import com.soywiz.korio.util.jvmFallback
+import com.soywiz.korio.util.*
 
 open class AtlasResourceProcessor : ResourceProcessor("atlas") {
 	companion object : AtlasResourceProcessor()

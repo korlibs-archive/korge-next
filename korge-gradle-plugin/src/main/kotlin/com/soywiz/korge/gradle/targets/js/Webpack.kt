@@ -1,7 +1,7 @@
 package com.soywiz.korge.gradle.targets.js
 
-import org.gradle.api.Project
-import org.gradle.kotlin.dsl.the
+import org.gradle.api.*
+import org.gradle.kotlin.dsl.*
 
 fun Project.configureWebpackFixes() {
 // @TODO: HACK for webpack: https://youtrack.jetbrains.com/issue/KT-48273#focus=Comments-27-5122487.0-0

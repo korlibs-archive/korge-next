@@ -1,16 +1,13 @@
 package com.soywiz.korgw.x11
 
 import com.soywiz.kds.IntMap
-import com.soywiz.kmem.dyn.KStructure
+import com.soywiz.kmem.dyn.*
 import com.soywiz.korev.Key
 import com.soywiz.korgw.platform.INativeGL
 import com.soywiz.korgw.platform.NativeKgl
-import com.sun.jna.Library
-import com.sun.jna.Native
-import com.sun.jna.NativeLong
-import com.sun.jna.Pointer
+import com.sun.jna.*
 import com.sun.jna.platform.unix.X11
-import com.sun.jna.ptr.IntByReference
+import com.sun.jna.ptr.*
 
 
 typealias XVisualInfo = Pointer

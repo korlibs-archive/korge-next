@@ -1,9 +1,8 @@
 package com.soywiz.korge.component
 
-import com.soywiz.korge.tests.ViewsForTesting
-import com.soywiz.korge.view.SolidRect
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korge.tests.*
+import com.soywiz.korge.view.*
+import kotlin.test.*
 
 class StageComponentTest : ViewsForTesting() {
     @Test

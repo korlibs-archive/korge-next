@@ -1,6 +1,6 @@
 package com.soywiz.korge.gradle.targets.linux
 
-import java.io.File
+import java.io.*
 import java.nio.file.Files
 
 object LDLibraries {

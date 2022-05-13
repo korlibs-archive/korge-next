@@ -1,5 +1,7 @@
 package com.soywiz.korge.service
 
+import com.soywiz.korinject.*
+
 //@Singleton
 open class Store {
 	//companion object {

@@ -1,8 +1,8 @@
 package com.soywiz.korui.native
 
-import com.soywiz.korio.lang.Disposable
-import javax.swing.JCheckBox
-import javax.swing.event.ChangeListener
+import com.soywiz.korio.lang.*
+import javax.swing.*
+import javax.swing.event.*
 
 open class AwtCheckBox(factory: BaseAwtUiFactory, val checkBox: JCheckBox = JCheckBox()) : AwtComponent(factory, checkBox), NativeUiFactory.NativeCheckBox {
     override var text: String

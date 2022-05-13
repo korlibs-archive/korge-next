@@ -1,21 +1,15 @@
 package com.soywiz.korge.gradle
 
-import com.soywiz.korge.gradle.targets.GROUP_KORGE_LIST
-import com.soywiz.korge.gradle.targets.GROUP_KORGE_RESOURCES
-import com.soywiz.korge.gradle.targets.getIconBytes
+import com.soywiz.korge.gradle.targets.*
 import com.soywiz.korge.gradle.targets.jvm.KorgeJavaExec
-import com.soywiz.korge.gradle.util.executeInPlugin
-import com.soywiz.korge.gradle.util.get
-import org.gradle.api.DefaultTask
-import org.gradle.api.Project
-import org.gradle.api.Task
-import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.Classpath
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
-import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
+import com.soywiz.korge.gradle.util.*
+import org.gradle.api.*
+import org.gradle.api.file.*
+import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.dsl.*
+import org.jetbrains.kotlin.gradle.plugin.*
 import java.io.File
+import java.net.*
 import javax.inject.Inject
 
 fun Project.getCompilationKorgeProcessedResourcesFolder(compilation: KotlinCompilation<*>): File {

@@ -1,12 +1,12 @@
 package com.soywiz.korgw.x11
 
-import com.soywiz.kmem.toInt
-import com.soywiz.korgw.GameWindowConfig
-import com.soywiz.korgw.platform.BaseOpenglContext
-import com.soywiz.korio.lang.Environment
+import com.soywiz.kmem.*
+import com.soywiz.korgw.*
+import com.soywiz.korgw.platform.*
+import com.soywiz.korio.lang.*
 import com.sun.jna.CallbackReference
 import com.sun.jna.Pointer
-import com.sun.jna.platform.unix.X11
+import com.sun.jna.platform.unix.*
 
 // https://www.khronos.org/opengl/wiki/Tutorial:_OpenGL_3.0_Context_Creation_(GLX)
 class X11OpenglContext(val gwconfig: GameWindowConfig, val d: X11.Display?, val w: X11.Drawable?, val scr: Int, val vi: XVisualInfo? = chooseVisuals(d, scr), val doubleBuffered: Boolean = true) : BaseOpenglContext {

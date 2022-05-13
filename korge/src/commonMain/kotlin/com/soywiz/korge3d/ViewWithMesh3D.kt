@@ -1,12 +1,10 @@
 package com.soywiz.korge3d
 
-import com.soywiz.kds.get
-import com.soywiz.kds.iterators.fastForEach
-import com.soywiz.kds.iterators.fastForEachWithIndex
-import com.soywiz.kmem.clamp
-import com.soywiz.korag.AG
-import com.soywiz.korma.geom.Matrix3D
-import com.soywiz.korma.geom.invert
+import com.soywiz.kds.*
+import com.soywiz.kds.iterators.*
+import com.soywiz.kmem.*
+import com.soywiz.korag.*
+import com.soywiz.korma.geom.*
 
 @Korge3DExperimental
 inline fun Container3D.mesh(mesh: Mesh3D, callback: ViewWithMesh3D.() -> Unit = {}): ViewWithMesh3D {

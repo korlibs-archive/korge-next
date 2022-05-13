@@ -7,7 +7,7 @@ import com.soywiz.korge.view.Container
 import com.soywiz.korge.view.View
 import com.soywiz.korge.view.ViewDslMarker
 import com.soywiz.korge.view.addTo
-import kotlin.math.min
+import kotlin.math.*
 
 inline fun Container.fastSpriteContainer(
     useRotation: Boolean = false,

@@ -1,9 +1,7 @@
 package com.soywiz.korio.concurrent.atomic
 
-import com.soywiz.kmem.toInt
-import kotlin.native.concurrent.AtomicInt
-import kotlin.native.concurrent.AtomicLong
-import kotlin.native.concurrent.AtomicReference
+import com.soywiz.kmem.*
+import kotlin.native.concurrent.*
 
 actual fun <T> korAtomic(initial: T): KorAtomicRef<T> = object : KorAtomicRef<T>(initial, true) {
     val ref = AtomicReference(initial)

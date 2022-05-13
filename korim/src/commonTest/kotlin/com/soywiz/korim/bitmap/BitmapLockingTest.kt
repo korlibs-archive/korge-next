@@ -1,8 +1,7 @@
 package com.soywiz.korim.bitmap
 
-import com.soywiz.korma.geom.Rectangle
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korma.geom.*
+import kotlin.test.*
 
 class BitmapLockingTest {
     @Test

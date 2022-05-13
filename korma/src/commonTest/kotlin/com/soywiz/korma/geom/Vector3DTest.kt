@@ -1,7 +1,6 @@
 package com.soywiz.korma.geom
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class Vector3DTest {
     @Test

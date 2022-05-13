@@ -1,7 +1,8 @@
 package com.soywiz.korge.resources
 
-import com.soywiz.korinject.AsyncInjector
-import kotlin.reflect.KClass
+import com.soywiz.korinject.*
+import com.soywiz.korio.*
+import kotlin.reflect.*
 
 data class VPath(val path: String)
 

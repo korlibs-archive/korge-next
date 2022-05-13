@@ -1,6 +1,10 @@
 package com.soywiz.korgw
 
-import kotlin.test.Test
+import com.soywiz.korag.*
+import com.soywiz.korev.*
+import com.soywiz.korim.color.*
+import com.soywiz.korio.*
+import kotlin.test.*
 
 class KorgwTest {
     @Test

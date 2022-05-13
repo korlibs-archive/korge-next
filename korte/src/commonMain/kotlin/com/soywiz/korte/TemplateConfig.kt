@@ -1,6 +1,7 @@
 package com.soywiz.korte
 
 import com.soywiz.korte.dynamic.Dynamic2
+import com.soywiz.korte.internal.htmlspecialchars
 
 open class TemplateConfig(
     extraTags: List<Tag> = listOf(),

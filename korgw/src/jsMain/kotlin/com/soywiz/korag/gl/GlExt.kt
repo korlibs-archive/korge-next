@@ -1,15 +1,11 @@
 package com.soywiz.korag.gl
 
-import com.soywiz.kgl.KmlGl
-import com.soywiz.kgl.KmlGlJsCanvas
-import com.soywiz.korag.AG
-import com.soywiz.korag.AGConfig
-import com.soywiz.korag.AGContainer
-import com.soywiz.korag.AGFactory
-import com.soywiz.korag.AGWindow
-import kotlinx.browser.document
-import kotlinx.browser.window
-import org.w3c.dom.HTMLCanvasElement
+import com.soywiz.kgl.*
+import com.soywiz.kmem.*
+import com.soywiz.korag.*
+import com.soywiz.korim.bitmap.*
+import org.w3c.dom.*
+import kotlinx.browser.*
 
 object AGFactoryWebgl : AGFactory {
 	override val supportsNativeFrame: Boolean = true

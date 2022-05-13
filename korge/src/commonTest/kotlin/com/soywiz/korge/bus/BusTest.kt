@@ -1,9 +1,8 @@
 package com.soywiz.korge.bus
 
-import com.soywiz.korinject.AsyncInjector
-import com.soywiz.korio.async.suspendTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korinject.*
+import com.soywiz.korio.async.*
+import kotlin.test.*
 
 class BusTest {
     val out = arrayListOf<String>()

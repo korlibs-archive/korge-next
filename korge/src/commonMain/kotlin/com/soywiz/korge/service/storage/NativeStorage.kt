@@ -1,8 +1,7 @@
 package com.soywiz.korge.service.storage
 
-import com.soywiz.kds.Extra
-import com.soywiz.korge.view.Views
-import com.soywiz.korge.view.ViewsContainer
+import com.soywiz.kds.*
+import com.soywiz.korge.view.*
 
 /** Cross-platform way of synchronously storing small data */
 expect class NativeStorage(views: Views) : IStorage {

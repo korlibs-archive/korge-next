@@ -1,21 +1,7 @@
 package com.soywiz.korgw
 
-import X11Embed.Atom
-import X11Embed.AtomVar
-import X11Embed.Display
-import X11Embed.Status
-import X11Embed.Window
-import X11Embed.XEvent
-import X11Embed.XKeyEvent
-import com.soywiz.kgl.CDisplayPointer
-import com.soywiz.kgl.CString
-import com.soywiz.kgl.GLFuncNull
-import com.soywiz.kgl.GLLib
-import com.soywiz.kgl.GLXDrawable
-import com.soywiz.kgl.KeySym
-import com.soywiz.kgl.KmlGl
-import com.soywiz.kgl.NativeBaseKmlGl
-import com.soywiz.kgl.XVisualInfo
+import X11Embed.*
+import com.soywiz.kgl.*
 import com.soywiz.kmem.Platform
 import com.soywiz.kmem.dyn.DynamicLibrary
 import com.soywiz.kmem.dyn.func

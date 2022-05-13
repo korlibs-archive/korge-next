@@ -1,8 +1,6 @@
 package com.soywiz.korio.serialization.xml
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFails
+import kotlin.test.*
 
 class XmlTest {
 	@kotlin.test.Test

@@ -1,8 +1,7 @@
 package com.soywiz.korio.net
 
-import com.soywiz.korio.lang.toByteArray
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korio.lang.*
+import kotlin.test.*
 
 class URLTest {
 	data class UrlInfo(val url: String, val componentString: String, val isAbsolute: Boolean, val isOpaque: Boolean)

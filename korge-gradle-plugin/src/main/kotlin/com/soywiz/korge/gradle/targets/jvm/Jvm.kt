@@ -1,33 +1,17 @@
 package com.soywiz.korge.gradle.targets.jvm
 
-import com.soywiz.korge.gradle.getCompilationKorgeProcessedResourcesFolder
-import com.soywiz.korge.gradle.gkotlin
-import com.soywiz.korge.gradle.jnaVersion
-import com.soywiz.korge.gradle.korge
-import com.soywiz.korge.gradle.kotlin
-import com.soywiz.korge.gradle.targets.GROUP_KORGE
-import com.soywiz.korge.gradle.targets.GROUP_KORGE_PACKAGE
-import com.soywiz.korge.gradle.targets.GROUP_KORGE_RUN
-import com.soywiz.korge.gradle.targets.isMacos
-import com.soywiz.korge.gradle.util.GroovyClosure
-import com.soywiz.korge.gradle.util.addTask
-import com.soywiz.korge.gradle.util.get
-import org.gradle.api.NamedDomainObjectSet
-import org.gradle.api.Project
-import org.gradle.api.file.CopySpec
-import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.Copy
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.JavaExec
-import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.bundling.ZipEntryCompression
-import org.gradle.api.tasks.testing.Test
+import com.soywiz.korge.gradle.*
+import com.soywiz.korge.gradle.targets.*
+import com.soywiz.korge.gradle.util.*
+import org.gradle.api.*
+import org.gradle.api.file.*
+import org.gradle.api.tasks.*
+import org.gradle.api.tasks.bundling.*
+import org.gradle.api.tasks.testing.*
 import org.gradle.jvm.tasks.Jar
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmCompilation
-import proguard.gradle.ProGuardTask
+import org.jetbrains.kotlin.gradle.plugin.mpp.*
+import proguard.*
+import proguard.gradle.*
 
 fun Project.configureJvm() {
     if (gkotlin.targets.findByName("jvm") != null) return

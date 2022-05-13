@@ -1,10 +1,9 @@
 package com.soywiz.korag
 
-import com.soywiz.kds.fastArrayListOf
-import com.soywiz.kmem.toIntRound
-import com.soywiz.korag.shader.Program
-import com.soywiz.korag.shader.VertexLayout
-import com.soywiz.korma.geom.Rectangle
+import com.soywiz.kds.*
+import com.soywiz.kmem.*
+import com.soywiz.korag.shader.*
+import com.soywiz.korma.geom.*
 
 fun AGList.enableBlend(): Unit = enable(AGEnable.BLEND)
 fun AGList.enableCullFace(): Unit = enable(AGEnable.CULL_FACE)

@@ -1,7 +1,6 @@
 package com.soywiz.korge3d
 
-import kotlin.test.Test
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 @OptIn(Korge3DExperimental::class)
 class MeshTest {

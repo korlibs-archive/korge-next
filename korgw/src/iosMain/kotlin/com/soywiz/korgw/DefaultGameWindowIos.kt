@@ -1,7 +1,7 @@
 package com.soywiz.korgw
 
-import com.soywiz.korag.AG
-import com.soywiz.korag.gl.AGNative
+import com.soywiz.korag.*
+import com.soywiz.korag.gl.*
 
 class IosGameWindow : GameWindow() {
     override val dialogInterface = DialogInterfaceIos()

@@ -1,11 +1,8 @@
 package com.soywiz.korio.async
 
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.newFixedThreadPoolContext
-import kotlinx.coroutines.newSingleThreadContext
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import java.util.concurrent.ExecutorService
+import kotlinx.coroutines.*
+import java.util.concurrent.*
+import kotlin.coroutines.*
 
 fun <T> Deferred<T>.jvmSyncAwait(): T = runBlocking { await() }
 

@@ -1,6 +1,6 @@
 package mapbox.earcut
 
-import com.soywiz.kds.IntArrayList
+import com.soywiz.kds.*
 
 /**
  * Copyright 2020 the3deers.org

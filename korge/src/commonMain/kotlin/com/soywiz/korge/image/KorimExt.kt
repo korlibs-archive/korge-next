@@ -1,12 +1,6 @@
 package com.soywiz.korge.image
 
-import com.soywiz.korim.vector.CompoundShape
-import com.soywiz.korim.vector.EmptyShape
-import com.soywiz.korim.vector.FillShape
-import com.soywiz.korim.vector.PolylineShape
-import com.soywiz.korim.vector.Shape
-import com.soywiz.korim.vector.StyledShape
-import com.soywiz.korim.vector.TextShape
+import com.soywiz.korim.vector.*
 
 fun Shape.toExtString(): String = when (this) {
     is CompoundShape -> "CompoundShape(${this.components.joinToString(", ") { it.toExtString() }})"

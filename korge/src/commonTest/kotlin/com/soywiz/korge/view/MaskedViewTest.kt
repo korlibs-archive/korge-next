@@ -1,12 +1,10 @@
 package com.soywiz.korge.view
 
-import com.soywiz.korag.AG
-import com.soywiz.korag.log.LogBaseAG
-import com.soywiz.korge.render.MaskStates
-import com.soywiz.korge.render.VertexInfo
-import com.soywiz.korge.tests.ViewsForTesting
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korag.*
+import com.soywiz.korag.log.*
+import com.soywiz.korge.render.*
+import com.soywiz.korge.tests.*
+import kotlin.test.*
 
 class MaskedViewTest : ViewsForTesting() {
     @Test

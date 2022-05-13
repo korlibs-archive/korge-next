@@ -1,21 +1,15 @@
 package com.soywiz.korge.gradle.util
 
-import com.soywiz.korge.gradle.targets.isLinux
-import com.soywiz.korge.gradle.targets.isWindows
-import com.sun.net.httpserver.HttpExchange
-import com.sun.net.httpserver.HttpServer
-import org.gradle.api.Project
-import java.io.File
-import java.io.FileInputStream
-import java.io.OutputStream
-import java.lang.management.ManagementFactory
-import java.net.Inet4Address
-import java.net.InetSocketAddress
-import java.net.NetworkInterface
-import java.nio.charset.Charset
-import java.nio.file.Files
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.math.min
+import com.soywiz.korge.gradle.targets.*
+import com.sun.net.httpserver.*
+import org.gradle.api.*
+import java.io.*
+import java.lang.management.*
+import java.net.*
+import java.nio.charset.*
+import java.nio.file.*
+import java.util.concurrent.atomic.*
+import kotlin.math.*
 
 class DecoratedHttpServer(val server: HttpServer) {
     val port get() = server.address.port

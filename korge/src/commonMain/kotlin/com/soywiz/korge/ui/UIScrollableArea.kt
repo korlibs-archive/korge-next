@@ -1,12 +1,6 @@
 package com.soywiz.korge.ui
 
-import com.soywiz.korge.view.Container
-import com.soywiz.korge.view.ViewDslMarker
-import com.soywiz.korge.view.addTo
-import com.soywiz.korge.view.clipContainer
-import com.soywiz.korge.view.fixedSizeContainer
-import com.soywiz.korge.view.position
-import com.soywiz.korge.view.size
+import com.soywiz.korge.view.*
 
 @Deprecated("Use UINewScrollable")
 inline fun Container.uiScrollableArea(

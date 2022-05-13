@@ -1,8 +1,7 @@
 package com.soywiz.korio.stream
 
-import com.soywiz.korio.experimental.KorioExperimentalApi
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import com.soywiz.korio.experimental.*
+import kotlin.test.*
 
 @OptIn(KorioExperimentalApi::class)
 class ByteArrayBitReaderTest {

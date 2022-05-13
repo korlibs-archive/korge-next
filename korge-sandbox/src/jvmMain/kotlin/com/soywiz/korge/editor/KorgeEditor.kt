@@ -1,4 +1,4 @@
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 
 object KorgeEditor {
     @JvmStatic

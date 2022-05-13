@@ -1,10 +1,9 @@
 package com.soywiz.korvi
 
+import com.soywiz.klock.*
 import com.soywiz.klock.hr.timeSpan
-import com.soywiz.klock.minutes
-import com.soywiz.klock.seconds
-import com.soywiz.korim.awt.awtShowImageAndWait
-import kotlinx.coroutines.runBlocking
+import com.soywiz.korim.awt.*
+import kotlinx.coroutines.*
 
 object KorviJvm {
     @JvmStatic

@@ -1,8 +1,7 @@
 package com.soywiz.korio.util
 
-import java.io.ByteArrayOutputStream
-import java.io.OutputStream
-import java.io.PrintStream
+import com.soywiz.korio.async.*
+import java.io.*
 
 object StdoutRouterStream : OutputStream() {
 	val defaultRoute = System.out

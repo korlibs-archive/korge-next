@@ -1,13 +1,11 @@
 package com.soywiz.kgl
 
-import com.soywiz.kmem.FBuffer
-import com.soywiz.kmem.startAddressOf
-import com.soywiz.kmem.toInt
-import com.soywiz.korim.bitmap.NativeImage
-import com.soywiz.korim.format.BitmapNativeImage
-import com.soywiz.korio.concurrent.atomic.korAtomic
+import com.soywiz.kmem.*
+import com.soywiz.korim.bitmap.*
+import com.soywiz.korim.format.*
+import com.soywiz.korio.concurrent.atomic.*
 import kotlinx.cinterop.*
-import kotlin.reflect.KProperty
+import kotlin.reflect.*
 
 abstract class NativeBaseKmlGl : KmlGlWithExtensions() {
     val tempBufferAddress = TempBufferAddress()

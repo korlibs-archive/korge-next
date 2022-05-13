@@ -1,9 +1,7 @@
 package com.soywiz.korio.util
 
-import kotlin.math.abs
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import kotlin.math.*
+import kotlin.test.*
 
 class NumberParserTest {
 	@Test fun test1() = assertEquals(0.0, NumberParser.parseDouble("0"))

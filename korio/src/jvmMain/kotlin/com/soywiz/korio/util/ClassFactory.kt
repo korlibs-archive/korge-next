@@ -1,32 +1,12 @@
 package com.soywiz.korio.util
 
-import com.soywiz.kds.iterators.fastForEach
-import com.soywiz.kds.toLinkedMap
-import com.soywiz.korio.dynamic.mapper.ObjectMapper
-import com.soywiz.korio.lang.invalidOp
-import java.lang.reflect.Constructor
-import java.lang.reflect.Modifier
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-import kotlin.collections.HashSet
-import kotlin.collections.Iterable
-import kotlin.collections.LinkedHashMap
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.Set
-import kotlin.collections.containsKey
-import kotlin.collections.filter
-import kotlin.collections.first
-import kotlin.collections.firstOrNull
-import kotlin.collections.get
-import kotlin.collections.getOrPut
-import kotlin.collections.map
-import kotlin.collections.set
-import kotlin.collections.sortedBy
-import kotlin.collections.toMap
-import kotlin.collections.toMutableList
-import kotlin.collections.toTypedArray
-import kotlin.reflect.KClass
+import com.soywiz.kds.*
+import com.soywiz.kds.iterators.*
+import com.soywiz.korio.dynamic.mapper.*
+import com.soywiz.korio.lang.*
+import java.lang.reflect.*
+import java.util.*
+import kotlin.reflect.*
 
 // @TODO: This should use ASM library to create a class per class to be as fast as possible
 class ClassFactory<T> private constructor(iclazz: Class<out T>, internal: kotlin.Boolean) {
