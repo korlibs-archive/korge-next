@@ -1,21 +1,48 @@
 package com.soywiz.korim.awt
 
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.*
-import com.soywiz.korim.paint.*
+import com.soywiz.korim.bitmap.Bitmap
+import com.soywiz.korim.bitmap.NativeImage
+import com.soywiz.korim.bitmap.ensureNative
+import com.soywiz.korim.color.BGRA
+import com.soywiz.korim.color.Colors
+import com.soywiz.korim.color.RGBA
+import com.soywiz.korim.color.RgbaArray
+import com.soywiz.korim.paint.BitmapPaint
+import com.soywiz.korim.paint.ColorPaint
+import com.soywiz.korim.paint.GradientFiller
+import com.soywiz.korim.paint.GradientInterpolationMethod
+import com.soywiz.korim.paint.GradientKind
 import com.soywiz.korim.paint.GradientPaint
 import com.soywiz.korim.paint.Paint
-import com.soywiz.korim.vector.*
-import com.soywiz.korma.geom.*
-import com.soywiz.korma.geom.vector.*
-import java.awt.*
+import com.soywiz.korim.paint.TransformedPaint
+import com.soywiz.korim.vector.Context2d
+import com.soywiz.korim.vector.CycleMethod
+import com.soywiz.korim.vector.GraphicsPath
+import com.soywiz.korma.geom.Matrix
+import com.soywiz.korma.geom.vector.LineCap
+import com.soywiz.korma.geom.vector.LineJoin
+import com.soywiz.korma.geom.vector.Winding
+import com.soywiz.korma.geom.vector.isEmpty
+import java.awt.AlphaComposite
+import java.awt.BasicStroke
+import java.awt.Color
+import java.awt.Graphics2D
+import java.awt.Image
+import java.awt.MultipleGradientPaint
+import java.awt.PaintContext
 import java.awt.Rectangle
-import java.awt.RenderingHints.*
-import java.awt.geom.*
-import java.awt.image.*
-import java.nio.*
+import java.awt.RenderingHints
+import java.awt.RenderingHints.KEY_ANTIALIASING
+import java.awt.Transparency
+import java.awt.geom.AffineTransform
+import java.awt.geom.Point2D
+import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
-
+import java.awt.image.ColorModel
+import java.awt.image.DataBufferInt
+import java.awt.image.Raster
+import java.nio.Buffer
+import java.nio.ByteBuffer
 
 
 const val AWT_INTERNAL_IMAGE_TYPE_PRE = BufferedImage.TYPE_INT_ARGB_PRE

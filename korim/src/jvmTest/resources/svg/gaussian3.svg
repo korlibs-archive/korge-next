@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 <svg
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
-   id="svg2"
-   width="744.09448819"
-   height="1052.3622047">
+    xmlns="http://www.w3.org/2000/svg"
+    id="svg2"
+    width="744.09448819"
+    height="1052.3622047">
   <defs>
     <filter id="filter1"  x="-10%" y="-10%" width="120%" height="120%">
       <feGaussianBlur stdDeviation="64" id="feGaussianBlur1"/>

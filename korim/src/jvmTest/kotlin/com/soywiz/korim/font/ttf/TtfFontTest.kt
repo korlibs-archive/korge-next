@@ -1,16 +1,16 @@
 package com.soywiz.korim.font.ttf
 
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.*
-import com.soywiz.korim.font.*
-import com.soywiz.korim.format.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.file.*
-import com.soywiz.korio.file.std.*
-import com.soywiz.korio.lang.*
-import com.soywiz.korio.stream.*
-import com.soywiz.korma.geom.*
-import kotlin.test.*
+import com.soywiz.korim.font.DefaultTtfFont
+import com.soywiz.korim.font.SystemFont
+import com.soywiz.korim.font.getTextBounds
+import com.soywiz.korio.async.suspendTest
+import com.soywiz.korio.file.VfsFile
+import com.soywiz.korio.file.std.applicationVfs
+import com.soywiz.korio.file.std.resourcesVfs
+import com.soywiz.korio.lang.WString
+import com.soywiz.korma.geom.int
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class TtfFontTest {
     lateinit var root: VfsFile

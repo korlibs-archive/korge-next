@@ -1,9 +1,8 @@
 package com.soywiz.korim.format
 
-import com.soywiz.korio.async.*
-import kotlin.native.ThreadLocal
-import kotlin.native.concurrent.*
-import kotlin.native.internal.*
+import com.soywiz.korio.async.await
+import kotlin.native.concurrent.Future
+import kotlin.native.concurrent.Worker
 
 @PublishedApi
 @ThreadLocal

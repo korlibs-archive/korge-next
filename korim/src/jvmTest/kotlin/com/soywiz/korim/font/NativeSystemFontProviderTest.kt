@@ -1,7 +1,7 @@
 package com.soywiz.korim.font
 
 import org.junit.Test
-import kotlin.test.*
+import kotlin.test.assertEquals
 
 class NativeSystemFontProviderTest {
     @Test

@@ -1,8 +1,9 @@
 package com.soywiz.korim.format
 
-import com.soywiz.korio.async.*
-import com.soywiz.korio.file.std.*
-import kotlin.test.*
+import com.soywiz.korio.async.suspendTest
+import com.soywiz.korio.file.std.resourcesVfs
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class KRAJvmTest {
     @Test
