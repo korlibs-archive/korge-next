@@ -1,7 +1,12 @@
 package com.soywiz.korgw.platform
 
-import com.soywiz.kgl.*
-import com.soywiz.kmem.*
+import com.soywiz.kgl.KmlGlWithExtensions
+import com.soywiz.kgl.nioBuffer
+import com.soywiz.kgl.nioFloatBuffer
+import com.soywiz.kgl.nioIntBuffer
+import com.soywiz.kmem.FBuffer
+import com.soywiz.kmem.toBoolean
+import com.soywiz.kmem.toByte
 import com.soywiz.korim.awt.AwtNativeImage
 import com.soywiz.korim.bitmap.NativeImage
 import com.sun.jna.NativeLong

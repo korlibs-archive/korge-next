@@ -1,7 +1,13 @@
 package com.soywiz.korio.posix
 
-import kotlinx.cinterop.*
-import platform.posix.*
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.convert
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.refTo
+import kotlinx.cinterop.wcstr
+import platform.posix.FILE
+import platform.posix.FIONREAD
+import platform.posix.ioctlsocket
 
 actual fun posixFopen(filename: String, mode: String): CPointer<FILE>? {
     return memScoped {

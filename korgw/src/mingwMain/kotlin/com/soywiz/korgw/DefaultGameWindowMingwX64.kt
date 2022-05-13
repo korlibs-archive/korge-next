@@ -1,13 +1,23 @@
 package com.soywiz.korgw
 
-import com.soywiz.kmem.*
-import com.soywiz.korag.*
+import com.soywiz.kmem.clamp
+import com.soywiz.kmem.extract
+import com.soywiz.kmem.hasBits
+import com.soywiz.kmem.toInt
+import com.soywiz.kmem.with
+import com.soywiz.kmem.without
+import com.soywiz.korag.AG
+import com.soywiz.korag.AGConfig
 import com.soywiz.korag.gl.AGOpenglFactory
-import com.soywiz.korev.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korma.geom.*
+import com.soywiz.korev.KeyEvent
+import com.soywiz.korev.MouseButton
+import com.soywiz.korev.MouseEvent
+import com.soywiz.korev.dispatch
+import com.soywiz.korim.bitmap.Bitmap
+import com.soywiz.korim.bitmap.Bitmap32
+import com.soywiz.korma.geom.SizeInt
 import kotlinx.cinterop.*
-import platform.opengl32.*
+import platform.opengl32.glClear
 import platform.windows.*
 
 

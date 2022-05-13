@@ -1,15 +1,16 @@
 package com.soywiz.korgw
 
-import com.soywiz.korag.*
-import com.soywiz.korev.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.*
-import com.soywiz.korio.lang.*
-import com.soywiz.korio.util.*
-import com.soywiz.korma.geom.*
-import kotlinx.coroutines.*
-import java.awt.*
-import kotlin.test.*
+import com.soywiz.korag.AG
+import com.soywiz.korag.DefaultShaders
+import com.soywiz.korev.MouseEvent
+import com.soywiz.korev.addEventListener
+import com.soywiz.korim.bitmap.Bitmap32
+import com.soywiz.korim.color.Colors
+import com.soywiz.korio.util.OS
+import kotlinx.coroutines.runBlocking
+import java.awt.GraphicsEnvironment
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 class TestE2eJava {
     @Test

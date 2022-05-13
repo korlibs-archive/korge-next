@@ -1,8 +1,6 @@
 package com.soywiz.korio.net
 
-import com.soywiz.korio.*
-import com.soywiz.korio.util.*
-import kotlin.coroutines.*
+import com.soywiz.korio.jsRuntime
 
 internal actual val asyncSocketFactory: AsyncSocketFactory by lazy {
 	object : AsyncSocketFactory() {

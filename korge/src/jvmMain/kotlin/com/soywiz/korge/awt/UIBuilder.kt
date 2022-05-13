@@ -1,13 +1,25 @@
 package com.soywiz.korge.awt
 
-import com.soywiz.korim.color.*
-import com.soywiz.korio.async.*
-import java.awt.*
-import java.awt.event.*
+import com.soywiz.korio.async.Signal
+import com.soywiz.korio.async.addCallInit
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.LayoutManager2
 import java.util.*
-import javax.imageio.*
-import javax.swing.*
-import kotlin.collections.ArrayList
+import javax.swing.AbstractButton
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JMenuItem
+import javax.swing.JPanel
+import javax.swing.JPopupMenu
+import javax.swing.JSlider
+import javax.swing.JTabbedPane
+import javax.swing.JTextField
 
 fun Component.showPopupMenu(menu: JPopupMenu) {
     menu.show(this, 0, this.height)

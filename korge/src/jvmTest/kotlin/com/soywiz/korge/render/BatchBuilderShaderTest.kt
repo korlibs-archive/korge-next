@@ -1,9 +1,10 @@
 package com.soywiz.korge.render
 
-import com.soywiz.korag.shader.*
-import com.soywiz.korag.shader.gl.*
-import com.soywiz.korge.test.*
-import kotlin.test.*
+import com.soywiz.korag.shader.ProgramConfig
+import com.soywiz.korag.shader.gl.GlslConfig
+import com.soywiz.korag.shader.gl.toNewGlslString
+import com.soywiz.korge.test.assertEqualsFileReference
+import kotlin.test.Test
 
 class BatchBuilderShaderTest {
     @Test

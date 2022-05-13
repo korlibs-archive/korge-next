@@ -1,6 +1,8 @@
 package com.soywiz.korio.dynamic
 
-import java.lang.reflect.*
+import java.lang.reflect.Field
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
 
 internal actual object DynamicInternal : DynApi {
     class JavaPackage(val name: String)

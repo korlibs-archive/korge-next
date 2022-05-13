@@ -1,7 +1,7 @@
 package com.soywiz.korge.service.storage
 
-import com.soywiz.korge.view.*
-import kotlinx.browser.*
+import com.soywiz.korge.view.Views
+import kotlinx.browser.localStorage
 
 @JsName("Array")
 private external class JsArray<T> {

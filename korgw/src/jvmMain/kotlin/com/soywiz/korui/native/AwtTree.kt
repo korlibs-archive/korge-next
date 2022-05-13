@@ -1,10 +1,12 @@
 package com.soywiz.korui.native
 
-import com.soywiz.kds.*
-import com.soywiz.korui.*
+import com.soywiz.kds.Extra
+import com.soywiz.korui.UiTreeNode
 import java.util.*
-import javax.swing.*
-import javax.swing.tree.*
+import javax.swing.JTree
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeNode
+import javax.swing.tree.TreePath
 
 val UiTreeNode.awt by Extra.PropertyThis<UiTreeNode, AwtTreeNode>() { AwtTreeNode(this) }
 

@@ -1,8 +1,8 @@
 package com.soywiz.korgw.awt
 
 import com.soywiz.korgw.GameWindowCreationConfig
-import com.soywiz.korgw.platform.*
-import java.awt.*
+import com.soywiz.korgw.platform.BaseOpenglContext
+import java.awt.Component
 
 open class GLCanvasGameWindow(val canvas: GLCanvas, config: GameWindowCreationConfig = GameWindowCreationConfig()) : BaseAwtGameWindow(config) {
     init {

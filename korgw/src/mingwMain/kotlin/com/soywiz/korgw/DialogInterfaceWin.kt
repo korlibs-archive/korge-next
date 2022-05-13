@@ -1,8 +1,10 @@
 package com.soywiz.korgw
 
-import com.soywiz.korio.file.*
-import com.soywiz.korio.net.*
-import platform.windows.*
+import com.soywiz.korio.file.VfsFile
+import com.soywiz.korio.net.URL
+import platform.windows.HWND
+import platform.windows.SW_SHOWNORMAL
+import platform.windows.ShellExecuteW
 
 actual fun createDialogInterfaceForComponent(nativeComponent: Any?): DialogInterface {
     return DialogInterfaceWin { nativeComponent }

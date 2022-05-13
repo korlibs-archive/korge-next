@@ -1,8 +1,11 @@
 package com.soywiz.korui.native.util
 
-import com.soywiz.korui.*
-import com.soywiz.korui.native.*
-import javax.swing.*
+import com.soywiz.korui.UiMenu
+import com.soywiz.korui.UiMenuItem
+import com.soywiz.korui.native.BaseAwtUiFactory
+import javax.swing.JMenu
+import javax.swing.JMenuBar
+import javax.swing.JMenuItem
 
 fun UiMenuItem.toMenuItem(factory: BaseAwtUiFactory): JMenuItem {
     val item = factory.createJMenuItem()

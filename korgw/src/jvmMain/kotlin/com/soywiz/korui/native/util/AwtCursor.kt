@@ -1,9 +1,9 @@
 package com.soywiz.korui.native.util
 
-import com.soywiz.kds.*
-import com.soywiz.korui.*
-import java.awt.*
-import javax.swing.*
+import com.soywiz.kds.flip
+import com.soywiz.korui.UiCursor
+import com.soywiz.korui.UiStandardCursor
+import java.awt.Cursor
 
 private val standardCursorToAwt = mapOf(
     UiStandardCursor.DEFAULT to Cursor.DEFAULT_CURSOR,

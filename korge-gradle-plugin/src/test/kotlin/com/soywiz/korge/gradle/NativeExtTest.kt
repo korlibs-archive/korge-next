@@ -1,7 +1,9 @@
 package com.soywiz.korge.gradle
 
-import com.soywiz.korge.gradle.util.*
-import kotlin.test.*
+import com.soywiz.korge.gradle.util.SemVer
+import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class NativeExtTest {
     @Test

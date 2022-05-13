@@ -1,7 +1,8 @@
 package com.soywiz.korio.posix
 
-import kotlinx.cinterop.*
-import platform.posix.*
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.CValuesRef
+import platform.posix.FILE
 
 data class PosixStatInfo(val size: Long, val isDirectory: Boolean)
 

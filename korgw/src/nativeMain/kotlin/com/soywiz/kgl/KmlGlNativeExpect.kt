@@ -1,6 +1,6 @@
 package com.soywiz.kgl
 
-import kotlinx.cinterop.*
+import kotlinx.cinterop.COpaquePointer
 
 expect class KmlGlNative() : NativeBaseKmlGl {
 }

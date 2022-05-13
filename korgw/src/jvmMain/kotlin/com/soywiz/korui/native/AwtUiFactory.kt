@@ -1,12 +1,26 @@
 package com.soywiz.korui.native
 
-import com.soywiz.korim.color.*
-import com.soywiz.korio.file.*
-import com.soywiz.korio.file.std.*
-import com.soywiz.korma.geom.*
-import java.awt.*
-import java.awt.event.*
-import javax.swing.*
+import com.soywiz.korim.color.RGBA
+import com.soywiz.korim.color.toAwt
+import com.soywiz.korim.color.toRgba
+import com.soywiz.korio.file.VfsFile
+import com.soywiz.korio.file.std.localVfs
+import com.soywiz.korma.geom.BoundsBuilder
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.Window
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import javax.swing.JColorChooser
+import javax.swing.JFileChooser
+import javax.swing.JMenu
+import javax.swing.JMenuBar
+import javax.swing.JMenuItem
+import javax.swing.JPanel
+import javax.swing.JPopupMenu
+import javax.swing.JScrollPane
+import javax.swing.JToolBar
 
 actual val DEFAULT_UI_FACTORY: NativeUiFactory get() = DEFAULT_AWT_UI_FACTORY
 

@@ -1,7 +1,10 @@
 package com.soywiz.korag.gl
 
-import com.soywiz.kgl.*
-import com.soywiz.korag.*
+import com.soywiz.kgl.KmlGl
+import com.soywiz.korag.AG
+import com.soywiz.korag.AGConfig
+import com.soywiz.korag.AGFactory
+import com.soywiz.korag.AGWindow
 
 actual object AGOpenglFactory {
 	actual fun create(nativeComponent: Any?): AGFactory = AGFactoryNative

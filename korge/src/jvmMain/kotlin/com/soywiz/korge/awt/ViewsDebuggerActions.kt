@@ -1,10 +1,16 @@
 package com.soywiz.korge.awt
 
-import com.soywiz.korge.view.*
-import com.soywiz.korge.view.camera.*
-import com.soywiz.korge.view.ktree.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.serialization.xml.*
+import com.soywiz.korge.view.Container
+import com.soywiz.korge.view.View
+import com.soywiz.korge.view.ViewLeaf
+import com.soywiz.korge.view.Views
+import com.soywiz.korge.view.camera.cameraContainer
+import com.soywiz.korge.view.findFirstAscendant
+import com.soywiz.korge.view.ktree.KTreeRoot
+import com.soywiz.korge.view.ktree.ktreeToViewTree
+import com.soywiz.korge.view.ktree.viewTreeToKTree
+import com.soywiz.korio.async.launchImmediately
+import com.soywiz.korio.serialization.xml.Xml
 
 open class ViewsDebuggerActions(val views: Views) {
     var componentOrNull: ViewsDebuggerComponent? = null

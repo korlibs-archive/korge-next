@@ -1,6 +1,7 @@
 package com.soywiz.korge.lipsync
 
-import com.soywiz.korau.format.*
+import com.soywiz.korau.format.AudioFormats
+import com.soywiz.korau.format.toWav
 import com.soywiz.korau.sound.AudioData
 import com.soywiz.korau.sound.readAudioData
 import com.soywiz.korge.resources.ResourceProcessor
@@ -15,7 +16,8 @@ import com.soywiz.korio.util.AsyncOnce
 import com.soywiz.korio.util.OS
 import com.soywiz.korio.util.basename
 import com.soywiz.korio.util.jvmFallback
-import com.soywiz.krypto.encoding.*
+import com.soywiz.krypto.encoding.hex
+import com.soywiz.krypto.encoding.unhex
 import com.soywiz.krypto.sha1
 import java.io.File
 import java.net.URL

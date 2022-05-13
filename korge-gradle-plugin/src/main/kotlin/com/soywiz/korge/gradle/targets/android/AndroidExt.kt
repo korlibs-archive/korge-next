@@ -1,11 +1,21 @@
 package com.soywiz.korge.gradle.targets.android
 
-import com.soywiz.korge.gradle.*
-import com.soywiz.korge.gradle.targets.*
-import com.soywiz.korge.gradle.util.*
-import org.gradle.api.*
-import org.gradle.api.tasks.*
-import java.io.*
+import com.soywiz.korge.gradle.korge
+import com.soywiz.korge.gradle.kotlin
+import com.soywiz.korge.gradle.targets.GROUP_KORGE_ADB
+import com.soywiz.korge.gradle.targets.GROUP_KORGE_INSTALL
+import com.soywiz.korge.gradle.targets.GROUP_KORGE_RUN
+import com.soywiz.korge.gradle.util.createTyped
+import com.soywiz.korge.gradle.util.ensureParents
+import com.soywiz.korge.gradle.util.execLogger
+import com.soywiz.korge.gradle.util.execOutput
+import com.soywiz.korge.gradle.util.get
+import com.soywiz.korge.gradle.util.spawnExt
+import org.gradle.api.DefaultTask
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.tasks.GradleBuild
+import java.io.File
 import java.util.*
 
 val ANDROID_SDK_PATH_KEY = "android.sdk.path"

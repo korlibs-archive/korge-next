@@ -1,11 +1,13 @@
 package com.soywiz.korge.gradle.targets.windows
 
-import com.soywiz.korge.gradle.util.*
-import org.gradle.api.*
-import java.io.*
+import com.soywiz.korge.gradle.util.debugExecSpec
 import com.soywiz.korge.gradle.util.get
-import org.gradle.kotlin.dsl.support.*
-import java.net.*
+import com.soywiz.korge.gradle.util.getFirstRegexOrFail
+import com.soywiz.korge.gradle.util.getFirstRegexOrNull
+import org.gradle.api.Project
+import org.gradle.kotlin.dsl.support.unzipTo
+import java.io.File
+import java.net.URL
 
 /**
  * @NOTE: We have to call compileKotlinMingw first at least once so the toolchain is downloaded before doing stuff

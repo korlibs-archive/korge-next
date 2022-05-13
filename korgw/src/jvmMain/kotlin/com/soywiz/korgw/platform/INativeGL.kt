@@ -2,10 +2,16 @@
 
 package com.soywiz.korgw.platform
 
-import com.soywiz.korio.lang.*
-import com.soywiz.korio.time.*
-import com.soywiz.korio.util.*
-import com.sun.jna.*
+import com.soywiz.korio.lang.Environment
+import com.soywiz.korio.lang.UTF8
+import com.soywiz.korio.lang.toByteArray
+import com.soywiz.korio.time.traceTime
+import com.soywiz.korio.util.OS
+import com.sun.jna.Memory
+import com.sun.jna.Native
+import com.sun.jna.NativeLibrary
+import com.sun.jna.NativeLong
+import com.sun.jna.Pointer
 import java.nio.ByteBuffer
 import java.nio.FloatBuffer
 import java.nio.IntBuffer

@@ -1,9 +1,13 @@
 package com.soywiz.korge.gradle.targets.windows
 
-import com.soywiz.korge.gradle.util.*
-import java.awt.image.*
-import java.io.*
-import kotlin.math.*
+import com.soywiz.korge.gradle.util.area
+import com.soywiz.korge.gradle.util.encodePNG
+import com.soywiz.korge.gradle.util.write16LE
+import com.soywiz.korge.gradle.util.write32LE
+import com.soywiz.korge.gradle.util.write8
+import java.awt.image.BufferedImage
+import java.awt.image.DataBufferInt
+import java.io.ByteArrayOutputStream
 
 @Suppress("UNUSED_VARIABLE")
 object ICO2 {

@@ -1,9 +1,6 @@
-import com.soywiz.klock.*
-import com.soywiz.korag.gl.*
-import com.soywiz.korge.time.*
-import com.soywiz.korge.view.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.*
+import com.soywiz.korge.view.Stage
+import com.soywiz.korim.bitmap.NativeImage
+import com.soywiz.korim.color.RgbaArray
 
 suspend fun Stage.mainBitmapTexId() {
     //val bitmap = resourcesVfs["korim.png"].readBitmap().toBMP32()

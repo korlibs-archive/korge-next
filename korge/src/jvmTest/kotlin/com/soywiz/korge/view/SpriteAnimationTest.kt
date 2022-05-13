@@ -1,10 +1,11 @@
 package com.soywiz.korge.view
 
-import com.soywiz.klock.*
-import com.soywiz.korim.atlas.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.file.std.*
-import kotlin.test.*
+import com.soywiz.klock.milliseconds
+import com.soywiz.korim.atlas.readAtlas
+import com.soywiz.korio.async.suspendTest
+import com.soywiz.korio.file.std.resourcesVfs
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class SpriteAnimationTest {
     @Test

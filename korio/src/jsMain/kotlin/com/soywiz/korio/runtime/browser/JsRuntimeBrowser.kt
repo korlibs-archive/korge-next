@@ -2,12 +2,17 @@ package com.soywiz.korio.runtime.browser
 
 import com.soywiz.korio.file.SimpleStorage
 import com.soywiz.korio.file.VfsFile
-import com.soywiz.korio.file.std.*
+import com.soywiz.korio.file.std.MapLikeStorageVfs
+import com.soywiz.korio.file.std.MemoryVfs
+import com.soywiz.korio.file.std.UrlVfs
+import com.soywiz.korio.file.std.withCatalogJail
 import com.soywiz.korio.net.QueryString
 import com.soywiz.korio.net.http.Http
 import com.soywiz.korio.net.http.HttpClient
 import com.soywiz.korio.runtime.JsRuntime
-import com.soywiz.korio.stream.*
+import com.soywiz.korio.stream.AsyncInputStreamWithLength
+import com.soywiz.korio.stream.openAsync
+import com.soywiz.korio.stream.readAll
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.CompletableDeferred

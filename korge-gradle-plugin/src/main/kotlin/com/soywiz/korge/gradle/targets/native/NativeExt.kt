@@ -1,14 +1,18 @@
 package com.soywiz.korge.gradle.targets.native
 
-import com.soywiz.korge.gradle.*
-import com.soywiz.korge.gradle.util.*
-import org.gradle.api.*
-import org.gradle.api.internal.project.*
-import org.gradle.kotlin.dsl.*
-import org.jetbrains.kotlin.gradle.plugin.*
-import org.jetbrains.kotlin.gradle.plugin.mpp.*
-import org.jetbrains.kotlin.gradle.targets.native.tasks.*
-import org.jetbrains.kotlin.gradle.tasks.*
+import com.soywiz.korge.gradle.BuildVersions
+import com.soywiz.korge.gradle.korge
+import com.soywiz.korge.gradle.util.SemVer
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.kotlin.dsl.extra
+import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCompilation
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeOutputKind
+import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 
 fun KotlinNativeCompilation.getLinkTask(kind: NativeOutputKind, type: NativeBuildType, project: Project): KotlinNativeLink {
 	val taskName = "link${type.name.toLowerCase().capitalize()}${kind.name.toLowerCase().capitalize()}${target.name.capitalize()}"

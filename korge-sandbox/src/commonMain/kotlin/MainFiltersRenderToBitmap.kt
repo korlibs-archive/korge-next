@@ -1,8 +1,20 @@
-import com.soywiz.klock.*
-import com.soywiz.korge.view.*
-import com.soywiz.korge.view.filter.*
-import com.soywiz.korim.format.*
-import com.soywiz.korio.file.std.*
+import com.soywiz.klock.seconds
+import com.soywiz.korge.view.FixedSizeContainer
+import com.soywiz.korge.view.Stage
+import com.soywiz.korge.view.addFilter
+import com.soywiz.korge.view.filter.BlurFilter
+import com.soywiz.korge.view.filter.Convolute3Filter
+import com.soywiz.korge.view.filter.PageFilter
+import com.soywiz.korge.view.filter.SwizzleColorsFilter
+import com.soywiz.korge.view.filter.TransitionFilter
+import com.soywiz.korge.view.filter.WaveFilter
+import com.soywiz.korge.view.image
+import com.soywiz.korge.view.position
+import com.soywiz.korge.view.renderToBitmap
+import com.soywiz.korge.view.scale
+import com.soywiz.korge.view.xy
+import com.soywiz.korim.format.readBitmap
+import com.soywiz.korio.file.std.resourcesVfs
 
 suspend fun Stage.mainFiltersRenderToBitmap() {
     println("LOADING IMAGE...")

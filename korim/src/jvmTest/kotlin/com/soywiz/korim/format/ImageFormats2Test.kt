@@ -1,11 +1,12 @@
 package com.soywiz.korim.format
 
-import com.soywiz.korim.awt.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.file.*
-import com.soywiz.korio.file.std.*
-import kotlin.test.*
+import com.soywiz.korim.bitmap.matchContentsDistinctCount
+import com.soywiz.korio.async.suspendTest
+import com.soywiz.korio.file.VfsFile
+import com.soywiz.korio.file.std.applicationVfs
+import com.soywiz.korio.file.std.resourcesVfs
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class ImageFormats2Test {
     val formats = ImageFormats(PNG, ICO)

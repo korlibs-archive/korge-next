@@ -1,8 +1,40 @@
 package com.soywiz.korio.net
-import com.soywiz.korio.posix.*
-import kotlinx.cinterop.*
-import kotlinx.coroutines.*
-import platform.posix.*
+import com.soywiz.korio.posix.ioctlSocketFionRead
+import kotlinx.cinterop.ByteVar
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.CValuesRef
+import kotlinx.cinterop.UByteVar
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.convert
+import kotlinx.cinterop.get
+import kotlinx.cinterop.getBytes
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.pointed
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.readValue
+import kotlinx.cinterop.refTo
+import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.value
+import kotlinx.coroutines.delay
+import platform.posix.AF_INET
+import platform.posix.EWOULDBLOCK
+import platform.posix.F_GETFL
+import platform.posix.F_SETFL
+import platform.posix.O_NONBLOCK
+import platform.posix.SHUT_RDWR
+import platform.posix.SOCK_STREAM
+import platform.posix.connect
+import platform.posix.fcntl
+import platform.posix.gethostbyname
+import platform.posix.getsockname
+import platform.posix.init_sockets
+import platform.posix.posix_errno
+import platform.posix.send
+import platform.posix.sockaddr
+import platform.posix.sockaddr_in
+import platform.posix.socket
+import platform.posix.socklen_tVar
 
 class NativeSocket private constructor(internal val sockfd: Int, endpoint: Endpoint) {
     var endpoint: Endpoint = endpoint; private set

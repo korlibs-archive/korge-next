@@ -1,8 +1,31 @@
-import com.soywiz.korlibs.modules.*
-import com.soywiz.korlibs.util.*
-import org.gradle.kotlin.dsl.kotlin
-import java.io.File
-import com.soywiz.korlibs.modules.*
+import com.soywiz.korlibs.modules.KorgeJavaExec
+import com.soywiz.korlibs.modules.allNativeTargets
+import com.soywiz.korlibs.modules.beforeJava9
+import com.soywiz.korlibs.modules.configureMavenCentralRelease
+import com.soywiz.korlibs.modules.configurePublishing
+import com.soywiz.korlibs.modules.configureSigning
+import com.soywiz.korlibs.modules.currentPlatformNativeTarget
+import com.soywiz.korlibs.modules.doEnableKotlinAndroid
+import com.soywiz.korlibs.modules.doEnableKotlinMobile
+import com.soywiz.korlibs.modules.doEnableKotlinNative
+import com.soywiz.korlibs.modules.hasAndroidSdk
+import com.soywiz.korlibs.modules.isApple
+import com.soywiz.korlibs.modules.isArm
+import com.soywiz.korlibs.modules.isIos
+import com.soywiz.korlibs.modules.isLinux
+import com.soywiz.korlibs.modules.isMacos
+import com.soywiz.korlibs.modules.isPosix
+import com.soywiz.korlibs.modules.isTvos
+import com.soywiz.korlibs.modules.isWatchos
+import com.soywiz.korlibs.modules.isWin
+import com.soywiz.korlibs.modules.isWindows
+import com.soywiz.korlibs.modules.javaAddOpens
+import com.soywiz.korlibs.modules.mobileTargets
+import com.soywiz.korlibs.modules.nativeTargets
+import com.soywiz.korlibs.util.DecoratedHttpServer
+import com.soywiz.korlibs.util.LDLibraries
+import com.soywiz.korlibs.util.openBrowser
+import com.soywiz.korlibs.util.staticHttpServer
 
 buildscript {
     val kotlinVersion: String = libs.versions.kotlin.get()

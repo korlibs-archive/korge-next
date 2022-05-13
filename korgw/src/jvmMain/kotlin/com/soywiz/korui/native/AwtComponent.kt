@@ -1,20 +1,31 @@
 package com.soywiz.korui.native
 
-import com.soywiz.kds.*
-import com.soywiz.korev.*
+import com.soywiz.kds.Extra
+import com.soywiz.kds.WeakMap
 import com.soywiz.korev.FocusEvent
-import com.soywiz.korim.color.*
-import com.soywiz.korio.file.*
-import com.soywiz.korio.lang.*
-import com.soywiz.korma.geom.*
-import com.soywiz.korui.*
-import com.soywiz.korui.native.util.*
-import java.awt.*
+import com.soywiz.korev.MouseButton
+import com.soywiz.korev.ReshapeEvent
+import com.soywiz.korim.color.RGBA
+import com.soywiz.korio.file.VfsFile
+import com.soywiz.korio.lang.Disposable
+import com.soywiz.korma.geom.RectangleInt
+import com.soywiz.korui.UiCursor
+import com.soywiz.korui.UiMenuItem
+import com.soywiz.korui.native.util.toAwt
+import com.soywiz.korui.native.util.toMenuItem
+import java.awt.Component
+import java.awt.Cursor
+import java.awt.MouseInfo
 import java.awt.Point
 import java.awt.Rectangle
-import java.awt.event.*
+import java.awt.Robot
+import java.awt.Toolkit
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.FocusAdapter
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.awt.image.*
+import java.awt.image.BufferedImage
 
 internal val awtToWrappersMap = WeakMap<Component, AwtComponent>()
 

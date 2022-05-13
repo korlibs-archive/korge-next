@@ -1,6 +1,9 @@
 package com.soywiz.korinject.util
 
-import kotlin.coroutines.*
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.startCoroutine
 
 internal val _global = js("((typeof global !== 'undefined') ? global : window)")
 

@@ -1,10 +1,11 @@
 package com.soywiz.korag
 
-import com.soywiz.kgl.*
-import com.soywiz.korag.gl.*
-import com.soywiz.korio.annotations.*
-import com.soywiz.korio.test.*
-import kotlin.test.*
+import com.soywiz.kgl.KmlGlProxyLogToString
+import com.soywiz.korag.gl.AGQueueProcessorOpenGL
+import com.soywiz.korio.annotations.KorIncomplete
+import com.soywiz.korio.annotations.KorInternal
+import com.soywiz.korio.test.assertEqualsJvmFileReference
+import kotlin.test.Test
 
 @OptIn(KorIncomplete::class, KorInternal::class)
 class AGQueueProcessorOpenGLTest {

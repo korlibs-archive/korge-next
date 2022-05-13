@@ -1,11 +1,12 @@
 package com.soywiz.korge.view.fast
 
-import com.soywiz.korge.test.*
-import com.soywiz.korge.tests.*
-import com.soywiz.korge.view.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.*
-import org.junit.*
+import com.soywiz.korge.test.assertEqualsFileReference
+import com.soywiz.korge.tests.ViewsForTesting
+import com.soywiz.korge.view.image
+import com.soywiz.korge.view.xy
+import com.soywiz.korim.bitmap.Bitmap32
+import com.soywiz.korim.color.Colors
+import org.junit.Test
 
 class MultiTextureFastRender : ViewsForTesting(log = true) {
     @Test

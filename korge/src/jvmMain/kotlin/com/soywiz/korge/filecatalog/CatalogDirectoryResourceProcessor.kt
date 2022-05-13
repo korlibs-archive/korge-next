@@ -1,9 +1,10 @@
 package com.soywiz.korge.filecatalog
 
-import com.soywiz.korge.resources.*
-import com.soywiz.korio.file.*
-import com.soywiz.korio.serialization.json.*
-import java.io.*
+import com.soywiz.korge.resources.ResourceProcessor
+import com.soywiz.korio.file.VfsFile
+import com.soywiz.korio.file.baseName
+import com.soywiz.korio.serialization.json.Json
+import java.io.File
 
 class CatalogDirectoryResourceProcessor : ResourceProcessor(forFolders = true) {
     override val version: Int = 1

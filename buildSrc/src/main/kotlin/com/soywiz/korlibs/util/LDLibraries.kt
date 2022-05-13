@@ -1,6 +1,6 @@
 package com.soywiz.korlibs.util
 
-import java.io.*
+import java.io.File
 import java.nio.file.Files
 
 object LDLibraries {

@@ -1,14 +1,17 @@
 package com.soywiz.korge.resources
 
 import com.soywiz.korio.dynamic.mapper.Mapper
-import com.soywiz.korio.file.*
+import com.soywiz.korio.file.PathInfo
+import com.soywiz.korio.file.VfsFile
+import com.soywiz.korio.file.compoundExtensionLC
+import com.soywiz.korio.file.extensionLC
 import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.util.AsyncOnce
 import com.soywiz.korio.util.jvmFallback
 import kotlinx.coroutines.runBlocking
-import java.io.*
+import java.io.File
 import java.util.*
-import kotlin.coroutines.cancellation.*
+import kotlin.coroutines.cancellation.CancellationException
 
 abstract class ResourceProcessor @JvmOverloads constructor(
     vararg extensions: String,

@@ -1,9 +1,12 @@
 package com.soywiz.korio.async
 
-import com.soywiz.klock.*
-import com.soywiz.korio.*
-import com.soywiz.korio.util.*
-import kotlin.test.*
+import com.soywiz.klock.DateTime
+import com.soywiz.klock.milliseconds
+import com.soywiz.korio.jsGlobal
+import com.soywiz.korio.util.OS
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class PromiseJsTest {
     @Test

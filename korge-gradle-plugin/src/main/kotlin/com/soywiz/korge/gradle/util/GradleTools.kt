@@ -1,7 +1,9 @@
 package com.soywiz.korge.gradle.util
 
-import groovy.lang.*
-import org.gradle.api.*
+import groovy.lang.Closure
+import org.gradle.api.NamedDomainObjectSet
+import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.tasks.TaskContainer
 

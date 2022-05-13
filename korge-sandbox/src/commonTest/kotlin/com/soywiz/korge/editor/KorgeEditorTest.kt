@@ -1,6 +1,6 @@
 package com.soywiz.korge.editor
 
-import kotlin.test.*
+import kotlin.test.Test
 
 class KorgeEditorTest {
     @Test

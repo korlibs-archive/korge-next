@@ -1,11 +1,13 @@
 package com.soywiz.korge.gradle.util
 
-import groovy.util.*
-import groovy.xml.*
 // Why is this required?
-import groovy.xml.XmlParser
+import groovy.util.Node
+import groovy.util.NodeList
+import groovy.xml.QName
 import groovy.xml.XmlNodePrinter
-import java.io.*
+import groovy.xml.XmlParser
+import java.io.PrintWriter
+import java.io.StringWriter
 
 /*
 class KorgeXml(val file: File) {

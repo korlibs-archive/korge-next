@@ -1,8 +1,8 @@
 package com.soywiz.korui.native
 
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korui.native.util.*
-import javax.swing.*
+import com.soywiz.korim.bitmap.Bitmap
+import com.soywiz.korui.native.util.toAwtIcon
+import javax.swing.JButton
 
 open class AwtButton(factory: BaseAwtUiFactory, val button: JButton = JButton()) : AwtComponent(factory, button), NativeUiFactory.NativeButton {
     override var text: String

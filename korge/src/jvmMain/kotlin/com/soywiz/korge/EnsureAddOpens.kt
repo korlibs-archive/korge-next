@@ -1,10 +1,9 @@
 package com.soywiz.korge
 
 import com.soywiz.kmem.Platform
-import com.soywiz.korio.dynamic.*
+import com.soywiz.korio.dynamic.Dyn
 import java.util.*
 import kotlin.system.exitProcess
-import kotlin.text.contains
 
 private fun getJavaVersion(): Int {
     val version = System.getProperty("java.version")

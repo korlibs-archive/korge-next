@@ -1,14 +1,19 @@
 package com.soywiz.korlibs.modules
 
-import com.soywiz.korlibs.*
-import groovy.util.*
-import groovy.xml.*
-import org.gradle.api.*
-import org.gradle.api.publish.*
-import org.gradle.api.publish.maven.*
-import org.gradle.internal.impldep.com.amazonaws.util.XpathUtils.*
+import com.soywiz.korlibs.create
+import com.soywiz.korlibs.doOnce
+import com.soywiz.korlibs.gkotlin
+import groovy.util.Node
+import groovy.util.NodeList
+import groovy.xml.QName
+import org.gradle.api.Project
+import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.jvm.tasks.Jar
-import org.gradle.kotlin.dsl.*
+import org.gradle.kotlin.dsl.extra
+import org.gradle.kotlin.dsl.get
+import org.gradle.kotlin.dsl.getByType
+import org.gradle.kotlin.dsl.withType
 
 fun Project.getCustomProp(name: String, default: String): String? {
     val props = if (extra.has("props")) extra["props"] as? Map<String, String>? else null

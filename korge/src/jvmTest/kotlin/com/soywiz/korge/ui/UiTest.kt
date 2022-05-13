@@ -1,10 +1,10 @@
 package com.soywiz.korge.ui
 
-import com.soywiz.korge.*
-import com.soywiz.korge.input.*
-import com.soywiz.korge.view.*
-import com.soywiz.korgw.*
-import kotlinx.coroutines.*
+import com.soywiz.korge.Korge
+import com.soywiz.korge.input.onClick
+import com.soywiz.korge.view.position
+import com.soywiz.korgw.GameWindow
+import kotlinx.coroutines.runBlocking
 
 fun main(): Unit = runBlocking { korge() }
 

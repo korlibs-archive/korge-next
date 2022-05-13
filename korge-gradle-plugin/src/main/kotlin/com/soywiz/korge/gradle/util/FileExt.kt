@@ -1,7 +1,7 @@
 package com.soywiz.korge.gradle.util
 
 import java.io.File
-import java.nio.charset.*
+import java.nio.charset.Charset
 
 fun File.takeIfExists() = this.takeIf { it.exists() }
 fun File.takeIfNotExists() = this.takeIf { !it.exists() }

@@ -1,12 +1,13 @@
 package com.soywiz.korge.view
 
-import com.soywiz.korge.scene.*
-import com.soywiz.korge.test.*
-import com.soywiz.korge.tests.*
-import com.soywiz.korge.view.filter.*
-import com.soywiz.korim.color.*
-import com.soywiz.korma.geom.*
-import kotlin.test.*
+import com.soywiz.korge.scene.MaskTransition
+import com.soywiz.korge.scene.TransitionView
+import com.soywiz.korge.test.assertEqualsFileReference
+import com.soywiz.korge.tests.ViewsForTesting
+import com.soywiz.korge.view.filter.TransitionFilter
+import com.soywiz.korim.color.Colors
+import com.soywiz.korma.geom.SizeInt
+import kotlin.test.Test
 
 class TransitionViewTest : ViewsForTesting(log = true, windowSize = SizeInt(800, 600), virtualSize = SizeInt(512, 512)) {
     @Test

@@ -1,9 +1,10 @@
 package com.soywiz.korge.gradle
 
-import com.soywiz.korge.gradle.targets.ios.*
-import com.soywiz.korge.gradle.util.*
-import java.io.*
-import kotlin.test.*
+import com.soywiz.korge.gradle.targets.ios.iosDeployExt
+import com.soywiz.korge.gradle.util.get
+import java.io.File
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class IosDeployTest : AbstractGradleIntegrationTest() {
     @Test

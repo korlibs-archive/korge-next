@@ -1,8 +1,9 @@
 package com.soywiz.korgw.platform
 
 import com.soywiz.korgw.internal.MicroDynamic
-import java.awt.*
-import java.lang.reflect.*
+import java.awt.Component
+import java.lang.reflect.Field
+import java.lang.reflect.Method
 
 inline class ReflectiveAccessor(val instance: Any?) {
     val clazz get() = if (instance != null) instance::class.java else null

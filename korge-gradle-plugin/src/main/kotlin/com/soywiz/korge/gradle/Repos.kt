@@ -1,7 +1,6 @@
 package com.soywiz.korge.gradle
 
 import org.gradle.api.Project
-import java.net.URI
 
 fun Project.configureRepositories() {
 	repositories.apply {

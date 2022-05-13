@@ -1,23 +1,27 @@
 package com.soywiz.korge.gradle
 
 import com.soywiz.korge.gradle.bundle.KorgeBundles
-import com.soywiz.korge.gradle.targets.*
-import com.soywiz.korge.gradle.targets.android.*
-import com.soywiz.korge.gradle.targets.desktop.*
-import com.soywiz.korge.gradle.targets.ios.*
-import com.soywiz.korge.gradle.targets.js.*
-import com.soywiz.korge.gradle.targets.jvm.*
-import com.soywiz.korge.gradle.util.*
-import org.gradle.api.*
-import java.io.*
-import groovy.text.*
-import org.gradle.api.artifacts.*
-import org.jetbrains.kotlin.gradle.plugin.mpp.*
-import java.net.*
-import java.time.*
-import java.util.*
-import javax.naming.*
-import kotlin.collections.LinkedHashMap
+import com.soywiz.korge.gradle.targets.android.configureAndroidDirect
+import com.soywiz.korge.gradle.targets.android.configureAndroidIndirect
+import com.soywiz.korge.gradle.targets.desktop.DESKTOP_NATIVE_TARGETS
+import com.soywiz.korge.gradle.targets.desktop.configureNativeDesktop
+import com.soywiz.korge.gradle.targets.ios.configureNativeIos
+import com.soywiz.korge.gradle.targets.isLinux
+import com.soywiz.korge.gradle.targets.isMacos
+import com.soywiz.korge.gradle.targets.js.configureJavaScript
+import com.soywiz.korge.gradle.targets.jvm.configureJvm
+import com.soywiz.korge.gradle.targets.supportKotlinNative
+import com.soywiz.korge.gradle.util.get
+import com.soywiz.korge.gradle.util.invoke
+import groovy.text.SimpleTemplateEngine
+import org.gradle.api.Project
+import org.gradle.api.artifacts.ExternalModuleDependency
+import org.jetbrains.kotlin.gradle.plugin.mpp.AbstractKotlinTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCompilation
+import java.io.File
+import java.net.URLClassLoader
+import java.time.Year
+import javax.naming.InvalidNameException
 
 enum class Orientation(val lc: String) { DEFAULT("default"), LANDSCAPE("landscape"), PORTRAIT("portrait") }
 

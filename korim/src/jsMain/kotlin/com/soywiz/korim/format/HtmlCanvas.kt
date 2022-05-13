@@ -1,10 +1,11 @@
 package com.soywiz.korim.format
 
-import com.soywiz.korio.util.*
-import org.khronos.webgl.*
-import org.w3c.dom.*
-import org.w3c.files.*
-import kotlinx.browser.*
+import com.soywiz.korio.util.OS
+import kotlinx.browser.document
+import org.khronos.webgl.TexImageSource
+import org.w3c.dom.HTMLCanvasElement
+import org.w3c.dom.RenderingContext
+import org.w3c.files.Blob
 
 external interface HTMLCanvasElementLike : TexImageSource {
     val width: Int

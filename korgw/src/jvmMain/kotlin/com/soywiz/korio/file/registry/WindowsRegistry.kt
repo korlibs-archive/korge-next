@@ -1,7 +1,12 @@
 package com.soywiz.korio.file.registry
 
-import com.soywiz.korio.util.*
-import com.sun.jna.platform.win32.*
+import com.soywiz.korio.util.OS
+import com.sun.jna.platform.win32.Advapi32
+import com.sun.jna.platform.win32.Advapi32Util
+import com.sun.jna.platform.win32.W32Errors
+import com.sun.jna.platform.win32.Win32Exception
+import com.sun.jna.platform.win32.WinNT
+import com.sun.jna.platform.win32.WinReg
 
 actual object WindowsRegistry : WindowsRegistryBase() {
     override val isSupported: Boolean get() = OS.isWindows

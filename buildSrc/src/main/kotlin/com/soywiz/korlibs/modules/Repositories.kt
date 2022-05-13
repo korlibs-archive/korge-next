@@ -1,6 +1,6 @@
 package com.soywiz.korlibs.modules
 
-import org.gradle.api.*
+import org.gradle.api.Project
 
 fun Project.configureKorlibsRepos() {
     allprojects {

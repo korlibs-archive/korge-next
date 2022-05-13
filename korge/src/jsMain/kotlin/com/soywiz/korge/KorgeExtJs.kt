@@ -1,7 +1,6 @@
 package com.soywiz.korge
 
-import com.soywiz.korau.sound.*
-import com.soywiz.korge.view.*
+import com.soywiz.korge.view.Views
 
 internal actual fun completeViews(views: Views) {
     // Already performed on Korge start

@@ -1,9 +1,9 @@
 package com.soywiz.korlibs.modules
 
-import org.gradle.api.*
-import org.gradle.kotlin.dsl.*
-import org.gradle.plugins.signing.*
-import com.soywiz.korlibs.*
+import com.soywiz.korlibs.doOnce
+import org.gradle.api.Project
+import org.gradle.kotlin.dsl.getByType
+import org.gradle.plugins.signing.SigningExtension
 
 fun Project.configureSigning() {
 	plugins.apply("signing")

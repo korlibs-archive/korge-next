@@ -1,7 +1,13 @@
 package com.soywiz.korlibs
 
-import com.soywiz.korlibs.modules.*
-import org.gradle.api.*
+import com.soywiz.korlibs.modules.allNativeTargets
+import com.soywiz.korlibs.modules.configurePublishing
+import com.soywiz.korlibs.modules.configureSigning
+import com.soywiz.korlibs.modules.doEnableKotlinNative
+import com.soywiz.korlibs.modules.isLinux
+import com.soywiz.korlibs.modules.isWin
+import com.soywiz.korlibs.modules.nativeTargets
+import org.gradle.api.Project
 
 object NativeTools {
     @JvmStatic

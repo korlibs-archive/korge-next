@@ -1,11 +1,12 @@
 package com.soywiz.korlibs.util
 
-import com.google.gson.*
+import com.google.gson.JsonElement
 import com.google.gson.JsonParser
-import groovy.json.*
-import java.net.*
+import groovy.json.JsonOutput
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.*
-import kotlin.coroutines.cancellation.*
+import kotlin.coroutines.cancellation.CancellationException
 
 open class SimpleHttpClient(
 	val user: String? = null,

@@ -2,7 +2,8 @@ package com.soywiz.korge.service.haptic
 
 import com.soywiz.kmem.Platform
 import com.soywiz.korge.view.Views
-import com.soywiz.korgw.osx.*
+import com.soywiz.korgw.osx.NSClass
+import com.soywiz.korgw.osx.msgSend
 
 actual fun CreateHapticFeedback(views: Views): HapticFeedback = object : HapticFeedback(views) {
     override fun emit(kind: Kind) {

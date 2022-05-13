@@ -1,14 +1,20 @@
 package com.soywiz.korgw.osx
 
-import com.soywiz.kgl.*
-import com.soywiz.korag.*
-import com.soywiz.korag.gl.*
-import com.soywiz.korgw.*
-import com.soywiz.korgw.platform.*
-import com.soywiz.korio.dynamic.*
-import com.soywiz.korma.geom.*
-import java.awt.*
-import java.security.*
+import com.soywiz.kgl.getIntegerv
+import com.soywiz.korag.AG
+import com.soywiz.korag.gl.AGOpengl
+import com.soywiz.korgw.GameWindow
+import com.soywiz.korgw.GameWindowConfig
+import com.soywiz.korgw.platform.BaseOpenglContext
+import com.soywiz.korgw.platform.getDisplayScalingFactor
+import com.soywiz.korio.dynamic.Dyn
+import com.soywiz.korma.geom.RectangleInt
+import com.soywiz.korma.geom.setTo
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Window
+import java.security.AccessController
+import java.security.PrivilegedAction
 import javax.swing.SwingUtilities
 
 class MacosGLContext(

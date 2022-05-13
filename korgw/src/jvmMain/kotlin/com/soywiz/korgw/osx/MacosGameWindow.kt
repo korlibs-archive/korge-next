@@ -9,18 +9,23 @@ import com.soywiz.korev.Key
 import com.soywiz.korev.KeyEvent
 import com.soywiz.korev.MouseButton
 import com.soywiz.korev.MouseEvent
-import com.soywiz.korgw.*
-import com.soywiz.korgw.platform.*
+import com.soywiz.korgw.DialogInterface
+import com.soywiz.korgw.GameWindow
+import com.soywiz.korgw.GameWindowCoroutineDispatcher
+import com.soywiz.korgw.platform.DirectGL
+import com.soywiz.korgw.platform.INativeGL
+import com.soywiz.korgw.platform.NativeKgl
 import com.soywiz.korgw.platform.NativeLoad
 import com.soywiz.korim.bitmap.Bitmap
 import com.soywiz.korim.format.PNG
 import com.soywiz.korio.async.launchImmediately
 import com.soywiz.korio.util.OS
 import com.soywiz.korio.util.Once
-import com.sun.jna.*
+import com.sun.jna.Callback
+import com.sun.jna.Library
 import java.nio.ByteBuffer
-import kotlin.coroutines.*
-import kotlin.system.*
+import kotlin.coroutines.CoroutineContext
+import kotlin.system.exitProcess
 
 class MacAG(val window: Long, val checkGl: Boolean, val logGl:Boolean) : AGOpengl() {
     //override val glSlVersion = 140

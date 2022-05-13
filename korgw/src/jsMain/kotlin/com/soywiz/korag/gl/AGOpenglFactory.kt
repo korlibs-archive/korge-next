@@ -1,6 +1,6 @@
 package com.soywiz.korag.gl
 
-import com.soywiz.korag.*
+import com.soywiz.korag.AGFactory
 
 actual object AGOpenglFactory {
 	actual fun create(nativeComponent: Any?): AGFactory = AGFactoryWebgl

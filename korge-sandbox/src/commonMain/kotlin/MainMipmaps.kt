@@ -1,9 +1,11 @@
-import com.soywiz.klock.*
-import com.soywiz.korge.tween.*
-import com.soywiz.korge.view.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.format.*
-import com.soywiz.korio.file.std.*
+import com.soywiz.klock.seconds
+import com.soywiz.korge.tween.get
+import com.soywiz.korge.tween.tween
+import com.soywiz.korge.view.Stage
+import com.soywiz.korge.view.image
+import com.soywiz.korim.bitmap.mipmaps
+import com.soywiz.korim.format.readBitmap
+import com.soywiz.korio.file.std.resourcesVfs
 
 suspend fun Stage.mainMipmaps() {
     val image = image(resourcesVfs["korge.png"].readBitmap().mipmaps())

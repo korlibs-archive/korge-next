@@ -1,12 +1,17 @@
 package com.soywiz.korge.gradle.targets.js
 
-import com.soywiz.korge.gradle.*
-import com.soywiz.korge.gradle.targets.*
-import com.soywiz.korge.gradle.util.*
-import org.gradle.api.*
-import org.gradle.kotlin.dsl.*
-import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.*
-import java.lang.management.*
+import com.soywiz.korge.gradle.korge
+import com.soywiz.korge.gradle.targets.GROUP_KORGE_RUN
+import com.soywiz.korge.gradle.util.DecoratedHttpServer
+import com.soywiz.korge.gradle.util.addTask
+import com.soywiz.korge.gradle.util.get
+import com.soywiz.korge.gradle.util.openBrowser
+import com.soywiz.korge.gradle.util.staticHttpServer
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask
+import java.lang.management.ManagementFactory
 
 internal var _webServer: DecoratedHttpServer? = null
 

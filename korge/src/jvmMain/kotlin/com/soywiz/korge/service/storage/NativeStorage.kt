@@ -1,8 +1,15 @@
 package com.soywiz.korge.service.storage
 
-import com.soywiz.korge.view.*
-import java.io.*
+import com.soywiz.korge.view.Views
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
 import java.util.*
+import kotlin.collections.List
+import kotlin.collections.map
+import kotlin.collections.set
+import kotlin.collections.toList
 
 actual class NativeStorage actual constructor(val views: Views) : IStorage {
 	val props = Properties()

@@ -1,11 +1,12 @@
 package com.soywiz.korge.ui
 
-import com.soywiz.korge.*
-import com.soywiz.korge.view.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.format.*
-import com.soywiz.krypto.encoding.*
-import kotlinx.coroutines.*
+import com.soywiz.korge.Korge
+import com.soywiz.korge.view.position
+import com.soywiz.korim.bitmap.asNinePatchSimpleRatio
+import com.soywiz.korim.bitmap.sliceWithSize
+import com.soywiz.korim.format.PNG
+import com.soywiz.krypto.encoding.fromBase64
+import kotlinx.coroutines.runBlocking
 
 object KorgeUiSample {
     @JvmStatic

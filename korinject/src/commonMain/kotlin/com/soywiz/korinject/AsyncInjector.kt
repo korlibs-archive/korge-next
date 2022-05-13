@@ -1,8 +1,11 @@
 package com.soywiz.korinject
 
-import kotlinx.coroutines.*
-import kotlin.coroutines.*
-import kotlin.reflect.*
+import kotlinx.coroutines.CancellationException
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.startCoroutine
+import kotlin.reflect.KClass
 
 interface AsyncObjectProvider<T> {
     suspend fun get(injector: AsyncInjector): T

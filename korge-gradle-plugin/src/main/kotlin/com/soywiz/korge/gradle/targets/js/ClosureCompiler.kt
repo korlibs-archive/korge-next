@@ -1,8 +1,8 @@
 package com.soywiz.korge.gradle.targets.js
 
-import com.google.javascript.jscomp.*
-import org.gradle.api.*
-import java.io.*
+import com.google.javascript.jscomp.CommandLineRunner
+import org.gradle.api.Project
+import java.io.File
 
 
 fun Project.configureClosureCompiler() {

@@ -1,9 +1,10 @@
-import com.soywiz.klock.*
-import com.soywiz.korge.*
-import com.soywiz.korge.particle.*
-import com.soywiz.korge.time.*
-import com.soywiz.korge.view.*
-import com.soywiz.korio.file.std.*
+import com.soywiz.korge.particle.particleEmitter
+import com.soywiz.korge.particle.readParticleEmitter
+import com.soywiz.korge.view.Stage
+import com.soywiz.korge.view.addUpdater
+import com.soywiz.korge.view.container
+import com.soywiz.korge.view.position
+import com.soywiz.korio.file.std.resourcesVfs
 
 suspend fun Stage.particlesMain() {
     //val emitter = resourcesVfs["particle/demo2.pex"].readParticleEmitter()

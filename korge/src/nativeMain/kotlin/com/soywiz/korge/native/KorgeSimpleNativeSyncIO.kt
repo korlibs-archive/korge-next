@@ -1,9 +1,18 @@
 package com.soywiz.korge.native
 
-import com.soywiz.korio.*
-import com.soywiz.korio.posix.*
-import kotlinx.cinterop.*
-import platform.posix.*
+import com.soywiz.korio.posix.posixFclose
+import com.soywiz.korio.posix.posixFopen
+import com.soywiz.korio.posix.posixFread
+import com.soywiz.korio.posix.posixFseek
+import com.soywiz.korio.posix.posixFtell
+import com.soywiz.korio.posix.posixFwrite
+import com.soywiz.korio.posix.posixMkdir
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.convert
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.usePinned
+import platform.posix.SEEK_END
+import platform.posix.SEEK_SET
 
 object KorgeSimpleNativeSyncIO {
     fun mkdirs(file: String) {

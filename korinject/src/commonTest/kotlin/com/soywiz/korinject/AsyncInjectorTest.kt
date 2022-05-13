@@ -1,7 +1,10 @@
 package com.soywiz.korinject
 
-import com.soywiz.korinject.util.*
-import kotlin.test.*
+import com.soywiz.korinject.util.expectException
+import com.soywiz.korinject.util.suspendTest
+import com.soywiz.korinject.util.suspendTestIgnoreJs
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class AsyncInjectorTest {
 	class Holder {

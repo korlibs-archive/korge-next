@@ -1,14 +1,34 @@
 package com.soywiz.korio.process
 
-import com.soywiz.klock.*
-import com.soywiz.kmem.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.file.*
-import com.soywiz.korio.file.std.*
+import com.soywiz.klock.milliseconds
+import com.soywiz.kmem.startAddressOf
+import com.soywiz.korio.async.delay
+import com.soywiz.korio.file.VfsProcessHandler
+import com.soywiz.korio.file.std.ShellArgs
 import kotlinx.cinterop.*
-import platform.posix.*
+import platform.posix.AF_UNIX
+import platform.posix.FILE
+import platform.posix.SOCK_STREAM
+import platform.posix.STDIN_FILENO
+import platform.posix.STDOUT_FILENO
+import platform.posix._exit
+import platform.posix.chdir
+import platform.posix.close
+import platform.posix.dup2
+import platform.posix.execv
+import platform.posix.fd_set
+import platform.posix.fdopen
+import platform.posix.fileno
+import platform.posix.fork
+import platform.posix.posix_FD_ISSET
+import platform.posix.posix_FD_SET
+import platform.posix.putenv
+import platform.posix.read
+import platform.posix.select
+import platform.posix.socketpair
+import platform.posix.timeval
+import platform.posix.waitpid
 import kotlin.collections.*
-import kotlin.*
 
 actual suspend fun posixExec(
     path: String, cmdAndArgs: List<String>, env: Map<String, String>, handler: VfsProcessHandler

@@ -1,6 +1,13 @@
 package com.soywiz.korgw.sdl2.jna.events
 
-import com.soywiz.korgw.sdl2.jna.*
+import com.soywiz.korgw.sdl2.jna.SDL_FingerID
+import com.soywiz.korgw.sdl2.jna.SDL_GestureID
+import com.soywiz.korgw.sdl2.jna.SDL_TouchID
+import com.soywiz.korgw.sdl2.jna.Sint16
+import com.soywiz.korgw.sdl2.jna.Sint32
+import com.soywiz.korgw.sdl2.jna.Uint16
+import com.soywiz.korgw.sdl2.jna.Uint32
+import com.soywiz.korgw.sdl2.jna.Uint8
 import com.soywiz.korgw.sdl2.jna.enums.SDL_EventType
 import com.soywiz.korgw.sdl2.jna.structs.SDL_Keysym
 import com.sun.jna.Pointer

@@ -1,12 +1,16 @@
 package com.soywiz.korio.util
 
-import com.soywiz.kds.iterators.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.lang.*
-import java.lang.reflect.*
+import com.soywiz.kds.iterators.fastForEach
+import com.soywiz.korio.async.invokeSuspend
+import com.soywiz.korio.lang.invalidOp
+import com.soywiz.korio.lang.noImpl
+import com.soywiz.korio.lang.runIgnoringExceptions
 import java.lang.reflect.Array
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
 import java.util.*
-import kotlin.collections.ArrayList
 
 object DynamicJvm {
     fun getClass(name: String): Class<*>? = try {

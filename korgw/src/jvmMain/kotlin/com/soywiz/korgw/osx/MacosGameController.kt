@@ -1,7 +1,8 @@
 package com.soywiz.korgw.osx
 
-import com.soywiz.korev.*
-import com.sun.jna.*
+import com.soywiz.korev.EventDispatcher
+import com.sun.jna.Library
+import com.sun.jna.Native
 
 //fun main() {
 //}

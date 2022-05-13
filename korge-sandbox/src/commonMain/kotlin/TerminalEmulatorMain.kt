@@ -1,11 +1,21 @@
-import com.soywiz.kds.*
-import com.soywiz.kds.random.*
-import com.soywiz.korge.view.*
-import com.soywiz.korge.view.fast.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.*
-import com.soywiz.korim.format.*
-import com.soywiz.korio.file.std.*
+import com.soywiz.kds.IntArray2
+import com.soywiz.kds.random.fastRandom
+import com.soywiz.korge.view.Container
+import com.soywiz.korge.view.Stage
+import com.soywiz.korge.view.addTo
+import com.soywiz.korge.view.addUpdater
+import com.soywiz.korge.view.container
+import com.soywiz.korge.view.fast.FSprite
+import com.soywiz.korge.view.fast.FSprites
+import com.soywiz.korge.view.scale
+import com.soywiz.korge.view.xy
+import com.soywiz.korim.bitmap.Bitmap32
+import com.soywiz.korim.bitmap.BmpSlice
+import com.soywiz.korim.bitmap.slice
+import com.soywiz.korim.color.Colors
+import com.soywiz.korim.color.RGBA
+import com.soywiz.korim.format.readBitmap
+import com.soywiz.korio.file.std.resourcesVfs
 
 suspend fun Stage.terminalEmulatorMain() {
     container {

@@ -1,15 +1,18 @@
 package com.soywiz.korge
 
-import com.soywiz.klock.*
-import com.soywiz.korge.tests.*
-import com.soywiz.korge.view.*
-import com.soywiz.korim.format.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.file.std.*
-import kotlinx.coroutines.*
-import kotlin.native.concurrent.*
-import kotlin.native.internal.test.*
-import kotlin.test.*
+import com.soywiz.korim.format.ImageOrientation
+import com.soywiz.korim.format.PNG
+import com.soywiz.korim.format.orientation
+import com.soywiz.korim.format.orientationSure
+import com.soywiz.korim.format.readImageInfo
+import com.soywiz.korio.file.std.resourcesVfs
+import kotlinx.coroutines.runBlocking
+import kotlin.native.concurrent.TransferMode
+import kotlin.native.concurrent.Worker
+import kotlin.native.concurrent.freeze
+import kotlin.test.Ignore
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class KorgeMultithreadedTest {
     @Test

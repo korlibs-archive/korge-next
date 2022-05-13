@@ -1,6 +1,6 @@
 package com.soywiz.korge.plugin
 
-import kotlin.reflect.*
+import kotlin.reflect.KMutableProperty1
 
 open class KorgePluginExtension(
 	@Suppress("unused")

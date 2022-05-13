@@ -1,11 +1,10 @@
 package com.soywiz.korge.view.fast
 
-import com.soywiz.korge.test.*
-import com.soywiz.korge.tests.*
-import com.soywiz.korge.view.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korma.geom.*
-import kotlin.test.*
+import com.soywiz.korge.test.assertEqualsFileReference
+import com.soywiz.korge.tests.ViewsForTesting
+import com.soywiz.korim.bitmap.Bitmaps
+import com.soywiz.korma.geom.degrees
+import kotlin.test.Test
 
 class FSpritesJvmTest : ViewsForTesting(log = true) {
     @Test

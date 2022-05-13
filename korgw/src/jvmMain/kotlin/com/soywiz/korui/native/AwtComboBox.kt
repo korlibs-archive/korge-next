@@ -1,8 +1,9 @@
 package com.soywiz.korui.native
 
-import com.soywiz.korio.lang.*
+import com.soywiz.korio.lang.Disposable
 import java.awt.event.ActionListener
-import javax.swing.*
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JComboBox
 
 open class AwtComboBox<T>(factory: BaseAwtUiFactory, val comboBox: JComboBox<T> = JComboBox<T>()) : AwtComponent(factory, comboBox), NativeUiFactory.NativeComboBox<T> {
     override var items: List<T>

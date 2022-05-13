@@ -2,9 +2,13 @@ package com.soywiz.korgw.awt
 
 import com.soywiz.kds.WeakMap
 import com.soywiz.kds.getOrPut
-import com.soywiz.kds.iterators.*
+import com.soywiz.kds.iterators.fastForEach
 import com.soywiz.klogger.Console
-import java.awt.*
+import java.awt.Component
+import java.awt.Frame
+import java.awt.GraphicsDevice
+import java.awt.GraphicsEnvironment
+import java.awt.Window
 
 private val ge = GraphicsEnvironment.getLocalGraphicsEnvironment()
 fun Window.getScreenDevice(): GraphicsDevice {

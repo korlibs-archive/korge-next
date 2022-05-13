@@ -1,13 +1,14 @@
 package com.soywiz.korge.particles
 
-import com.soywiz.korag.log.*
-import com.soywiz.korge.particle.*
-import com.soywiz.korge.test.*
-import com.soywiz.korge.tests.*
-import com.soywiz.korge.view.*
-import com.soywiz.korio.file.std.*
-import kotlin.random.*
-import kotlin.test.*
+import com.soywiz.korag.log.LogBaseAG
+import com.soywiz.korge.particle.particleEmitter
+import com.soywiz.korge.particle.readParticleEmitter
+import com.soywiz.korge.test.assertEqualsFileReference
+import com.soywiz.korge.tests.ViewsForTesting
+import com.soywiz.korge.view.xy
+import com.soywiz.korio.file.std.SingleFileMemoryVfs
+import kotlin.random.Random
+import kotlin.test.Test
 
 class ParticleEmitterViewTest : ViewsForTesting(log = true) {
     override fun filterLogDraw(str: String, kind: LogBaseAG.Kind): Boolean = kind == LogBaseAG.Kind.DRAW

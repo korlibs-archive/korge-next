@@ -1,11 +1,13 @@
 package com.soywiz.korge.view
 
-import com.soywiz.korge.test.*
-import com.soywiz.korge.tests.*
-import com.soywiz.korge.view.filter.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.*
-import kotlin.test.*
+import com.soywiz.korge.test.assertEqualsFileReference
+import com.soywiz.korge.tests.ViewsForTesting
+import com.soywiz.korge.view.filter.ColorMatrixFilter
+import com.soywiz.korge.view.filter.SwizzleColorsFilter
+import com.soywiz.korim.bitmap.Bitmap32
+import com.soywiz.korim.color.Colors
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class ViewsRetinaFilterTest : ViewsForTesting(
     defaultDevicePixelRatio = 2.0,

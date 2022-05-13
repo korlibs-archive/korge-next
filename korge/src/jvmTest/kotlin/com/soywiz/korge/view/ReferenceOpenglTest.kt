@@ -1,21 +1,19 @@
 package com.soywiz.korge.view
 
-import com.soywiz.kgl.*
-import com.soywiz.korag.*
-import com.soywiz.korag.gl.*
-import com.soywiz.korev.*
-import com.soywiz.korge.input.*
-import com.soywiz.korge.test.*
-import com.soywiz.korge.tests.*
-import com.soywiz.korge.view.vector.*
-import com.soywiz.korgw.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.*
-import com.soywiz.korim.format.*
-import com.soywiz.korio.file.std.*
-import com.soywiz.korma.geom.*
-import com.soywiz.korma.geom.vector.*
-import org.junit.*
+import com.soywiz.kgl.KmlGlProxyLogToString
+import com.soywiz.korag.AG
+import com.soywiz.korag.gl.SimpleAGOpengl
+import com.soywiz.korge.test.assertEqualsFileReference
+import com.soywiz.korge.tests.ViewsForTesting
+import com.soywiz.korge.view.vector.gpuShapeView
+import com.soywiz.korim.bitmap.mipmaps
+import com.soywiz.korim.color.Colors
+import com.soywiz.korim.format.readBitmapOptimized
+import com.soywiz.korio.file.std.resourcesVfs
+import com.soywiz.korma.geom.vector.LineCap
+import com.soywiz.korma.geom.vector.LineJoin
+import com.soywiz.korma.geom.vector.rect
+import org.junit.Test
 
 class ReferenceOpenglTest : ViewsForTesting() {
     val gl = KmlGlProxyLogToString()

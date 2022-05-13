@@ -1,7 +1,11 @@
-import com.soywiz.korge.view.*
-import com.soywiz.korge.view.filter.*
-import com.soywiz.korim.format.*
-import com.soywiz.korio.file.std.*
+import com.soywiz.korge.view.Stage
+import com.soywiz.korge.view.filter.OldBlurFilter
+import com.soywiz.korge.view.filters
+import com.soywiz.korge.view.image
+import com.soywiz.korge.view.scale
+import com.soywiz.korim.format.readBitmapInfo
+import com.soywiz.korim.format.readBitmapSliceWithOrientation
+import com.soywiz.korio.file.std.resourcesVfs
 
 suspend fun Stage.mainExifTest() {
     //val file = localVfs("/tmp/Exif5-2x.avif")

@@ -1,22 +1,30 @@
 package com.soywiz.korge.awt
 
-import com.soywiz.kds.*
+import com.soywiz.kds.Extra
 import com.soywiz.korev.Event
-import com.soywiz.korge.debug.*
-import com.soywiz.korge.internal.*
-import com.soywiz.korge.view.*
+import com.soywiz.korge.debug.UiEditProperties
+import com.soywiz.korge.internal.KorgeInternal
 import com.soywiz.korge.view.Container
-import com.soywiz.korio.async.*
-import com.soywiz.korui.*
-import com.soywiz.korui.layout.*
-import java.awt.*
-import java.awt.event.*
+import com.soywiz.korge.view.View
+import com.soywiz.korge.view.ViewLeaf
+import com.soywiz.korge.view.Views
+import com.soywiz.korio.async.launchImmediately
+import com.soywiz.korui.UiApplication
+import com.soywiz.korui.layout.UiFillLayout
+import java.awt.GridLayout
+import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.*
-import javax.swing.*
-import javax.swing.tree.*
-import kotlin.coroutines.*
+import javax.swing.JMenu
+import javax.swing.JPanel
+import javax.swing.JTree
+import javax.swing.SwingUtilities
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeNode
+import javax.swing.tree.TreePath
+import kotlin.coroutines.CoroutineContext
 
 val View.treeNode: ViewNode by Extra.PropertyThis { ViewNode(this) }
 

@@ -1,6 +1,6 @@
 package com.soywiz.korge.gradle.util
 
-import java.io.*
+import java.io.OutputStream
 
 fun OutputStream.write8(value: Int) {
     write(value)

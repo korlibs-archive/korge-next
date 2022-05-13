@@ -1,10 +1,20 @@
 package com.soywiz.korge.gradle
 
-import com.soywiz.korge.gradle.targets.android.*
-import com.soywiz.korge.gradle.util.*
-import org.gradle.api.*
-import java.io.*
-import kotlin.test.*
+import com.soywiz.korge.gradle.targets.android.ANDROID_SDK_PATH_KEY
+import com.soywiz.korge.gradle.targets.android.adbLogcatTaskName
+import com.soywiz.korge.gradle.targets.android.androidAdbPath
+import com.soywiz.korge.gradle.targets.android.androidEmulatorFirstAvd
+import com.soywiz.korge.gradle.targets.android.androidEmulatorListAvds
+import com.soywiz.korge.gradle.targets.android.androidEmulatorPath
+import com.soywiz.korge.gradle.targets.android.androidEmulatorStart
+import com.soywiz.korge.gradle.targets.android.installAndroidRun
+import com.soywiz.korge.gradle.util.SpawnExtension
+import com.soywiz.korge.gradle.util.spawnExt
+import org.gradle.api.Task
+import java.io.File
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class AndroidTest : AbstractGradleIntegrationTest() {
     val ANDROID_SDK_PATH = "/fake/android/sdk/path"

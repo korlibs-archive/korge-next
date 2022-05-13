@@ -1,14 +1,26 @@
 package com.soywiz.korge.gradle.bundle
 
-import com.soywiz.korge.gradle.*
-import com.soywiz.korge.gradle.targets.*
-import com.soywiz.korge.gradle.util.*
-import org.gradle.api.*
-import org.gradle.api.artifacts.*
-import org.gradle.api.file.*
-import java.io.*
-import java.net.*
-import java.security.*
+import com.soywiz.korge.gradle.gkotlin
+import com.soywiz.korge.gradle.targets.isApple
+import com.soywiz.korge.gradle.targets.isIos
+import com.soywiz.korge.gradle.targets.isIosTvos
+import com.soywiz.korge.gradle.targets.isIosTvosWatchos
+import com.soywiz.korge.gradle.targets.isIosWatchos
+import com.soywiz.korge.gradle.targets.isMacos
+import com.soywiz.korge.gradle.targets.isNative
+import com.soywiz.korge.gradle.targets.isNativeDesktop
+import com.soywiz.korge.gradle.targets.isNativePosix
+import com.soywiz.korge.gradle.targets.isTvos
+import com.soywiz.korge.gradle.targets.isWatchos
+import com.soywiz.korge.gradle.util.get
+import com.soywiz.korge.gradle.util.hex
+import org.gradle.api.Project
+import org.gradle.api.artifacts.UnknownConfigurationException
+import org.gradle.api.file.FileTree
+import org.gradle.api.file.SourceDirectorySet
+import java.io.File
+import java.net.URL
+import java.security.MessageDigest
 
 class KorgeBundles(val project: Project) {
     val bundlesDir get() = project.file("bundles").also { it.mkdirs() }

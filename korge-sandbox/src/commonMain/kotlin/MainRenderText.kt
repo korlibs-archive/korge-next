@@ -1,8 +1,10 @@
-import com.soywiz.korge.view.*
-import com.soywiz.korim.color.*
-import com.soywiz.korim.font.*
-import com.soywiz.korim.text.*
-import com.soywiz.korio.file.std.*
+import com.soywiz.korge.view.Stage
+import com.soywiz.korge.view.image
+import com.soywiz.korim.color.Colors
+import com.soywiz.korim.font.readFont
+import com.soywiz.korim.font.renderTextToBitmap
+import com.soywiz.korim.text.DefaultStringTextRenderer
+import com.soywiz.korio.file.std.resourcesVfs
 
 suspend fun Stage.mainRenderText() {
     val font = resourcesVfs["Pacifico.ttf"].readFont()

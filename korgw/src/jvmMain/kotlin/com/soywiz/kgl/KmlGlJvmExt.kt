@@ -1,8 +1,7 @@
 package com.soywiz.kgl
 
-import com.soywiz.kmem.*
-import java.awt.image.*
-import java.nio.*
+import com.soywiz.kmem.FBuffer
+import java.nio.Buffer
 
 val FBuffer.nioBuffer: java.nio.ByteBuffer get() = this.mem.buffer.apply { (this as Buffer).rewind() }
 val FBuffer.nioByteBuffer: java.nio.ByteBuffer get() = this.mem.buffer.apply { (this as Buffer).rewind() }

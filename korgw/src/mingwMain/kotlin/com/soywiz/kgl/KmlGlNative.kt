@@ -4,8 +4,11 @@
 
 package com.soywiz.kgl
 
-import kotlinx.cinterop.*
-import platform.windows.*
+import kotlinx.cinterop.COpaquePointer
+import platform.windows.GetProcAddress
+import platform.windows.HMODULE
+import platform.windows.LoadLibraryA
+import platform.windows.wglGetProcAddress
 
 private val OPENGL32_DLL_MODULE: HMODULE? by lazy { LoadLibraryA("opengl32.dll") }
 

@@ -1,13 +1,14 @@
 package com.soywiz.korge.atlas
 
-import com.soywiz.korge.resources.*
-import com.soywiz.korim.atlas.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.file.std.*
-import com.soywiz.korio.util.*
+import com.soywiz.korge.resources.ResourceVersion
+import com.soywiz.korim.atlas.readAtlas
+import com.soywiz.korio.async.suspendTest
+import com.soywiz.korio.file.std.MemoryVfs
+import com.soywiz.korio.file.std.resourcesVfs
+import com.soywiz.korio.util.OS
 import kotlinx.coroutines.flow.toList
 import org.junit.Test
-import kotlin.test.*
+import kotlin.test.assertEquals
 
 class AtlasResourceProcessorTest {
     // @TODO: Do not test on windows since CI is checking out files converting \n to \r\n and SHA-1 file is different because of this :/

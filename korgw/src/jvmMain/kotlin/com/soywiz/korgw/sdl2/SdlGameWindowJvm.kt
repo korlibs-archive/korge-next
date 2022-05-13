@@ -14,14 +14,19 @@ import com.soywiz.korgw.sdl2.jna.ISDL
 import com.soywiz.korgw.sdl2.jna.SDL_GLContext
 import com.soywiz.korgw.sdl2.jna.SDL_Renderer
 import com.soywiz.korgw.sdl2.jna.SDL_Window
-import com.soywiz.korgw.sdl2.jna.enums.*
+import com.soywiz.korgw.sdl2.jna.enums.SDL_EventType
+import com.soywiz.korgw.sdl2.jna.enums.SDL_Init
+import com.soywiz.korgw.sdl2.jna.enums.SDL_MouseButton
+import com.soywiz.korgw.sdl2.jna.enums.SDL_RendererFlags
+import com.soywiz.korgw.sdl2.jna.enums.SDL_WindowEventID
+import com.soywiz.korgw.sdl2.jna.enums.SDL_WindowFlags
 import com.soywiz.korgw.sdl2.jna.events.SDL_Event
 import com.soywiz.korgw.sdl2.jna.structs.SDL_DisplayMode
 import com.soywiz.korio.util.OS
 import com.sun.jna.Library
 import com.sun.jna.Native
 import com.sun.jna.Pointer
-import kotlin.system.*
+import kotlin.system.exitProcess
 
 open class SDLKmlGl : NativeKgl(SDL) {
     override val gles: Boolean = true

@@ -1,11 +1,16 @@
 package com.soywiz.korge.gradle.targets.js
 
-import com.soywiz.korge.gradle.*
-import org.gradle.api.*
-import org.gradle.api.file.*
-import org.gradle.api.tasks.*
-import org.gradle.kotlin.dsl.*
-import java.io.*
+import com.soywiz.korge.gradle.korge
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.Exec
+import org.gradle.kotlin.dsl.create
+import org.gradle.kotlin.dsl.creating
+import org.gradle.kotlin.dsl.getValue
+import org.gradle.kotlin.dsl.provideDelegate
+import java.io.File
 
 fun Project.configureEsbuild() {
     val userGradleFolder = File(System.getProperty("user.home"), ".gradle")
