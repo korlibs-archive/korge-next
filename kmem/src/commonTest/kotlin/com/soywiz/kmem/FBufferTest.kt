@@ -1,6 +1,8 @@
 package com.soywiz.kmem
 
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class FBufferTest {
 	@Test
@@ -32,7 +34,12 @@ class FBufferTest {
     @Test
     fun testAllocUnaligned() {
         assertEquals(12, FBuffer.alloc(4 * 3 * 3).f32.size)
-        assertEquals(9, FBuffer.allocUnaligned(4 * 3 * 3).f32.size)
+
+        assertEquals(12, FBuffer.allocUnaligned(4 * 4 * 3).f32.size)
+
+        assertFailsWith<IllegalStateException> {
+            assertEquals(9, FBuffer.allocUnaligned(4 * 3 * 3).f32.size)
+        }
     }
 
 	@Test
