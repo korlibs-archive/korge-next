@@ -9,7 +9,7 @@ import kotlin.native.concurrent.ThreadLocal
 class KmlGlException(message: String) : RuntimeException(message)
 
 @ThreadLocal
-private val tempFBufferByte = FBuffer.allocUnaligned(1)
+private val tempFBufferByte = FBuffer.allocUnaligned(4)
 @ThreadLocal
 private val tempFBuffer1 = FBuffer.allocUnaligned(4)
 @ThreadLocal
