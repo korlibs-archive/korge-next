@@ -1,10 +1,9 @@
 package com.soywiz.korim.atlas
 
-import com.soywiz.kds.*
-import com.soywiz.korim.bitmap.TextureCoords
-import com.soywiz.korio.dynamic.*
-import com.soywiz.korio.serialization.json.*
-import com.soywiz.korio.serialization.xml.*
+import com.soywiz.kds.ListReader
+import com.soywiz.korio.dynamic.KDynamic
+import com.soywiz.korio.serialization.json.Json
+import com.soywiz.korio.serialization.xml.Xml
 import com.soywiz.korma.geom.*
 
 //e: java.lang.UnsupportedOperationException: Class literal annotation arguments are not yet supported: Factory
@@ -99,7 +98,6 @@ data class AtlasInfo(
         val trimmed: Boolean,
         val orig: Size = Size(0, 0),
         val offset: Point = Point(),
-        val textureCoords: TextureCoords? = null,
     ) {
         // @TODO: Rename to path or name
         val filename get() = name
@@ -129,17 +127,14 @@ data class AtlasInfo(
     companion object {
         private fun Any?.toRect() = KDynamic(this) { Rect(it["x"].int, it["y"].int, it["w"].int, it["h"].int) }
         private fun Any?.toSize() = KDynamic(this) { Size(it["w"].int, it["h"].int) }
-        private fun KDynamic.createEntry(name: String, it: Any?): Region {
-            val rotated = it["rotated"].bool
-            return Region(
-                name = name,
-                frame = it["frame"].toRect(),
-                rotated = rotated,
-                sourceSize = it["sourceSize"].toSize(),
-                spriteSourceSize = it["spriteSourceSize"].toRect(),
-                trimmed = it["trimmed"].bool
-            )
-        }
+        private fun KDynamic.createEntry(name: String, it: Any?) = Region(
+            name = name,
+            frame = it["frame"].toRect(),
+            rotated = it["rotated"].bool,
+            sourceSize = it["sourceSize"].toSize(),
+            spriteSourceSize = it["spriteSourceSize"].toRect(),
+            trimmed = it["trimmed"].bool
+        )
 
         // @TODO: kotlinx-serialization?
         fun loadJsonSpriter(json: String): AtlasInfo {
@@ -209,82 +204,35 @@ data class AtlasInfo(
                     }
                 )
             }
-            val w = info.size.width.toFloat()
-            val h = info.size.height.toFloat()
-            return info.copy(pages = info.pages.map { it.copy(regions = it.regions.map { r ->
-                if (r.rotated) {
-                    val f = r.frame
-                    r.copy(textureCoords = TextureCoords(
-                        tl_x = (f.x + f.h) / w, tl_y = f.y / h,
-                        tr_x = (f.x + f.h) / w, tr_y = (f.y + f.w) / h,
-                        br_x = f.x / w, br_y = (f.y + f.w) / h,
-                        bl_x = f.x / w, bl_y = f.y / h
-                    ),
-                        rotated = false
-                    )
-                } else {
-                    r
-                }
-            }) })
+            return info.copy(pages = info.pages.map { it.copy(regions = it.regions.map { it.apply { } }) })
         }
 
         fun loadXml(content: String): AtlasInfo {
             val xml = Xml(content)
             val imagePath = xml.str("imagePath")
-            val size = Size(xml.int("width", -1), xml.int("height", -1))
-            val w = size.width.toFloat()
-            val h = size.height.toFloat()
 
             return AtlasInfo(
                 (xml.children("SubTexture") + xml.children("sprite")).map {
-                    val rotated = it.boolean("rotated", false)
                     val rect = Rect(
                         it.int("x"),
                         it.int("y"),
-                        if (rotated) {
-                            it.intNull("height") ?: it.int("w")
-                        } else {
-                            it.intNull("width") ?: it.int("h")
-                        },
-                        if (rotated) {
-                            it.intNull("width") ?: it.int("w")
-                        } else {
-                            it.intNull("height") ?: it.int("h")
-                        }
-                    )
-                    val offRect = Rect(
-                        it.int("frameX") * -1,
-                        it.int("frameY") * -1,
-                        rect.w,
-                        rect.h
+                        it.intNull("width") ?: it.int("w"),
+                        it.intNull("height") ?: it.int("h")
                     )
                     Region(
                         name = it.strNull("name") ?: it.str("n"),
                         frame = rect,
                         rotated = false,
-                        sourceSize = Size(
-                            it.int("frameWidth", rect.w),
-                            it.int("frameHeight", rect.h)
-                        ),
-                        spriteSourceSize = offRect,
-                        trimmed = it.hasAttribute("frameX"),
-                        textureCoords = if (rotated) {
-                            TextureCoords(
-                                tl_x = (rect.x + rect.h) / w, tl_y = rect.y / h,
-                                tr_x = (rect.x + rect.h) / w, tr_y = (rect.y + rect.w) / h,
-                                br_x = rect.x / w, br_y = (rect.y + rect.w) / h,
-                                bl_x = rect.x / w, bl_y = rect.y / h
-                           )
-                        } else {
-                            null
-                        }
+                        sourceSize = Size(rect.w, rect.h),
+                        spriteSourceSize = rect,
+                        trimmed = false
                     )
                 }, Meta(
                     app = "Unknown",
                     format = "xml",
                     image = imagePath,
                     scale = 1.0,
-                    size = size,
+                    size = Size(-1, -1),
                     version = "1.0"
                 )
             )
@@ -322,8 +270,6 @@ data class AtlasInfo(
             var currentEntryList = arrayListOf<Region>()
             val pages = arrayListOf<Page>()
 
-            var w = 1f
-            var h = 1f
             while (r.hasMore) {
                 val line = r.read().trim()
                 if (line.isEmpty()) {
@@ -336,16 +282,10 @@ data class AtlasInfo(
                     var filterMag = false
                     var repeatX = false
                     var repeatY = false
-                    w = 1f
-                    h = 1f
                     while (r.hasMore && r.peek().contains(':')) {
                         val (key, value) = r.read().trim().keyValue()
                         when (key) {
-                            "size" -> {
-                                size = value.size()
-                                w = size.width.toFloat()
-                                h = size.height.toFloat()
-                            }
+                            "size" -> size = value.size()
                             "format" -> format = value
                             "filter" -> {
                                 val filter = value.split(",").map { it.trim().toLowerCase() }
@@ -377,21 +317,11 @@ data class AtlasInfo(
                             "offset" -> offset = value.point()
                         }
                     }
+                    if (rotate) {
+                        size = Size(size.height, size.width)
+                    }
                     val rect = Rect(xy.x.toInt(), xy.y.toInt(), size.width, size.height)
-                    val spriteSourceSize = Rect(offset.x.toInt(), offset.y.toInt(), size.width, size.height)
-
-                    currentEntryList.add(Region(name, rect, false, orig, spriteSourceSize, orig != size || (offset.x != 0.0 && offset.y != 0.0), orig, offset,
-                        textureCoords = if (rotate) {
-                            TextureCoords(
-                                tl_x = rect.x / w, tl_y = (rect.y + rect.w) / h,
-                                tr_x = rect.x / w, tr_y = rect.y / h,
-                                br_x = (rect.x + rect.h) / w, br_y = rect.y / h,
-                                bl_x = (rect.x + rect.h) / w, bl_y = (rect.y + rect.w) / h
-                            )
-                        } else {
-                            null
-                        }
-                    ))
+                    currentEntryList.add(Region(name, rect, rotate, size, rect, false, orig, offset))
                 }
             }
             val firstPage = pages.first()
