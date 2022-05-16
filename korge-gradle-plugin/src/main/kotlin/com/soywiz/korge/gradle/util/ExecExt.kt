@@ -6,8 +6,8 @@ import org.gradle.process.*
 import java.io.*
 
 fun Project.debugExecSpec(exec: ExecSpec) {
-	//logger.info("COMMAND: ${exec.commandLine.joinToString(" ")}")
-    println("COMMAND: ${exec.commandLine.joinToString(" ")}")
+	logger.warn("COMMAND: ${exec.commandLine.joinToString(" ")}")
+    //println("COMMAND: ${exec.commandLine.joinToString(" ")}")
 }
 
 /*
