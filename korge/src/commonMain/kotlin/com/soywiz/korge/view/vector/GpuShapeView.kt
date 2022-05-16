@@ -514,7 +514,7 @@ open class GpuShapeView(
         val pathDataStart = gpuShapeViewCommands.verticesStart()
         val pathData = getPointsForPath(shape.path)
         val pathDataEnd = gpuShapeViewCommands.verticesEnd()
-        val pathBounds = pathData.bounds
+        val pathBounds = pathData.bounds.clone().expand(2, 2, 2, 2)
 
         if (!shape.requireStencil && shape.clip == null) {
             gpuShapeViewCommands.draw(
@@ -584,7 +584,7 @@ open class GpuShapeView(
             )
         }
 
-        writeFill(paintShader, stencilEqualsValue)
+        writeFill(paintShader, stencilEqualsValue, pathBounds)
 
         gpuShapeViewCommands.clearStencil(0)
 
@@ -603,11 +603,11 @@ open class GpuShapeView(
         )
     }
 
-    private fun writeFill(paintShader: GpuShapeViewPrograms.PaintShader, stencilEqualsValue: Int) {
-        val x0 = 0f
-        val y0 = 0f
-        val x1 = bufferWidth.toFloat()
-        val y1 = bufferHeight.toFloat()
+    private fun writeFill(paintShader: GpuShapeViewPrograms.PaintShader, stencilEqualsValue: Int, pathBounds: Rectangle) {
+        val x0 = pathBounds.left.toFloat()
+        val y0 = pathBounds.top.toFloat()
+        val x1 = pathBounds.right.toFloat()
+        val y1 = pathBounds.bottom.toFloat()
 
         val vstart = gpuShapeViewCommands.verticesStart()
         gpuShapeViewCommands.addVertex(x0, y0)

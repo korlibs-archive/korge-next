@@ -260,7 +260,7 @@ createStencil: 0
 stencilMask: 255
 clear: color=false, depth=false, stencil=true
 enable: SCISSOR
-scissor: -14, 50, 175, 175
+scissor: -17, 47, 180, 180
 disable: SCISSOR
 uboSet: 2
 uboSet.uniform: Uniform(u_ProgramType) = 5.0
@@ -1062,10 +1062,10 @@ blendFunction: SOURCE_ALPHA, ONE_MINUS_SOURCE_ALPHA, ONE, ONE_MINUS_SOURCE_ALPHA
 draw: TRIANGLE_FAN, offset=754, count=4, instances=1, indexType=null
 ::draw.indices: [754, 755, 756, 757]
 ::draw.attributes[1]: [Attribute(a_Pos), Attribute(a_Tex), Attribute(a_Dist)]
-::draw.vertex[754]: a_Pos[0,0], a_Tex[0,0], a_Dist[0]
-::draw.vertex[755]: a_Pos[1000,0], a_Tex[1000,0], a_Dist[0]
-::draw.vertex[756]: a_Pos[1000,1000], a_Tex[1000,1000], a_Dist[0]
-::draw.vertex[757]: a_Pos[0,1000], a_Tex[0,1000], a_Dist[0]
+::draw.vertex[754]: a_Pos[-1.9930393,-1.9930393], a_Tex[-1.9930393,-1.9930393], a_Dist[0]
+::draw.vertex[755]: a_Pos[130,-1.9930393], a_Tex[130,-1.9930393], a_Dist[0]
+::draw.vertex[756]: a_Pos[130,129.99304], a_Tex[130,129.99304], a_Dist[0]
+::draw.vertex[757]: a_Pos[-1.9930393,129.99304], a_Tex[-1.9930393,129.99304], a_Dist[0]
 createStencil: 0
 stencilMask: 255
 clear: color=false, depth=false, stencil=true
