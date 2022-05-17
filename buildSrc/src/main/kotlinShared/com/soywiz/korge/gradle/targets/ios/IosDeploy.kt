@@ -1,16 +1,19 @@
 package com.soywiz.korge.gradle.targets.ios
 
-import com.soywiz.korge.gradle.*
-import com.soywiz.korge.gradle.util.*
-import org.gradle.api.*
+import org.gradle.api.Project
+import com.soywiz.korge.gradle.util.projectExtension
+import com.soywiz.korge.gradle.util.execLogger
+import java.io.File
 
 val Project.iosDeployExt by projectExtension {
     IosDeploy(this)
 }
 
+val korgeCacheDir get() = File(System.getProperty("user.home"), ".korge").apply { mkdirs() }
+
 class IosDeploy(val project: Project) {
-    val iosDeployDir = project.korgeCacheDir["ios-deploy"]
-    val iosDeployCmd = iosDeployDir["build/Release/ios-deploy"]
+    val iosDeployDir = File(korgeCacheDir, "ios-deploy")
+    val iosDeployCmd = File(iosDeployDir, "build/Release/ios-deploy")
 
     val isInstalled get() = iosDeployCmd.exists()
 
@@ -38,7 +41,7 @@ class IosDeploy(val project: Project) {
     }
 
     fun installIfRequired() {
-        if (!iosDeployDir[".git"].exists()) clone()
+        if (!File(iosDeployDir, ".git").exists()) clone()
         if (!isInstalled) build()
     }
 

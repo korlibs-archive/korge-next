@@ -1,3 +1,7 @@
+import org.apache.tools.ant.taskdefs.optional.unix.Symlink
+
+import java.nio.file.Files
+
 plugins {
     id "org.gradle.kotlin.kotlin-dsl" version "2.1.7"
     id "java"
@@ -43,7 +47,7 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
 }
 
 kotlin.sourceSets.main.each {
-    it.kotlin.srcDir(new File(buildDir, "srcgen"))
+    it.kotlin.srcDirs(new File(buildDir, "srcgen"), new File(buildDir, "srcgen2"))
 }
 
 com.soywiz.korlibs.NativeTools.groovyConfigurePublishing(project, false)

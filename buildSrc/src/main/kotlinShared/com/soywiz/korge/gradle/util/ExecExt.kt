@@ -6,7 +6,7 @@ import org.gradle.process.*
 import java.io.*
 
 fun Project.debugExecSpec(exec: ExecSpec) {
-	logger.warn("COMMAND: ${exec.commandLine.joinToString(" ")}")
+    logger.warn("COMMAND: ${exec.commandLine.joinToString(" ")}")
     //println("COMMAND: ${exec.commandLine.joinToString(" ")}")
 }
 
@@ -27,31 +27,31 @@ class LoggerOutputStream(val logger: org.gradle.api.logging.Logger, val prefix: 
 */
 
 fun Project.execLogger(action: (ExecSpec) -> Unit): ExecResult {
-	return exec {
-		action(this)
+    return exec {
+        action(this)
         //standardOutput = LoggerOutputStream(logger, "OUT")
         //errorOutput = LoggerOutputStream(logger, "ERR")
-		debugExecSpec(this)
-	}
+        debugExecSpec(this)
+    }
 }
 
 fun ExecSpec.commandLineCompat(vararg args: String): ExecSpec {
-	return when {
-		Os.isFamily(Os.FAMILY_WINDOWS) -> commandLine("cmd", "/c", *args)
-		else -> commandLine(*args)
-	}
+    return when {
+        Os.isFamily(Os.FAMILY_WINDOWS) -> commandLine("cmd", "/c", *args)
+        else -> commandLine(*args)
+    }
 }
 
 fun Project.execOutput(vararg cmds: String, log: Boolean = true): String {
-	val stdout = ByteArrayOutputStream()
-	exec {
-		commandLineCompat(*cmds)
-		standardOutput = stdout
+    val stdout = ByteArrayOutputStream()
+    exec {
+        commandLineCompat(*cmds)
+        standardOutput = stdout
         //errorOutput = stdout
-		if (log) {
-			debugExecSpec(this)
-		}
-	}
-	return stdout.toString("UTF-8")
+        if (log) {
+            debugExecSpec(this)
+        }
+    }
+    return stdout.toString("UTF-8")
 }
 

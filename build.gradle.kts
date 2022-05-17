@@ -2,6 +2,7 @@ import com.soywiz.korlibs.modules.*
 import com.soywiz.korlibs.util.*
 import org.gradle.kotlin.dsl.kotlin
 import java.io.File
+import java.nio.file.Files
 import com.soywiz.korlibs.modules.*
 
 buildscript {
@@ -922,6 +923,40 @@ val gitVersion = try {
 } catch (e: Throwable) {
     e.printStackTrace()
     "unknown"
+}
+
+//fileTree(new File(rootProject.projectDir, "buildSrc/src/main/kotlinShared"))
+//copy {
+copy {
+    val it = this
+    val fromFolder = File(rootProject.projectDir, "buildSrc/src/main/kotlinShared")
+    val intoFolder = File(rootProject.projectDir, "korge-gradle-plugin/build/srcgen2")
+    it.from(fromFolder)
+    it.into(intoFolder)
+    it.duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    it.eachFile {
+        val details = this
+        val fromFile = File(fromFolder, details.sourcePath)
+        val intoFile = File(intoFolder, details.path)
+        //println("${fromFile} -> ${intoFile}")
+        try {
+            //try {
+            //    if (intoFile.exists() && Files.isSymbolicLink(intoFile.toPath())) {
+            //        if (Files.readSymbolicLink(intoFile.toPath()) == fromFile.toPath()) {
+            //            details.exclude()
+            //            return@eachFile
+            //        }
+            //    }
+            //} catch (e: Throwable) {
+            //    //e.printStackTrace()
+            //}
+            Files.deleteIfExists(intoFile.toPath())
+            Files.createSymbolicLink(intoFile.toPath(), fromFile.toPath())
+            details.exclude()
+        } catch (e: Throwable) {
+            //e.printStackTrace()
+        }
+    }
 }
 
 
