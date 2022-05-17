@@ -2,6 +2,7 @@ package com.soywiz.korge.gradle
 
 import com.soywiz.korge.gradle.targets.*
 import com.soywiz.korge.gradle.targets.linux.*
+import com.soywiz.korge.gradle.targets.linux.LDLibraries
 import com.soywiz.korge.gradle.util.*
 import groovy.lang.*
 import org.gradle.api.*

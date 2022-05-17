@@ -1,4 +1,4 @@
-package com.soywiz.korlibs.util
+package com.soywiz.korge.gradle.util
 
 import java.io.*
 import java.nio.file.Files

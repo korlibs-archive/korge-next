@@ -1,5 +1,5 @@
 import com.soywiz.korlibs.modules.*
-import com.soywiz.korlibs.util.*
+import com.soywiz.korge.gradle.util.*
 import org.gradle.kotlin.dsl.kotlin
 import java.io.File
 import java.nio.file.Files

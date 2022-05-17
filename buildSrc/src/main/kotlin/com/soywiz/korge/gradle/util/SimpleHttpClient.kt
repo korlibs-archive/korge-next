@@ -1,4 +1,4 @@
-package com.soywiz.korlibs.util
+package com.soywiz.korge.gradle.util
 
 import com.google.gson.*
 import com.google.gson.JsonParser
