@@ -48,6 +48,7 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
 
 kotlin.sourceSets.main.each {
     it.kotlin.srcDirs(new File(buildDir, "srcgen"), new File(buildDir, "srcgen2"))
+    it.resources.srcDirs(new File(rootProject.projectDir, "buildSrc/src/main/resources"))
 }
 
 com.soywiz.korlibs.NativeTools.groovyConfigurePublishing(project, false)

@@ -8,6 +8,9 @@ String androidApplicationId = "com.korge.samples.${project.name.replace("-", "_"
 
 kotlin.android()
 
+//File korgeGradlePluginResources = new File(rootProject.projectDir, "korge-gradle-plugin/src/main/resources")
+File korgeGradlePluginResources = new File(rootProject.projectDir, "buildSrc/src/main/resources")
+
 android {
     lintOptions {
         // @TODO: ../../build.gradle: All com.android.support libraries must use the exact same version specification (mixing versions can lead to runtime crashes). Found versions 28.0.0, 26.1.0. Examples include com.android.support:animated-vector-drawable:28.0.0 and com.android.support:customtabs:26.1.0
@@ -45,7 +48,7 @@ android {
     signingConfigs {
         release {
             //storeFile file(findProperty('RELEASE_STORE_FILE') ?: "korge.keystore")
-            storeFile new File(rootProject.projectDir, "korge-gradle-plugin/src/main/resources/korge.keystore")
+            storeFile new File(korgeGradlePluginResources, "korge.keystore")
             storePassword findProperty('RELEASE_STORE_PASSWORD') ?: "password"
             keyAlias findProperty('RELEASE_KEY_ALIAS') ?: "korge"
             keyPassword findProperty('RELEASE_KEY_PASSWORD') ?: "password"
@@ -124,9 +127,9 @@ def createAndroidManifest =tasks.create("createAndroidManifest") {
         new File(mainDir, "androidres/drawable").mkdirs()
         new File(mainDir, "androidres/mipmap").mkdirs()
 
-        new File(mainDir, "androidres/drawable/app_banner.png").bytes = new File(rootProject.projectDir, "korge-gradle-plugin/src/main/resources/banners/korge.png").bytes
-        new File(mainDir, "androidres/drawable/app_icon.png").bytes = new File(rootProject.projectDir, "korge-gradle-plugin/src/main/resources/icons/korge.png").bytes
-        new File(mainDir, "androidres/mipmap/icon.png").bytes = new File(rootProject.projectDir, "korge-gradle-plugin/src/main/resources/icons/korge.png").bytes
+        new File(mainDir, "androidres/drawable/app_banner.png").bytes = new File(korgeGradlePluginResources, "banners/korge.png").bytes
+        new File(mainDir, "androidres/drawable/app_icon.png").bytes = new File(korgeGradlePluginResources, "icons/korge.png").bytes
+        new File(mainDir, "androidres/mipmap/icon.png").bytes = new File(korgeGradlePluginResources, "icons/korge.png").bytes
 
         new File(mainDir, "androidsrc/MainActivity.kt").text = """
             package ${androidApplicationId}
