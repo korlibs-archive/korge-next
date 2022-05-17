@@ -19,7 +19,9 @@ import kotlin.coroutines.*
 
 actual fun CreateDefaultGameWindow(config: GameWindowCreationConfig): GameWindow = TODO()
 
-abstract class BaseAndroidGameWindow() : GameWindow() {
+abstract class BaseAndroidGameWindow(
+    val config: GameWindowCreationConfig = GameWindowCreationConfig(),
+) : GameWindow() {
     abstract val androidContext: Context
     abstract val androidView: View
     val context get() = androidContext
@@ -68,11 +70,11 @@ abstract class BaseAndroidGameWindow() : GameWindow() {
     }
 }
 
-class AndroidGameWindow(val activity: KorgwActivity) : BaseAndroidGameWindow() {
+class AndroidGameWindow(val activity: KorgwActivity) : BaseAndroidGameWindow(activity.config) {
     override val androidContext get() = activity
     override val androidView: View get() = activity.mGLView ?: error("Can't find mGLView")
 
-    val mainHandler by lazy { android.os.Handler(androidContext.getMainLooper()) }
+    val mainHandler by lazy { android.os.Handler(androidContext.mainLooper) }
 
     override val ag: AG get() = activity.ag
 
@@ -115,8 +117,9 @@ class AndroidGameWindowNoActivity(
     override val height: Int,
     override val ag: AG,
     override val androidContext: Context,
+    config: GameWindowCreationConfig = GameWindowCreationConfig(),
     val getView: () -> View
-) : BaseAndroidGameWindow() {
+) : BaseAndroidGameWindow(config) {
     override val dialogInterface = DialogInterfaceAndroid { androidContext }
 
     override val androidView: View get() = getView()

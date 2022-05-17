@@ -75,7 +75,8 @@ import kotlin.native.concurrent.ThreadLocal
 var GLOBAL_CHECK_GL = false
 
 data class GameWindowCreationConfig(
-    val multithreaded: Boolean? = null
+    val multithreaded: Boolean? = null,
+    val hdr: Boolean? = null,
 )
 
 expect fun CreateDefaultGameWindow(config: GameWindowCreationConfig): GameWindow
