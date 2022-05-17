@@ -6,6 +6,10 @@ import com.soywiz.korag.*
 import com.soywiz.korag.gl.*
 
 import com.soywiz.klogger.Console
+import com.soywiz.kmem.hasFlags
+import com.soywiz.korev.Key
+import com.soywiz.korev.KeyEvent
+import com.soywiz.korio.lang.currentThreadId
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExportObjCClass
 import kotlinx.cinterop.UnsafeNumber
@@ -22,6 +26,12 @@ import platform.GLKit.GLKViewDrawableStencilFormat8
 import platform.UIKit.UIApplication
 import platform.UIKit.UIColor
 import platform.UIKit.UIEvent
+import platform.UIKit.UIKeyModifierAlternate
+import platform.UIKit.UIKeyModifierCommand
+import platform.UIKit.UIKeyModifierControl
+import platform.UIKit.UIKeyModifierShift
+import platform.UIKit.UIPress
+import platform.UIKit.UIPressesEvent
 import platform.UIKit.UIScreen
 import platform.UIKit.UITouch
 import platform.UIKit.UIViewController
@@ -89,6 +99,7 @@ abstract class KorgwBaseNewAppDelegate {
 class ViewController(val entry: suspend () -> Unit) : UIViewController(null, null) {
     // Keep references to avoid collecting instances
     lateinit var glXViewController: MyGLKViewController
+    val gameWindow: IosGameWindow get() = MyIosGameWindow
 
     override fun viewDidLoad() {
         super.viewDidLoad()
@@ -104,6 +115,51 @@ class ViewController(val entry: suspend () -> Unit) : UIViewController(null, nul
         Console.info("glView: ${glView.bounds}")
         view.addSubview(glView)
     }
+
+    @Suppress("RemoveRedundantCallsOfConversionMethods")
+    @OptIn(UnsafeNumber::class)
+    private fun pressesHandler(type: KeyEvent.Type, presses: Set<*>, withEvent: UIPressesEvent?) {
+        super.pressesBegan(presses, withEvent)
+        for (press in presses) {
+            if (press !is UIPress) continue
+            val uiKey = press.key ?: continue
+            val keyCode = uiKey.keyCode.toInt()
+            val modifierFlags = uiKey.modifierFlags.toInt()
+            val key = IosKeyMap.KEY_MAP[keyCode.toInt()] ?: Key.UNKNOWN
+            //println("pressesHandler[$type]: ${keyCode}, ${modifierFlags}, $key, ${uiKey.charactersIgnoringModifiers}")
+
+            gameWindow.dispatchKeyEventEx(
+                type,
+                0,
+                uiKey.charactersIgnoringModifiers.firstOrNull() ?: '\u0000',
+                key,
+                keyCode.toInt(),
+                shift = modifierFlags.hasFlags(UIKeyModifierShift.toInt()),
+                ctrl = modifierFlags.hasFlags(UIKeyModifierControl.toInt()),
+                alt = modifierFlags.hasFlags(UIKeyModifierAlternate.toInt()),
+                meta = modifierFlags.hasFlags(UIKeyModifierCommand.toInt()),
+            )
+        }
+    }
+
+    override fun pressesBegan(presses: Set<*>, withEvent: UIPressesEvent?) {
+        super.pressesBegan(presses, withEvent)
+        pressesHandler(KeyEvent.Type.DOWN, presses, withEvent)
+    }
+
+    override fun pressesEnded(presses: Set<*>, withEvent: UIPressesEvent?) {
+        super.pressesBegan(presses, withEvent)
+        pressesHandler(KeyEvent.Type.UP, presses, withEvent)
+    }
+
+    //override fun pressesCancelled(presses: Set<*>, withEvent: UIPressesEvent?) {
+    //    super.pressesBegan(presses, withEvent)
+    //    pressesHandler(KeyEvent.Type.UP, presses, withEvent)
+    //}
+    //override fun pressesChanged(presses: Set<*>, withEvent: UIPressesEvent?) {
+    //    super.pressesBegan(presses, withEvent)
+    //    pressesHandler(KeyEvent.Type.UP, presses, withEvent)
+    //}
 }
 
 @OptIn(UnsafeNumber::class)
@@ -221,6 +277,8 @@ class MyGLKViewController(val entry: suspend () -> Unit)  : GLKViewController(nu
         addTouches(touches, type = TouchType.ENDED)
         this.gameWindow.dispatchTouchEventEnd()
     }
+
+
 
     private fun addTouches(touches: Set<*>, type: TouchType) {
         //println("addTouches[${touches.size}] type=$type");
