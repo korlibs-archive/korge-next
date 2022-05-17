@@ -49,7 +49,7 @@ abstract class KorgwActivity(
         }
 
         // @TODO: Cache somehow?
-        override val pixelsPerInch: Double get() = getResources().getDisplayMetrics().densityDpi.toDouble()
+        override val pixelsPerInch: Double get() = resources.displayMetrics.densityDpi.toDouble()
 
         init {
             println("KorgwActivityAGOpengl: Created ag $this for ${this@KorgwActivity} with gl=$gl")
@@ -82,6 +82,16 @@ abstract class KorgwActivity(
                 }
             })
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        println("---------------- KorgwActivity.onSaveInstanceState(outState=$outState) --------------")
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        println("---------------- KorgwActivity.onRestoreInstanceState(savedInstanceState=$savedInstanceState) --------------")
+        super.onRestoreInstanceState(savedInstanceState)
     }
 
     override fun onResume() {

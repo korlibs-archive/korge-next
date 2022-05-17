@@ -359,15 +359,17 @@ fun writeAndroidManifest(outputFolder: File, korge: KorgeExtension, info: Androi
 
 					line("<activity android:name=\".MainActivity\"")
 					indent {
+                        val orientationString = when (korge.orientation) {
+                            Orientation.LANDSCAPE -> "landscape"
+                            Orientation.PORTRAIT -> "portrait"
+                            Orientation.DEFAULT -> "sensor"
+                        }
                         line("android:banner=\"@drawable/app_banner\"")
                         line("android:icon=\"@drawable/app_icon\"")
                         line("android:label=\"$androidAppName\"")
                         line("android:logo=\"@drawable/app_icon\"")
-						when (korge.orientation) {
-							Orientation.LANDSCAPE -> line("android:screenOrientation=\"landscape\"")
-							Orientation.PORTRAIT -> line("android:screenOrientation=\"portrait\"")
-                            Orientation.DEFAULT -> Unit
-						}
+                        line("android:configChanges=\"orientation|screenSize|screenLayout|keyboardHidden\"")
+                        line("android:screenOrientation=\"$orientationString\"")
 					}
 					line(">")
 

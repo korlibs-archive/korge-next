@@ -104,7 +104,8 @@ def createAndroidManifest =tasks.create("createAndroidManifest") {
                         android:icon="@drawable/app_icon"
                         android:label="unnamed"
                         android:logo="@drawable/app_icon"
-                        android:screenOrientation="landscape"
+                        android:screenOrientation="sensor"
+                        android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
                     >
                         <intent-filter>
                             <action android:name="android.intent.action.MAIN"/>
