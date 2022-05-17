@@ -25,17 +25,29 @@ import android.opengl.EGL14.eglGetCurrentDisplay
 import android.opengl.EGL14.eglQueryContext
 import android.opengl.GLSurfaceView
 import android.os.Build
+import android.view.InputDevice
+import android.view.KeyEvent
 import android.view.MotionEvent
+import com.soywiz.kds.IntMap
 import com.soywiz.kds.buildIntArray
 import com.soywiz.kds.toIntArrayList
+import com.soywiz.kds.toMap
 import com.soywiz.kmem.hasBits
+import com.soywiz.kmem.setBits
+import com.soywiz.korev.GameButton
+import com.soywiz.korev.GamePadConnectionEvent
+import com.soywiz.korev.GamepadInfo
+import com.soywiz.korev.Key
+import com.soywiz.korev.StandardGamepadMapping
 import com.soywiz.korev.Touch
 import com.soywiz.korev.TouchEvent
 import com.soywiz.korio.async.Signal
+import com.soywiz.korma.geom.Point
 import javax.microedition.khronos.egl.EGL10
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.egl.EGLDisplay
 import javax.microedition.khronos.opengles.GL10
+import kotlin.math.absoluteValue
 
 // https://github.com/aosp-mirror/platform_frameworks_base/blob/e4df5d375df945b0f53a9c7cca83d37970b7ce64/opengl/java/android/opengl/GLSurfaceView.java
 open class KorgwSurfaceView constructor(
@@ -72,6 +84,37 @@ open class KorgwSurfaceView constructor(
             override fun onDrawFrame(unused: GL10) {
                 gameWindow.handleInitEventIfRequired()
                 gameWindow.handleReshapeEventIfRequired(0, 0, view.width, view.height)
+                try {
+                    val gamepads = InputDevice.getDeviceIds().map { InputDevice.getDevice(it) }
+                        .filter { it.sources.hasBits(InputDevice.SOURCE_GAMEPAD) }.sortedBy { it.id }
+
+                    if (gamepads.isNotEmpty() || activeGamepads.size != 0) {
+                        val currentGamePadIds = gamepads.map { it.id }.toSet()
+                        activeGamepads.toMap().forEach { (deviceId, value) ->
+                            if (deviceId !in currentGamePadIds) {
+                                activeGamepads.remove(deviceId)
+                                gameWindow.dispatchGamepadConnectionEvent(GamePadConnectionEvent.Type.DISCONNECTED, -1)
+                            }
+                        }
+                        gameWindow.dispatchGamepadUpdateStart()
+                        val l = Point()
+                        val r = Point()
+                        for ((index, gamepad) in gamepads.withIndex()) {
+                            val info = getGamepadInfo(gamepad.id)
+                            if (!info.connected) {
+                                info.connected = true
+                                gameWindow.dispatchGamepadConnectionEvent(GamePadConnectionEvent.Type.CONNECTED, index)
+                            }
+                            l.setTo(info.rawAxes[0], info.rawAxes[1])
+                            r.setTo(info.rawAxes[2], info.rawAxes[3])
+                            gameWindow.dispatchGamepadUpdateAdd(l, r, info.rawButtonsPressed, StandardGamepadMapping, gamepad.name, 1.0)
+                            //println("gamepad=$gamepad")
+                        }
+                        gameWindow.dispatchGamepadUpdateEnd()
+                    }
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                }
                 gameWindow.frame()
                 onDraw(Unit)
             }
@@ -85,8 +128,115 @@ open class KorgwSurfaceView constructor(
         })
     }
 
+    val activeGamepads = IntMap<GamepadInfo>()
+    fun getGamepadInfo(deviceId: Int): GamepadInfo = activeGamepads.getOrPut(deviceId) { GamepadInfo() }
+
     private val touches = TouchEventHandler()
     private val coords = MotionEvent.PointerCoords()
+
+    fun onKey(keyCode: Int, event: KeyEvent, type: com.soywiz.korev.KeyEvent.Type, long: Boolean): Boolean {
+        val char = keyCode.toChar()
+        val key = AndroidKeyMap.KEY_MAP[keyCode] ?: Key.UNKNOWN
+
+        //if (event.source.hasBits(InputDevice.SOURCE_GAMEPAD)) {
+        if (event.device.sources.hasBits(InputDevice.SOURCE_GAMEPAD)) {
+            //println("GAMEPAD: $key")
+            val info = getGamepadInfo(event.deviceId)
+            val press = type == com.soywiz.korev.KeyEvent.Type.DOWN
+            val button = when (key) {
+                Key.LEFT -> GameButton.LEFT
+                Key.RIGHT -> GameButton.RIGHT
+                Key.UP -> GameButton.UP
+                Key.DOWN -> GameButton.DOWN
+                Key.XBUTTON_L1 -> GameButton.L1
+                Key.XBUTTON_L2 -> GameButton.L2
+                Key.XBUTTON_R1 -> GameButton.R1
+                Key.XBUTTON_R2 -> GameButton.R2
+                Key.XBUTTON_A -> GameButton.BUTTON0
+                Key.XBUTTON_B -> GameButton.BUTTON1
+                Key.XBUTTON_X -> GameButton.BUTTON2
+                Key.XBUTTON_Y -> GameButton.BUTTON3
+                Key.XBUTTON_SELECT -> GameButton.SELECT
+                Key.XBUTTON_START -> GameButton.START
+                Key.XBUTTON_MODE -> GameButton.SYSTEM
+                Key.MEDIA_RECORD -> GameButton.RECORD
+                else -> {
+                    println(" - UNHANDLED GAMEPAD KEY: $key (keyCode=$keyCode)")
+                    null
+                }
+            }
+            if (button != null) {
+                info.rawButtonsPressed = info.rawButtonsPressed.setBits(button.bitMask, press)
+                return true
+            }
+        }
+
+        //println("type=$type, keyCode=$keyCode, char=$char, key=$key, long=$long, unicodeChar=${event.unicodeChar}, event.keyCode=${event.keyCode}")
+        //println("onKey[$type]: $event, keyboardType=${event.device.keyboardType}, sources=${event.device.sources}")
+
+
+        //if (event.source.hasBits(InputDevice.SOURCE_GAMEPAD)) {
+        //}
+        //println(InputDevice.SOURCE)
+        gameWindow.queue {
+            gameWindow.dispatchKeyEventEx(
+                type, 0, char, key, keyCode,
+                shift = event.isShiftPressed,
+                ctrl = event.isCtrlPressed,
+                alt = event.isAltPressed,
+                meta = event.isMetaPressed,
+            )
+        }
+        return true
+    }
+
+    private fun Double.withoutDeadRange(): Double {
+        // @TODO: Should we query for the right value?
+        if (this.absoluteValue < 0.09) return 0.0
+        return this
+    }
+
+    override fun onGenericMotionEvent(event: MotionEvent): Boolean {
+        if (event.device.sources.hasBits(InputDevice.SOURCE_GAMEPAD)) {
+            val info = getGamepadInfo(event.deviceId)
+            info.rawAxes[0] = event.getAxisValue(MotionEvent.AXIS_X).toDouble().withoutDeadRange()
+            info.rawAxes[1] = event.getAxisValue(MotionEvent.AXIS_Y).toDouble().withoutDeadRange()
+            info.rawAxes[2] = event.getAxisValue(MotionEvent.AXIS_RX).toDouble().withoutDeadRange()
+            info.rawAxes[3] = event.getAxisValue(MotionEvent.AXIS_RY).toDouble().withoutDeadRange()
+            info.rawAxes[4] = event.getAxisValue(MotionEvent.AXIS_LTRIGGER).toDouble().withoutDeadRange()
+            info.rawAxes[5] = event.getAxisValue(MotionEvent.AXIS_RTRIGGER).toDouble().withoutDeadRange()
+            return true
+        }
+        return super.onGenericMotionEvent(event)
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        //println("KorgwSurfaceView.onKeyDown")
+        return onKey(keyCode, event, type = com.soywiz.korev.KeyEvent.Type.DOWN, long = false)
+    }
+
+    override fun onKeyLongPress(keyCode: Int, event: KeyEvent): Boolean {
+        //println("KorgwSurfaceView.onKeyLongPress")
+        return onKey(keyCode, event, type = com.soywiz.korev.KeyEvent.Type.DOWN, long = true)
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+        //println("KorgwSurfaceView.onKeyUp")
+        onKey(keyCode, event, type = com.soywiz.korev.KeyEvent.Type.UP, long = false)
+        val unicodeChar = event.unicodeChar
+        if (unicodeChar != 0) {
+            onKey(unicodeChar, event, type = com.soywiz.korev.KeyEvent.Type.TYPE, long = false)
+        }
+        return true
+    }
+
+    override fun onKeyMultiple(keyCode: Int, repeatCount: Int, event: KeyEvent): Boolean {
+        //println("Android.onKeyMultiple:$keyCode,$repeatCount,${event.unicodeChar},$event")
+        for (char in event.characters) {
+            onKey(char.toInt(), event, type = com.soywiz.korev.KeyEvent.Type.TYPE, long = false)
+        }
+        return true
+    }
 
     override fun onTouchEvent(ev: MotionEvent): Boolean {
         val gameWindow = gameWindow

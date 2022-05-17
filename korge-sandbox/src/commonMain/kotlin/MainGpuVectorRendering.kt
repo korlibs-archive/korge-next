@@ -29,11 +29,13 @@ suspend fun Stage.mainGpuVectorRendering() {
 
     //return
 
+    lateinit var shape: GpuShapeView
+
     container {
         //xy(0, 0)
         xy(300, 300)
         //val shape = graphics({
-        val shape = gpuShapeView({
+        shape = gpuShapeView({
             //val lineWidth = 6.12123231 * 2
             val lineWidth = 12.0
             val width = 300.0
@@ -240,7 +242,7 @@ suspend fun Stage.mainGpuVectorRendering() {
         println("BUILD SHAPE: $it")
     }
 
-    measureTime({
+    val gpuTigger = measureTime({
         gpuShapeView({ buildGraphics("GPU") }) {
             xy(40, 0)
             scale(1.1)
@@ -263,6 +265,30 @@ suspend fun Stage.mainGpuVectorRendering() {
         image(Bitmap32(512, 512).context2d { buildGraphics("KOTLIN") }).xy(550, 370)
     }) {
         println("CONTEXT2D BITMAP: $it")
+    }
+
+    gamepad {
+        connected { println("CONNECTED gamepad=${it}") }
+        disconnected { println("DISCONNECTED gamepad=${it}") }
+        button { playerId, pressed, button, value ->
+            if (pressed && button == GameButton.START) {
+                shape.antialiased = !shape.antialiased
+                gpuTigger.antialiased = !gpuTigger.antialiased
+                println("shape.antialiased=${shape.antialiased}")
+            }
+            println("BUTTON: $playerId, $pressed, button=$button, value=$value")
+        }
+        stick { playerId, stick, x, y ->
+            println("STICK: $playerId, stick=$stick, x=$x, y=$y")
+            if (stick == GameStick.LEFT) {
+                rotation += x.degrees
+            }
+        }
+        updatedGamepad {
+            //println("updatedGamepad: $it")
+            rotation += it.lx.degrees
+            shape.rotation += it.ly.degrees
+        }
     }
 
     //while (true) Bitmap32(512, 512).context2d { buildGraphics("KOTLIN") }

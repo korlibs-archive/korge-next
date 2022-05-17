@@ -181,9 +181,10 @@ enum class GameButton {
 	L3, R3,
 	LX, LY,
 	RX, RY,
-	BUTTON4, BUTTON5, BUTTON6, BUTTON7, BUTTON8;
+	BUTTON4, BUTTON5, BUTTON6, BUTTON7, BUTTON8, RECORD;
 
     val index: Int get() = ordinal
+    val bitMask: Int get() = 1 shl ordinal
 
 	companion object {
 		val BUTTONS = values()
@@ -241,6 +242,18 @@ class GamepadInfo(
         arraycopy(that.rawButtonsPressure, 0, this.rawButtonsPressure, 0, min(this.rawButtonsPressure.size, that.rawButtonsPressure.size))
 		arraycopy(that.rawAxes, 0, this.rawAxes, 0, min(this.rawAxes.size, that.rawAxes.size))
 	}
+
+    val up: Boolean get() = this[GameButton.UP] != 0.0
+    val down: Boolean get() = this[GameButton.DOWN] != 0.0
+    val left: Boolean get() = this[GameButton.LEFT] != 0.0
+    val right: Boolean get() = this[GameButton.RIGHT] != 0.0
+    val start: Boolean get() = this[GameButton.START] != 0.0
+    val select: Boolean get() = this[GameButton.SELECT] != 0.0
+    val system: Boolean get() = this[GameButton.SYSTEM] != 0.0
+    val lx: Double get() = this[GameButton.LX]
+    val ly: Double get() = this[GameButton.LY]
+    val rx: Double get() = this[GameButton.RX]
+    val ry: Double get() = this[GameButton.RY]
 
 	operator fun get(button: GameButton): Double = mapping.get(button, this)
     operator fun get(stick: GameStick): Point = axesData[stick.id].apply {

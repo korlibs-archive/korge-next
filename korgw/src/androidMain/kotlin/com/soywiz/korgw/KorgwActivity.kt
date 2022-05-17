@@ -8,6 +8,7 @@ import android.view.*
 import android.view.KeyEvent
 import com.soywiz.kds.*
 import com.soywiz.kgl.*
+import com.soywiz.kmem.hasBits
 import com.soywiz.korag.gl.*
 import com.soywiz.korev.*
 import kotlin.coroutines.*
@@ -160,54 +161,27 @@ abstract class KorgwActivity(
         }
     }
 
-    fun onKey(keyCode: Int, event: KeyEvent, type: com.soywiz.korev.KeyEvent.Type, long: Boolean): Boolean {
-        val char = keyCode.toChar()
-        val key = AndroidKeyMap.KEY_MAP[keyCode] ?: Key.UNKNOWN
-        //println("type=$type, keyCode=$keyCode, char=$char, key=$key, long=$long, unicodeChar=${event.unicodeChar}, event.keyCode=${event.keyCode}")
-        gameWindow.queue {
-            gameWindow.dispatchKeyEventEx(
-                type, 0, char, key, keyCode,
-                shift = event.isShiftPressed,
-                ctrl = event.isCtrlPressed,
-                alt = event.isAltPressed,
-                meta = event.isMetaPressed,
-            )
-        }
-        return true
-    }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        //println("Android.onKeyDown:$keyCode,${event.getUnicodeChar()}")
-        return onKey(keyCode, event, type = com.soywiz.korev.KeyEvent.Type.DOWN, long = false)
-    }
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean =
+        mGLView?.dispatchKeyEvent(event) ?: super.onKeyDown(keyCode, event)
 
-    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        //println("Android.onKeyUp:$keyCode,${event.getUnicodeChar()}")
-        onKey(keyCode, event, type = com.soywiz.korev.KeyEvent.Type.UP, long = false)
-        val unicodeChar = event.unicodeChar
-        if (unicodeChar != 0) {
-            onKey(unicodeChar, event, type = com.soywiz.korev.KeyEvent.Type.TYPE, long = false)
-        }
-        return true
-    }
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean =
+        mGLView?.dispatchKeyEvent(event) ?: super.onKeyUp(keyCode, event)
 
-    override fun onKeyLongPress(keyCode: Int, event: KeyEvent): Boolean {
-        //println("Android.onKeyLongPress:$keyCode,${event.getUnicodeChar()}")
-        return onKey(keyCode, event, type = com.soywiz.korev.KeyEvent.Type.DOWN, long = true)
-    }
+    override fun onKeyLongPress(keyCode: Int, event: KeyEvent): Boolean =
+        mGLView?.dispatchKeyEvent(event) ?: super.onKeyLongPress(keyCode, event)
 
-    override fun onKeyMultiple(keyCode: Int, repeatCount: Int, event: KeyEvent): Boolean {
-        //println("Android.onKeyMultiple:$keyCode,$repeatCount,${event.unicodeChar},$event")
-        for (char in event.characters) {
-            onKey(char.toInt(), event, type = com.soywiz.korev.KeyEvent.Type.TYPE, long = false)
-        }
-        return true
-    }
+    override fun onKeyMultiple(keyCode: Int, repeatCount: Int, event: KeyEvent): Boolean =
+        mGLView?.dispatchKeyEvent(event) ?: super.onKeyMultiple(keyCode, repeatCount, event)
 
-    override fun onKeyShortcut(keyCode: Int, event: KeyEvent): Boolean {
-        println("Android.onKeyShortcut:$keyCode")
-        return super.onKeyShortcut(keyCode, event)
-    }
+    override fun onKeyShortcut(keyCode: Int, event: KeyEvent): Boolean =
+        mGLView?.dispatchKeyShortcutEvent(event) ?: super.onKeyShortcut(keyCode, event)
+
+    override fun onTrackballEvent(event: MotionEvent): Boolean =
+        mGLView?.dispatchTrackballEvent(event) ?: super.onTrackballEvent(event)
+
+    override fun onGenericMotionEvent(event: MotionEvent): Boolean =
+        mGLView?.dispatchGenericMotionEvent(event) ?: super.onGenericMotionEvent(event)
 
     override fun onBackPressed() {
         gameWindow.queue {
