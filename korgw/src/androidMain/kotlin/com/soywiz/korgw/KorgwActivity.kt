@@ -149,15 +149,15 @@ abstract class KorgwActivity(
     }
 
     fun onKey(keyCode: Int, event: KeyEvent, type: com.soywiz.korev.KeyEvent.Type, long: Boolean): Boolean {
+        val char = keyCode.toChar()
+        val key = AndroidKeyMap.KEY_MAP[keyCode] ?: Key.UNKNOWN
+        //println("type=$type, keyCode=$keyCode, char=$char, key=$key, long=$long, unicodeChar=${event.unicodeChar}, event.keyCode=${event.keyCode}")
         gameWindow.dispatchKeyEventEx(
-            type, 0,
-            keyCode.toChar(),
-            AndroidKeyMap.KEY_MAP[keyCode] ?: Key.UNKNOWN,
-            keyCode,
+            type, 0, char, key, keyCode,
             shift = event.isShiftPressed,
             ctrl = event.isCtrlPressed,
             alt = event.isAltPressed,
-            meta = event.isMetaPressed
+            meta = event.isMetaPressed,
         )
         return true
     }
@@ -183,7 +183,7 @@ abstract class KorgwActivity(
     }
 
     override fun onKeyMultiple(keyCode: Int, repeatCount: Int, event: KeyEvent): Boolean {
-        //println("Android.onKeyMultiple:$keyCode,$repeatCount,${event.getUnicodeChar()},$event")
+        //println("Android.onKeyMultiple:$keyCode,$repeatCount,${event.unicodeChar},$event")
         for (char in event.characters) {
             onKey(char.toInt(), event, type = com.soywiz.korev.KeyEvent.Type.TYPE, long = false)
         }
@@ -193,5 +193,11 @@ abstract class KorgwActivity(
     override fun onKeyShortcut(keyCode: Int, event: KeyEvent): Boolean {
         println("Android.onKeyShortcut:$keyCode")
         return super.onKeyShortcut(keyCode, event)
+    }
+
+    override fun onBackPressed() {
+        if (!gameWindow.dispatchKeyEventEx(com.soywiz.korev.KeyEvent.Type.DOWN, 0, '\u0008', Key.BACKSPACE, KeyEvent.KEYCODE_BACK)) {
+            super.onBackPressed()
+        }
     }
 }

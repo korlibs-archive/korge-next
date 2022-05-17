@@ -160,7 +160,6 @@ open class GpuShapeView(
                 ctx.renderToTexture(bufferWidth, bufferHeight, {
                     renderCommands(ctx)
                 }, hasDepth = false, hasStencil = true, msamples = 1) { texture ->
-                    ctx.ag.clearStencil()
                     ctx.useBatcher {
                         it.drawQuad(texture, x = 0f, y = 0f)
                     }

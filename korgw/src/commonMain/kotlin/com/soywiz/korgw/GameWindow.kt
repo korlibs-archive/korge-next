@@ -642,15 +642,14 @@ open class GameWindow :
     private val scrollDeltaZ = 0.0
     private val scaleCoords = false
 
-    fun dispatchKeyEvent(type: KeyEvent.Type, id: Int, character: Char, key: Key, keyCode: Int) {
-        dispatchKeyEventEx(type, id, character, key, keyCode)
+    fun dispatchKeyEvent(type: KeyEvent.Type, id: Int, character: Char, key: Key, keyCode: Int): Boolean {
+        return dispatchKeyEventEx(type, id, character, key, keyCode)
     }
 
     fun dispatchKeyEventEx(
         type: KeyEvent.Type, id: Int, character: Char, key: Key, keyCode: Int,
-
         shift: Boolean = this.shift, ctrl: Boolean = this.ctrl, alt: Boolean = this.alt, meta: Boolean = this.meta
-    ) {
+    ): Boolean {
         if (type != KeyEvent.Type.TYPE) {
             keysPresing[key.ordinal] = (type == KeyEvent.Type.DOWN)
         }
@@ -665,6 +664,7 @@ open class GameWindow :
             this.alt = alt
             this.meta = meta
         })
+        return keyEvent._stopPropagation
     }
 
     fun dispatchSimpleMouseEvent(
