@@ -113,7 +113,9 @@ abstract class KorgwActivity(
         //mGLView?.
         mGLView = null
         setContentView(android.view.View(this))
-        gameWindow.dispatchDestroyEvent()
+        gameWindow.queue {
+            gameWindow.dispatchDestroyEvent()
+        }
         //gameWindow?.close() // Do not close, since it will be automatically closed by the destroy event
     }
 
@@ -152,13 +154,15 @@ abstract class KorgwActivity(
         val char = keyCode.toChar()
         val key = AndroidKeyMap.KEY_MAP[keyCode] ?: Key.UNKNOWN
         //println("type=$type, keyCode=$keyCode, char=$char, key=$key, long=$long, unicodeChar=${event.unicodeChar}, event.keyCode=${event.keyCode}")
-        gameWindow.dispatchKeyEventEx(
-            type, 0, char, key, keyCode,
-            shift = event.isShiftPressed,
-            ctrl = event.isCtrlPressed,
-            alt = event.isAltPressed,
-            meta = event.isMetaPressed,
-        )
+        gameWindow.queue {
+            gameWindow.dispatchKeyEventEx(
+                type, 0, char, key, keyCode,
+                shift = event.isShiftPressed,
+                ctrl = event.isCtrlPressed,
+                alt = event.isAltPressed,
+                meta = event.isMetaPressed,
+            )
+        }
         return true
     }
 
@@ -196,8 +200,12 @@ abstract class KorgwActivity(
     }
 
     override fun onBackPressed() {
-        if (!gameWindow.dispatchKeyEventEx(com.soywiz.korev.KeyEvent.Type.DOWN, 0, '\u0008', Key.BACKSPACE, KeyEvent.KEYCODE_BACK)) {
-            super.onBackPressed()
+        gameWindow.queue {
+            if (!gameWindow.dispatchKeyEventEx(com.soywiz.korev.KeyEvent.Type.DOWN, 0, '\u0008', Key.BACKSPACE, KeyEvent.KEYCODE_BACK)) {
+                runOnUiThread {
+                    super.onBackPressed()
+                }
+            }
         }
     }
 }

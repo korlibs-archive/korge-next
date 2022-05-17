@@ -105,7 +105,8 @@ open class KorgwSurfaceView constructor(
             MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> TouchEvent.Type.END
             else -> TouchEvent.Type.UNKNOWN
         }
-        touches.handleEvent(gameWindow, gameWindow.coroutineContext!!, type) { currentTouchEvent ->
+
+        touches.handleEvent(gameWindow, type) { currentTouchEvent ->
             for (n in 0 until ev.pointerCount) {
                 ev.getPointerCoords(n, coords)
                 val id = ev.getPointerId(n)

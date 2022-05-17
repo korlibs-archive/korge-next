@@ -1,20 +1,10 @@
 package com.soywiz.korgw
 
-import android.app.*
 import android.content.*
-import android.content.DialogInterface
-import android.net.*
-import android.text.*
 import android.view.*
 import android.view.inputmethod.*
-import android.widget.*
 import com.soywiz.korag.*
 import com.soywiz.korim.bitmap.*
-import com.soywiz.korio.file.*
-import com.soywiz.korio.file.std.*
-import com.soywiz.korio.net.*
-import kotlinx.coroutines.*
-import java.io.*
 import kotlin.coroutines.*
 
 actual fun CreateDefaultGameWindow(config: GameWindowCreationConfig): GameWindow = TODO()
@@ -68,6 +58,17 @@ abstract class BaseAndroidGameWindow(
             e.printStackTrace()
         }
     }
+
+    //fun <T : Any> queueAndWait(callback: () -> T): T {
+    //    var result: Result<T>? = null
+    //    val semaphore = java.util.concurrent.Semaphore(0)
+    //    coroutineDispatcher.queue {
+    //        result = kotlin.runCatching { callback() }
+    //        semaphore.release()
+    //    }
+    //    semaphore.acquire()
+    //    return result!!.getOrThrow()
+    //}
 }
 
 class AndroidGameWindow(val activity: KorgwActivity) : BaseAndroidGameWindow(activity.config) {
