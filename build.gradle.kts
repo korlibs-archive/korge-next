@@ -1,5 +1,6 @@
 import com.soywiz.korlibs.modules.*
 import com.soywiz.korge.gradle.util.*
+import com.soywiz.korge.gradle.targets.android.AndroidSdk
 import org.gradle.kotlin.dsl.kotlin
 import java.io.File
 import java.nio.file.Files
@@ -77,7 +78,7 @@ allprojects {
 	}
 }
 
-val hasAndroidSdk by lazy { hasAndroidSdk() }
+val hasAndroidSdk by lazy { AndroidSdk.hasAndroidSdk(project) }
 
 // Required by RC
 kotlin {
@@ -926,11 +927,7 @@ val gitVersion = try {
     "unknown"
 }
 
-//fileTree(new File(rootProject.projectDir, "buildSrc/src/main/kotlinShared"))
-//copy {
-if (true) {
-    val fromFolder = File(rootProject.projectDir, "buildSrc/src/main/kotlin")
-    val intoFolder = File(rootProject.projectDir, "korge-gradle-plugin/build/srcgen2")
+fun symlinktree(fromFolder: File, intoFolder: File) {
     try {
         if (!intoFolder.isDirectory && !Files.isSymbolicLink(intoFolder.toPath())) {
             runCatching { intoFolder.delete() }
@@ -947,7 +944,17 @@ if (true) {
     }
 }
 
+//fileTree(new File(rootProject.projectDir, "buildSrc/src/main/kotlinShared"))
+//copy {
+symlinktree(
+    fromFolder = File(rootProject.projectDir, "buildSrc/src/main/kotlin"),
+    intoFolder = File(rootProject.projectDir, "korge-gradle-plugin/build/srcgen2")
+)
 
+symlinktree(
+    fromFolder = File(rootProject.projectDir, "buildSrc/src/main/resources"),
+    intoFolder = File(rootProject.projectDir, "korge-gradle-plugin/build/srcgen2res")
+)
 
 val buildVersionsFile = file("korge-gradle-plugin/build/srcgen/com/soywiz/korge/gradle/BuildVersions.kt")
 val oldBuildVersionsText = buildVersionsFile.takeIf { it.exists() }?.readText()

@@ -13,6 +13,7 @@ val ANDROID_SDK_PATH_KEY = "android.sdk.path"
 //Linux: ~/Android/Sdk
 //Mac: ~/Library/Android/sdk
 //Windows: %LOCALAPPDATA%\Android\sdk
+// @TODO: Use [AndroidSdk] class
 val Project.androidSdkPath: String get() {
     val extensionAndroidSdkPath = this.findProperty(ANDROID_SDK_PATH_KEY)?.toString() ?: this.extensions.findByName(ANDROID_SDK_PATH_KEY)?.toString()
     if (extensionAndroidSdkPath != null) return extensionAndroidSdkPath

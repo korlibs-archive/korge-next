@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 //apply plugin: 'kotlin-android'
 //apply plugin: 'kotlin-android-extensions'
 
-import com.soywiz.korlibs.modules.Android
+import com.soywiz.korge.gradle.targets.android.AndroidSdk
 
 String androidApplicationId = "com.korge.samples.${project.name.replace("-", "_")}"
 
@@ -162,7 +162,7 @@ def execOutput(String... args) {
 
 tasks.create("onlyRunAndroid") {
     doFirst {
-        def adb = "${Android.guessAndroidSdkPath()}/platform-tools/adb"
+        def adb = "${AndroidSdk.guessAndroidSdkPath()}/platform-tools/adb"
         exec {
             commandLine adb, "shell", "am", "start", "-n", "${androidApplicationId}/${androidApplicationId}.MainActivity"
         }

@@ -435,6 +435,7 @@ class AndroidInfo(val map: Map<String, Any?>?) {
 }
 
 private var _tryAndroidSdkDirs: List<File>? = null
+// @TODO: Use [AndroidSdk] class
 val tryAndroidSdkDirs: List<File> get() {
     if (_tryAndroidSdkDirs == null) {
         _tryAndroidSdkDirs = listOf(
