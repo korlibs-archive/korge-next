@@ -2,10 +2,11 @@ apply plugin: 'com.android.application'
 //apply plugin: 'kotlin-android'
 //apply plugin: 'kotlin-android-extensions'
 
-String androidApplicationId = "com.korge.samples.${project.name.replace("-", "_")}";
+import com.soywiz.korlibs.modules.Android
 
-kotlin.android();
+String androidApplicationId = "com.korge.samples.${project.name.replace("-", "_")}"
 
+kotlin.android()
 
 android {
     lintOptions {
@@ -157,15 +158,16 @@ def execOutput(String... args) {
 
 tasks.create("onlyRunAndroid") {
     doFirst {
+        def adb = "${Android.guessAndroidSdkPath()}/platform-tools/adb"
         exec {
-            commandLine "adb", "shell", "am", "start", "-n", "${androidApplicationId}/${androidApplicationId}.MainActivity"
+            commandLine adb, "shell", "am", "start", "-n", "${androidApplicationId}/${androidApplicationId}.MainActivity"
         }
 
         String pid = ""
         for (int n = 0; n < 10; n++) {
             try {
-                pid = execOutput("adb", "shell", "pidof", androidApplicationId)
-                break;
+                pid = execOutput(adb, "shell", "pidof", androidApplicationId)
+                break
             } catch (e) {
                 Thread.sleep(500L)
                 if (n == 9) throw e
@@ -173,7 +175,7 @@ tasks.create("onlyRunAndroid") {
         }
         println(pid)
         exec {
-            commandLine "adb", "logcat", "--pid=${pid.trim()}"
+            commandLine adb, "logcat", "--pid=${pid.trim()}"
         }
     }
 }
