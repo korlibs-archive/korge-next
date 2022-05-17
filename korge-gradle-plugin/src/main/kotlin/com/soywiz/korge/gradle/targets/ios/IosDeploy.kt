@@ -17,6 +17,7 @@ class IosDeploy(val project: Project) {
     fun command(vararg cmds: String) {
         project.execLogger {
             it.commandLine(iosDeployCmd, *cmds)
+            it.standardInput = System.`in`
         }
     }
 
