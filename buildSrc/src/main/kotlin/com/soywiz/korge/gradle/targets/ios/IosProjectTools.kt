@@ -1,6 +1,9 @@
 package com.soywiz.korge.gradle.targets.ios
 
-object IosTools {
+import java.io.File
+import com.soywiz.korge.gradle.util.*
+
+object IosProjectTools {
     fun genBootstrapKt(entrypoint: String): String = """
         import $entrypoint
         
@@ -72,4 +75,72 @@ object IosTools {
             </scenes>
         </document>
     """.trimIndent()
+
+    fun prepareKotlinNativeIosProject(folder: File) {
+        folder["app/main.m"].ensureParents().writeText(genMainObjC())
+        folder["app/Base.lproj/LaunchScreen.storyboard"].ensureParents().writeText(genLaunchScreenStoryboard())
+        folder["app/Assets.xcassets/Contents.json"].ensureParents().writeText("""
+            {
+              "info" : {
+                "version" : 1,
+                "author" : "xcode"
+              }
+            }
+        """.trimIndent())
+        folder["app/Info.plist"].ensureParents().writeText(Indenter {
+            line("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+            line("<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">")
+            line("<plist version=\"1.0\">")
+            line("<dict>")
+            indent {
+                line("<key>CFBundleDevelopmentRegion</key>")
+                line("<string>$(DEVELOPMENT_LANGUAGE)</string>")
+                line("<key>CFBundleExecutable</key>")
+                line("<string>$(EXECUTABLE_NAME)</string>")
+                line("<key>CFBundleIdentifier</key>")
+                line("<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>")
+                line("<key>CFBundleInfoDictionaryVersion</key>")
+                line("<string>6.0</string>")
+                line("<key>CFBundleName</key>")
+                line("<string>$(PRODUCT_NAME)</string>")
+                line("<key>CFBundlePackageType</key>")
+                line("<string>APPL</string>")
+                line("<key>CFBundleShortVersionString</key>")
+                line("<string>1.0</string>")
+                line("<key>CFBundleVersion</key>")
+                line("<string>1</string>")
+                line("<key>LSRequiresIPhoneOS</key>")
+                line("<true/>")
+                line("<key>UILaunchStoryboardName</key>")
+                line("<string>LaunchScreen</string>")
+                //line("<key>UIMainStoryboardFile</key>")
+                //line("<string>Main</string>")
+                line("<key>UIRequiredDeviceCapabilities</key>")
+                line("<array>")
+                indent {
+                    line("<string>armv7</string>")
+                }
+                line("</array>")
+                line("<key>UISupportedInterfaceOrientations</key>")
+                line("<array>")
+                indent {
+                    line("<string>UIInterfaceOrientationPortrait</string>")
+                    line("<string>UIInterfaceOrientationLandscapeLeft</string>")
+                    line("<string>UIInterfaceOrientationLandscapeRight</string>")
+                }
+                line("</array>")
+                line("<key>UISupportedInterfaceOrientations~ipad</key>")
+                line("<array>")
+                indent {
+                    line("<string>UIInterfaceOrientationPortrait</string>")
+                    line("<string>UIInterfaceOrientationPortraitUpsideDown</string>")
+                    line("<string>UIInterfaceOrientationLandscapeLeft</string>")
+                    line("<string>UIInterfaceOrientationLandscapeRight</string>")
+                }
+                line("</array>")
+            }
+            line("</dict>")
+            line("</plist>")
+        })
+    }
 }

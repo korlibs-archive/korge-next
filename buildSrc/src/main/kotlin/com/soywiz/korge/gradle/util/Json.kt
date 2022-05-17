@@ -3,7 +3,6 @@ package com.soywiz.korge.gradle.util
 import java.io.*
 import kotlin.math.*
 
-
 object Json {
 	fun parse(s: String): Any? = parse(StrReader(s))
 	fun stringify(obj: Any?) = StringBuilder().apply { stringify(obj, this) }.toString()

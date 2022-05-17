@@ -1,7 +1,7 @@
 package com.soywiz.korge.gradle.util
 
-import com.soywiz.korge.gradle.targets.*
 import com.sun.net.httpserver.*
+import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.*
 import java.io.*
 import java.lang.management.*
@@ -176,6 +176,10 @@ fun File.miniMimeType() = when (this.extension.toLowerCase()) {
     "mp3" -> "audio/mpeg"
     else -> if (this.exists()) Files.probeContentType(this.toPath()) ?: "application/octet-stream" else "text/plain"
 }
+
+private val isWindows get() = Os.isFamily(Os.FAMILY_WINDOWS)
+private val isMacos get() = Os.isFamily(Os.FAMILY_MAC)
+private val isLinux get() = Os.isFamily(Os.FAMILY_UNIX) && !isMacos
 
 fun Project.openBrowser(url: String) {
     exec {

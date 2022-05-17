@@ -47,13 +47,6 @@ data class KorgePluginDescriptor(val container: KorgePluginsContainer, val artif
 	fun addArgs(args: Map<String, String>) = this.apply { this.args.putAll(args) }.apply { container.globalParams.putAll(args) }
 }
 
-enum class GameCategory {
-	ACTION, ADVENTURE, ARCADE, BOARD, CARD,
-	CASINO, DICE, EDUCATIONAL, FAMILY, KIDS,
-	MUSIC, PUZZLE, RACING, ROLE_PLAYING, SIMULATION,
-	SPORTS, STRATEGY, TRIVIA, WORD
-}
-
 fun String.replaceGroovy(replacements: Map<String, Any?>): String {
 	//println("String.replaceGroovy: this=$this, replacements=$replacements")
 	val templateEngine = SimpleTemplateEngine()

@@ -6,7 +6,7 @@ import com.soywiz.korge.gradle.targets.desktop.*
 import com.soywiz.korge.gradle.targets.native.*
 import com.soywiz.korge.gradle.util.*
 import com.soywiz.korge.gradle.util.get
-import com.soywiz.korge.gradle.targets.ios.IosTools
+import com.soywiz.korge.gradle.targets.ios.IosProjectTools
 import org.gradle.api.*
 import org.gradle.api.file.*
 import org.gradle.api.tasks.*
@@ -24,7 +24,7 @@ fun Project.configureNativeIos() {
         doLast {
             File(buildDir, "platforms/native-ios/bootstrap.kt").apply {
                 parentFile.mkdirs()
-                writeText(IosTools.genBootstrapKt(korge.realEntryPoint))
+                writeText(IosProjectTools.genBootstrapKt(korge.realEntryPoint))
             }
         }
 	}
@@ -66,34 +66,12 @@ fun Project.configureNativeIos() {
 		}
 	}
 
-    val korlibsFolder = File(System.getProperty("user.home") + "/.korlibs").apply { mkdirs() }
-    val xcodeGenFolder = korlibsFolder["XcodeGen"]
-    val xcodeGenLocalExecutable = File("/usr/local/bin/xcodegen")
-    val xcodeGenExecutable = FileList(
-        xcodeGenFolder[".build/release/xcodegen"],
-        xcodeGenFolder[".build/apple/Products/Release/xcodegen"],
-    )
-    val xcodeGenGitTag = "2.25.0"
+    val iosXcodegenExt = project.iosXcodegenExt
+    val iosSdkExt = project.iosSdkExt
 
     tasks.create("installXcodeGen") {
-        onlyIf { !xcodeGenLocalExecutable.exists() && !xcodeGenExecutable.exists() }
-        doLast {
-            if (!xcodeGenFolder[".git"].isDirectory) {
-                execLogger {
-                    //it.commandLine("git", "clone", "--depth", "1", "--branch", xcodeGenGitTag, "https://github.com/yonaskolb/XcodeGen.git")
-                    it.commandLine("git", "clone", "https://github.com/yonaskolb/XcodeGen.git")
-                    it.workingDir(korlibsFolder)
-                }
-            }
-            execLogger {
-                it.commandLine("git", "checkout", xcodeGenGitTag)
-                it.workingDir(xcodeGenFolder)
-            }
-            execLogger {
-                it.commandLine("make", "build")
-                it.workingDir(xcodeGenFolder)
-            }
-        }
+        onlyIf { !iosXcodegenExt.isInstalled() }
+        doLast { iosXcodegenExt.install() }
 	}
 
 	val combinedResourcesFolder = File(buildDir, "combinedResources/resources")
@@ -117,73 +95,7 @@ fun Project.configureNativeIos() {
 			//File(rootDir, "src/commonMain/resources").mkdirs()
 
 			val folder = File(buildDir, "platforms/ios")
-            folder["app/main.m"].ensureParents().writeText(IosTools.genMainObjC())
-			folder["app/Info.plist"].ensureParents().writeText(Indenter {
-				line("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
-				line("<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">")
-				line("<plist version=\"1.0\">")
-				line("<dict>")
-				indent {
-					line("<key>CFBundleDevelopmentRegion</key>")
-					line("<string>$(DEVELOPMENT_LANGUAGE)</string>")
-					line("<key>CFBundleExecutable</key>")
-					line("<string>$(EXECUTABLE_NAME)</string>")
-					line("<key>CFBundleIdentifier</key>")
-					line("<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>")
-					line("<key>CFBundleInfoDictionaryVersion</key>")
-					line("<string>6.0</string>")
-					line("<key>CFBundleName</key>")
-					line("<string>$(PRODUCT_NAME)</string>")
-					line("<key>CFBundlePackageType</key>")
-					line("<string>APPL</string>")
-					line("<key>CFBundleShortVersionString</key>")
-					line("<string>1.0</string>")
-					line("<key>CFBundleVersion</key>")
-					line("<string>1</string>")
-					line("<key>LSRequiresIPhoneOS</key>")
-					line("<true/>")
-					line("<key>UILaunchStoryboardName</key>")
-					line("<string>LaunchScreen</string>")
-					//line("<key>UIMainStoryboardFile</key>")
-					//line("<string>Main</string>")
-					line("<key>UIRequiredDeviceCapabilities</key>")
-					line("<array>")
-					indent {
-						line("<string>armv7</string>")
-					}
-					line("</array>")
-					line("<key>UISupportedInterfaceOrientations</key>")
-					line("<array>")
-					indent {
-						line("<string>UIInterfaceOrientationPortrait</string>")
-						line("<string>UIInterfaceOrientationLandscapeLeft</string>")
-						line("<string>UIInterfaceOrientationLandscapeRight</string>")
-					}
-					line("</array>")
-					line("<key>UISupportedInterfaceOrientations~ipad</key>")
-					line("<array>")
-					indent {
-						line("<string>UIInterfaceOrientationPortrait</string>")
-						line("<string>UIInterfaceOrientationPortraitUpsideDown</string>")
-						line("<string>UIInterfaceOrientationLandscapeLeft</string>")
-						line("<string>UIInterfaceOrientationLandscapeRight</string>")
-					}
-					line("</array>")
-				}
-				line("</dict>")
-				line("</plist>")
-			})
-
-			folder["app/Base.lproj/LaunchScreen.storyboard"].ensureParents().writeText(IosTools.genLaunchScreenStoryboard())
-
-			folder["app/Assets.xcassets/Contents.json"].ensureParents().writeText("""
-				{
-				  "info" : {
-					"version" : 1,
-					"author" : "xcode"
-				  }
-				}
-			""".trimIndent())
+            IosProjectTools.prepareKotlinNativeIosProject(folder)
 
 			data class IconConfig(val idiom: String, val size: Number, val scale: Int) {
 				val sizeStr = "${size}x$size"
@@ -249,7 +161,7 @@ fun Project.configureNativeIos() {
 				indent {
 					line("PRODUCT_NAME: ${korge.name}")
 					line("ENABLE_BITCODE: NO")
-                    val team = korge.appleDevelopmentTeamId ?: appleGetDefaultDeveloperCertificateTeamId()
+                    val team = korge.appleDevelopmentTeamId ?: iosSdkExt.appleGetDefaultDeveloperCertificateTeamId()
 					if (team != null) {
 						line("DEVELOPMENT_TEAM: $team")
 					}
@@ -300,7 +212,7 @@ fun Project.configureNativeIos() {
 
 			execLogger {
 				it.workingDir(folder)
-				it.commandLine(xcodeGenExecutable.takeIfExists() ?: xcodeGenLocalExecutable.takeIfExists() ?: error("Can't find xcodegen"))
+				it.commandLine(iosXcodegenExt.xcodeGenExe)
 			}
 		}
 	}
@@ -314,7 +226,7 @@ fun Project.configureNativeIos() {
     val iphoneVersion = korge.preferredIphoneSimulatorVersion
 
 	val iosCreateIphone = tasks.create("iosCreateIphone", Task::class.java) {
-		onlyIf { appleGetDevices().none { it.name == "iPhone $iphoneVersion" } }
+		onlyIf { iosSdkExt.appleGetDevices().none { it.name == "iPhone $iphoneVersion" } }
 		doFirst {
             val result = execOutput("xcrun", "simctl", "list")
             val regex = Regex("com\\.apple\\.CoreSimulator\\.SimRuntime\\.iOS[\\w\\-]+")
@@ -325,14 +237,14 @@ fun Project.configureNativeIos() {
 	}
 
 	tasks.create("iosBootSimulator", Task::class.java) {
-		onlyIf { appleGetBootedDevice() == null }
+		onlyIf { iosSdkExt.appleGetBootedDevice() == null }
 		dependsOn(iosCreateIphone)
 		doLast {
-            val device = appleGetBootDevice(iphoneVersion)
+            val device = iosSdkExt.appleGetBootDevice(iphoneVersion)
             val udid = device.udid
             logger.info("Booting udid=$udid")
             if (logger.isInfoEnabled) {
-                for (device in appleGetDevices()) {
+                for (device in iosSdkExt.appleGetDevices()) {
                     logger.info(" - $device")
                 }
             }
@@ -364,7 +276,7 @@ fun Project.configureNativeIos() {
 				//}
                 workingDir(xcodeProjDir)
                 doFirst {
-                    commandLine("xcrun", "xcodebuild", "-scheme", "app-$arch-$debugSuffix", "-project", ".", "-configuration", debugSuffix, "-derivedDataPath", "build", "-arch", arch2, "-sdk", appleFindSdk(sdkName))
+                    commandLine("xcrun", "xcodebuild", "-scheme", "app-$arch-$debugSuffix", "-project", ".", "-configuration", debugSuffix, "-derivedDataPath", "build", "-arch", arch2, "-sdk", iosSdkExt.appleFindSdk(sdkName))
                     println("COMMAND: ${commandLine.joinToString(" ")}")
                 }
 			}
@@ -377,7 +289,7 @@ fun Project.configureNativeIos() {
 			dependsOn(buildTaskName, "iosBootSimulator")
 			doLast {
 				val appFolder = tasks.getByName(buildTaskName).outputs.files.first().parentFile
-                val device = appleGetInstallDevice(iphoneVersion)
+                val device = iosSdkExt.appleGetInstallDevice(iphoneVersion)
 				execLogger { it.commandLine("xcrun", "simctl", "install", device.udid, appFolder.absolutePath) }
 			}
 		}
@@ -406,7 +318,7 @@ fun Project.configureNativeIos() {
             group = GROUP_KORGE_RUN
             dependsOn(installIosSimulator)
             doFirst {
-                val device = appleGetInstallDevice(iphoneVersion)
+                val device = iosSdkExt.appleGetInstallDevice(iphoneVersion)
                 // xcrun simctl launch --console 7F49203A-1F16-4DEE-B9A2-7A1BB153DF70 com.sample.demo.app-X64-Debug
                 //logger.info(params.joinToString(" "))
                 execLogger { it.commandLine("xcrun", "simctl", "launch", "--console", device.udid, "${korge.id}.app-X64-$debugSuffix") }
@@ -434,87 +346,3 @@ fun Project.configureNativeIos() {
     }
 }
 
-data class IosDevice(val booted: Boolean, val isAvailable: Boolean, val name: String, val udid: String)
-
-// https://gist.github.com/luckman212/ec52e9291f27bc39c2eecee07e7a9aa7
-fun Project.appleGetDefaultDeveloperCertificateTeamId(): String? {
-    @Throws(IOException::class)
-    fun execCmd(cmd: String?): String {
-        return Runtime.getRuntime().exec(cmd).inputStream.reader().readText()
-    }
-
-    val certB64 = execCmd("security find-certificate -p")
-        .replace("-----BEGIN CERTIFICATE-----", "")
-        .replace("-----END CERTIFICATE-----", "")
-        .lines()
-        .joinToString("")
-
-    val cert = CertificateFactory.getInstance("X.509").generateCertificate(ByteArrayInputStream(Base64.getDecoder().decode(certB64))) as X509Certificate
-    val subjectStr = cert.subjectX500Principal.getName(X500Principal.RFC2253)
-
-    return Regex("OU=(\\w+)").find(subjectStr)?.groups?.get(1)?.value
-}
-
-fun Project.appleGetDevices(os: String = "iOS"): List<IosDevice> = KDynamic {
-	val res = Json.parse(execOutput("xcrun", "simctl", "list", "-j", "devices"))
-	val devices = res["devices"]
-	val oses = devices.keys.map { it.str }
-	val iosOses = oses.filter { it.contains(os) }
-    iosOses.map { devices[it].list }.flatten().map {
-        //println(it)
-		IosDevice(it["state"].str == "Booted", it["isAvailable"].bool, it["name"].str, it["udid"].str).also {
-		    //println(it)
-        }
-	}
-}
-
-fun Project.appleGetBootDevice(iphoneVersion: Int): IosDevice {
-    val devices = appleGetDevices()
-    return devices.firstOrNull { it.name == "iPhone $iphoneVersion" && it.isAvailable }
-        ?: devices.firstOrNull { it.name.contains("iPhone") && it.isAvailable }
-        ?: run {
-            val errorMessage = "Can't find suitable available iPhone $iphoneVersion device"
-            logger.info(errorMessage)
-            for (device in devices) logger.info("- $device")
-            error(errorMessage)
-        }
-}
-
-fun Project.appleGetInstallDevice(iphoneVersion: Int): IosDevice {
-    val devices = appleGetDevices()
-    return devices.firstOrNull { it.name == "iPhone $iphoneVersion" && it.booted }
-        ?: devices.firstOrNull { it.name.contains("iPhone") && it.booted }
-        ?: error("Can't find suitable booted iPhone $iphoneVersion device")
-}
-
-fun Project.appleGetBootedDevice(os: String = "iOS"): IosDevice? = appleGetDevices(os).firstOrNull { it.booted }
-fun Project.appleFindSdk(name: String): String = Regex("(${name}.*)").find(execOutput("xcrun", "xcodebuild", "-showsdks"))?.groupValues?.get(0) ?: error("Can't find sdk starting with $name")
-fun Project.appleFindIphoneSimSdk(): String = appleFindSdk("iphonesimulator")
-fun Project.appleFindIphoneOsSdk(): String = appleFindSdk("iphoneos")
-
-//tasks.create<Task>("iosLaunchSimulator") {
-//	dependsOn("iosInstallSimulator")
-//	doLast {
-//		val udid = appleGetDevices().firstOrNull { it.name == "iPhone 7" }?.udid ?: error("Can't find iPhone 7 device")
-//		execLogger { commandLine("xcrun", "simctl", "launch", "-w", udid, korge.id) }
-//
-//	}
-//}
-
-
-//task iosLaunchSimulator(type: Exec, dependsOn: [iosInstallSimulator]) {
-//	workingDir file("client-mpp-ios.xcodeproj")
-//	executable "sh"
-//	args "-c", "xcrun simctl launch booted io.ktor.samples.mpp.client-mpp-ios"
-//}
-
-// https://www.objc.io/issues/17-security/inside-code-signing/
-// security find-identity -v -p codesigning
-// codesign -s 'iPhone Developer: Thomas Kollbach (7TPNXN7G6K)' Example.app
-// codesign -f -s 'iPhone Developer: Thomas Kollbach (7TPNXN7G6K)' Example.app
-
-//osascript -e 'tell application "iOS Simulator" to quit'
-//osascript -e 'tell application "Simulator" to quit'
-//xcrun simctl erase all
-
-// xcrun lipo

@@ -927,37 +927,47 @@ val gitVersion = try {
 
 //fileTree(new File(rootProject.projectDir, "buildSrc/src/main/kotlinShared"))
 //copy {
-copy {
-    val it = this
-    val fromFolder = File(rootProject.projectDir, "buildSrc/src/main/kotlinShared")
+if (true) {
+    val fromFolder = File(rootProject.projectDir, "buildSrc/src/main/kotlin")
     val intoFolder = File(rootProject.projectDir, "korge-gradle-plugin/build/srcgen2")
-    it.from(fromFolder)
-    it.into(intoFolder)
-    it.duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    it.eachFile {
-        val details = this
-        val fromFile = File(fromFolder, details.sourcePath)
-        val intoFile = File(intoFolder, details.path)
-        //println("${fromFile} -> ${intoFile}")
-        try {
-            //try {
-            //    if (intoFile.exists() && Files.isSymbolicLink(intoFile.toPath())) {
-            //        if (Files.readSymbolicLink(intoFile.toPath()) == fromFile.toPath()) {
-            //            details.exclude()
-            //            return@eachFile
-            //        }
+    try {
+        if (!intoFolder.isDirectory && !Files.isSymbolicLink(intoFolder.toPath())) {
+            intoFolder.deleteRecursively()
+            Files.createSymbolicLink(intoFolder.toPath(), fromFolder.toPath())
+        }
+    } catch (e: Throwable) {
+        copy {
+            val it = this
+            it.from(fromFolder)
+            it.into(intoFolder)
+            it.duplicatesStrategy = DuplicatesStrategy.INCLUDE
+            //it.eachFile {
+            //    val details = this
+            //    val fromFile = File(fromFolder, details.sourcePath)
+            //    val intoFile = File(intoFolder, details.path)
+            //    //println("${fromFile} -> ${intoFile}")
+            //    try {
+            //        //try {
+            //        //    if (intoFile.exists() && Files.isSymbolicLink(intoFile.toPath())) {
+            //        //        if (Files.readSymbolicLink(intoFile.toPath()) == fromFile.toPath()) {
+            //        //            details.exclude()
+            //        //            return@eachFile
+            //        //        }
+            //        //    }
+            //        //} catch (e: Throwable) {
+            //        //    //e.printStackTrace()
+            //        //}
+            //        Files.deleteIfExists(intoFile.toPath())
+            //        Files.createSymbolicLink(intoFile.toPath(), fromFile.toPath())
+            //        details.exclude()
+            //    } catch (e: Throwable) {
+            //        //e.printStackTrace()
             //    }
-            //} catch (e: Throwable) {
-            //    //e.printStackTrace()
             //}
-            Files.deleteIfExists(intoFile.toPath())
-            Files.createSymbolicLink(intoFile.toPath(), fromFile.toPath())
-            details.exclude()
-        } catch (e: Throwable) {
-            //e.printStackTrace()
         }
     }
 }
+
 
 
 val buildVersionsFile = file("korge-gradle-plugin/build/srcgen/com/soywiz/korge/gradle/BuildVersions.kt")
