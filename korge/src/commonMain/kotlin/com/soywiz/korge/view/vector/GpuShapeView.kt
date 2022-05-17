@@ -38,6 +38,7 @@ import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.bezier.Bezier
 import com.soywiz.korma.geom.degrees
 import com.soywiz.korma.geom.distanceTo
+import com.soywiz.korma.geom.expand
 import com.soywiz.korma.geom.minus
 import com.soywiz.korma.geom.plus
 import com.soywiz.korma.geom.shape.emitPoints2
@@ -584,7 +585,7 @@ open class GpuShapeView(
             )
         }
 
-        writeFill(paintShader, stencilEqualsValue, pathBounds)
+        writeFill(paintShader, stencilEqualsValue, pathBounds, pathDataStart, pathDataEnd)
 
         gpuShapeViewCommands.clearStencil(0)
 
@@ -603,18 +604,23 @@ open class GpuShapeView(
         )
     }
 
-    private fun writeFill(paintShader: GpuShapeViewPrograms.PaintShader, stencilEqualsValue: Int, pathBounds: Rectangle) {
-        val x0 = pathBounds.left.toFloat()
-        val y0 = pathBounds.top.toFloat()
-        val x1 = pathBounds.right.toFloat()
-        val y1 = pathBounds.bottom.toFloat()
-
-        val vstart = gpuShapeViewCommands.verticesStart()
-        gpuShapeViewCommands.addVertex(x0, y0)
-        gpuShapeViewCommands.addVertex(x1, y0)
-        gpuShapeViewCommands.addVertex(x1, y1)
-        gpuShapeViewCommands.addVertex(x0, y1)
-        val vend = gpuShapeViewCommands.verticesEnd()
+    private fun writeFill(
+        paintShader: GpuShapeViewPrograms.PaintShader,
+        stencilEqualsValue: Int,
+        pathBounds: Rectangle,
+        pathDataStart: Int,
+        pathDataEnd: Int
+    ) {
+        //val vstart = gpuShapeViewCommands.verticesStart()
+        //val x0 = pathBounds.left.toFloat()
+        //val y0 = pathBounds.top.toFloat()
+        //val x1 = pathBounds.right.toFloat()
+        //val y1 = pathBounds.bottom.toFloat()
+        //gpuShapeViewCommands.addVertex(x0, y0)
+        //gpuShapeViewCommands.addVertex(x1, y0)
+        //gpuShapeViewCommands.addVertex(x1, y1)
+        //gpuShapeViewCommands.addVertex(x0, y1)
+        //val vend = gpuShapeViewCommands.verticesEnd()
 
         //println("[($lx0,$ly0)-($lx1,$ly1)]")
 
@@ -628,8 +634,10 @@ open class GpuShapeView(
                 referenceValue = stencilEqualsValue,
                 writeMask = 0,
             ),
-            startIndex = vstart,
-            endIndex = vend,
+            //startIndex = vstart,
+            //endIndex = vend,
+            startIndex = pathDataStart,
+            endIndex = pathDataEnd,
         )
     }
 
