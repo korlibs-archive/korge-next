@@ -4,6 +4,7 @@ import org.gradle.kotlin.dsl.kotlin
 import java.io.File
 import java.nio.file.Files
 import com.soywiz.korlibs.modules.*
+import kotlin.io.path.relativeTo
 
 buildscript {
     val kotlinVersion: String = libs.versions.kotlin.get()
@@ -932,8 +933,9 @@ if (true) {
     val intoFolder = File(rootProject.projectDir, "korge-gradle-plugin/build/srcgen2")
     try {
         if (!intoFolder.isDirectory && !Files.isSymbolicLink(intoFolder.toPath())) {
-            intoFolder.deleteRecursively()
-            Files.createSymbolicLink(intoFolder.toPath(), fromFolder.toPath())
+            runCatching { intoFolder.delete() }
+            runCatching { intoFolder.deleteRecursively() }
+            Files.createSymbolicLink(intoFolder.toPath(), intoFolder.parentFile.toPath().relativize(fromFolder.toPath()))
         }
     } catch (e: Throwable) {
         copy {
@@ -941,29 +943,6 @@ if (true) {
             it.from(fromFolder)
             it.into(intoFolder)
             it.duplicatesStrategy = DuplicatesStrategy.INCLUDE
-            //it.eachFile {
-            //    val details = this
-            //    val fromFile = File(fromFolder, details.sourcePath)
-            //    val intoFile = File(intoFolder, details.path)
-            //    //println("${fromFile} -> ${intoFile}")
-            //    try {
-            //        //try {
-            //        //    if (intoFile.exists() && Files.isSymbolicLink(intoFile.toPath())) {
-            //        //        if (Files.readSymbolicLink(intoFile.toPath()) == fromFile.toPath()) {
-            //        //            details.exclude()
-            //        //            return@eachFile
-            //        //        }
-            //        //    }
-            //        //} catch (e: Throwable) {
-            //        //    //e.printStackTrace()
-            //        //}
-            //        Files.deleteIfExists(intoFile.toPath())
-            //        Files.createSymbolicLink(intoFile.toPath(), fromFile.toPath())
-            //        details.exclude()
-            //    } catch (e: Throwable) {
-            //        //e.printStackTrace()
-            //    }
-            //}
         }
     }
 }
