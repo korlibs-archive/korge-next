@@ -1,5 +1,7 @@
 package com.soywiz.korlibs.modules
 
+import com.soywiz.korge.gradle.targets.isLinux
+import com.soywiz.korge.gradle.targets.isMacos
 import com.soywiz.korlibs.kotlin
 import org.gradle.api.NamedDomainObjectSet
 import org.gradle.api.tasks.InputFiles

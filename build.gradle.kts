@@ -1,5 +1,6 @@
 import com.soywiz.korlibs.modules.*
 import com.soywiz.korge.gradle.util.*
+import com.soywiz.korge.gradle.targets.*
 import com.soywiz.korge.gradle.targets.android.AndroidSdk
 import org.gradle.kotlin.dsl.kotlin
 import java.io.File
