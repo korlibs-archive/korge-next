@@ -165,6 +165,16 @@ class ViewController(val entry: suspend () -> Unit) : UIViewController(null, nul
 @OptIn(UnsafeNumber::class)
 @ExportObjCClass
 class MyGLKViewController(val entry: suspend () -> Unit)  : GLKViewController(null, null) {
+    var value = 0
+    var initialized = false
+    private var myContext: EAGLContext? = null
+    val gameWindow: IosGameWindow get() = MyIosGameWindow
+    val touches = arrayListOf<UITouch>()
+    val touchesIds = arrayListOf<Int>()
+    val freeIds = Pool { it }
+    var lastWidth = 0
+    var lastHeight = 0
+
     override fun viewDidLoad() {
         val view = this.view as? GLKView?
         view?.multipleTouchEnabled = true
@@ -172,19 +182,9 @@ class MyGLKViewController(val entry: suspend () -> Unit)  : GLKViewController(nu
         view?.drawableStencilFormat = GLKViewDrawableStencilFormat8
         view?.context = EAGLContext(kEAGLRenderingAPIOpenGLES2)
         initialized = false
-        reshape = true
+        lastWidth = 0
+        lastHeight = 0
     }
-
-    var value = 0
-
-    var initialized = false
-    var reshape = false
-    private var myContext: EAGLContext? = null
-    val gameWindow: IosGameWindow get() = MyIosGameWindow
-    val touches = arrayListOf<UITouch>()
-    val freeIds = Pool { it }
-    val touchesIds = arrayListOf<Int>()
-    var lastTouchId = 0
 
     override fun glkView(view: GLKView, drawInRect: CValue<CGRect>) {
         if (!initialized) {
@@ -197,16 +197,12 @@ class MyGLKViewController(val entry: suspend () -> Unit)  : GLKViewController(nu
             }
             //self.lastTouchId = 0;
 
-            val width = view.frame.useContents { this.size.width.toDouble() }
-            val height = view.frame.useContents { this.size.height.toDouble() }
-
             Console.info("dispatchInitEvent")
             gameWindow.dispatchInitEvent()
             gameWindow.entry {
                 Console.info("Executing entry...")
                 this.entry()
             }
-            this.reshape = true
         }
 
         // Context changed!
@@ -218,22 +214,22 @@ class MyGLKViewController(val entry: suspend () -> Unit)  : GLKViewController(nu
             gameWindow.ag.contextLost()
         }
 
-        val width = view.bounds.useContents { size.width } * view.contentScaleFactor
-        val height = view.bounds.useContents { size.height } * view.contentScaleFactor
-        if (this.reshape) {
-            this.reshape = false
-            gameWindow.dispatchReshapeEvent(0, 0, width.toInt(), height.toInt())
+        val width = (view.bounds.useContents { size.width } * view.contentScaleFactor).toInt()
+        val height = (view.bounds.useContents { size.height } * view.contentScaleFactor).toInt()
+        if (lastWidth != width || lastHeight != height) {
+            println("RESHAPE: $lastWidth, $lastHeight -> $width, $height")
+            this.lastWidth = width
+            this.lastHeight = height
+            gameWindow.dispatchReshapeEvent(0, 0, width, height)
         }
 
-        /*
-        this.value++
-        glDisable(GL_SCISSOR_TEST)
-        glDisable(GL_STENCIL_TEST)
-        glViewport(0, 0, 200, 300)
-        glScissor(0, 0, 200, 300)
-        glClearColor((this.value % 100).toFloat() / 100f, 0f, 1f, 1f)
-        glClear(GL_COLOR_BUFFER_BIT)
-         */
+        //this.value++
+        //glDisable(GL_SCISSOR_TEST)
+        //glDisable(GL_STENCIL_TEST)
+        //glViewport(0, 0, 200, 300)
+        //glScissor(0, 0, 200, 300)
+        //glClearColor((this.value % 100).toFloat() / 100f, 0f, 1f, 1f)
+        //glClear(GL_COLOR_BUFFER_BIT)
 
         gameWindow.frame()
     }
@@ -277,8 +273,6 @@ class MyGLKViewController(val entry: suspend () -> Unit)  : GLKViewController(nu
         addTouches(touches, type = TouchType.ENDED)
         this.gameWindow.dispatchTouchEventEnd()
     }
-
-
 
     private fun addTouches(touches: Set<*>, type: TouchType) {
         //println("addTouches[${touches.size}] type=$type");
