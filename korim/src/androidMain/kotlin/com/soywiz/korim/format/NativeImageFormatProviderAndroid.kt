@@ -222,8 +222,17 @@ class AndroidContext2dRenderer(val bmp: android.graphics.Bitmap, val antialiasin
             }
             is com.soywiz.korim.paint.GradientPaint -> {
                 val colors = c.colors.toColorScaledAlpha(alpha)
-                    // @TODO: Why is this required?
-                    .also { it.reverse() }
+                    .apply {
+                        if (c.kind != GradientKind.SWEEP) {
+                            // @TODO: Why is this required?
+                            reverse()
+                        } else {
+                            // @TODO: Why is this required?
+                            for (n in indices) {
+                                this[n] = BGRA.rgbaToBgra(this[n])
+                            }
+                        }
+                    }
                 val stops = c.stops.toFloatArray()
                 out.shader = when (c.kind) {
                     GradientKind.LINEAR ->
