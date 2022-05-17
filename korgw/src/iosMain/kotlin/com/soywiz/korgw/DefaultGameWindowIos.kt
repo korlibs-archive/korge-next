@@ -287,7 +287,7 @@ class MyGLKViewController(val entry: suspend () -> Unit)  : GLKViewController(nu
                 val leftStick = Point()
                 val rightStick = Point()
                 fun button(button: GameButton, pressed: Boolean) {
-                    if (pressed) buttonMask = buttonMask or (1 shl mapping.getButtonIndex(button))
+                    if (pressed) buttonMask = buttonMask or (1 shl button.ordinal)
                 }
 
                 fun button(button: GameButton, gcbutton: GCControllerButtonInput?) {

@@ -169,19 +169,21 @@ enum class GameStick(val id: Int) {
 	}
 }
 
-enum class GameButton(val index: Int) {
-	LEFT(0), RIGHT(1), UP(2), DOWN(3),
-	BUTTON0(4), // XBox: A, Playstation: Cross
-    BUTTON1(5), // XBox: B, Playstation: Circle
-    BUTTON2(6), // XBox: X, Playstation: Square
-    BUTTON3(7), // XBox: Y, Playstation: Triangle
-	SELECT(8), START(9), SYSTEM(10),
-	L1(11), R1(12),
-	L2(13), R2(14),
-	L3(15), R3(16),
-	LX(17), LY(18),
-	RX(19), RY(20),
-	BUTTON4(24), BUTTON5(25), BUTTON6(26), BUTTON7(27), BUTTON8(28);
+enum class GameButton {
+	LEFT, RIGHT, UP, DOWN,
+	BUTTON0, // XBox: A, Playstation: Cross
+    BUTTON1, // XBox: B, Playstation: Circle
+    BUTTON2, // XBox: X, Playstation: Square
+    BUTTON3, // XBox: Y, Playstation: Triangle
+	SELECT, START, SYSTEM,
+	L1, R1,
+	L2, R2,
+	L3, R3,
+	LX, LY,
+	RX, RY,
+	BUTTON4, BUTTON5, BUTTON6, BUTTON7, BUTTON8;
+
+    val index: Int get() = ordinal
 
 	companion object {
 		val BUTTONS = values()
@@ -262,26 +264,7 @@ abstract class GamepadMapping {
     fun GamepadInfo.getRawPressureButton(index: Int) = this.rawButtonsPressure[index]
     fun GamepadInfo.getRawButton(index: Int): Double = this.rawButtonsPressed.getButton(index)
     fun GamepadInfo.getRawAxe(index: Int) = this.rawAxes.getOrElse(index) { 0.0 }
-    open fun getButtonIndex(button: GameButton): Int = when (button) {
-        GameButton.BUTTON0 -> 0
-        GameButton.BUTTON1 -> 1
-        GameButton.BUTTON2 -> 2
-        GameButton.BUTTON3 -> 3
-        GameButton.L1     -> 4
-        GameButton.R1     -> 5
-        GameButton.L2     -> 6
-        GameButton.R2     -> 7
-        GameButton.SELECT -> 8
-        GameButton.START -> 9
-        GameButton.L3 -> 10
-        GameButton.R3 -> 11
-        GameButton.UP -> 12
-        GameButton.DOWN -> 13
-        GameButton.LEFT -> 14
-        GameButton.RIGHT -> 15
-        GameButton.SYSTEM -> 16
-        else -> 0
-    }
+    open fun getButtonIndex(button: GameButton): Int = button.ordinal
     open fun getAxeIndex(button: GameButton): Int = when (button) {
         GameButton.LX -> 0
         GameButton.LY -> 1
