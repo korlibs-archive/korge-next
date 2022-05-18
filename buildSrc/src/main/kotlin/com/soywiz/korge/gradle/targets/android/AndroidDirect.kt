@@ -27,10 +27,11 @@ fun Project.configureAndroidDirect() {
             sourceCompatibility = JavaVersion.VERSION_1_8
             targetCompatibility = JavaVersion.VERSION_1_8
         }
-        installation {
-            installOptions = listOf("-r")
-            timeOutInMs = project.korge.androidTimeoutMs
-        }
+        // @TODO: Android Build Gradle newer version
+        //installation {
+        //    installOptions = listOf("-r")
+        //    timeOutInMs = project.korge.androidTimeoutMs
+        //}
         packagingOptions {
             for (pattern in project.korge.androidExcludePatterns) {
                 resources.excludes.add(pattern)
