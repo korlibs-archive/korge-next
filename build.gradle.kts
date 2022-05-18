@@ -139,6 +139,10 @@ subprojects {
             }
         }
 
+        if (isSample && doEnableKotlinNative && com.soywiz.korge.gradle.targets.isMacos) {
+            configureNativeIos()
+        }
+
         if (!isSample && rootProject.plugins.hasPlugin("org.jetbrains.dokka")) {
             apply(plugin = "org.jetbrains.dokka")
 
