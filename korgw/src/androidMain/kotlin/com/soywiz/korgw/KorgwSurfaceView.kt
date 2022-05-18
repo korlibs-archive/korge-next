@@ -93,7 +93,7 @@ open class KorgwSurfaceView constructor(
                         activeGamepads.toMap().forEach { (deviceId, value) ->
                             if (deviceId !in currentGamePadIds) {
                                 activeGamepads.remove(deviceId)
-                                gameWindow.dispatchGamepadConnectionEvent(GamePadConnectionEvent.Type.DISCONNECTED, -1)
+                                //gameWindow.dispatchGamepadConnectionEvent(GamePadConnectionEvent.Type.DISCONNECTED, -1)
                             }
                         }
                         gameWindow.dispatchGamepadUpdateStart()

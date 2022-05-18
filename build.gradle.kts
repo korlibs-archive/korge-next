@@ -2,6 +2,8 @@ import com.soywiz.korlibs.modules.*
 import com.soywiz.korge.gradle.util.*
 import com.soywiz.korge.gradle.targets.*
 import com.soywiz.korge.gradle.targets.android.AndroidSdk
+import com.soywiz.korge.gradle.targets.ios.configureNativeIos
+import com.soywiz.korge.gradle.targets.jvm.JvmAddOpens
 import org.gradle.kotlin.dsl.kotlin
 import java.io.File
 import java.nio.file.Files
@@ -173,10 +175,10 @@ subprojects {
                     testClassesDirs = jvmTest.testClassesDirs
                     classpath = jvmTest.classpath
                     bootstrapClasspath = jvmTest.bootstrapClasspath
-                    if (!beforeJava9) jvmArgs(*javaAddOpens)
+                    if (!JvmAddOpens.beforeJava9) jvmArgs(*JvmAddOpens.createAddOpensTypedArray())
                     if (headlessTests) systemProperty("java.awt.headless", "true")
                 }
-                if (!beforeJava9) jvmTest.jvmArgs(*javaAddOpens)
+                if (!JvmAddOpens.beforeJava9) jvmTest.jvmArgs(*JvmAddOpens.createAddOpensTypedArray())
                 if (headlessTests) jvmTest.systemProperty("java.awt.headless", "true")
             }
         }

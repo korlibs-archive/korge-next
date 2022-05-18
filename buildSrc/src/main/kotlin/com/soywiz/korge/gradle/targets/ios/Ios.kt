@@ -96,119 +96,14 @@ fun Project.configureNativeIos() {
 
 			val folder = File(buildDir, "platforms/ios")
             IosProjectTools.prepareKotlinNativeIosProject(folder)
-
-			data class IconConfig(val idiom: String, val size: Number, val scale: Int) {
-				val sizeStr = "${size}x$size"
-				val scaleStr = "${scale}x"
-				val realSize = (size.toDouble() * scale).toInt()
-				val fileName = "icon$realSize.png"
-			}
-			val icons = listOf(
-				IconConfig("iphone", 20, 2),
-				IconConfig("iphone", 20, 3),
-				IconConfig("iphone", 29, 2),
-				IconConfig("iphone", 20, 3),
-				IconConfig("iphone", 40, 2),
-				IconConfig("iphone", 40, 3),
-				IconConfig("iphone", 60, 2),
-				IconConfig("iphone", 60, 3),
-				IconConfig("ipad", 20, 1),
-				IconConfig("ipad", 20, 2),
-				IconConfig("ipad", 29, 1),
-				IconConfig("ipad", 29, 2),
-				IconConfig("ipad", 40, 1),
-				IconConfig("ipad", 40, 2),
-				IconConfig("ipad", 76, 1),
-				IconConfig("ipad", 76, 2),
-				IconConfig("ipad", 83.5, 2),
-				IconConfig("ios-marketing", 1024, 1)
-			)
-
-			for (icon in icons.distinctBy { it.realSize }) {
-				folder["app/Assets.xcassets/AppIcon.appiconset/${icon.fileName}"].ensureParents().writeBytes(korge.getIconBytes(icon.realSize))
-			}
-
-			folder["app/Assets.xcassets/AppIcon.appiconset/Contents.json"].ensureParents().writeText(
-				Indenter {
-					line("{")
-					indent {
-						line("\"images\" : [")
-						indent {
-
-							for ((index, config) in icons.withIndex()) {
-								val isLast = (index == icons.lastIndex)
-								val tail = if (isLast) "" else ","
-								line("{ \"idiom\" : ${config.idiom.quoted}, \"size\" : ${config.sizeStr.quoted}, \"scale\" : ${config.scaleStr.quoted}, \"filename\" : ${config.fileName.quoted} }$tail")
-							}
-
-						}
-						line("],")
-						line("\"info\" : { \"version\": 1, \"author\": \"xcode\" }")
-					}
-					line("}")
-				}
-			)
-
-
-			folder["project.yml"].ensureParents().writeText(Indenter {
-				line("name: app")
-				line("options:")
-				indent {
-					line("bundleIdPrefix: ${korge.id}")
-					line("minimumXcodeGenVersion: 2.0.0")
-				}
-				line("settings:")
-				indent {
-					line("PRODUCT_NAME: ${korge.name}")
-					line("ENABLE_BITCODE: NO")
-                    val team = korge.appleDevelopmentTeamId ?: iosSdkExt.appleGetDefaultDeveloperCertificateTeamId()
-					if (team != null) {
-						line("DEVELOPMENT_TEAM: $team")
-					}
-				}
-				line("targets:")
-
-				indent {
-					for (debug in listOf(false, true)) {
-						val debugSuffix = if (debug) "Debug" else "Release"
-						for (target in listOf("X64", "Arm64", "Arm32")) {
-							line("app-$target-$debugSuffix:")
-							indent {
-								line("platform: iOS")
-								line("type: application")
-								line("deploymentTarget: \"10.0\"")
-								line("sources:")
-								indent {
-									line("- app")
-									//for (path in listOf("../../../src/commonMain/resources", "../../../build/genMainResources")) {
-									for (path in listOf(combinedResourcesFolder.relativeTo(folder))) {
-										line("- path: $path")
-										indent {
-											line("name: assets")
-											line("optional: true")
-											line("buildPhase:")
-											indent {
-												line("copyFiles:")
-												indent {
-													line("destination: resources")
-													line("subpath: include/app")
-												}
-											}
-											line("type: folder")
-										}
-									}
-								}
-                                if (korge.iosDevelopmentTeam != null) {
-                                    line("settings:")
-                                    line("  DEVELOPMENT_TEAM: ${korge.iosDevelopmentTeam}")
-                                }
-                                line("dependencies:")
-                                line("  - framework: ../../bin/ios$target/${debugSuffix.toLowerCase()}Framework/GameMain.framework")
-							}
-						}
-					}
-				}
-			}.replace("\t", "  "))
+            IosProjectTools.prepareKotlinNativeIosProjectIcons(folder) { korge.getIconBytes(it) }
+            IosProjectTools.prepareKotlinNativeIosProjectYml(
+                folder,
+                id = korge.id,
+                name = korge.name,
+                team = korge.iosDevelopmentTeam ?: korge.appleDevelopmentTeamId ?: iosSdkExt.appleGetDefaultDeveloperCertificateTeamId(),
+                combinedResourcesFolder = combinedResourcesFolder
+            )
 
 			execLogger {
 				it.workingDir(folder)
