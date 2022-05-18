@@ -3,6 +3,7 @@ import com.soywiz.klogger.*
 import com.soywiz.korev.*
 import com.soywiz.korge.annotations.*
 import com.soywiz.korge.input.*
+import com.soywiz.korge.ui.uiButton
 import com.soywiz.korge.view.*
 import com.soywiz.korge.view.vector.*
 import com.soywiz.korgw.*
@@ -290,6 +291,8 @@ suspend fun Stage.mainGpuVectorRendering() {
             shape.rotation += it.ly.degrees
         }
     }
+
+    uiButton("HELLO").xy(400, 400).scale(4.0)
 
     //while (true) Bitmap32(512, 512).context2d { buildGraphics("KOTLIN") }
 }
