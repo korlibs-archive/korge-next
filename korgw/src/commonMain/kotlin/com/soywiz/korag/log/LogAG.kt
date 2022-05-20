@@ -278,7 +278,7 @@ open class LogBaseAG(
                 indices != null -> {
                     val indexMem = (indices as LogBuffer).logmem!!
                     val range = offset until offset + vertexCount
-                    when (batch?.indexType) {
+                    when (batch.indexType) {
                         IndexType.UBYTE -> range.mapInt { indexMem.getAlignedUInt8(it) }
                         IndexType.USHORT -> range.mapInt { indexMem.getAlignedUInt16(it) }
                         IndexType.UINT -> range.mapInt { indexMem.getAlignedInt32(it) }

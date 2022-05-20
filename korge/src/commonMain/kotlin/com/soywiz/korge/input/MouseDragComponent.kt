@@ -97,6 +97,7 @@ fun <T : View> T.onMouseDrag(timeProvider: TimeProvider = TimeProvider, info: Mo
             MouseDragState.END -> {
                 dragging = false
             }
+            else -> Unit
         }
         cx = mousePos.x
         cy = mousePos.y

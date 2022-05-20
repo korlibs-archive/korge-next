@@ -159,6 +159,7 @@ class TouchBuilder {
                     }
                 }
             }
+            else -> Unit
         }
     }
 
@@ -175,8 +176,8 @@ class TouchBuilder {
                 }
             }
             Mode.IOS -> {
-
             }
+            else -> Unit
         }
         new.endFrame()
         old.copyFrom(new)

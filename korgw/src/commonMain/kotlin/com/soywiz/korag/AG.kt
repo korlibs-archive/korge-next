@@ -893,6 +893,7 @@ abstract class AG : AGFeatures, Extra by Extra.Mixin() {
                         }
                     }
                 }
+                else -> Unit
             }
         }
         return useExternalSampler
