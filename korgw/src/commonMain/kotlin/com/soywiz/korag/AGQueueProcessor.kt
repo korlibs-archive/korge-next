@@ -1,19 +1,23 @@
 package com.soywiz.korag
 
-import com.soywiz.kmem.*
-import com.soywiz.korag.shader.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korio.annotations.*
+import com.soywiz.kmem.FBuffer
+import com.soywiz.korag.shader.Program
+import com.soywiz.korag.shader.ProgramConfig
+import com.soywiz.korag.shader.UniformLayout
+import com.soywiz.korim.bitmap.Bitmap
+import com.soywiz.korio.annotations.KorInternal
 
-@KorIncomplete
 @KorInternal
 interface AGQueueProcessor {
+    // EXTRA
+    fun contextLost()
     // SYNC
     fun finish()
     // ENABLE / DISABLE
     fun enableDisable(kind: AGEnable, enable: Boolean)
     // READ
     fun readPixels(x: Int, y: Int, width: Int, height: Int, data: Any, kind: AG.ReadKind)
+    fun readPixelsToTexture(textureId: Int, x: Int, y: Int, width: Int, height: Int, kind: AG.ReadKind)
     // DRAW
     fun draw(type: AGDrawType, vertexCount: Int, offset: Int = 0, instances: Int = 1, indexType: AGIndexType? = null, indices: AG.Buffer? = null)
     // Buffers
@@ -71,7 +75,7 @@ interface AGQueueProcessor {
         premultiplied: Boolean
     )
     fun textureBind(textureId: Int, target: AG.TextureTargetKind, implForcedTexId: Int)
-    fun textureBindEnsuring(tex: AG.Texture)
+    fun textureBindEnsuring(tex: AG.Texture?)
     fun textureSetFromFrameBuffer(textureId: Int, x: Int, y: Int, width: Int, height: Int)
     // FRAME BUFFER
     fun frameBufferCreate(id: Int)

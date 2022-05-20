@@ -1,8 +1,12 @@
 package com.soywiz.krypto
 
-import com.soywiz.krypto.encoding.*
+import com.soywiz.krypto.encoding.Hex
+import com.soywiz.krypto.encoding.hexLower
+import com.soywiz.krypto.encoding.unhex
 import kotlin.random.Random
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class AESTest {
     @Test
@@ -21,6 +25,48 @@ class AESTest {
         val cipherKey = Hex.decode("000102030405060708090a0b0c0d0e0f")
         val cipherText = AES.encryptAes128Cbc(plainText, cipherKey)
         assertEquals(plainText.toHexStringLower(), AES.decryptAes128Cbc(cipherText, cipherKey).toHexStringLower())
+    }
+
+    @Test
+    fun aesModes() {
+        val keySizeArray = intArrayOf(16, 24, 32)
+        val paddingValues = arrayListOf(Padding.NoPadding, Padding.PKCS7Padding, Padding.ANSIX923Padding, Padding.ISO10126Padding)
+        val modes = listOf(
+            CipherMode.ECB,
+            CipherMode.CBC,
+            CipherMode.PCBC,
+            CipherMode.CFB,
+            CipherMode.OFB,
+            CipherMode.CTR,
+        )
+        for (mode in modes) {
+            for (i in 0..100) {
+                val keySize = keySizeArray[i % keySizeArray.size]
+                val cipherKey = Random.nextBytes(keySize)
+                val iv = Random.nextBytes(16)
+                val padding = paddingValues[i % paddingValues.size]
+                val ivCopy = iv.copyOf()
+
+                //println("KeySize=$keySize, Padding=$padding")
+                //println("Key= " + cipherKey.contentToString())
+                val dataSize = if (padding == Padding.NoPadding) 16 else Random.nextInt(32)
+                val plainText = Random.nextBytes(dataSize)
+                val plainTextCopy = plainText.copyOf()
+                val cipher = AES(cipherKey)[mode, padding, iv]
+                val encryptedText = cipher.encrypt(plainText)
+                val encryptedTextCopy = encryptedText.copyOf()
+                val decryptedText = cipher.decrypt(encryptedText)
+                //println("PlainText=   ${plainText.contentToString()}")
+                //println("EncryptText= ${encryptedText.contentToString()}")
+                //println("DecryptText= ${decryptedText.contentToString()}")
+                //println()
+                assertEquals(plainText.hexLower, decryptedText.hexLower)
+                // Ensure we don't mutate input arrays
+                assertEquals(ivCopy.hexLower, iv.hexLower, "IV shouldn't be mutated")
+                assertEquals(plainTextCopy.hexLower, plainText.hexLower, "plainText shouldn't be mutated")
+                assertEquals(encryptedTextCopy.hexLower, encryptedText.hexLower, "encryptedText shouldn't be muated")
+            }
+        }
     }
 
     @Test
@@ -85,6 +131,30 @@ class AESTest {
             val plainText = Random.nextBytes(dataSize)
             val encryptedText = AES.encryptAesPcbc(plainText, cipherKey, iv, padding)
             val decryptedText = AES.decryptAesPcbc(encryptedText, cipherKey, iv, padding)
+            //println("PlainText=   ${plainText.contentToString()}")
+            //println("EncryptText= ${encryptedText.contentToString()}")
+            //println("DecryptText= ${decryptedText.contentToString()}")
+            //println()
+            assertEquals(plainText.toHexStringLower(), decryptedText.toHexStringLower())
+        }
+    }
+
+    @Test
+    fun aecCtr() {
+        val keySizeArray = intArrayOf(16, 24, 32)
+        val paddingValues = arrayListOf(Padding.NoPadding, Padding.PKCS7Padding, Padding.ANSIX923Padding, Padding.ISO10126Padding)
+        for (i in 0..100) {
+            val keySize = keySizeArray[i % keySizeArray.size]
+            val cipherKey = Random.nextBytes(keySize)
+            val iv = Random.nextBytes(16)
+            val padding = paddingValues[i % paddingValues.size]
+            //println("KeySize=$keySize, Padding=$padding")
+            //println("Key= " + cipherKey.contentToString())
+            //println("IV= " + iv.contentToString())
+            val dataSize = if (padding == Padding.NoPadding) 16 else Random.nextInt(32)
+            val plainText = Random.nextBytes(dataSize)
+            val encryptedText = AES.encryptAesCtr(plainText, cipherKey, iv, padding)
+            val decryptedText = AES.decryptAesCtr(encryptedText, cipherKey, iv, padding)
             //println("PlainText=   ${plainText.contentToString()}")
             //println("EncryptText= ${encryptedText.contentToString()}")
             //println("DecryptText= ${decryptedText.contentToString()}")

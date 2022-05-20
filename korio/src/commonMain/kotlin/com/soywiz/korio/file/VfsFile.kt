@@ -2,17 +2,31 @@
 
 package com.soywiz.korio.file
 
-import com.soywiz.kds.*
-import com.soywiz.klock.*
-import com.soywiz.kmem.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.experimental.*
-import com.soywiz.korio.file.std.*
-import com.soywiz.korio.lang.*
-import com.soywiz.korio.stream.*
-import com.soywiz.korio.util.*
-import kotlinx.coroutines.flow.*
-import kotlin.coroutines.*
+import com.soywiz.kds.Extra
+import com.soywiz.klock.DateTime
+import com.soywiz.kmem.ByteArrayBuilder
+import com.soywiz.korio.async.launchImmediately
+import com.soywiz.korio.async.use
+import com.soywiz.korio.experimental.KorioExperimentalApi
+import com.soywiz.korio.file.std.JailVfs
+import com.soywiz.korio.lang.Charset
+import com.soywiz.korio.lang.Closeable
+import com.soywiz.korio.lang.UTF8
+import com.soywiz.korio.lang.runIgnoringExceptions
+import com.soywiz.korio.lang.toByteArray
+import com.soywiz.korio.lang.toString
+import com.soywiz.korio.stream.AsyncInputOpenable
+import com.soywiz.korio.stream.AsyncInputStream
+import com.soywiz.korio.stream.AsyncOutputStream
+import com.soywiz.korio.stream.AsyncStream
+import com.soywiz.korio.stream.SyncStream
+import com.soywiz.korio.stream.copyTo
+import com.soywiz.korio.stream.openSync
+import com.soywiz.korio.util.LONG_ZERO_TO_MAX_RANGE
+import com.soywiz.korio.util.toLongRange
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlin.coroutines.coroutineContext
 
 @OptIn(KorioExperimentalApi::class)
 data class VfsFile(
@@ -125,7 +139,7 @@ data class VfsFile(
 		target: VfsFile,
 		vararg attributes: Vfs.Attribute,
 		notify: suspend (Pair<VfsFile, VfsFile>) -> Unit = {}
-	): Unit {
+	) {
 		notify(this to target)
 		if (this.isDirectory()) {
 			target.mkdir()

@@ -1,33 +1,90 @@
 package com.soywiz.korgw
 
 import com.soywiz.kds.*
-import com.soywiz.kds.lock.*
-import com.soywiz.klock.*
+import com.soywiz.kds.lock.Lock
+import com.soywiz.klock.PerformanceCounter
+import com.soywiz.klock.TimeSpan
+import com.soywiz.klock.blockingSleep
+import com.soywiz.klock.measureTime
+import com.soywiz.klock.microseconds
+import com.soywiz.klock.milliseconds
+import com.soywiz.klock.seconds
 import com.soywiz.kmem.setBits
-import com.soywiz.korag.*
-import com.soywiz.korag.annotation.*
-import com.soywiz.korag.log.*
-import com.soywiz.korev.*
-import com.soywiz.korgw.internal.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.*
-import com.soywiz.korio.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.file.*
-import com.soywiz.korio.file.std.localCurrentDirVfs
-import com.soywiz.korio.file.std.localVfs
-import com.soywiz.korio.lang.*
-import com.soywiz.korio.net.*
-import com.soywiz.korio.util.*
-import com.soywiz.korma.geom.*
-import kotlinx.coroutines.*
-import kotlin.coroutines.*
-import kotlin.native.concurrent.*
+import com.soywiz.korag.AG
+import com.soywiz.korag.AGWindow
+import com.soywiz.korag.annotation.KoragExperimental
+import com.soywiz.korag.log.DummyAG
+import com.soywiz.korev.DestroyEvent
+import com.soywiz.korev.DisposeEvent
+import com.soywiz.korev.DropFileEvent
+import com.soywiz.korev.EventDispatcher
+import com.soywiz.korev.FullScreenEvent
+import com.soywiz.korev.GamePadConnectionEvent
+import com.soywiz.korev.GamePadUpdateEvent
+import com.soywiz.korev.GameStick
+import com.soywiz.korev.GamepadMapping
+import com.soywiz.korev.InitEvent
+import com.soywiz.korev.Key
+import com.soywiz.korev.KeyEvent
+import com.soywiz.korev.MouseButton
+import com.soywiz.korev.MouseEvent
+import com.soywiz.korev.PauseEvent
+import com.soywiz.korev.RenderEvent
+import com.soywiz.korev.ReshapeEvent
+import com.soywiz.korev.ResumeEvent
+import com.soywiz.korev.StandardGamepadMapping
+import com.soywiz.korev.StopEvent
+import com.soywiz.korev.TouchBuilder
+import com.soywiz.korev.TouchEvent
+import com.soywiz.korev.addEventListener
+import com.soywiz.korev.dispatch
+import com.soywiz.korgw.GameWindow.Quality.PERFORMANCE
+import com.soywiz.korgw.GameWindow.Quality.QUALITY
+import com.soywiz.korgw.internal.IntTimedCache
+import com.soywiz.korim.bitmap.Bitmap
+import com.soywiz.korim.color.Colors
+import com.soywiz.korim.color.RGBA
+import com.soywiz.korio.Korio
+import com.soywiz.korio.async.Signal
+import com.soywiz.korio.async.delay
+import com.soywiz.korio.async.invoke
+import com.soywiz.korio.async.launch
+import com.soywiz.korio.async.launchImmediately
+import com.soywiz.korio.file.VfsFile
+import com.soywiz.korio.lang.Closeable
+import com.soywiz.korma.geom.Anchor
+import com.soywiz.korma.geom.Angle
+import com.soywiz.korma.geom.Point
+import com.soywiz.korma.geom.Rectangle
+import com.soywiz.korma.geom.absoluteValue
+import com.soywiz.korma.geom.degrees
+import com.soywiz.korma.geom.minus
+import com.soywiz.korma.geom.times
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Delay
+import kotlinx.coroutines.DisposableHandle
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.cancelChildren
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.startCoroutine
+import kotlin.native.concurrent.ThreadLocal
 
 @ThreadLocal
 var GLOBAL_CHECK_GL = false
 
-expect fun CreateDefaultGameWindow(): GameWindow
+data class GameWindowCreationConfig(
+    val multithreaded: Boolean? = null,
+    val hdr: Boolean? = null,
+)
+
+expect fun CreateDefaultGameWindow(config: GameWindowCreationConfig): GameWindow
+fun CreateDefaultGameWindow() = CreateDefaultGameWindow(GameWindowCreationConfig())
 
 /**
  * @example FileFilter("All files" to listOf("*.*"), "Image files" to listOf("*.png", "*.jpg", "*.jpeg", "*.gif"))
@@ -589,15 +646,53 @@ open class GameWindow :
     private val scrollDeltaZ = 0.0
     private val scaleCoords = false
 
-    fun dispatchKeyEvent(type: KeyEvent.Type, id: Int, character: Char, key: Key, keyCode: Int) {
-        dispatchKeyEventEx(type, id, character, key, keyCode)
+    fun dispatchKeyEvent(type: KeyEvent.Type, id: Int, character: Char, key: Key, keyCode: Int): Boolean {
+        return dispatchKeyEventEx(type, id, character, key, keyCode)
+    }
+
+    //private val gamePadConnectionEvent = GamePadConnectionEvent()
+    fun dispatchGamepadConnectionEvent(type: GamePadConnectionEvent.Type, gamepad: Int) {
+        dispatch(gamePadConnectionEvent.apply {
+            this.type = type
+            this.gamepad = gamepad
+        })
+    }
+
+    //private val gamePadUpdateEvent = GamePadUpdateEvent()
+    fun dispatchGamepadUpdateStart() {
+        gamePadUpdateEvent.gamepadsLength = 0
+    }
+
+    fun dispatchGamepadUpdateAdd(
+        leftStick: Point,
+        rightStick: Point,
+        rawButtonsPressed: Int,
+        mapping: GamepadMapping,
+        name: String?,
+        batteryLevel: Double
+    ) {
+        val index = gamePadUpdateEvent.gamepadsLength++
+        val pad = gamePadUpdateEvent.gamepads[index]
+        pad.mapping = mapping
+        pad.axesLength = 4
+        pad.buttonsLength = 32
+        pad.rawAxes[0] = leftStick.x
+        pad.rawAxes[1] = leftStick.y
+        pad.rawAxes[2] = rightStick.x
+        pad.rawAxes[3] = rightStick.y
+        pad.rawButtonsPressed = rawButtonsPressed
+        pad.name = name ?: "unknown"
+        pad.batteryLevel = batteryLevel
+    }
+
+    fun dispatchGamepadUpdateEnd() {
+        dispatch(gamePadUpdateEvent)
     }
 
     fun dispatchKeyEventEx(
         type: KeyEvent.Type, id: Int, character: Char, key: Key, keyCode: Int,
-
         shift: Boolean = this.shift, ctrl: Boolean = this.ctrl, alt: Boolean = this.alt, meta: Boolean = this.meta
-    ) {
+    ): Boolean {
         if (type != KeyEvent.Type.TYPE) {
             keysPresing[key.ordinal] = (type == KeyEvent.Type.DOWN)
         }
@@ -612,6 +707,7 @@ open class GameWindow :
             this.alt = alt
             this.meta = meta
         })
+        return keyEvent._stopPropagation
     }
 
     fun dispatchSimpleMouseEvent(

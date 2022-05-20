@@ -1,13 +1,17 @@
 package com.soywiz.korev
 
 import com.soywiz.kds.*
-import com.soywiz.kds.iterators.*
-import com.soywiz.klock.*
-import com.soywiz.korio.file.*
-import com.soywiz.korio.lang.*
-import com.soywiz.korio.util.*
-import kotlin.jvm.*
+import com.soywiz.kds.iterators.fastForEach
+import com.soywiz.kds.iterators.fastIterateRemove
+import com.soywiz.klock.DateTime
+import com.soywiz.klock.TimeSpan
+import com.soywiz.korio.file.VfsFile
+import com.soywiz.korio.lang.Closeable
+import com.soywiz.korio.util.OS
+import com.soywiz.korio.util.niceStr
+import kotlin.jvm.JvmOverloads
 
+/** [x] and [y] positions are window-based where 0,0 is the top-left position in the window client area */
 data class MouseEvent(
     var type: Type = Type.MOVE,
     var id: Int = 0,
@@ -388,6 +392,7 @@ data class GamePadButtonEvent @JvmOverloads constructor(
     }
 }
 
+@Deprecated("")
 data class GamePadStickEvent(
     var gamepad: Int = 0,
     var stick: GameStick = GameStick.LEFT,

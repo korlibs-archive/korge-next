@@ -1,14 +1,41 @@
 package com.soywiz.korim.bitmap
 
-import com.soywiz.kmem.*
-import com.soywiz.korim.annotation.*
-import com.soywiz.korim.color.*
-import com.soywiz.korim.internal.*
-import com.soywiz.korim.vector.*
-import com.soywiz.korma.geom.*
-import kotlin.js.*
-import kotlin.jvm.*
-import kotlin.math.*
+import com.soywiz.kmem.arraycopy
+import com.soywiz.kmem.clamp
+import com.soywiz.kmem.fill
+import com.soywiz.kmem.toInt
+import com.soywiz.korim.annotation.KorimInternal
+import com.soywiz.korim.color.ColorFormat
+import com.soywiz.korim.color.ColorTransform
+import com.soywiz.korim.color.Colors
+import com.soywiz.korim.color.RGBA
+import com.soywiz.korim.color.RGBAPremultiplied
+import com.soywiz.korim.color.RgbaArray
+import com.soywiz.korim.color.RgbaPremultipliedArray
+import com.soywiz.korim.color.YCbCr
+import com.soywiz.korim.color.arraycopy
+import com.soywiz.korim.color.asNonPremultiplied
+import com.soywiz.korim.color.asPremultiplied
+import com.soywiz.korim.color.decode
+import com.soywiz.korim.color.encode
+import com.soywiz.korim.color.mix
+import com.soywiz.korim.color.toRGBA
+import com.soywiz.korim.color.toYCbCr
+import com.soywiz.korim.vector.Bitmap32Context2d
+import com.soywiz.korim.vector.Context2d
+import com.soywiz.korma.geom.IRectangleInt
+import com.soywiz.korma.geom.Matrix3D
+import com.soywiz.korma.geom.RectangleInt
+import com.soywiz.korma.geom.Vector3D
+import com.soywiz.korma.geom.bottom
+import com.soywiz.korma.geom.left
+import com.soywiz.korma.geom.right
+import com.soywiz.korma.geom.top
+import kotlin.js.JsName
+import kotlin.jvm.JvmOverloads
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 // @TODO: Create separate classes for premultiplied and non-premultiplied variants
 @OptIn(KorimInternal::class)
@@ -54,7 +81,7 @@ class Bitmap32(
 	override fun getInt(x: Int, y: Int): Int = data.ints[index(x, y)]
 
     override fun getRgba(x: Int, y: Int): RGBA = data[index(x, y)]
-	override fun setRgba(x: Int, y: Int, v: RGBA): Unit { data[index(x, y)] = v }
+	override fun setRgba(x: Int, y: Int, v: RGBA) { data[index(x, y)] = v }
 
 	fun setRow(y: Int, row: IntArray) {
 		arraycopy(row, 0, data.ints, index(0, y), width)

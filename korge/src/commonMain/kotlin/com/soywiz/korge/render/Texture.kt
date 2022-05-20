@@ -20,12 +20,16 @@ class TextureBase(
 ) : Closeable, ISizeInt {
     var version = -1
     val premultiplied get() = base?.premultiplied == true
-    override fun close(): Unit {
+    override fun close() {
         base?.close()
         base = null
     }
     fun update(bmp: Bitmap, mipmaps: Boolean = bmp.mipmaps) {
-        base?.upload(bmp, mipmaps)
+        if (bmp is MultiBitmap) {
+            base?.upload(bmp.bitmaps, bmp.width, bmp.height)
+        } else {
+            base?.upload(bmp, mipmaps)
+        }
     }
 
     override fun toString(): String = "TextureBase($base)"
@@ -119,6 +123,11 @@ class Texture(
          */
 		operator fun invoke(agBase: AG.Texture, width: Int, height: Int): Texture =
 			Texture(TextureBase(agBase, width, height), 0, 0, width, height)
+
+        /**
+         * Creates a [Texture] from a frame buffer [frameBuffer] with the right size of the frameBuffer.
+         */
+        operator fun invoke(frameBuffer: AG.RenderBuffer): Texture = invoke(frameBuffer.tex, frameBuffer.width, frameBuffer.height)
 	}
 
     /**

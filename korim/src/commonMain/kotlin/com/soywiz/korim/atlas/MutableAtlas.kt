@@ -1,8 +1,23 @@
 package com.soywiz.korim.atlas
 
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korma.geom.*
-import com.soywiz.korma.geom.binpack.*
+import com.soywiz.korim.bitmap.Bitmap32
+import com.soywiz.korim.bitmap.BitmapSlice
+import com.soywiz.korim.bitmap.BmpSlice
+import com.soywiz.korim.bitmap.expandBorder
+import com.soywiz.korim.bitmap.extract
+import com.soywiz.korim.bitmap.isFullyTransparent
+import com.soywiz.korim.bitmap.slice
+import com.soywiz.korim.bitmap.sliceWithBounds
+import com.soywiz.korim.bitmap.sliceWithSize
+import com.soywiz.korma.geom.RectangleInt
+import com.soywiz.korma.geom.binpack.BinPacker
+import com.soywiz.korma.geom.expand
+import kotlin.collections.LinkedHashMap
+import kotlin.collections.arrayListOf
+import kotlin.collections.map
+import kotlin.collections.plusAssign
+import kotlin.collections.set
+import kotlin.collections.toList
 
 typealias MutableAtlasUnit = MutableAtlas<Unit>
 
@@ -102,8 +117,11 @@ class MutableAtlas<T>(
                 )
                 val dstX = slice.left
                 val dstY = slice.top
-                this.bitmap.draw(bmp, dstX, dstY)
-                this.bitmap.expandBorder(slice.bounds, border)
+                val boundsWithBorder = slice.bounds.rect.clone().expand(border, border, border, border)
+                this.bitmap.lock(boundsWithBorder) {
+                    this.bitmap.draw(bmp, dstX, dstY)
+                    this.bitmap.expandBorder(slice.bounds, border)
+                }
                 //bmp.bmp.copy(srcX, srcY, this.bitmap, dstX, dstY, w, h)
                 entry = Entry(slice, data)
 
@@ -114,7 +132,6 @@ class MutableAtlas<T>(
 
             entries += entry
             entriesByName[rname] = entry
-            bitmap.contentVersion++
 
             return entry
         } catch (e: Throwable) {

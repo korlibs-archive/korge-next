@@ -1,6 +1,14 @@
 package com.soywiz.korte.dynamic
 
-import kotlin.reflect.*
+import kotlin.reflect.KCallable
+import kotlin.reflect.KFunction0
+import kotlin.reflect.KFunction1
+import kotlin.reflect.KFunction2
+import kotlin.reflect.KFunction3
+import kotlin.reflect.KFunction4
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty1
 
 interface DynamicShapeRegister<T> {
     fun register(prop: KProperty<*>): DynamicShapeRegister<T>
@@ -23,7 +31,7 @@ class DynamicShape<T> : DynamicShapeRegister<T> {
     fun hasProp(key: String): Boolean = key in propertiesByName
     fun hasMethod(key: String): Boolean = key in methodsByName || key in smethodsByName
     fun getProp(instance: T, key: Any?): Any? = (propertiesByName[key] as? KProperty1<Any?, Any?>?)?.get(instance)
-    fun setProp(instance: T, key: Any?, value: Any?): Unit { (propertiesByName[key] as? KMutableProperty1<Any?, Any?>?)?.set(instance, value) }
+    fun setProp(instance: T, key: Any?, value: Any?) { (propertiesByName[key] as? KMutableProperty1<Any?, Any?>?)?.set(instance, value) }
 
     @Suppress("RedundantSuspendModifier")
     suspend fun callMethod(instance: T, key: Any?, args: List<Any?>): Any? {

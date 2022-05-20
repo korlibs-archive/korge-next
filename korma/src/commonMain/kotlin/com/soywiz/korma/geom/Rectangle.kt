@@ -1,9 +1,12 @@
 package com.soywiz.korma.geom
 
-import com.soywiz.korma.internal.*
-import com.soywiz.korma.interpolation.*
+import com.soywiz.korma.internal.niceStr
+import com.soywiz.korma.interpolation.Interpolable
+import com.soywiz.korma.interpolation.MutableInterpolable
+import com.soywiz.korma.interpolation.interpolate
 import com.soywiz.korma.math.isAlmostEquals
-import kotlin.math.*
+import kotlin.math.max
+import kotlin.math.min
 
 interface IRectangle {
     val x: Double
@@ -64,6 +67,11 @@ data class Rectangle(
         fun fromBounds(topLeft: Point, bottomRight: Point): Rectangle = Rectangle().setBounds(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y)
 
         fun isContainedIn(a: Rectangle, b: Rectangle): Boolean = a.x >= b.x && a.y >= b.y && a.x + a.width <= b.x + b.width && a.y + a.height <= b.y + b.height
+    }
+
+    fun setXY(x: Double, y: Double) {
+        this.x = x
+        this.y = y
     }
 
     val isEmpty: Boolean get() = area == 0.0
@@ -404,9 +412,19 @@ fun Rectangle.with(margin: Margin): Rectangle =
     Rectangle.fromBounds(left - margin.left, top - margin.top, right + margin.right, bottom + margin.bottom)
 
 fun Rectangle.applyTransform(m: Matrix): Rectangle {
-    val l = m.transformX(left, top)
-    val t = m.transformY(left, top)
-    val r = m.transformX(right, bottom)
-    val b = m.transformY(right, bottom)
-    return setTo(l, t, r - l, b - t)
+    val tl = m.transform(left, top)
+    val tr = m.transform(right, top)
+    val bl = m.transform(left, bottom)
+    val br = m.transform(right, bottom)
+
+    val minX = com.soywiz.korma.math.min(tl.x, tr.x, bl.x, br.x)
+    val minY = com.soywiz.korma.math.min(tl.y, tr.y, bl.y, br.y)
+    val maxX = com.soywiz.korma.math.max(tl.x, tr.x, bl.x, br.x)
+    val maxY = com.soywiz.korma.math.max(tl.y, tr.y, bl.y, br.y)
+
+    //val l = m.transformX(left, top)
+    //val t = m.transformY(left, top)
+    //val r = m.transformX(right, bottom)
+    //val b = m.transformY(right, bottom)
+    return setBounds(minX, minY, maxX, maxY)
 }

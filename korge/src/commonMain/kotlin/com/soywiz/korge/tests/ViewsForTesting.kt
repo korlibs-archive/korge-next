@@ -1,27 +1,55 @@
 package com.soywiz.korge.tests
 
-import com.soywiz.kds.*
-import com.soywiz.kds.iterators.*
-import com.soywiz.klock.*
+import com.soywiz.kds.TGenPriorityQueue
+import com.soywiz.klock.DateTime
+import com.soywiz.klock.PerformanceCounter
+import com.soywiz.klock.TimeProvider
+import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.milliseconds
-import com.soywiz.korag.*
-import com.soywiz.korag.log.*
-import com.soywiz.korev.*
-import com.soywiz.korge.*
-import com.soywiz.korge.input.*
+import com.soywiz.klock.seconds
+import com.soywiz.korag.AG
+import com.soywiz.korag.log.DummyAG
+import com.soywiz.korag.log.LogAG
+import com.soywiz.korag.log.LogBaseAG
+import com.soywiz.korev.Key
+import com.soywiz.korev.KeyEvent
+import com.soywiz.korev.MouseButton
+import com.soywiz.korev.MouseEvent
+import com.soywiz.korev.dispatch
+import com.soywiz.korge.Korge
 import com.soywiz.korge.input.MouseEvents
-import com.soywiz.korge.internal.*
-import com.soywiz.korge.scene.*
-import com.soywiz.korge.view.*
-import com.soywiz.korgw.*
+import com.soywiz.korge.input.mouse
+import com.soywiz.korge.internal.DefaultViewport
+import com.soywiz.korge.render.RenderContext
+import com.soywiz.korge.scene.Module
+import com.soywiz.korge.scene.Scene
+import com.soywiz.korge.scene.sceneContainer
+import com.soywiz.korge.view.GameWindowLog
+import com.soywiz.korge.view.Stage
+import com.soywiz.korge.view.View
+import com.soywiz.korge.view.ViewsLog
+import com.soywiz.korgw.GameWindowCoroutineDispatcher
 import com.soywiz.korinject.AsyncInjector
-import com.soywiz.korio.async.*
-import com.soywiz.korio.lang.*
-import com.soywiz.korio.util.*
-import com.soywiz.korma.geom.*
-import kotlinx.coroutines.*
-import kotlin.coroutines.*
-import kotlin.jvm.*
+import com.soywiz.korio.async.DEFAULT_SUSPEND_TEST_TIMEOUT
+import com.soywiz.korio.async.launchImmediately
+import com.soywiz.korio.async.suspendTest
+import com.soywiz.korio.async.withTimeout
+import com.soywiz.korio.lang.WChar
+import com.soywiz.korio.lang.WString
+import com.soywiz.korio.lang.forEachCodePoint
+import com.soywiz.korio.util.OS
+import com.soywiz.korma.geom.Anchor
+import com.soywiz.korma.geom.IPoint
+import com.soywiz.korma.geom.Rectangle
+import com.soywiz.korma.geom.ScaleMode
+import com.soywiz.korma.geom.SizeInt
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.DisposableHandle
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.delay
+import kotlin.coroutines.CoroutineContext
+import kotlin.jvm.JvmName
 
 open class ViewsForTesting(
     val frameTime: TimeSpan = 10.milliseconds,
@@ -66,6 +94,7 @@ open class ViewsForTesting(
 	val viewsLog by lazy { ViewsLog(gameWindow, ag = ag, gameWindow = gameWindow, timeProvider = timeProvider).also { viewsLog ->
         viewsLog.views.virtualWidth = virtualSize.width
         viewsLog.views.virtualHeight = virtualSize.height
+        viewsLog.views.resized(windowSize.width, windowSize.height)
     } }
 	val injector get() = viewsLog.injector
     val logAgOrNull get() = ag as? LogAG?
@@ -75,7 +104,7 @@ open class ViewsForTesting(
 	val views get() = viewsLog.views
     val stage get() = views.stage
 	val stats get() = views.stats
-	val mouse get() = input.mouse
+	val mouse: IPoint get() = input.mouse
 
     fun resizeGameWindow(width: Int, height: Int, scaleMode: ScaleMode = views.scaleMode, scaleAnchor: Anchor = views.scaleAnchor) {
         logAgOrNull?.backWidth = width
@@ -105,8 +134,12 @@ open class ViewsForTesting(
 
     suspend fun mouseMoveTo(point: IPoint) = mouseMoveTo(point.x, point.y)
 
+    /**
+     * x, y in global/virtual coordinates
+     */
     suspend fun mouseMoveTo(x: Int, y: Int) {
-        gameWindow.dispatch(MouseEvent(type = MouseEvent.Type.MOVE, id = 0, x = x, y = y))
+        val pos = views.globalToWindowMatrix.transform(x, y)
+        gameWindow.dispatch(MouseEvent(type = MouseEvent.Type.MOVE, id = 0, x = pos.x.toInt(), y = pos.y.toInt()))
         //views.update(frameTime)
         simulateFrame(count = 2)
     }
@@ -143,8 +176,8 @@ open class ViewsForTesting(
             MouseEvent(
                 type = type,
                 id = 0,
-                x = input.mouse.x.toInt(),
-                y = input.mouse.y.toInt(),
+                x = views.windowMouseX.toInt(),
+                y = views.windowMouseY.toInt(),
                 button = button,
                 buttons = mouseButtons
             )
@@ -358,4 +391,11 @@ open class ViewsForTesting(
 
 		override fun toString(): String = "FastGameWindowCoroutineDispatcher"
 	}
+
+    inline fun <T : AG> testRenderContext(ag: T, block: (RenderContext) -> Unit): T {
+        val ctx = RenderContext(ag, views)
+        block(ctx)
+        ctx.flush()
+        return ag
+    }
 }

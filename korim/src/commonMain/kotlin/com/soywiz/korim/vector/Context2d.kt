@@ -1,17 +1,42 @@
 package com.soywiz.korim.vector
 
-import com.soywiz.kds.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.*
-import com.soywiz.korim.font.*
+import com.soywiz.kds.Stack
+import com.soywiz.korim.bitmap.Bitmap
+import com.soywiz.korim.bitmap.Bitmap32
+import com.soywiz.korim.bitmap.NativeImage
+import com.soywiz.korim.bitmap.NativeImageOrBitmap32
+import com.soywiz.korim.bitmap.context2d
+import com.soywiz.korim.bitmap.mipmap
+import com.soywiz.korim.color.RGBA
+import com.soywiz.korim.font.Font
+import com.soywiz.korim.font.FontRegistry
+import com.soywiz.korim.font.TextMetrics
+import com.soywiz.korim.font.drawText
+import com.soywiz.korim.font.getTextBounds
 import com.soywiz.korim.paint.*
-import com.soywiz.korim.text.*
-import com.soywiz.korim.vector.renderer.*
-import com.soywiz.korio.lang.*
-import com.soywiz.korma.geom.*
-import com.soywiz.korma.geom.shape.*
-import com.soywiz.korma.geom.vector.*
-import kotlin.math.*
+import com.soywiz.korim.text.DefaultStringTextRenderer
+import com.soywiz.korim.text.HorizontalAlign
+import com.soywiz.korim.text.TextAlignment
+import com.soywiz.korim.text.TextRenderer
+import com.soywiz.korim.text.VerticalAlign
+import com.soywiz.korim.vector.renderer.Renderer
+import com.soywiz.korio.lang.Disposable
+import com.soywiz.korma.geom.Angle
+import com.soywiz.korma.geom.Matrix
+import com.soywiz.korma.geom.Rectangle
+import com.soywiz.korma.geom.degrees
+import com.soywiz.korma.geom.radians
+import com.soywiz.korma.geom.shape.buildPath
+import com.soywiz.korma.geom.vector.LineCap
+import com.soywiz.korma.geom.vector.LineJoin
+import com.soywiz.korma.geom.vector.VectorBuilder
+import com.soywiz.korma.geom.vector.VectorPath
+import com.soywiz.korma.geom.vector.Winding
+import com.soywiz.korma.geom.vector.rect
+import com.soywiz.korma.geom.vector.roundRect
+import kotlin.math.abs
+import kotlin.math.absoluteValue
+import kotlin.math.ceil
 
 open class Context2d constructor(
     val renderer: Renderer,
@@ -77,7 +102,7 @@ open class Context2d constructor(
 		//override fun renderText(state: State, font: Font, fontSize: Double, text: String, x: Double, y: Double, fill: Boolean): Unit =
 		//	adjustState(state) { parent.renderText(state, font, fontSize, text, x, y, fill) }
 
-		override fun drawImage(image: Bitmap, x: Double, y: Double, width: Double, height: Double, transform: Matrix): Unit {
+		override fun drawImage(image: Bitmap, x: Double, y: Double, width: Double, height: Double, transform: Matrix) {
 			adjustMatrix(transform) { parent.drawImage(image, x, y, width, height, transform) }
 		}
 	}
@@ -376,7 +401,7 @@ open class Context2d constructor(
         lineJoin: LineJoin = this.lineJoin,
         miterLimit: Double = this.miterLimit,
         begin: Boolean = true,
-        callback: () -> Unit
+        callback: () -> Unit = {}
     ) {
         if (begin) beginPath()
 		callback()
@@ -389,14 +414,14 @@ open class Context2d constructor(
         }
 	}
 
-    inline fun stroke(paint: Paint, info: StrokeInfo, begin: Boolean = true, callback: () -> Unit) {
+    inline fun stroke(paint: Paint, info: StrokeInfo, begin: Boolean = true, callback: () -> Unit = {}) {
         stroke(paint, info.thickness, info.startCap, info.lineJoin, info.miterLimit, begin, callback)
     }
 
-    inline fun fillStroke(fill: Paint, stroke: Paint, callback: () -> Unit) {
+    inline fun fillStroke(fill: Paint, stroke: Paint, strokeInfo: StrokeInfo? = null, callback: () -> Unit = {}) {
         callback()
         fill(fill)
-        stroke(stroke)
+        if (strokeInfo != null) stroke(stroke, strokeInfo) else stroke(stroke)
     }
 
     fun fillStroke() { fill(); stroke() }
@@ -533,7 +558,7 @@ open class Context2d constructor(
         halign: HorizontalAlign = this.horizontalAlign,
         valign: VerticalAlign = this.verticalAlign,
         color: Paint? = null
-    ): Unit {
+    ) {
         font(font, halign, valign, fontSize) {
             fillStyle(color ?: fillStyle) {
                 drawText(text, x.toDouble(), y.toDouble(), fill = true)

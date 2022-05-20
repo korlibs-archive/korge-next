@@ -2,19 +2,86 @@
 
 package com.soywiz.korio.stream
 
-import com.soywiz.kds.*
-import com.soywiz.kds.iterators.*
-import com.soywiz.kmem.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.file.*
-import com.soywiz.korio.file.std.*
-import com.soywiz.korio.internal.*
-import com.soywiz.korio.lang.*
-import com.soywiz.korio.util.*
-import kotlinx.coroutines.*
-import kotlin.coroutines.*
-import kotlin.math.*
-import kotlin.native.concurrent.*
+import com.soywiz.kds.ByteArrayDeque
+import com.soywiz.kds.Extra
+import com.soywiz.kds.iterators.fastForEach
+import com.soywiz.kmem.ByteArrayBuilder
+import com.soywiz.kmem.Endian
+import com.soywiz.kmem.arraycopy
+import com.soywiz.kmem.clamp
+import com.soywiz.kmem.fill
+import com.soywiz.kmem.nextAlignedTo
+import com.soywiz.kmem.readCharArrayBE
+import com.soywiz.kmem.readCharArrayLE
+import com.soywiz.kmem.readDoubleArrayBE
+import com.soywiz.kmem.readDoubleArrayLE
+import com.soywiz.kmem.readF32BE
+import com.soywiz.kmem.readF32LE
+import com.soywiz.kmem.readF64BE
+import com.soywiz.kmem.readF64LE
+import com.soywiz.kmem.readFloatArrayBE
+import com.soywiz.kmem.readFloatArrayLE
+import com.soywiz.kmem.readIntArrayBE
+import com.soywiz.kmem.readIntArrayLE
+import com.soywiz.kmem.readLongArrayLE
+import com.soywiz.kmem.readS16BE
+import com.soywiz.kmem.readS16LE
+import com.soywiz.kmem.readS24BE
+import com.soywiz.kmem.readS24LE
+import com.soywiz.kmem.readS32BE
+import com.soywiz.kmem.readS32LE
+import com.soywiz.kmem.readS64BE
+import com.soywiz.kmem.readS64LE
+import com.soywiz.kmem.readShortArrayBE
+import com.soywiz.kmem.readShortArrayLE
+import com.soywiz.kmem.readU16BE
+import com.soywiz.kmem.readU16LE
+import com.soywiz.kmem.readU24BE
+import com.soywiz.kmem.readU24LE
+import com.soywiz.kmem.readU32BE
+import com.soywiz.kmem.readU32LE
+import com.soywiz.kmem.toIntClamp
+import com.soywiz.kmem.unsigned
+import com.soywiz.kmem.write16BE
+import com.soywiz.kmem.write16LE
+import com.soywiz.kmem.write24BE
+import com.soywiz.kmem.write24LE
+import com.soywiz.kmem.write32BE
+import com.soywiz.kmem.write32LE
+import com.soywiz.kmem.write64BE
+import com.soywiz.kmem.write64LE
+import com.soywiz.kmem.writeArrayBE
+import com.soywiz.kmem.writeArrayLE
+import com.soywiz.kmem.writeF32BE
+import com.soywiz.kmem.writeF32LE
+import com.soywiz.kmem.writeF64BE
+import com.soywiz.kmem.writeF64LE
+import com.soywiz.korio.async.AsyncByteArrayDeque
+import com.soywiz.korio.async.AsyncByteArrayDequeChunked
+import com.soywiz.korio.async.AsyncCloseable
+import com.soywiz.korio.async.AsyncThread
+import com.soywiz.korio.async.launchImmediately
+import com.soywiz.korio.async.use
+import com.soywiz.korio.file.VfsFile
+import com.soywiz.korio.file.VfsOpenMode
+import com.soywiz.korio.file.std.MemoryVfs
+import com.soywiz.korio.internal.BYTES_TEMP_SIZE
+import com.soywiz.korio.internal.bytesTempPool
+import com.soywiz.korio.internal.smallBytesPool
+import com.soywiz.korio.lang.Charset
+import com.soywiz.korio.lang.Closeable
+import com.soywiz.korio.lang.EOFException
+import com.soywiz.korio.lang.UTF8
+import com.soywiz.korio.lang.invalidOp
+import com.soywiz.korio.lang.toByteArray
+import com.soywiz.korio.lang.toBytez
+import com.soywiz.korio.lang.toString
+import com.soywiz.korio.util.indexOf
+import kotlinx.coroutines.Job
+import kotlin.coroutines.coroutineContext
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.native.concurrent.SharedImmutable
 
 //interface SmallTemp {
 //	val smallTemp: ByteArray
@@ -607,7 +674,7 @@ suspend fun AsyncInputStream.readLongArray(count: Int, endian: Endian): LongArra
 suspend fun AsyncInputStream.readFloatArray(count: Int, endian: Endian): FloatArray = if (endian.isLittle) readFloatArrayLE(count) else readFloatArrayBE(count)
 suspend fun AsyncInputStream.readDoubleArray(count: Int, endian: Endian): DoubleArray = if (endian.isLittle) readDoubleArrayLE(count) else readDoubleArrayBE(count)
 
-suspend fun AsyncOutputStream.writeTempBytes(size: Int, block: ByteArray.() -> Unit): Unit {
+suspend fun AsyncOutputStream.writeTempBytes(size: Int, block: ByteArray.() -> Unit) {
     if (size <= BYTES_TEMP_SIZE) {
         bytesTempPool.allocThis {
             this@writeTempBytes.write(this@allocThis.apply(block), 0, size)
@@ -771,7 +838,7 @@ fun SyncInputStream.toAsyncInputStream() = object : AsyncInputStreamWithLength {
 	val sync = this@toAsyncInputStream
 
 	override suspend fun read(buffer: ByteArray, offset: Int, len: Int): Int = sync.read(buffer, offset, len)
-	override suspend fun close(): Unit { (sync as? Closeable)?.close() }
+	override suspend fun close() { (sync as? Closeable)?.close() }
 	override suspend fun getPosition(): Long = (sync as? SyncPositionStream)?.position ?: super.getPosition()
 	override suspend fun getLength(): Long = (sync as? SyncLengthStream)?.length ?: super.getLength()
 }
@@ -780,7 +847,7 @@ fun SyncOutputStream.toAsyncOutputStream() = object : AsyncOutputStream {
 	override suspend fun write(buffer: ByteArray, offset: Int, len: Int): Unit =
 		this@toAsyncOutputStream.write(buffer, offset, len)
 
-	override suspend fun close(): Unit { (this@toAsyncOutputStream as? Closeable)?.close() }
+	override suspend fun close() { (this@toAsyncOutputStream as? Closeable)?.close() }
 }
 
 fun AsyncStream.asVfsFile(name: String = "unknown.bin"): VfsFile = MemoryVfs(

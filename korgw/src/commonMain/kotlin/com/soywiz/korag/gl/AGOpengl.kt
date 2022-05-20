@@ -1,13 +1,18 @@
 package com.soywiz.korag.gl
 
-import com.soywiz.kds.*
-import com.soywiz.kgl.*
-import com.soywiz.klogger.*
-import com.soywiz.kmem.*
-import com.soywiz.korag.*
-import com.soywiz.korio.annotations.*
-import com.soywiz.krypto.encoding.*
-import kotlin.native.concurrent.*
+import com.soywiz.kds.Extra
+import com.soywiz.kgl.KmlGl
+import com.soywiz.kgl.KmlGlState
+import com.soywiz.kgl.getIntegerv
+import com.soywiz.klogger.Console
+import com.soywiz.korag.AG
+import com.soywiz.korag.AGFeatures
+import com.soywiz.korag.AGList
+import com.soywiz.korag.processBlockingAll
+import com.soywiz.korio.annotations.KorIncomplete
+import com.soywiz.korio.annotations.KorInternal
+import com.soywiz.krypto.encoding.hex
+import kotlin.native.concurrent.SharedImmutable
 
 open class SimpleAGOpengl<TKmlGl : KmlGl>(override val gl: TKmlGl, override val nativeComponent: Any = Unit) : AGOpengl()
 
@@ -21,20 +26,10 @@ abstract class AGOpengl : AG() {
 
     override val parentFeatures: AGFeatures get() = gl
 
-    override fun contextLost() {
-        Console.info("AG.contextLost()", this, gl, gl.root)
-        contextVersion++
-    }
-
     //val queue = Deque<(gl: GL) -> Unit>()
 
     open fun setSwapInterval(value: Int) {
         //gl.swapInterval = 0
-    }
-
-    private fun setViewport(buffer: BaseRenderBuffer) {
-        commandsNoWait { it.viewport(buffer.x, buffer.y, buffer.width, buffer.height) }
-        //println("setViewport: ${buffer.x}, ${buffer.y}, ${buffer.width}, ${buffer.height}")
     }
 
     override fun createMainRenderBuffer(): BaseRenderBufferImpl {
@@ -69,61 +64,21 @@ abstract class AGOpengl : AG() {
 
     fun createGlState() = KmlGlState(gl)
 
-    var lastRenderContextId = 0
-
-    inner class GlRenderBuffer : RenderBuffer() {
-        override val id = lastRenderContextId++
-
-        var frameBufferId: Int = -1
-
-        // http://wangchuan.github.io/coding/2016/05/26/multisampling-fbo.html
-        override fun set() {
-            setViewport(this)
-
-            commandsNoWait { list ->
-                if (dirty) {
-                    if (frameBufferId < 0) {
-                        frameBufferId = list.frameBufferCreate()
-                    }
-                    list.frameBufferSet(frameBufferId, tex.texId, width, height, hasStencil, hasDepth)
-                }
-                list.frameBufferUse(frameBufferId)
-            }
-        }
-
-        override fun close() {
-            super.close()
-            commandsNoWait { list ->
-                if (frameBufferId >= 0) {
-                    list.frameBufferDelete(frameBufferId)
-                    frameBufferId = -1
-                }
-            }
-        }
-
-        override fun toString(): String = "GlRenderBuffer[$id]($width, $height)"
-    }
-
-    override fun createRenderBuffer(): RenderBuffer = GlRenderBuffer()
-
     private var _glProcessor: AGQueueProcessorOpenGL? = null
     private val glProcessor: AGQueueProcessorOpenGL get() {
         if (_glProcessor == null) _glProcessor = AGQueueProcessorOpenGL(gl, _globalState)
         return _glProcessor!!
     }
 
-    val glProcessorSync: AGQueueProcessorOpenGL get() {
-        commandsSync {  }
-        return glProcessor
-    }
-
     override fun executeList(list: AGList) {
         glProcessor?.processBlockingAll(list)
     }
 
-    override fun readColorTexture(texture: Texture, width: Int, height: Int) {
+    override fun readColorTexture(texture: Texture, x: Int, y: Int, width: Int, height: Int) {
+        //gl.flush()
+        //gl.finish()
         texture.bind()
-        gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 0, 0, width, height, 0)
+        gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, x, y, width, height, 0)
         texture.unbind()
     }
 }

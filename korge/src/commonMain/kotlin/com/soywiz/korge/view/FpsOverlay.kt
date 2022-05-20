@@ -1,15 +1,20 @@
 package com.soywiz.korge.view
 
-import com.soywiz.kds.*
-import com.soywiz.klock.*
+import com.soywiz.kds.IntDeque
+import com.soywiz.klock.PerformanceCounter
+import com.soywiz.klock.TimeSpan
+import com.soywiz.klock.microseconds
+import com.soywiz.klock.milliseconds
+import com.soywiz.klock.seconds
+import com.soywiz.klock.toFrequency
 import com.soywiz.kmem.Platform
 import com.soywiz.kmem.convertRange
-import com.soywiz.korge.bitmapfont.*
-import com.soywiz.korge.internal.*
-import com.soywiz.korge.render.*
-import com.soywiz.korim.color.*
-import com.soywiz.korio.util.OS
-import com.soywiz.korma.math.*
+import com.soywiz.korge.bitmapfont.drawText
+import com.soywiz.korge.internal.KorgeInternal
+import com.soywiz.korge.render.debugLineRenderContext
+import com.soywiz.korge.render.useLineBatcher
+import com.soywiz.korim.color.Colors
+import com.soywiz.korma.math.roundDecimalPlaces
 
 @OptIn(KorgeInternal::class)
 internal fun ViewsContainer.installFpsDebugOverlay() {
@@ -63,9 +68,11 @@ internal fun ViewsContainer.installFpsDebugOverlay() {
         frames++
         previousTime = currentTime
 
+        val matrix = views.windowToGlobalMatrix
+
         fun drawTextWithShadow(text: String, x: Int, y: Int) {
-            ctx.drawText(debugBmpFont, fontSize, text, x = x + 1, y = y + 1, colMul = Colors.BLACK, filtering = false)
-            ctx.drawText(debugBmpFont, fontSize, text, x = x, y = y, colMul = ctx.debugExtraFontColor, filtering = false)
+            //ctx.drawText(debugBmpFont, fontSize, text, x = x + 1, y = y + 1, colMul = Colors.BLACK, filtering = false, m = matrix)
+            ctx.drawText(debugBmpFont, fontSize, text, x = x, y = y, colMul = ctx.debugExtraFontColor, filtering = false, m = matrix, blendMode = BlendMode.INVERT)
         }
 
         drawTextWithShadow("FPS: " +
@@ -84,7 +91,7 @@ internal fun ViewsContainer.installFpsDebugOverlay() {
         val overlayHeight = 30 * scale
         val overlayHeightGap = 5.0
 
-        renderContext.useLineBatcher { debugLineRenderContext ->
+        renderContext.useLineBatcher(matrix) { debugLineRenderContext -> debugLineRenderContext.blending(BlendMode.INVERT) {
             debugLineRenderContext.color(Colors.YELLOW) {
                 // y-axis
                 debugLineRenderContext.line(
@@ -98,7 +105,8 @@ internal fun ViewsContainer.installFpsDebugOverlay() {
                 )
             }
 
-            for (index in 0 until 2) {
+            //for (index in 0 until 2) {
+            for (index in 0..0) {
                 val color = if (index == 0) Colors.WHITE else Colors.BLACK
                 debugLineRenderContext.color(color) {
                     val ratio = longWindow.size.toDouble() / longWindow.capacity.toDouble()
@@ -146,7 +154,7 @@ internal fun ViewsContainer.installFpsDebugOverlay() {
                     }
                 }
             }
-        }
+        } }
     }
 }
 

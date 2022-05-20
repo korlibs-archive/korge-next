@@ -1,18 +1,53 @@
 package com.soywiz.korge.view
 
-import com.soywiz.kds.*
-import com.soywiz.kds.iterators.*
-import com.soywiz.kmem.*
-import com.soywiz.korim.color.*
-import com.soywiz.korim.paint.*
-import com.soywiz.korim.vector.*
-import com.soywiz.korma.geom.*
-import com.soywiz.korma.geom.shape.*
-import com.soywiz.korma.geom.vector.*
-import kotlin.jvm.*
+import com.soywiz.kds.Pool
+import com.soywiz.kds.iterators.fastForEach
+import com.soywiz.kmem.clamp
+import com.soywiz.korge.annotations.KorgeExperimental
+import com.soywiz.korim.color.Colors
+import com.soywiz.korim.color.RGBA
+import com.soywiz.korim.paint.ColorPaint
+import com.soywiz.korim.paint.Paint
+import com.soywiz.korim.vector.CompoundShape
+import com.soywiz.korim.vector.Context2d
+import com.soywiz.korim.vector.FillShape
+import com.soywiz.korim.vector.GraphicsPath
+import com.soywiz.korim.vector.LineScaleMode
+import com.soywiz.korim.vector.PolylineShape
+import com.soywiz.korim.vector.Shape
+import com.soywiz.korim.vector.ShapeBuilder
+import com.soywiz.korim.vector.StrokeInfo
+import com.soywiz.korim.vector.StyledShape
+import com.soywiz.korim.vector.buildShape
+import com.soywiz.korma.geom.BoundsBuilder
+import com.soywiz.korma.geom.Matrix
+import com.soywiz.korma.geom.shape.Shape2d
+import com.soywiz.korma.geom.shape.toShape2d
+import com.soywiz.korma.geom.vector.LineCap
+import com.soywiz.korma.geom.vector.LineJoin
+import com.soywiz.korma.geom.vector.VectorBuilder
+import com.soywiz.korma.geom.vector.VectorPath
+import kotlin.jvm.JvmOverloads
 
 inline fun Container.graphics(autoScaling: Boolean = false, callback: @ViewDslMarker Graphics.() -> Unit = {}): Graphics = Graphics(autoScaling).addTo(this, callback).apply { redrawIfRequired() }
 inline fun Container.sgraphics(callback: @ViewDslMarker Graphics.() -> Unit = {}): Graphics = Graphics(autoScaling = true).addTo(this, callback).apply { redrawIfRequired() }
+inline fun Container.graphicsView(autoScaling: Boolean = false, callback: @ViewDslMarker Graphics.() -> Unit = {}): Graphics = Graphics(autoScaling).addTo(this, callback).apply { redrawIfRequired() }
+
+@KorgeExperimental
+inline fun Container.graphics(
+    build: ShapeBuilder.() -> Unit,
+    antialiased: Boolean = true,
+    callback: @ViewDslMarker Graphics.() -> Unit = {}
+) = Graphics(buildShape { build() }, antialiased).addTo(this, callback)
+
+fun Graphics(
+    shape: Shape,
+    antialiased: Boolean = true,
+): Graphics = Graphics().apply {
+    this.antialiased = antialiased
+    this.clear()
+    this.shape(shape)
+}
 
 open class Graphics @JvmOverloads constructor(
     autoScaling: Boolean = false
@@ -26,6 +61,14 @@ open class Graphics @JvmOverloads constructor(
 	private var stroke: Paint? = null
 	@PublishedApi
 	internal var currentPath = graphicsPathPool.alloc()
+
+    // @TODO: Not used but to have same API as GpuShapeView
+    var antialiased: Boolean = true
+
+    inline fun updateShape(block: ShapeBuilder.() -> Unit) {
+        this.clear()
+        this.shape(buildShape { block() })
+    }
 
     private var hitShapeVersion = -1
     private var hitShape2dVersion = -1

@@ -1,6 +1,7 @@
 package com.soywiz.korge.android
 
 import android.content.Context
+import android.util.AttributeSet
 import android.widget.RelativeLayout
 import com.soywiz.kgl.KmlGl
 import com.soywiz.kgl.KmlGlAndroid
@@ -10,6 +11,7 @@ import com.soywiz.korev.RenderEvent
 import com.soywiz.korge.Korge
 import com.soywiz.korge.scene.Module
 import com.soywiz.korgw.AndroidGameWindowNoActivity
+import com.soywiz.korgw.GameWindowCreationConfig
 import com.soywiz.korio.Korio
 import com.soywiz.korio.android.withAndroidContext
 import com.soywiz.korio.file.std.cleanUpResourcesVfs
@@ -18,7 +20,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class KorgeAndroidView(context: Context) : RelativeLayout(context, null) {
+@Suppress("unused")
+open class KorgeAndroidView(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0,
+    val config: GameWindowCreationConfig = GameWindowCreationConfig(),
+) : RelativeLayout(context, attrs, defStyleAttr) {
     var mGLView: com.soywiz.korgw.KorgwSurfaceView? = null
     private var agOpenGl: AGOpengl? = null
     private var gameWindow: AndroidGameWindowNoActivity? = null
@@ -30,11 +38,11 @@ class KorgeAndroidView(context: Context) : RelativeLayout(context, null) {
 
     inner class KorgeViewAGOpenGL : AGOpengl() {
 
-        override val gl: KmlGl = KmlGlAndroid({ mGLView?.clientVersion ?: -1 })
+        override val gl: KmlGl = KmlGlAndroid { mGLView?.clientVersion ?: -1 }
         override val nativeComponent: Any get() = this@KorgeAndroidView
 
         // @TODO: Cache somehow?
-        override val pixelsPerInch: Double get() = getResources().getDisplayMetrics().densityDpi.toDouble()
+        override val pixelsPerInch: Double get() = resources.displayMetrics.densityDpi.toDouble()
 
         override fun repaint() {
             mGLView?.invalidate()
@@ -67,7 +75,7 @@ class KorgeAndroidView(context: Context) : RelativeLayout(context, null) {
         if (!moduleLoaded) {
 
             agOpenGl = KorgeViewAGOpenGL()
-            gameWindow = AndroidGameWindowNoActivity(module.windowSize.width, module.windowSize.height, agOpenGl!!, context) { mGLView!! }
+            gameWindow = AndroidGameWindowNoActivity(module.windowSize.width, module.windowSize.height, agOpenGl!!, context, config) { mGLView!! }
 
             mGLView = com.soywiz.korgw.KorgwSurfaceView(this, context, gameWindow!!)
 
@@ -90,5 +98,9 @@ class KorgeAndroidView(context: Context) : RelativeLayout(context, null) {
 
             moduleLoaded = true
         }
+    }
+
+    fun queueEvent(runnable: Runnable) {
+        mGLView?.queueEvent(runnable)
     }
 }

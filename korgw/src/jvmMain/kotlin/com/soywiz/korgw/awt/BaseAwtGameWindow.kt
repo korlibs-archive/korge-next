@@ -25,7 +25,7 @@ import java.net.*
 import javax.swing.*
 import kotlin.system.*
 
-abstract class BaseAwtGameWindow : GameWindow() {
+abstract class BaseAwtGameWindow(val config: GameWindowCreationConfig) : GameWindow() {
     abstract override val ag: AwtAg
 
     //val fvsync get() = vsync
@@ -192,6 +192,8 @@ abstract class BaseAwtGameWindow : GameWindow() {
             */
 
             //println("-- viewport=$viewport, scissors=$scissor")
+
+            //println("RENDER: $info, factor=$factor")
 
             if (component is JFrame) {
                 //println("component.width: ${contentComponent.width}x${contentComponent.height}")
@@ -489,7 +491,7 @@ abstract class BaseAwtGameWindow : GameWindow() {
 
         component.addMouseWheelListener { e -> handleMouseWheelEvent(e) }
 
-        component.setFocusTraversalKeysEnabled(false)
+        component.focusTraversalKeysEnabled = false
         component.addKeyListener(object : KeyAdapter() {
             override fun keyTyped(e: KeyEvent) = handleKeyEvent(e)
             override fun keyPressed(e: KeyEvent) = handleKeyEvent(e)

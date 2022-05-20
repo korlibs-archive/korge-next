@@ -1,12 +1,19 @@
 package com.soywiz.korge.tests
 
 import com.soywiz.kds.*
-import com.soywiz.kds.lock.*
-import com.soywiz.klock.*
-import com.soywiz.korge.internal.*
-import com.soywiz.korio.lang.*
-import kotlinx.coroutines.*
-import kotlin.coroutines.*
+import com.soywiz.kds.lock.Lock
+import com.soywiz.klock.TimeSpan
+import com.soywiz.klock.milliseconds
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Delay
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Runnable
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.startCoroutine
 
 @OptIn(InternalCoroutinesApi::class)
 class TestCoroutineDispatcher(val frameTime: TimeSpan = 16.milliseconds) :
@@ -47,7 +54,7 @@ class TestCoroutineDispatcher(val frameTime: TimeSpan = 16.milliseconds) :
 		scheduleAfter(0) { block.run() }
 	}
 
-	override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>): Unit {
+	override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
 		scheduleAfter(timeMillis.toInt()) { continuation.resume(Unit) }
 	}
 

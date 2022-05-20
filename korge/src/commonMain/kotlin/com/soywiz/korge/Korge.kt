@@ -1,35 +1,75 @@
 package com.soywiz.korge
 
-import com.soywiz.kds.iterators.*
-import com.soywiz.klock.*
-import com.soywiz.klogger.*
-import com.soywiz.korag.log.*
-import com.soywiz.korau.sound.*
-import com.soywiz.korev.*
-import com.soywiz.korge.input.*
-import com.soywiz.korge.internal.*
-import com.soywiz.korge.logger.*
-import com.soywiz.korge.render.*
-import com.soywiz.korge.resources.*
-import com.soywiz.korge.scene.*
-import com.soywiz.korge.stat.*
-import com.soywiz.korge.view.*
-import com.soywiz.korgw.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.*
-import com.soywiz.korim.format.*
-import com.soywiz.korim.vector.*
-import com.soywiz.korinject.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.dynamic.*
-import com.soywiz.korio.file.std.*
-import com.soywiz.korio.lang.*
-import com.soywiz.korio.resources.*
-import com.soywiz.korio.util.*
-import com.soywiz.korma.geom.*
-import kotlinx.coroutines.*
-import kotlin.coroutines.*
-import kotlin.reflect.*
+import com.soywiz.kds.iterators.fastForEach
+import com.soywiz.klock.DateTime
+import com.soywiz.klock.TimeProvider
+import com.soywiz.klock.TimeSpan
+import com.soywiz.klock.milliseconds
+import com.soywiz.klogger.Console
+import com.soywiz.klogger.Logger
+import com.soywiz.korag.log.PrintAG
+import com.soywiz.korau.sound.nativeSoundProvider
+import com.soywiz.korev.DestroyEvent
+import com.soywiz.korev.EventDispatcher
+import com.soywiz.korev.GamePadConnectionEvent
+import com.soywiz.korev.GamePadUpdateEvent
+import com.soywiz.korev.KeyEvent
+import com.soywiz.korev.MouseButton
+import com.soywiz.korev.MouseEvent
+import com.soywiz.korev.PauseEvent
+import com.soywiz.korev.ReshapeEvent
+import com.soywiz.korev.ResumeEvent
+import com.soywiz.korev.StopEvent
+import com.soywiz.korev.Touch
+import com.soywiz.korev.TouchEvent
+import com.soywiz.korev.addEventListener
+import com.soywiz.korev.dispatch
+import com.soywiz.korge.input.Input
+import com.soywiz.korge.internal.DefaultViewport
+import com.soywiz.korge.internal.KorgeInternal
+import com.soywiz.korge.logger.configureLoggerFromProperties
+import com.soywiz.korge.render.BatchBuilder2D
+import com.soywiz.korge.resources.ResourcesRoot
+import com.soywiz.korge.scene.EmptyScene
+import com.soywiz.korge.scene.Module
+import com.soywiz.korge.scene.Scene
+import com.soywiz.korge.scene.SceneContainer
+import com.soywiz.korge.stat.Stats
+import com.soywiz.korge.view.Stage
+import com.soywiz.korge.view.ViewDslMarker
+import com.soywiz.korge.view.Views
+import com.soywiz.korgw.CreateDefaultGameWindow
+import com.soywiz.korgw.GameWindow
+import com.soywiz.korgw.GameWindowCreationConfig
+import com.soywiz.korgw.configure
+import com.soywiz.korim.bitmap.Bitmap
+import com.soywiz.korim.color.Colors
+import com.soywiz.korim.color.RGBA
+import com.soywiz.korim.format.ImageFormat
+import com.soywiz.korim.format.ImageFormats
+import com.soywiz.korim.format.RegisteredImageFormats
+import com.soywiz.korim.format.plus
+import com.soywiz.korim.format.readBitmapOptimized
+import com.soywiz.korinject.AsyncInjector
+import com.soywiz.korinject.AsyncInjectorContext
+import com.soywiz.korio.async.delay
+import com.soywiz.korio.async.launchImmediately
+import com.soywiz.korio.dynamic.KDynamic
+import com.soywiz.korio.file.std.localCurrentDirVfs
+import com.soywiz.korio.file.std.resourcesVfs
+import com.soywiz.korio.resources.Resources
+import com.soywiz.korio.util.OS
+import com.soywiz.korma.geom.Anchor
+import com.soywiz.korma.geom.ISizeInt
+import com.soywiz.korma.geom.Point
+import com.soywiz.korma.geom.ScaleMode
+import com.soywiz.korma.geom.SizeInt
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
+import kotlin.reflect.KClass
 
 /**
  * Entry point for games written in Korge.
@@ -70,6 +110,7 @@ object Korge {
             gameId = config.gameId,
             settingsFolder = config.settingsFolder,
             batchMaxQuads = config.batchMaxQuads,
+            multithreaded = config.multithreaded,
             entry = {
                 //println("Korge views prepared for Config")
                 RegisteredImageFormats.register(*module.imageFormats.toTypedArray())
@@ -125,12 +166,13 @@ object Korge {
         gameId: String = DEFAULT_GAME_ID,
         settingsFolder: String? = null,
         batchMaxQuads: Int = BatchBuilder2D.DEFAULT_BATCH_QUADS,
+        multithreaded: Boolean? = null,
         entry: @ViewDslMarker suspend Stage.() -> Unit
 	) {
         if (!OS.isJsBrowser) {
             configureLoggerFromProperties(localCurrentDirVfs["klogger.properties"])
         }
-        val realGameWindow = (gameWindow ?: coroutineContext[GameWindow] ?: CreateDefaultGameWindow())
+        val realGameWindow = (gameWindow ?: coroutineContext[GameWindow] ?: CreateDefaultGameWindow(GameWindowCreationConfig(multithreaded = multithreaded)))
         realGameWindow.bgcolor = bgcolor ?: Colors.BLACK
         //println("Configure: ${width}x${height}")
         // @TODO: Configure should happen before loop. But we should ensure that all the korgw targets are ready for this
@@ -264,9 +306,14 @@ object Korge {
         var moveMouseOutsideInNextFrame = false
         val mouseTouchId = -1
 
+        val tempXY: Point = Point()
         // devicePixelRatio might change at runtime by changing the resolution or changing the screen of the window
-        fun getRealX(x: Double, scaleCoords: Boolean) = if (scaleCoords) x * ag.devicePixelRatio else x
-        fun getRealY(y: Double, scaleCoords: Boolean) = if (scaleCoords) y * ag.devicePixelRatio else y
+        fun getRealXY(x: Double, y: Double, scaleCoords: Boolean, out: Point = tempXY): Point {
+            return views.windowToGlobalCoords(x, y, out)
+        }
+
+        fun getRealX(x: Double, scaleCoords: Boolean): Double = if (scaleCoords) x * ag.devicePixelRatio else x
+        fun getRealY(y: Double, scaleCoords: Boolean): Double = if (scaleCoords) y * ag.devicePixelRatio else y
 
         /*
         fun updateTouch(id: Int, x: Double, y: Double, start: Boolean, end: Boolean) {
@@ -290,8 +337,8 @@ object Korge {
 
         fun mouseDown(type: String, x: Double, y: Double, button: MouseButton) {
             input.toggleButton(button, true)
-            input.mouse.setTo(x, y)
-            input.mouseDown.setTo(x, y)
+            input.setMouseGlobalXY(x, y, down = false)
+            input.setMouseGlobalXY(x, y, down = true)
             views.mouseUpdated()
             downPos.copyFrom(input.mouse)
             downTime = DateTime.now()
@@ -301,13 +348,13 @@ object Korge {
         fun mouseUp(type: String, x: Double, y: Double, button: MouseButton) {
             //Console.log("mouseUp: $name")
             input.toggleButton(button, false)
-            input.mouse.setTo(x, y)
+            input.setMouseGlobalXY(x, y, down = false)
             views.mouseUpdated()
             upPos.copyFrom(views.input.mouse)
         }
 
         fun mouseMove(type: String, x: Double, y: Double, inside: Boolean) {
-            views.input.mouse.setTo(x, y)
+            views.input.setMouseGlobalXY(x, y, down = false)
             views.input.mouseInside = inside
             if (!inside) {
                 moveMouseOutsideInNextFrame = true
@@ -317,7 +364,7 @@ object Korge {
         }
 
         fun mouseDrag(type: String, x: Double, y: Double) {
-            views.input.mouse.setTo(x, y)
+            views.input.setMouseGlobalXY(x, y, down = false)
             views.mouseUpdated()
             moveTime = DateTime.now()
         }
@@ -338,8 +385,7 @@ object Korge {
         eventDispatcher.addEventListener<MouseEvent> { e ->
             //println("MOUSE: $e")
             logger.trace { "eventDispatcher.addEventListener<MouseEvent>:$e" }
-            val x = getRealX(e.x.toDouble(), e.scaleCoords)
-            val y = getRealY(e.y.toDouble(), e.scaleCoords)
+            val (x, y) = getRealXY(e.x.toDouble(), e.y.toDouble(), e.scaleCoords)
             when (e.type) {
                 MouseEvent.Type.DOWN -> {
                     mouseDown("mouseDown", x, y, e.button)
@@ -388,15 +434,21 @@ object Korge {
             logger.trace { "eventDispatcher.addEventListener<TouchEvent>:$e" }
 
             input.updateTouches(e)
-            views.dispatch(e)
+            val ee = input.touch
+            for (t in ee.touches) {
+                val (x, y) = getRealXY(t.x, t.y, e.scaleCoords)
+                t.x = x
+                t.y = y
+            }
+            views.dispatch(ee)
 
             // Touch to mouse events
-            if (e.numTouches == 1) {
-                val start = e.isStart
-                val end = e.isEnd
-                val t = e.touches.first()
-                val x = getRealX(t.x, e.scaleCoords)
-                val y = getRealY(t.y, e.scaleCoords)
+            if (ee.numTouches == 1) {
+                val start = ee.isStart
+                val end = ee.isEnd
+                val t = ee.touches.first()
+                val x = t.x
+                val y = t.y
                 val button = MouseButton.LEFT
                 touchMouseEvent.id = 0
                 touchMouseEvent.button = button
@@ -528,6 +580,7 @@ object Korge {
         val bgcolor: RGBA? = null,
         val quality: GameWindow.Quality? = null,
         val icon: String? = null,
+        val multithreaded: Boolean? = null,
         val main: (suspend Stage.() -> Unit)? = null,
         val constructedScene: Scene.(Views) -> Unit = {},
         val constructedViews: (Views) -> Unit = {}

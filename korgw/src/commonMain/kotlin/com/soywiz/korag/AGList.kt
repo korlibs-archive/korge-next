@@ -6,15 +6,34 @@
 
 package com.soywiz.korag
 
-import com.soywiz.kds.*
-import com.soywiz.kds.lock.*
-import com.soywiz.kmem.*
-import com.soywiz.korag.annotation.*
-import com.soywiz.korag.shader.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korio.annotations.*
-import com.soywiz.krypto.encoding.*
-import kotlinx.coroutines.*
+import com.soywiz.kds.ConcurrentPool
+import com.soywiz.kds.Deque
+import com.soywiz.kds.FloatDeque
+import com.soywiz.kds.IntDeque
+import com.soywiz.kds.Pool
+import com.soywiz.kds.fastCastTo
+import com.soywiz.kds.lock.Lock
+import com.soywiz.kmem.FBuffer
+import com.soywiz.kmem.extract
+import com.soywiz.kmem.extract16
+import com.soywiz.kmem.extract24
+import com.soywiz.kmem.extract4
+import com.soywiz.kmem.extract8
+import com.soywiz.kmem.extractBool
+import com.soywiz.kmem.finsert
+import com.soywiz.kmem.finsert16
+import com.soywiz.kmem.finsert24
+import com.soywiz.kmem.finsert4
+import com.soywiz.kmem.finsert8
+import com.soywiz.korag.annotation.KoragExperimental
+import com.soywiz.korag.shader.Program
+import com.soywiz.korag.shader.ProgramConfig
+import com.soywiz.korag.shader.UniformLayout
+import com.soywiz.korio.annotations.KorIncomplete
+import com.soywiz.korio.annotations.KorInternal
+import com.soywiz.korma.geom.Rectangle
+import com.soywiz.krypto.encoding.hex
+import kotlinx.coroutines.CompletableDeferred
 
 @KorInternal
 inline fun AGQueueProcessor.processBlocking(list: AGList, maxCount: Int = 1) {
@@ -58,8 +77,11 @@ class AGGlobalState {
     fun createList(): AGList = AGList(this)
 }
 
+// @TODO: Support either calling other lists, or copying the contents of other list here
 class AGList(val globalState: AGGlobalState) {
     var contextVersion: Int by globalState::contextVersion
+
+    val tempRect = Rectangle()
 
     internal val completed = CompletableDeferred<Unit>()
     private val _lock = Lock() // @TODO: This is slow!
@@ -67,6 +89,8 @@ class AGList(val globalState: AGGlobalState) {
     private val _ints = IntDeque(16)
     private val _float = FloatDeque(16)
     private val _extra = Deque<Any?>(16)
+
+    private val uniformValuesPool = Pool { AG.UniformValues() }
 
     private fun addExtra(v0: Any?) { _lock { _extra.add(v0) } }
     private fun addExtra(v0: Any?, v1: Any?) { _lock { _extra.add(v0); _extra.add(v1) } }
@@ -103,6 +127,7 @@ class AGList(val globalState: AGGlobalState) {
                     completed.complete(Unit)
                     return true
                 }
+                CMD_CONTEXT_LOST -> processor.contextLost()
                 CMD_DEPTH_FUNCTION -> processor.depthFunction(AGCompareMode.VALUES[data.extract4(0)])
                 CMD_ENABLE -> processor.enableDisable(AGEnable.VALUES[data.extract4(0)], enable = true)
                 CMD_DISABLE -> processor.enableDisable(AGEnable.VALUES[data.extract4(0)], enable = false)
@@ -134,6 +159,10 @@ class AGList(val globalState: AGGlobalState) {
                     readExtra(),
                     AG.ReadKind.VALUES[data.extract4(0)]
                 )
+                CMD_READ_PIXELS_TO_TEXTURE -> processor.readPixelsToTexture(
+                    readInt(), readInt(), readInt(), readInt(), readInt(),
+                    AG.ReadKind.VALUES[data.extract4(0)]
+                )
                 // Uniforms
                 CMD_UNIFORMS_SET -> processor.uniformsSet(readExtra(), readExtra())
                 CMD_DEPTH_MASK -> processor.depthMask(data.extract(0))
@@ -156,7 +185,7 @@ class AGList(val globalState: AGGlobalState) {
                 CMD_CLEAR -> processor.clear(data.extract(0), data.extract(1), data.extract(2))
                 CMD_CLEAR_COLOR -> processor.clearColor(readFloat(), readFloat(), readFloat(), readFloat())
                 CMD_CLEAR_DEPTH -> processor.clearDepth(readFloat())
-                CMD_CLEAR_STENCIL -> processor.clearStencil(readInt())
+                CMD_CLEAR_STENCIL -> processor.clearStencil(data.extract24(0))
                 // VAO
                 CMD_VAO_CREATE -> processor.vaoCreate(data.extract16(0))
                 CMD_VAO_DELETE -> processor.vaoDelete(data.extract16(0))
@@ -165,7 +194,11 @@ class AGList(val globalState: AGGlobalState) {
                 // UBO
                 CMD_UBO_CREATE -> processor.uboCreate(data.extract16(0))
                 CMD_UBO_DELETE -> processor.uboDelete(data.extract16(0))
-                CMD_UBO_SET -> processor.uboSet(data.extract16(0), readExtra())
+                CMD_UBO_SET -> {
+                    val ubo = readExtra<AG.UniformValues>()
+                    processor.uboSet(data.extract16(0), ubo)
+                    uniformValuesPool.free(ubo)
+                }
                 CMD_UBO_USE -> processor.uboUse(data.extract16(0))
                 // BUFFER
                 CMD_BUFFER_CREATE -> processor.bufferCreate(data.extract16(0))
@@ -206,13 +239,17 @@ class AGList(val globalState: AGGlobalState) {
         deferred.await()
     }
 
-    inline fun enableDisable(kind: AGEnable, enable: Boolean, block: () -> Unit = {}): Unit {
+    inline fun enableDisable(kind: AGEnable, enable: Boolean, block: () -> Unit = {}) {
         if (enable) {
             enable(kind)
             block()
         } else {
             disable(kind)
         }
+    }
+
+    fun contextLost() {
+        add(CMD(CMD_CONTEXT_LOST))
     }
 
     fun colorMask(red: Boolean, green: Boolean, blue: Boolean, alpha: Boolean) {
@@ -234,8 +271,7 @@ class AGList(val globalState: AGGlobalState) {
     }
 
     fun clearStencil(stencil: Int) {
-        addInt(stencil)
-        add(CMD(CMD_CLEAR_STENCIL))
+        add(CMD(CMD_CLEAR_STENCIL).finsert24(stencil, 0))
     }
 
     fun clear(color: Boolean, depth: Boolean, stencil: Boolean) {
@@ -267,6 +303,7 @@ class AGList(val globalState: AGGlobalState) {
     }
 
     fun scissor(x: Int, y: Int, width: Int, height: Int) {
+        //if (width < 200) println("AGList.scissor: $x, $y, $width, $height")
         addInt(x, y, width, height)
         add(CMD(CMD_SCISSOR))
     }
@@ -305,6 +342,11 @@ class AGList(val globalState: AGGlobalState) {
         add(CMD(CMD_PROGRAM_USE).finsert16(programId, 0))
     }
 
+    fun useProgram(program: AG.AgProgram) {
+        program.ensure(this)
+        useProgram(program.programId)
+    }
+
     ////////////////////////////////////////
     // TEXTURES
     ////////////////////////////////////////
@@ -331,7 +373,7 @@ class AGList(val globalState: AGGlobalState) {
         add(CMD(CMD_TEXTURE_BIND).finsert16(textureId, 0).finsert4(target.ordinal, 16))
     }
 
-    fun bindTextureEnsuring(texture: AG.Texture) {
+    fun bindTextureEnsuring(texture: AG.Texture?) {
         addExtra(texture)
         add(CMD(CMD_TEXTURE_BIND_ENSURING))
     }
@@ -407,7 +449,9 @@ class AGList(val globalState: AGGlobalState) {
     }
 
     fun uboSet(id: Int, ubo: AG.UniformValues) {
-        addExtra(ubo)
+        val uboCopy = uniformValuesPool.alloc()
+        uboCopy.setTo(ubo)
+        addExtra(uboCopy)
         add(CMD(CMD_UBO_SET).finsert16(id, 0))
     }
 
@@ -426,6 +470,12 @@ class AGList(val globalState: AGGlobalState) {
         addInt(x, y, width, height)
         addExtra(data)
         add(CMD(CMD_READ_PIXELS).finsert4(kind.ordinal, 0))
+    }
+
+    fun readPixelsToTexture(textureId: Int, x: Int, y: Int, width: Int, height: Int, kind: AG.ReadKind) {
+        addInt(textureId)
+        addInt(x, y, width, height)
+        add(CMD(CMD_READ_PIXELS_TO_TEXTURE).finsert4(kind.ordinal, 0))
     }
 
     // BUFFERS
@@ -463,8 +513,9 @@ class AGList(val globalState: AGGlobalState) {
         private fun CMD(cmd: Int): Int = 0.finsert8(cmd, 24)
 
         // Special
-
-        private const val CMD_READ_PIXELS = 0xFC
+        private const val CMD_CONTEXT_LOST = 0xFA
+        private const val CMD_READ_PIXELS = 0xFB
+        private const val CMD_READ_PIXELS_TO_TEXTURE = 0xFC
         private const val CMD_DRAW = 0xFD
         private const val CMD_SYNC = 0xFE
         private const val CMD_FINISH = 0xFF
@@ -535,15 +586,3 @@ class AGList(val globalState: AGGlobalState) {
         private const val CMD_FRAMEBUFFER_USE = 0xC3
     }
 }
-
-@KorIncomplete fun AGList.enableBlend(): Unit = enable(AGEnable.BLEND)
-@KorIncomplete fun AGList.enableCullFace(): Unit = enable(AGEnable.CULL_FACE)
-@KorIncomplete fun AGList.enableDepth(): Unit = enable(AGEnable.DEPTH)
-@KorIncomplete fun AGList.enableScissor(): Unit = enable(AGEnable.SCISSOR)
-@KorIncomplete fun AGList.enableStencil(): Unit = enable(AGEnable.STENCIL)
-@KorIncomplete fun AGList.disableBlend(): Unit = disable(AGEnable.BLEND)
-@KorIncomplete fun AGList.disableCullFace(): Unit = disable(AGEnable.CULL_FACE)
-@KorIncomplete fun AGList.disableDepth(): Unit = disable(AGEnable.DEPTH)
-@KorIncomplete fun AGList.disableScissor(): Unit = disable(AGEnable.SCISSOR)
-@KorIncomplete fun AGList.disableStencil(): Unit = disable(AGEnable.STENCIL)
-

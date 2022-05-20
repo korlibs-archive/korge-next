@@ -1,14 +1,18 @@
 package com.soywiz.korge.view
 
-import com.soywiz.kds.iterators.*
-import com.soywiz.korag.annotation.*
-import com.soywiz.korev.*
-import com.soywiz.korge.debug.*
-import com.soywiz.korge.render.*
-import com.soywiz.korio.resources.*
-import com.soywiz.korma.geom.*
-import com.soywiz.korui.*
-import kotlinx.coroutines.*
+import com.soywiz.kds.iterators.fastForEach
+import com.soywiz.korag.annotation.KoragExperimental
+import com.soywiz.korev.EventDispatcher
+import com.soywiz.korge.debug.findObservableProperties
+import com.soywiz.korge.debug.uiCollapsibleSection
+import com.soywiz.korge.debug.uiEditableValue
+import com.soywiz.korge.render.RenderContext
+import com.soywiz.korio.resources.ResourcesContainer
+import com.soywiz.korma.geom.Point
+import com.soywiz.korma.geom.Rectangle
+import com.soywiz.korma.geom.setTo
+import com.soywiz.korui.UiContainer
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * Singleton root [View] and [Container] that contains a reference to the [Views] singleton and doesn't have any parent.
@@ -19,6 +23,7 @@ class Stage(override val views: Views) : Container()
     , EventDispatcher by EventDispatcher.Mixin()
     , ViewsContainer
     , ResourcesContainer
+    , BoundsProvider by views.bp
 {
     val keys get() = views.input.keys
     val input get() = views.input
@@ -52,8 +57,10 @@ class Stage(override val views: Views) : Container()
     override fun renderInternal(ctx: RenderContext) {
         if (views.clipBorders) {
             ctx.useCtx2d { ctx2d ->
-                ctx2d.scissor(x, y, (views.virtualWidth * scaleX), (views.virtualHeight * scaleY)) {
-                    super.renderInternal(ctx)
+                ctx.rectPool.alloc { _tempWindowBounds ->
+                    ctx2d.scissor(views.globalToWindowBounds(this.globalBounds, _tempWindowBounds)) {
+                        super.renderInternal(ctx)
+                    }
                 }
             }
         } else {

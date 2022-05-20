@@ -1,7 +1,14 @@
 import com.soywiz.korlibs.modules.*
-import com.soywiz.korlibs.util.*
+import com.soywiz.korge.gradle.util.*
+import com.soywiz.korge.gradle.targets.*
+import com.soywiz.korge.gradle.targets.android.AndroidSdk
+import com.soywiz.korge.gradle.targets.ios.configureNativeIos
+import com.soywiz.korge.gradle.targets.jvm.JvmAddOpens
 import org.gradle.kotlin.dsl.kotlin
 import java.io.File
+import java.nio.file.Files
+import com.soywiz.korlibs.modules.*
+import kotlin.io.path.relativeTo
 
 buildscript {
     val kotlinVersion: String = libs.versions.kotlin.get()
@@ -74,7 +81,7 @@ allprojects {
 	}
 }
 
-val hasAndroidSdk by lazy { hasAndroidSdk() }
+val hasAndroidSdk by lazy { AndroidSdk.hasAndroidSdk(project) }
 
 // Required by RC
 kotlin {
@@ -101,19 +108,6 @@ allprojects {
         else -> "com.soywiz.korlibs.$firstComponent"
     }
 }
-
-val beforeJava9 = System.getProperty("java.version").startsWith("1.")
-
-val javaAddOpens = ArrayList<String>().apply {
-    add("--add-opens=java.desktop/sun.java2d.opengl=ALL-UNNAMED")
-    add("--add-opens=java.desktop/java.awt=ALL-UNNAMED")
-    add("--add-opens=java.desktop/sun.awt=ALL-UNNAMED")
-    if (isMacos) {
-        add("--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED")
-        add("--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED")
-    }
-    if (isLinux) add("--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED")
-}.toTypedArray()
 
 rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin> {
     rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion = nodeVersion
@@ -143,6 +137,10 @@ subprojects {
             if (isSample) {
                 apply(from = "${rootProject.rootDir}/build.android.application.gradle")
             }
+        }
+
+        if (isSample && doEnableKotlinNative && com.soywiz.korge.gradle.targets.isMacos) {
+            configureNativeIos()
         }
 
         if (!isSample && rootProject.plugins.hasPlugin("org.jetbrains.dokka")) {
@@ -181,10 +179,10 @@ subprojects {
                     testClassesDirs = jvmTest.testClassesDirs
                     classpath = jvmTest.classpath
                     bootstrapClasspath = jvmTest.bootstrapClasspath
-                    if (!beforeJava9) jvmArgs(*javaAddOpens)
+                    if (!JvmAddOpens.beforeJava9) jvmArgs(*JvmAddOpens.createAddOpensTypedArray())
                     if (headlessTests) systemProperty("java.awt.headless", "true")
                 }
-                if (!beforeJava9) jvmTest.jvmArgs(*javaAddOpens)
+                if (!JvmAddOpens.beforeJava9) jvmTest.jvmArgs(*JvmAddOpens.createAddOpensTypedArray())
                 if (headlessTests) jvmTest.systemProperty("java.awt.headless", "true")
             }
         }
@@ -436,24 +434,6 @@ subprojects {
     }
 }
 
-open class KorgeJavaExec : JavaExec() {
-    private val jvmCompilation by lazy { project.kotlin.targets.getByName("jvm").compilations as NamedDomainObjectSet<*> }
-    private val mainJvmCompilation by lazy { jvmCompilation.getByName("main") as org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmCompilation }
-
-    @get:InputFiles
-    val korgeClassPath by lazy {
-        mainJvmCompilation.runtimeDependencyFiles + mainJvmCompilation.compileDependencyFiles + mainJvmCompilation.output.allOutputs + mainJvmCompilation.output.classesDirs
-    }
-
-    init {
-        systemProperties = (System.getProperties().toMutableMap() as MutableMap<String, Any>) - "java.awt.headless"
-        project.afterEvaluate {
-            //if (firstThread == true && OS.isMac) task.jvmArgs("-XstartOnFirstThread")
-            classpath = korgeClassPath
-        }
-    }
-}
-
 fun Project.samples(block: Project.() -> Unit) {
     subprojects {
         if (project.isSample && project.hasBuildGradle()) {
@@ -614,9 +594,6 @@ samples {
         val runJvm by creating(KorgeJavaExec::class) {
             group = "run"
             mainClass.set("MainKt")
-            if (!beforeJava9) {
-                javaAddOpens.forEach { jvmArgs(it) }
-            }
         }
 
         // esbuild
@@ -961,6 +938,34 @@ val gitVersion = try {
     "unknown"
 }
 
+fun symlinktree(fromFolder: File, intoFolder: File) {
+    try {
+        if (!intoFolder.isDirectory && !Files.isSymbolicLink(intoFolder.toPath())) {
+            runCatching { intoFolder.delete() }
+            runCatching { intoFolder.deleteRecursively() }
+            Files.createSymbolicLink(intoFolder.toPath(), intoFolder.parentFile.toPath().relativize(fromFolder.toPath()))
+        }
+    } catch (e: Throwable) {
+        copy {
+            val it = this
+            it.from(fromFolder)
+            it.into(intoFolder)
+            it.duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        }
+    }
+}
+
+//fileTree(new File(rootProject.projectDir, "buildSrc/src/main/kotlinShared"))
+//copy {
+symlinktree(
+    fromFolder = File(rootProject.projectDir, "buildSrc/src/main/kotlin"),
+    intoFolder = File(rootProject.projectDir, "korge-gradle-plugin/build/srcgen2")
+)
+
+symlinktree(
+    fromFolder = File(rootProject.projectDir, "buildSrc/src/main/resources"),
+    intoFolder = File(rootProject.projectDir, "korge-gradle-plugin/build/srcgen2res")
+)
 
 val buildVersionsFile = file("korge-gradle-plugin/build/srcgen/com/soywiz/korge/gradle/BuildVersions.kt")
 val oldBuildVersionsText = buildVersionsFile.takeIf { it.exists() }?.readText()

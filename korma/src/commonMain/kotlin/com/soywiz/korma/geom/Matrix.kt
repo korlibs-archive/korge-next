@@ -2,12 +2,17 @@
 
 package com.soywiz.korma.geom
 
-import com.soywiz.kds.*
 import com.soywiz.korma.interpolation.Interpolable
 import com.soywiz.korma.interpolation.MutableInterpolable
 import com.soywiz.korma.interpolation.interpolate
-import kotlin.jvm.*
-import kotlin.math.*
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.ceil
+import kotlin.math.cos
+import kotlin.math.floor
+import kotlin.math.hypot
+import kotlin.math.sin
 
 data class Matrix(
     var a: Double = 1.0,
@@ -278,6 +283,7 @@ data class Matrix(
     fun clone() = Matrix(a, b, c, d, tx, ty)
 
     operator fun times(that: Matrix): Matrix = Matrix().multiply(this, that)
+    operator fun times(scale: Double): Matrix = Matrix().copyFrom(this).scale(scale)
 
     fun toTransform(out: Transform = Transform()): Transform {
         out.setMatrixNoReturn(this)
@@ -311,7 +317,7 @@ data class Matrix(
     fun transformYf(px: Int, py: Int): Float = transformY(px.toDouble(), py.toDouble()).toFloat()
 
     @Suppress("DuplicatedCode")
-    fun transformRectangle(rectangle: Rectangle, delta: Boolean = false): Unit {
+    fun transformRectangle(rectangle: Rectangle, delta: Boolean = false) {
         val a = this.af
         val b = this.bf
         val c = this.cf

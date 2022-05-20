@@ -1,13 +1,16 @@
 package com.soywiz.korge.view
 
-import com.soywiz.kds.iterators.*
-import com.soywiz.korge.animate.*
+import com.soywiz.kds.iterators.fastForEach
+import com.soywiz.korge.animate.play
 import com.soywiz.korge.input.EventsDslMarker
 import com.soywiz.korge.input.MouseEvents
 import com.soywiz.korge.input.onClick
-import com.soywiz.korim.color.*
-import com.soywiz.korma.geom.*
-import kotlin.reflect.*
+import com.soywiz.korim.color.Colors
+import com.soywiz.korim.color.RGBA
+import com.soywiz.korma.geom.Angle
+import com.soywiz.korma.geom.IPoint
+import com.soywiz.korma.geom.degrees
+import kotlin.reflect.KMutableProperty1
 
 class QView(val views: List<View>) : List<View> by views, BView {
     val firstOrNull: View? = views.firstOrNull()
@@ -19,7 +22,7 @@ class QView(val views: List<View>) : List<View> by views, BView {
 
     operator fun get(name: String): QView = QView(views.mapNotNull { it.firstDescendantWith { it.name == name } })
 
-    fun position(): Point = first.pos.copy()
+    fun position(): IPoint = first.pos
 
     fun <T> setProperty(prop: KMutableProperty1<View, T>, value: T) {
         views.fastForEach { prop.set(it, value) }

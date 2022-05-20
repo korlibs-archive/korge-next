@@ -1,11 +1,17 @@
 package com.soywiz.korge.view
 
-import com.soywiz.korge.tests.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.color.*
-import com.soywiz.korma.geom.*
-import kotlin.math.*
-import kotlin.test.*
+import com.soywiz.korge.tests.ViewsForTesting
+import com.soywiz.korim.bitmap.Bitmap32
+import com.soywiz.korim.color.Colors
+import com.soywiz.korma.geom.Anchor
+import com.soywiz.korma.geom.Point
+import com.soywiz.korma.geom.Rectangle
+import com.soywiz.korma.geom.ScaleMode
+import com.soywiz.korma.geom.SizeInt
+import kotlin.math.absoluteValue
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class Views2Test : ViewsForTesting(
     windowSize = SizeInt(1280, 720),
@@ -15,13 +21,23 @@ class Views2Test : ViewsForTesting(
 
     @Test
     fun testScaleMode() = viewsTest {
-        assertEquals("window(1280,720),virtual(640,480),stage(160.0,0.0,640.0,480.0,1.5,1.5)", str())
+        val lines = arrayListOf<String>()
+        lines.add(str())
         resizeGameWindow(640, 480)
-        assertEquals("window(640,480),virtual(640,480),stage(0.0,0.0,640.0,480.0,1.0,1.0)", str())
+        lines.add(str())
         resizeGameWindow(1280, 720, scaleAnchor = Anchor.TOP_LEFT)
-        assertEquals("window(1280,720),virtual(640,480),stage(0.0,0.0,640.0,480.0,1.5,1.5)", str())
+        lines.add(str())
         resizeGameWindow(1280, 720, scaleMode = ScaleMode.EXACT)
-        assertEquals("window(1280,720),virtual(640,480),stage(0.0,0.0,640.0,480.0,2.0,1.5)", str())
+        lines.add(str())
+        assertEquals(
+            """
+                window(1280,720),virtual(640,480),stage(0.0,0.0,640.0,480.0,1.0,1.0)
+                window(640,480),virtual(640,480),stage(0.0,0.0,640.0,480.0,1.0,1.0)
+                window(1280,720),virtual(640,480),stage(0.0,0.0,640.0,480.0,1.0,1.0)
+                window(1280,720),virtual(640,480),stage(0.0,0.0,640.0,480.0,1.0,1.0)
+            """.trimIndent(),
+            lines.joinToString("\n")
+        )
     }
 
     @Test

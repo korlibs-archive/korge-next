@@ -1,9 +1,10 @@
 package com.soywiz.korim.format
 
-import com.soywiz.klock.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.file.std.*
-import kotlin.test.*
+import com.soywiz.klock.milliseconds
+import com.soywiz.korio.async.suspendTestNoBrowser
+import com.soywiz.korio.file.std.resourcesVfs
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class GIFTest {
     @Test
@@ -15,6 +16,14 @@ class GIFTest {
         assertEquals(10.milliseconds, data.frames[0].duration)
         assertEquals(10.milliseconds, data.frames[1].duration)
         assertEquals(10.milliseconds, data.frames[2].duration)
+        //for (frame in data.frames) frame.bitmap.showImageAndWait()
+    }
+
+    @Test
+    fun testIssue636() = suspendTestNoBrowser {
+        val data = resourcesVfs["200.gif"].readImageData(GIF)
+        assertEquals(30.milliseconds, data.defaultAnimation.frames.first().duration)
+
         //for (frame in data.frames) frame.bitmap.showImageAndWait()
     }
 }

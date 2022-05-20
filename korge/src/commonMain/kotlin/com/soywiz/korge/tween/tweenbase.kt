@@ -1,11 +1,29 @@
 package com.soywiz.korge.tween
 
-import com.soywiz.klock.*
-import com.soywiz.korim.color.*
-import com.soywiz.korma.geom.*
-import com.soywiz.korma.interpolation.*
-import kotlin.jvm.*
-import kotlin.reflect.*
+import com.soywiz.klock.TimeSpan
+import com.soywiz.klock.coalesce
+import com.soywiz.klock.milliseconds
+import com.soywiz.klock.nanoseconds
+import com.soywiz.kmem.fract
+import com.soywiz.kmem.toIntFloor
+import com.soywiz.korim.color.ColorAdd
+import com.soywiz.korim.color.RGBA
+import com.soywiz.korma.geom.Angle
+import com.soywiz.korma.geom.IPoint
+import com.soywiz.korma.geom.IPointArrayList
+import com.soywiz.korma.geom.Point
+import com.soywiz.korma.geom.absoluteValue
+import com.soywiz.korma.geom.degrees
+import com.soywiz.korma.geom.minus
+import com.soywiz.korma.geom.normalized
+import com.soywiz.korma.geom.plus
+import com.soywiz.korma.geom.shape.getPoints2
+import com.soywiz.korma.geom.vector.VectorPath
+import com.soywiz.korma.interpolation.Easing
+import com.soywiz.korma.interpolation.Interpolable
+import com.soywiz.korma.interpolation.interpolate
+import kotlin.jvm.JvmName
+import kotlin.reflect.KMutableProperty0
 
 @Suppress("UNCHECKED_CAST")
 data class V2<V>(
@@ -102,6 +120,24 @@ internal fun _interpolateTimeSpan(ratio: Double, l: TimeSpan, r: TimeSpan): Time
 //inline operator fun KMutableProperty0<Float>.get(end: Number) = V2(this, this.get(), end.toFloat(), ::_interpolateFloat)
 //inline operator fun KMutableProperty0<Float>.get(initial: Number, end: Number) =
 //	V2(this, initial.toFloat(), end.toFloat(), ::_interpolateFloat)
+
+inline operator fun KMutableProperty0<IPoint>.get(path: VectorPath): V2<IPoint> = this[path.getPoints2()]
+
+inline operator fun KMutableProperty0<IPoint>.get(range: IPointArrayList): V2<IPoint> {
+    val temp = Point()
+    return V2(
+        this, temp, temp, { ratio, _, _ ->
+            val ratioIndex = ratio * (range.size - 1)
+            val index = ratioIndex.toIntFloor()
+            val index1 = (index + 1).coerceAtMost(range.size)
+            val sratio = fract(ratioIndex)
+            temp.setTo(
+                sratio.interpolate(range.getX(index), range.getX(index1)),
+                sratio.interpolate(range.getY(index), range.getY(index1))
+            )
+        }, includeStart = false
+    )
+}
 
 inline operator fun KMutableProperty0<Double>.get(end: Double) = V2(this, this.get(), end, ::_interpolate, includeStart = false)
 inline operator fun KMutableProperty0<Double>.get(initial: Double, end: Double) = V2(this, initial, end, ::_interpolate, true)

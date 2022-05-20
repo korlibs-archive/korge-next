@@ -1,15 +1,23 @@
 package com.soywiz.korge.input
 
-import com.soywiz.kds.*
-import com.soywiz.kds.iterators.*
+import com.soywiz.kds.Extra
+import com.soywiz.kds.clear
+import com.soywiz.kds.iterators.fastForEach
 import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.milliseconds
 import com.soywiz.klock.nanoseconds
-import com.soywiz.kmem.*
-import com.soywiz.korag.gl.*
-import com.soywiz.korev.*
-import com.soywiz.korge.internal.*
-import com.soywiz.korma.geom.*
+import com.soywiz.kmem.arraycopy
+import com.soywiz.kmem.setBits
+import com.soywiz.korag.gl.AGOpenglFactory
+import com.soywiz.korev.GamepadInfo
+import com.soywiz.korev.Key
+import com.soywiz.korev.KeyEvent
+import com.soywiz.korev.MouseButton
+import com.soywiz.korev.Touch
+import com.soywiz.korev.TouchEvent
+import com.soywiz.korge.internal.KorgeInternal
+import com.soywiz.korma.geom.IPoint
+import com.soywiz.korma.geom.Point
 
 //@Singleton
 @OptIn(KorgeInternal::class)
@@ -48,8 +56,18 @@ class Input : Extra by Extra.Mixin() {
     /** Configures the distance from down to up to consider a finger up event a tap */
     var clickDistance = 20.0 // @TODO: We should take into account pointSize/DPI
 
-    val mouse = Point(-1000.0, -1000.0)
-    val mouseDown = Point(-1000.0, -1000.0)
+    // Mouse coordinates relative to the Stage
+    private val _mouse: Point = Point(-1000.0, -1000.0)
+    private val _mouseDown: Point = Point(-1000.0, -1000.0)
+    val mouse: IPoint get() = _mouse
+    val mouseDown: IPoint get() = _mouseDown
+
+    @KorgeInternal fun setMouseGlobalXY(x: Double, y: Double, down: Boolean = false) {
+        val point = if (down) _mouseDown else _mouse
+        //println("setMouseGlobalXY: x=$x, y=$y, down=$down")
+        //if (x == 5.0) println("-----")
+        point.setTo(x, y)
+    }
 
     /** BitField with pressed mouse buttons */
     var mouseButtons = 0

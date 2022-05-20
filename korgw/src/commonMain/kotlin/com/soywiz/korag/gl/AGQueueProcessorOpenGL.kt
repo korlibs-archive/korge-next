@@ -1,20 +1,57 @@
 package com.soywiz.korag.gl
 
-import com.soywiz.kds.*
-import com.soywiz.kds.iterators.*
-import com.soywiz.kgl.*
-import com.soywiz.kmem.*
-import com.soywiz.korag.*
-import com.soywiz.korag.internal.*
-import com.soywiz.korag.shader.*
-import com.soywiz.korag.shader.gl.*
-import com.soywiz.korim.bitmap.*
-import com.soywiz.korim.vector.*
-import com.soywiz.korio.annotations.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.lang.*
-import com.soywiz.korma.geom.*
-import kotlin.math.*
+import com.soywiz.kds.fastCastTo
+import com.soywiz.kds.iterators.fastForEach
+import com.soywiz.kgl.KmlGl
+import com.soywiz.kgl.deleteBuffer
+import com.soywiz.kgl.deleteFramebuffer
+import com.soywiz.kgl.deleteRenderbuffer
+import com.soywiz.kgl.deleteTexture
+import com.soywiz.kgl.genBuffer
+import com.soywiz.kgl.genFramebuffer
+import com.soywiz.kgl.genRenderbuffer
+import com.soywiz.kgl.genTexture
+import com.soywiz.kmem.FBuffer
+import com.soywiz.kmem.arraycopy
+import com.soywiz.kmem.fbuffer
+import com.soywiz.kmem.get
+import com.soywiz.kmem.toInt
+import com.soywiz.korag.AG
+import com.soywiz.korag.AGBlendEquation
+import com.soywiz.korag.AGBlendFactor
+import com.soywiz.korag.AGBufferKind
+import com.soywiz.korag.AGCompareMode
+import com.soywiz.korag.AGCullFace
+import com.soywiz.korag.AGDrawType
+import com.soywiz.korag.AGEnable
+import com.soywiz.korag.AGFrontFace
+import com.soywiz.korag.AGGlobalState
+import com.soywiz.korag.AGIndexType
+import com.soywiz.korag.AGQueueProcessor
+import com.soywiz.korag.ForcedTexId
+import com.soywiz.korag.ForcedTexTarget
+import com.soywiz.korag.internal.setFloats
+import com.soywiz.korag.shader.Program
+import com.soywiz.korag.shader.ProgramConfig
+import com.soywiz.korag.shader.UniformLayout
+import com.soywiz.korag.shader.VarType
+import com.soywiz.korag.shader.gl.GlslConfig
+import com.soywiz.korim.bitmap.Bitmap
+import com.soywiz.korim.bitmap.Bitmap32
+import com.soywiz.korim.bitmap.Bitmap8
+import com.soywiz.korim.bitmap.FloatBitmap32
+import com.soywiz.korim.bitmap.NativeImage
+import com.soywiz.korim.vector.BitmapVector
+import com.soywiz.korio.annotations.KorIncomplete
+import com.soywiz.korio.annotations.KorInternal
+import com.soywiz.korio.async.launchImmediately
+import com.soywiz.korio.lang.invalidOp
+import com.soywiz.korio.lang.unsupported
+import com.soywiz.korma.geom.MajorOrder
+import com.soywiz.korma.geom.Matrix3D
+import com.soywiz.korma.geom.Vector3D
+import com.soywiz.korma.geom.copyToFloatWxH
+import kotlin.math.min
 
 @OptIn(KorIncomplete::class, KorInternal::class)
 class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AGQueueProcessor {
@@ -38,6 +75,11 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
     )
 
     val contextVersion: Int get() = globalState.contextVersion
+
+    override fun contextLost() {
+        globalState.contextVersion++
+        gl.handleContextLost()
+    }
 
     override fun finish() {
         gl.flush()
@@ -125,7 +167,7 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
         buffers.tryGetAndDelete(id)?.let { gl.deleteBuffer(it.glId); it.glId = 0 }
     }
 
-    private fun bindBuffer(buffer: AG.Buffer, target: AGBufferKind = buffer.kind) {
+    private fun bindBuffer(buffer: AG.Buffer, target: AGBufferKind) {
         val bufferInfo = buffers[buffer.agId] ?: return
         if (bufferInfo.cachedVersion != globalState.contextVersion) {
             bufferInfo.cachedVersion = globalState.contextVersion
@@ -212,10 +254,12 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
 
     override fun scissor(x: Int, y: Int, width: Int, height: Int) {
         gl.scissor(x, y, width, height)
+        //println("SCISSOR: $x, $y, $width, $height")
     }
 
     override fun viewport(x: Int, y: Int, width: Int, height: Int) {
         gl.viewport(x, y, width, height)
+        //println("VIEWPORT: $x, $y, $width, $height")
     }
 
     override fun clear(color: Boolean, depth: Boolean, stencil: Boolean) {
@@ -289,7 +333,7 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
                 val vattrs = vertexLayout.attributes
                 val vattrspos = vertexLayout.attributePositions
 
-                if (vertices?.kind != AG.Buffer.Kind.VERTEX) invalidOp("Not a VertexBuffer")
+                //if (vertices.kind != AG.Buffer.Kind.VERTEX) invalidOp("Not a VertexBuffer")
 
                 bindBuffer(vertices, AGBufferKind.VERTEX)
                 val totalSize = vertexLayout.totalSize
@@ -342,9 +386,9 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
 
     private val TEMP_MAX_MATRICES = 1024
     val tempBuffer = FBuffer(4 * 16 * TEMP_MAX_MATRICES)
-    val tempBufferM2 = FBuffer.allocUnaligned(4 * 2 * 2)
-    val tempBufferM3 = FBuffer.allocUnaligned(4 * 3 * 3)
-    val tempBufferM4 = FBuffer.allocUnaligned(4 * 4 * 4)
+    val tempBufferM2 = FBuffer(4 * 2 * 2)
+    val tempBufferM3 = FBuffer(4 * 3 * 3)
+    val tempBufferM4 = FBuffer(4 * 4 * 4)
     val tempF32 = tempBuffer.f32
     private val tempFloats = FloatArray(16 * TEMP_MAX_MATRICES)
     private val mat3dArray = arrayOf(Matrix3D())
@@ -371,7 +415,7 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
                     val unit = value.fastCastTo<AG.TextureUnit>()
                     gl.activeTexture(KmlGl.TEXTURE0 + textureUnit)
 
-                    val tex = (unit.texture.fastCastTo<AG.Texture?>())
+                    val tex = unit.texture
                     if (tex != null) {
                         // @TODO: This might be enqueuing commands, we shouldn'd do that here.
                         textureBindEnsuring(tex)
@@ -473,12 +517,24 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
                             }
                         }
                     } else {
-                        when (uniform.type) {
-                            VarType.Float1 -> gl.uniform1fv(location, arrayCount, tempBuffer)
-                            VarType.Float2 -> gl.uniform2fv(location, arrayCount, tempBuffer)
-                            VarType.Float3 -> gl.uniform3fv(location, arrayCount, tempBuffer)
-                            VarType.Float4 -> gl.uniform4fv(location, arrayCount, tempBuffer)
-                            else -> Unit
+                        val tb = tempBuffer
+                        val f32 = tb.f32
+                        if (arrayCount == 1) {
+                            when (uniform.type) {
+                                VarType.Float1 -> gl.uniform1f(location, f32[0])
+                                VarType.Float2 -> gl.uniform2f(location, f32[0], f32[1])
+                                VarType.Float3 -> gl.uniform3f(location, f32[0], f32[1], f32[2])
+                                VarType.Float4 -> gl.uniform4f(location, f32[0], f32[1], f32[2], f32[3])
+                                else -> Unit
+                            }
+                        } else {
+                            when (uniform.type) {
+                                VarType.Float1 -> gl.uniform1fv(location, arrayCount, tempBuffer)
+                                VarType.Float2 -> gl.uniform2fv(location, arrayCount, tempBuffer)
+                                VarType.Float3 -> gl.uniform3fv(location, arrayCount, tempBuffer)
+                                VarType.Float4 -> gl.uniform4fv(location, arrayCount, tempBuffer)
+                                else -> Unit
+                            }
                         }
                     }
                 }
@@ -539,9 +595,22 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
         }
     }
 
+    override fun readPixelsToTexture(textureId: Int, x: Int, y: Int, width: Int, height: Int, kind: AG.ReadKind) {
+        //println("BEFORE:" + gl.getError())
+        //textureBindEnsuring(tex)
+        textureBind(textureId, AG.TextureTargetKind.TEXTURE_2D, -1)
+        //println("BIND:" + gl.getError())
+        gl.copyTexImage2D(KmlGl.TEXTURE_2D, 0, KmlGl.RGBA, x, y, width, height, 0)
+
+        //val data = FBuffer.alloc(800 * 800 * 4)
+        //for (n in 0 until 800 * 800) data.setInt(n, Colors.RED.value)
+        //gl.texImage2D(KmlGl.TEXTURE_2D, 0, KmlGl.RGBA, 800, 800, 0, KmlGl.RGBA, KmlGl.UNSIGNED_BYTE, data)
+        //println("COPY_TEX:" + gl.getError())
+    }
+
     // TEXTURES
     class TextureInfo(val id: Int) {
-        var glId: Int = 0
+        var glId: Int = -1
     }
 
     internal val textures = FastResources { TextureInfo(it) }
@@ -562,16 +631,24 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
 
     override fun textureBind(textureId: Int, target: AG.TextureTargetKind, implForcedTexId: Int) {
         val glId = implForcedTexId.takeIf { it >= 0 } ?: textures[textureId]?.glId ?: 0
+        //if (glId == -1) println("glId=$glId")
         gl.bindTexture(target.toGl(), glId)
     }
 
-    // @TODO: Handle context loss and restoring here
-    fun textureBind(tex: AG.Texture) {
-        textureBind(tex.texId, tex.implForcedTexTarget, tex.implForcedTexId)
-    }
+    override fun textureBindEnsuring(tex: AG.Texture?) {
+        if (tex == null) {
+            return gl.bindTexture(KmlGl.TEXTURE_2D, 0)
+        }
 
-    override fun textureBindEnsuring(tex: AG.Texture) {
-        textureBind(tex)
+        // Context lost
+        if (tex.cachedVersion != contextVersion) {
+            tex.cachedVersion = contextVersion
+            tex.invalidate()
+            textureCreate(tex.texId)
+        }
+
+        textureBind(tex.texId, tex.implForcedTexTarget, tex.implForcedTexId)
+
         if (tex.isFbo) return
         val source = tex.source
         if (tex.uploaded) return
@@ -735,7 +812,7 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
         var nsamples: Int = 1
 
         val hasStencilAndDepth: Boolean get() = when {
-            gl.android -> hasStencil || hasDepth // stencil8 causes strange bug artifacts in Android (at least in one of my devices)
+            //gl.android -> hasStencil || hasDepth // stencil8 causes strange bug artifacts in Android (at least in one of my devices)
             else -> hasStencil && hasDepth
         }
     }
@@ -840,8 +917,7 @@ class AGQueueProcessorOpenGL(val gl: KmlGl, val globalState: AGGlobalState) : AG
             gl.framebufferRenderbuffer(KmlGl.FRAMEBUFFER, KmlGl.STENCIL_ATTACHMENT, KmlGl.RENDERBUFFER, 0)
             gl.framebufferRenderbuffer(KmlGl.DEPTH_ATTACHMENT, KmlGl.STENCIL_ATTACHMENT, KmlGl.RENDERBUFFER, 0)
         }
-        //val status = gl.checkFramebufferStatus(KmlGl.FRAMEBUFFER);
-        //if (status != KmlGl.FRAMEBUFFER_COMPLETE) error("Error getting framebuffer")
-        //gl.bindFramebuffer(KmlGl.FRAMEBUFFER, 0)
+        //val status = gl.checkFramebufferStatus(KmlGl.FRAMEBUFFER)
+        //if (status != KmlGl.FRAMEBUFFER_COMPLETE) { gl.bindFramebuffer(KmlGl.FRAMEBUFFER, 0); error("Error getting framebuffer") }
     }
 }

@@ -1,7 +1,15 @@
 package com.soywiz.korag
 
-import com.soywiz.korag.annotation.KoragExperimental
-import com.soywiz.korag.shader.*
+import com.soywiz.korag.shader.Attribute
+import com.soywiz.korag.shader.FragmentShader
+import com.soywiz.korag.shader.Precision
+import com.soywiz.korag.shader.Program
+import com.soywiz.korag.shader.Temp
+import com.soywiz.korag.shader.Uniform
+import com.soywiz.korag.shader.VarType
+import com.soywiz.korag.shader.Varying
+import com.soywiz.korag.shader.VertexLayout
+import com.soywiz.korag.shader.VertexShader
 
 fun ProgramWithDefault(
 	vertex: VertexShader = DefaultShaders.VERTEX_DEFAULT,
@@ -11,6 +19,7 @@ fun ProgramWithDefault(
 
 interface IDefaultShaders {
     val u_Tex: Uniform get() = DefaultShaders.u_Tex
+    val u_Tex2: Uniform get() = DefaultShaders.u_Tex2
     val u_ProjMat: Uniform get() = DefaultShaders.u_ProjMat
     val u_ViewMat: Uniform get() = DefaultShaders.u_ViewMat
     val a_Pos: Attribute get() = DefaultShaders.a_Pos
@@ -27,6 +36,7 @@ interface IDefaultShaders {
 object DefaultShaders {
     // from korge
 	val u_Tex: Uniform = Uniform("u_Tex", VarType.Sampler2D)
+    val u_Tex2: Uniform = Uniform("u_Tex2", VarType.Sampler2D)
 
 	val u_ProjMat: Uniform = Uniform("u_ProjMat", VarType.Mat4)
 	val u_ViewMat: Uniform = Uniform("u_ViewMat", VarType.Mat4)

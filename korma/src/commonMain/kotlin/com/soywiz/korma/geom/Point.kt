@@ -3,9 +3,16 @@
 package com.soywiz.korma.geom
 
 import com.soywiz.korma.internal.niceStr
-import com.soywiz.korma.interpolation.*
-import com.soywiz.korma.math.*
-import kotlin.math.*
+import com.soywiz.korma.interpolation.Interpolable
+import com.soywiz.korma.interpolation.MutableInterpolable
+import com.soywiz.korma.interpolation.interpolate
+import com.soywiz.korma.math.isAlmostZero
+import kotlin.math.absoluteValue
+import kotlin.math.acos
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.hypot
+import kotlin.math.round
 
 interface IPoint {
     val x: Double
@@ -84,7 +91,7 @@ inline fun Point.setToMul(a: IPoint, s: Number): Point = setToMul(a, s.toDouble(
 fun Point.setToDiv(a: IPoint, b: IPoint): Point = setTo(a.x / b.x, a.y / b.y)
 fun Point.setToDiv(a: IPoint, s: Double): Point = setTo(a.x / s, a.y / s)
 inline fun Point.setToDiv(a: IPoint, s: Number): Point = setToDiv(a, s.toDouble())
-operator fun Point.plusAssign(that: IPoint): Unit { setTo(this.x + that.x, this.y + that.y) }
+operator fun Point.plusAssign(that: IPoint) { setTo(this.x + that.x, this.y + that.y) }
 
 data class Point(
     override var x: Double,
@@ -237,7 +244,7 @@ data class Point(
     fun add(x: Double, y: Double) = this.setTo(this.x + x, this.y + y)
     fun sub(x: Double, y: Double) = this.setTo(this.x - x, this.y - y)
 
-    fun copyFrom(that: Point) = setTo(that.x, that.y)
+    fun copyFrom(that: IPoint) = setTo(that.x, that.y)
 
     fun setToTransform(mat: Matrix, p: Point): Point = setToTransform(mat, p.x, p.y)
     fun setToTransform(mat: Matrix, x: Double, y: Double): Point = setTo(mat.transformX(x, y), mat.transformY(x, y))
@@ -250,7 +257,7 @@ data class Point(
     fun setToDiv(a: Point, b: Point): Point = setTo(a.x / b.x, a.y / b.y)
     fun setToDiv(a: Point, s: Double): Point = setTo(a.x / s, a.y / s)
     fun setToDiv(a: Point, s: Float): Point = setToDiv(a, s.toDouble())
-    operator fun plusAssign(that: Point): Unit { setTo(this.x + that.x, this.y + that.y) }
+    operator fun plusAssign(that: Point) { setTo(this.x + that.x, this.y + that.y) }
 
     operator fun plus(that: Point): Point = Point(this.x + that.x, this.y + that.y)
     operator fun minus(that: Point): Point = Point(this.x - that.x, this.y - that.y)
