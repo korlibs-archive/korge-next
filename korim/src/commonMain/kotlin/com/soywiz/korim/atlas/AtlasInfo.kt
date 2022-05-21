@@ -34,9 +34,7 @@ data class AtlasInfo(
     data class Rect(val x: Int, val y: Int, val w: Int, val h: Int) {
         val rect get() = Rectangle(x, y, w, h)
 
-        fun toRectangleInt() : RectangleInt {
-            return RectangleInt(x, y, w, h)
-        }
+        fun toRectangleInt() : RectangleInt = RectangleInt(x, y, w, h)
     }
 
     data class Size(val width: Int, val height: Int) {
@@ -92,7 +90,21 @@ data class AtlasInfo(
         var repeatX: Boolean,
         var repeatY: Boolean,
         val regions: List<Region>
-    )
+    ) {
+        fun createBmpCoords(region: Region): BmpCoordsWithT<ISizeInt> {
+            val tl = Point(region.frame.x / size.width.toDouble(), region.frame.y / size.height.toDouble())
+            val br = Point(tl.x + (region.srcWidth - 1) / size.width.toDouble(), tl.y + (region.srcHeight - 1) / size.height.toDouble())
+            val tr = Point(br.x, tl.y)
+            val bl = Point(tl.x, br.y)
+            return BmpCoordsWithInstance(
+                SizeInt(region.srcWidth, region.srcHeight),
+                tl.x.toFloat(), tl.y.toFloat(),
+                tr.x.toFloat(), tr.y.toFloat(),
+                br.x.toFloat(), br.y.toFloat(),
+                bl.x.toFloat(), bl.y.toFloat()
+            )
+        }
+    }
 
     data class Region(
         val name: String,
