@@ -1,6 +1,8 @@
 package com.soywiz.korim.atlas
 
 import com.soywiz.kds.ListReader
+import com.soywiz.korim.bitmap.BmpCoordsWithInstance
+import com.soywiz.korim.bitmap.BmpCoordsWithT
 import com.soywiz.korim.format.ImageOrientation
 import com.soywiz.korio.dynamic.KDynamic
 import com.soywiz.korio.serialization.json.Json
@@ -322,8 +324,8 @@ data class AtlasInfo(
                     val virtFrame = Rect(
                         it.int("frameX", 0) * -1,
                         it.int("frameY", 0) * -1,
-                        it.int("frameWidth, 0"),
-                        it.int("frameHeight, 0")
+                        it.int("frameWidth", 0),
+                        it.int("frameHeight", 0)
                     )
                     Region(
                         name = it.strNull("name") ?: it.str("n"),
@@ -425,7 +427,7 @@ data class AtlasInfo(
                     currentEntryList.add(Region(
                         name = name,
                         frame = Rect(xy.x.toInt(), xy.y.toInt(), size.width, size.height),
-                        virtFrame = Rect(offset.x.toInt(), offset.y.toInt(), orig.width, orig.height),
+                        virtFrame = Rect(offset.x.toInt(), orig.height - size.height - offset.y.toInt(), orig.width, orig.height), // In Spine atlas format offset is defined from left and bottom
                         imageOrientation = if (rotate) {
                             ImageOrientation.ROTATE_90
                         } else {
