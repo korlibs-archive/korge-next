@@ -2,15 +2,12 @@ package com.soywiz.korim.atlas
 
 import com.soywiz.korim.bitmap.Bitmap
 import com.soywiz.korim.bitmap.BitmapSlice
-import com.soywiz.korim.bitmap.BmpCoordsWithInstance
 import com.soywiz.korim.bitmap.BmpSlice
 import com.soywiz.korim.bitmap.asumePremultiplied
 import com.soywiz.korim.bitmap.copy
 import com.soywiz.korim.format.readBitmapSlice
 import com.soywiz.korim.format.withImageOrientation
 import com.soywiz.korio.file.VfsFile
-import com.soywiz.korma.geom.Point
-import com.soywiz.korma.geom.SizeInt
 
 class Atlas(val textures: Map<String, BitmapSlice<Bitmap>>, val info: AtlasInfo = AtlasInfo()) : AtlasLookup {
     constructor(texture: BitmapSlice<Bitmap>, info: AtlasInfo = AtlasInfo()) : this(mapOf(info.pages.first().fileName to texture), info)
@@ -21,21 +18,11 @@ class Atlas(val textures: Map<String, BitmapSlice<Bitmap>>, val info: AtlasInfo 
     inner class Entry(val info: AtlasInfo.Region, val page: AtlasInfo.Page) {
         val texture = textures[page.fileName]
             ?: error("Can't find '${page.fileName}' in ${textures.keys}")
-        val slice = texture.slice(info.frame.toRectangleInt(), info.name)
+        val slice = texture.sliceWithBmpCoords(info.frame.toRectangleInt(), page.createBmpCoords(info), info.name)
             .let {
-                val tl = Point(info.frame.x / page.size.width.toDouble(), info.frame.y / page.size.height.toDouble())
-                val br = Point(tl.x + info.srcWidth / page.size.width.toDouble(), tl.y + info.srcHeight / page.size.height.toDouble())
-                val tr = Point(br.x, tl.y)
-                val bl = Point(tl.x, br.y)
                 it.copy(
                     virtFrame = info.virtFrame?.toRectangleInt(),
-                    bmpCoords = BmpCoordsWithInstance(
-                        SizeInt(),
-                        tl.x.toFloat(), tl.y.toFloat(),
-                        tr.x.toFloat(), tr.y.toFloat(),
-                        br.x.toFloat(), br.y.toFloat(),
-                        bl.x.toFloat(), bl.y.toFloat()
-                    ).withImageOrientation(info.imageOrientation)
+                    bmpCoords = it.bmpCoords!!.withImageOrientation(info.imageOrientation)
                 )
             }
         val name get() = info.name

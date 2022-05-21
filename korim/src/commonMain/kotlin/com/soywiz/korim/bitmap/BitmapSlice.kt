@@ -255,7 +255,7 @@ abstract class BmpSlice(
     override val name: String? = null,
     val rotated: Boolean = false,
     val virtFrame: RectangleInt? = null,
-    val bmpCoords: BmpCoords? = null
+    val bmpCoords: BmpCoordsWithT<ISizeInt>? = null
 ) : Extra, BitmapCoords {
     override val base get() = bmpBase
     open val bmp: Bitmap = bmpBase
