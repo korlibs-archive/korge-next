@@ -11,10 +11,13 @@ import com.soywiz.korma.geom.ISizeInt
 import com.soywiz.korma.geom.Matrix
 import com.soywiz.korma.geom.Matrix3D
 import com.soywiz.korma.geom.Point
+import com.soywiz.korma.geom.PointInt
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.RectangleInt
 import com.soywiz.korma.geom.SizeInt
 import com.soywiz.korma.geom.setTo
+import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 
 interface BmpCoords {
     val tl_x: Float
@@ -307,12 +310,57 @@ abstract class BmpSlice(
         check((x + width) in 0 .. this.width)
         check((y + height) in 0 .. this.height)
         check(out.size >= offset + width * height)
-        bmpBase.readPixelsUnsafe(left + x, top + y, width, height, out, offset)
+        readPixelsUnsafe(left + x, top + y, width, height, out, offset)
         return out
     }
 
-    fun getRgba(x: Int, y: Int): RGBA = bmpBase.getRgba(left + x, top + y)
-    fun setRgba(x: Int, y: Int, value: RGBA): Unit = bmpBase.setRgba(left + x, top + y, value)
+    fun writePixels(x: Int, y: Int, width: Int, height: Int, out: RgbaArray = RgbaArray(width * height), offset: Int = 0): RgbaArray {
+        check(x in 0 until this.width)
+        check(y in 0 until this.height)
+        check((x + width) in 0 .. this.width)
+        check((y + height) in 0 .. this.height)
+        check(out.size >= offset + width * height)
+        writePixelsUnsafe(left + x, top + y, width, height, out, offset)
+        return out
+    }
+
+    open fun readPixelsUnsafe(x: Int, y: Int, width: Int, height: Int, out: RgbaArray, offset: Int = 0) {
+        var n = offset
+        for (y0 in 0 until height) for (x0 in 0 until width) out[n++] = getRgba(x0 + x, y0 + y)
+    }
+    open fun writePixelsUnsafe(x: Int, y: Int, width: Int, height: Int, out: RgbaArray, offset: Int = 0) {
+        var n = offset
+        for (y0 in 0 until height) for (x0 in 0 until width) setRgba(x0 + x, y0 + y, out[n++])
+    }
+
+    fun getRgba(x: Int, y: Int): RGBA = with(bmpCoords(x, y)) {
+        bmpBase.getRgba(this.x, this.y)
+    }
+    fun setRgba(x: Int, y: Int, value: RGBA): Unit = with(bmpCoords(x, y)) {
+        bmpBase.setRgba(this.x, this.y, value)
+    }
+
+    fun bmpCoords(x: Int, y: Int): PointInt {
+        if (tl_x < br_x && tl_y < br_y) {
+            // No transform
+            return PointInt(left + x, top + y)
+        }
+        // Transformed
+        val dx: Float
+        val dy: Float
+        if (width == ((tr_x - tl_x) * baseWidth).absoluteValue.roundToInt()) {
+            // Not rotated
+            dx = (br_x - tl_x) / (br_x - tl_x).absoluteValue * x
+            dy = (br_y - tl_y) / (br_y - tl_y).absoluteValue * y
+        } else {
+            // Rotated
+            dx = (br_x - tl_x) / (br_x - tl_x).absoluteValue * y
+            dy = (br_y - tl_y) / (br_y - tl_y).absoluteValue * x
+        }
+        return PointInt(
+            (tl_x * baseWidth + dx).roundToInt(),
+            (tl_y * baseHeight + dy).roundToInt())
+    }
 
     open fun sliceWithBounds(left: Int, top: Int, right: Int, bottom: Int, name: String? = null): BmpSlice =
         BitmapSlice(bmp, createRectangleInt(bounds.left, bounds.top, bounds.right, bounds.bottom, left, top, right, bottom), name)
@@ -334,7 +382,7 @@ class BitmapSlice<out T : Bitmap>(
     name: String? = null,
     rotated: Boolean = false,
     virtFrame: RectangleInt? = null,
-    bmpCoords: BmpCoords? = null
+    bmpCoords: BmpCoordsWithT<ISizeInt>? = null
 ) : BmpSlice(bmp, bounds, name, rotated, virtFrame, bmpCoords), Extra by Extra.Mixin() {
 	val premultiplied get() = bmp.premultiplied
 
@@ -345,6 +393,9 @@ class BitmapSlice<out T : Bitmap>(
     override fun sliceWithSize(x: Int, y: Int, width: Int, height: Int, name: String?): BitmapSlice<T> = sliceWithBounds(x, y, x + width, y + height, name)
     override fun slice(rect: RectangleInt, name: String?): BitmapSlice<T> = sliceWithBounds(rect.left, rect.top, rect.right, rect.bottom, name)
     override fun slice(rect: Rectangle, name: String?): BitmapSlice<T> = slice(rect.toInt(), name)
+
+    fun sliceWithBmpCoords(rect: RectangleInt, bmpCoords: BmpCoordsWithT<ISizeInt>, name: String?): BitmapSlice<T> =
+        copy(bounds = rect, bmpCoords = bmpCoords, name = name)
 
     fun split(width: Int, height: Int): List<BitmapSlice<T>> = splitInRows(width, height)
 
@@ -372,7 +423,7 @@ inline fun <T : Bitmap> BitmapSlice<T>.copy(
     name: String? = this.name,
     rotated: Boolean = this.rotated,
     virtFrame: RectangleInt? = this.virtFrame,
-    bmpCoords: BmpCoords? = this.bmpCoords
+    bmpCoords: BmpCoordsWithT<ISizeInt>? = this.bmpCoords
 ) = BitmapSlice(bmp, bounds, name, rotated, virtFrame, bmpCoords)
 
 // http://pixijs.download/dev/docs/PIXI.Texture.html#Texture
