@@ -310,7 +310,7 @@ abstract class BmpSlice(
         check((x + width) in 0 .. this.width)
         check((y + height) in 0 .. this.height)
         check(out.size >= offset + width * height)
-        readPixelsUnsafe(left + x, top + y, width, height, out, offset)
+        readPixelsUnsafe(x, y, width, height, out, offset)
         return out
     }
 
@@ -320,7 +320,7 @@ abstract class BmpSlice(
         check((x + width) in 0 .. this.width)
         check((y + height) in 0 .. this.height)
         check(out.size >= offset + width * height)
-        writePixelsUnsafe(left + x, top + y, width, height, out, offset)
+        writePixelsUnsafe(x, y, width, height, out, offset)
         return out
     }
 
