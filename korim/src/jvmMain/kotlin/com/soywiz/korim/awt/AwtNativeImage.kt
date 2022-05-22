@@ -293,7 +293,7 @@ class AwtContext2dRender(val awtImage: BufferedImage, val antialiasing: Boolean 
                                 if (USE_ACCURATE_RADIAL_PAINT) {
                                     AwtKorimGradientPaint(
                                         this,
-                                        t1
+                                        transform
                                     )
                                 } else {
                                     java.awt.RadialGradientPaint(
@@ -312,7 +312,7 @@ class AwtContext2dRender(val awtImage: BufferedImage, val antialiasing: Boolean 
                             }
                         }
                         else -> {
-                            AwtKorimGradientPaint(this, t1)
+                            AwtKorimGradientPaint(this, transform)
                         }
                     }
 
