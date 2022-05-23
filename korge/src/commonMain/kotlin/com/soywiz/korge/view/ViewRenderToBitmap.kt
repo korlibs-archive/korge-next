@@ -12,7 +12,7 @@ import kotlinx.coroutines.completeWith
  * The rendering will happen before the next frame.
  */
 suspend fun View.renderToBitmap(views: Views, region: Rectangle? = null): Bitmap32 {
-    val done = CompletableDeferred<Bitmap32>()
+	val done = CompletableDeferred<Bitmap32>()
 
     views.onBeforeRender.once { ctx ->
         done.completeWith(kotlin.runCatching {
@@ -26,14 +26,12 @@ suspend fun View.renderToBitmap(views: Views, region: Rectangle? = null): Bitmap
 }
 
 @KorgeExperimental
-fun View.unsafeRenderToBitmapSync(ctx: RenderContext, region: Rectangle? = null): Bitmap32 {
+fun View.unsafeRenderToBitmapSync(ctx: RenderContext, region: Rectangle? = null, scale: Double = 1.0): Bitmap32 {
     val view = this
     val bounds = getLocalBoundsOptimizedAnchored()
-    val boundsWidth = bounds.width
-    val boundsHeight = bounds.height
     return Bitmap32(
-        (if (region != null) boundsWidth - region.width else boundsWidth).toInt(),
-        (if (region != null) boundsHeight - region.height else boundsHeight).toInt()
+        (region?.width ?: bounds.width).toInt(),
+        (region?.height ?: bounds.height).toInt()
     ).also { bmp ->
         //val ctx = RenderContext(views.ag, coroutineContext = views.coroutineContext)
         //views.ag.renderToBitmap(bmp) {
@@ -41,6 +39,7 @@ fun View.unsafeRenderToBitmapSync(ctx: RenderContext, region: Rectangle? = null)
             ctx.useBatcher { batch ->
                 val matrix = view.globalMatrixInv.clone()
                 if (region != null) {
+                    matrix.prescale(scale)
                     matrix.pretranslate(-region.x, -region.y)
                 }
                 batch.setViewMatrixTemp(matrix) {
