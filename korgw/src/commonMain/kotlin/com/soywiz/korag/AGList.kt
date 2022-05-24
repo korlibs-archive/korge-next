@@ -90,6 +90,8 @@ class AGList(val globalState: AGGlobalState) {
     private val _float = FloatDeque(16)
     private val _extra = Deque<Any?>(16)
 
+    val tempUBOs = Pool { uboCreate() }
+
     private val uniformValuesPool = Pool { AG.UniformValues() }
 
     private fun addExtra(v0: Any?) { _lock { _extra.add(v0) } }
