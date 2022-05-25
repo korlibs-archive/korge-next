@@ -1,16 +1,22 @@
 import com.soywiz.klock.seconds
 import com.soywiz.korge.tween.get
 import com.soywiz.korge.tween.tween
+import com.soywiz.korge.view.Graphics
 import com.soywiz.korge.view.Stage
 import com.soywiz.korge.view.addUpdater
+import com.soywiz.korge.view.graphics
 import com.soywiz.korge.view.vector.gpuShapeView
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.vector.EmptyShape
+import com.soywiz.korim.vector.StrokeInfo
 import com.soywiz.korio.async.launch
 import com.soywiz.korma.geom.Point
+import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.bezier.Bezier
 import com.soywiz.korma.geom.vector.circle
+import com.soywiz.korma.geom.vector.cubic
 import com.soywiz.korma.geom.vector.curve
+import com.soywiz.korma.geom.vector.lineTo
 import com.soywiz.korma.geom.vector.moveTo
 import com.soywiz.korma.geom.vector.rect
 import com.soywiz.korma.random.get
@@ -31,16 +37,27 @@ suspend fun Stage.mainBezier() {
         shape.updateShape {
             //val curve = Bezier.Quad(bez.p1, bez.p2, bez.p3)
             val curve = Bezier.Cubic(bez.p1, bez.p2, bez.p3, bez.p4)
+
+            stroke(Colors.WHITE, lineWidth = 4.0) {
+                beginPath()
+                curve(curve)
+            }
+
+            stroke(Colors.PURPLE, lineWidth = 2.0) {
+                for (n in 0..50) {
+                    val p = curve.calc(n.toDouble() / 50.0)
+                    this.circle(p, 1.0)
+                }
+            }
+
             stroke(Colors.YELLOW, lineWidth = 2.0) {
+                this.circle(bez.p1, 8.0)
                 this.circle(bez.p1, 4.0)
                 this.circle(bez.p2, 4.0)
                 this.circle(bez.p3, 4.0)
                 this.circle(bez.p4, 4.0)
             }
-            stroke(Colors.WHITE, lineWidth = 4.0) {
-                beginPath()
-                curve(curve)
-            }
+
             stroke(Colors.RED, lineWidth = 2.0) {
                 rect(curve.getBounds())
             }
@@ -58,4 +75,40 @@ suspend fun Stage.mainBezier() {
             )
         }
     }
+
+    /*
+run {
+        val p0 = Point(109, 135)
+        val p1 = Point(25, 190)
+        val p2 = Point(210, 250)
+        val p3 = Point(234, 49)
+        val g = graphics()
+        g.clear()
+        g.stroke(Colors.DIMGREY, info = StrokeInfo(thickness = 1.0)) {
+            moveTo(p0)
+            lineTo(p1)
+            lineTo(p2)
+            lineTo(p3)
+        }
+        g.stroke(Colors.WHITE, info = StrokeInfo(thickness = 2.0)) {
+            cubic(p0, p1, p2, p3)
+        }
+        val ratio = 0.3
+        val cubic2 = Bezier.Cubic().setToSplitFirst(Bezier.Cubic(p0, p1, p2, p3), ratio)
+        val cubic3 = Bezier.Cubic().setToSplitSecond(Bezier.Cubic(p0, p1, p2, p3), ratio)
+
+        g.stroke(Colors.PURPLE, info = StrokeInfo(thickness = 4.0)) {
+            cubic(cubic2)
+        }
+        g.stroke(Colors.YELLOW, info = StrokeInfo(thickness = 4.0)) {
+            cubic(cubic3)
+        }
+        graphics {
+            stroke(Colors.RED, StrokeInfo(thickness = 2.0)) {
+                rect(g.getLocalBounds())
+            }
+        }
+    }
+    return
+     */
 }

@@ -291,14 +291,13 @@ inline fun VectorPath.emitPoints(flush: (close: Boolean) -> Unit, emit: (x: Doub
         },
         quadTo = { x0, y0, x1, y1 ->
             val dt = 1.0 / curveSteps
-            for (n in 1 until curveSteps) Bezier.quadCalc(lx, ly, x0, y0, x1, y1, n * dt, emit)
+            for (n in 1 .. curveSteps) Bezier.quadCalc(lx, ly, x0, y0, x1, y1, n * dt, emit)
             lx = x1 ; ly = y1
         },
         cubicTo = { x0, y0, x1, y1, x2, y2 ->
             val dt = 1.0 / curveSteps
-            for (n in 1 until curveSteps) Bezier.cubicCalc(lx, ly, x0, y0, x1, y1, x2, y2, n * dt, emit)
+            for (n in 1 .. curveSteps) Bezier.cubicCalc(lx, ly, x0, y0, x1, y1, x2, y2, n * dt, emit)
             lx = x2 ; ly = y2
-
         },
         close = { flush(true) }
     )
