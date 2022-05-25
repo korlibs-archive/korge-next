@@ -272,29 +272,29 @@ interface Bezier {
                 val mi = min(p0, p3) as Point
                 val ma = max(p0, p3) as Point
 
-                val c = -1.0 * p0 + 1.0 * p1;
-                val b = 1.0 * p0 - 2.0 * p1 + 1.0 * p2;
-                val a = -1.0 * p0 + 3.0 * p1 - 3.0 * p2 + 1.0 * p3;
+                val c = -1.0 * p0 + 1.0 * p1
+                val b = 1.0 * p0 - 2.0 * p1 + 1.0 * p2
+                val a = -1.0 * p0 + 3.0 * p1 - 3.0 * p2 + 1.0 * p3
 
-                val h = b * b - a * c;
+                val h = b * b - a * c
 
                 if (h.x > 0.0 || h.y > 0.0) {
-                    val g = sqrt(abs(h));
+                    val g = sqrt(abs(h))
                     val t1 = clamp((-b - g) / a, 0.0, 1.0)
-                    val s1 = 1.0 - t1;
+                    val s1 = 1.0 - t1
                     val t2 = clamp((-b + g) / a, 0.0, 1.0)
-                    val s2 = 1.0 - t2;
-                    val q1 = s1 * s1 * s1 * p0 + 3.0 * s1 * s1 * t1 * p1 + 3.0 * s1 * t1 * t1 * p2 + t1 * t1 * t1 * p3;
-                    val q2 = s2 * s2 * s2 * p0 + 3.0 * s2 * s2 * t2 * p1 + 3.0 * s2 * t2 * t2 * p2 + t2 * t2 * t2 * p3;
+                    val s2 = 1.0 - t2
+                    val q1 = s1 * s1 * s1 * p0 + 3.0 * s1 * s1 * t1 * p1 + 3.0 * s1 * t1 * t1 * p2 + t1 * t1 * t1 * p3
+                    val q2 = s2 * s2 * s2 * p0 + 3.0 * s2 * s2 * t2 * p1 + 3.0 * s2 * t2 * t2 * p2 + t2 * t2 * t2 * p3
 
                     if (h.x > 0.0) {
-                        mi.x = min(mi.x, min(q1.x, q2.x));
-                        ma.x = max(ma.x, max(q1.x, q2.x));
+                        mi.x = min(mi.x, min(q1.x, q2.x))
+                        ma.x = max(ma.x, max(q1.x, q2.x))
                     }
 
                     if (h.y > 0.0) {
-                        mi.y = min(mi.y, min(q1.y, q2.y));
-                        ma.y = max(ma.y, max(q1.y, q2.y));
+                        mi.y = min(mi.y, min(q1.y, q2.y))
+                        ma.y = max(ma.y, max(q1.y, q2.y))
                     }
                 }
 

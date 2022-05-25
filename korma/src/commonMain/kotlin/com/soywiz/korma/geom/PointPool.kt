@@ -52,6 +52,7 @@ class PointPool(val capacity: Int = 16, preallocate: Boolean = false) {
     fun clamp(p: IPoint, min: Double, max: Double): IPoint = p.clamp(min, max)
     @JvmName("IPoint_clamp")
     fun IPoint.clamp(min: Double, max: Double): IPoint = alloc().setTo(x.clamp(min, max), y.clamp(min, max))
+    val IPoint.absoluteValue: IPoint get() = abs(this)
 
     operator fun Double.times(other: IPoint): IPoint = other.times(this)
     operator fun Double.minus(other: IPoint): IPoint = alloc().setTo(this - other.x, this - other.y)
