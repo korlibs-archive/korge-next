@@ -386,6 +386,24 @@ fun VectorPath.getPoints2(out: PointArrayList = PointArrayList()): PointArrayLis
     return out
 }
 
+fun VectorPath.getPoints2List(): List<PointArrayList> {
+    val out = arrayListOf<PointArrayList>()
+    var current = PointArrayList()
+
+    fun flush() {
+        if (!current.isNotEmpty()) return
+        out.add(current)
+        current = PointArrayList()
+    }
+
+    emitPoints2 { x, y, move ->
+        if (move) flush()
+        current.add(x, y)
+    }
+    flush()
+    return out
+}
+
 @Deprecated("", ReplaceWith("buildVectorPath(out, block)"))
 inline fun buildPath(out: VectorPath = VectorPath(), block: VectorPath.() -> Unit): VectorPath = buildVectorPath(out, block)
 @Deprecated("", ReplaceWith("buildVectorPath(out, winding, block)"))

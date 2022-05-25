@@ -43,6 +43,12 @@ suspend fun Stage.mainBezier() {
                 curve(curve)
             }
 
+            stroke(Colors.DIMGREY, lineWidth = 1.6) {
+                moveTo(bez.p1)
+                lineTo(bez.p2)
+                lineTo(bez.p3)
+                lineTo(bez.p4)
+            }
             stroke(Colors.PURPLE, lineWidth = 2.0) {
                 for (n in 0..50) {
                     val p = curve.calc(n.toDouble() / 50.0)
@@ -50,13 +56,20 @@ suspend fun Stage.mainBezier() {
                 }
             }
 
-            stroke(Colors.YELLOW, lineWidth = 2.0) {
+            //stroke(Colors.YELLOW, lineWidth = 2.0) {
+            fill(Colors.YELLOW) {
                 this.circle(bez.p1, 8.0)
-                this.circle(bez.p1, 4.0)
                 this.circle(bez.p2, 4.0)
+                this.circle(bez.p1, 4.0)
                 this.circle(bez.p3, 4.0)
                 this.circle(bez.p4, 4.0)
             }
+
+            //fill(Colors.YELLOW) { this.circle(bez.p1, 8.0) }
+            //fill(Colors.YELLOW) { this.circle(bez.p2, 4.0) }
+            //fill(Colors.YELLOW) { this.circle(bez.p1, 4.0) }
+            //fill(Colors.YELLOW) { this.circle(bez.p3, 4.0) }
+            //fill(Colors.YELLOW) { this.circle(bez.p4, 4.0) }
 
             stroke(Colors.RED, lineWidth = 2.0) {
                 rect(curve.getBounds())
