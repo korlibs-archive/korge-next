@@ -63,7 +63,7 @@ inline fun Container.gpuShapeView(
 
 @KorgeExperimental
 inline fun Container.gpuShapeView(
-    shape: Shape,
+    shape: Shape = EmptyShape,
     antialiased: Boolean = true,
     callback: @ViewDslMarker GpuShapeView.() -> Unit = {}
 ) =
