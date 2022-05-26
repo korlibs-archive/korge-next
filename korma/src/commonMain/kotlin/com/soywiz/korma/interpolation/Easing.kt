@@ -95,11 +95,17 @@ fun interface Easing {
         fun cubic(f: (t: Double, b: Double, c: Double, d: Double) -> Double): Easing = Easing { f(it, 0.0, 1.0, 1.0) }
         fun combine(start: Easing, end: Easing) = Easing { combine(it, start, end) }
 
+        private val _ALL_LIST: List<Easings> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+            Easings.values().toList()
+        }
+
+        val ALL_LIST: List<Easing> get() = _ALL_LIST
+
         /**
          * Retrieves a mapping of all standard easings defined directly in [Easing], for example "SMOOTH" -> Easing.SMOOTH.
          */
         val ALL: Map<String, Easing> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-            Easings.values().associateBy { it.name }
+            _ALL_LIST.associateBy { it.name }
         }
 
         // Author's note:
