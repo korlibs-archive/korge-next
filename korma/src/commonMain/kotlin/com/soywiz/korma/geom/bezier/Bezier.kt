@@ -41,7 +41,7 @@ data class Curves(val curves: List<Curve>) : Curve {
 
     override fun getBounds(target: Rectangle): Rectangle {
         bb.reset()
-        infos.fastForEach { bb.add(it.bounds) }
+        infos.fastForEach { bb.addEvenEmpty(it.bounds) }
         return bb.getBounds(target)
     }
 
