@@ -28,7 +28,7 @@ abstract class NativeBaseKmlGl : KmlGlWithExtensions() {
     override fun clear(mask: Int): Unit = tempBufferAddress { glClearExt(mask.convert()) }
     override fun clearColor(red: Float, green: Float, blue: Float, alpha: Float): Unit = tempBufferAddress { glClearColorExt(red, green, blue, alpha) }
     override fun clearDepthf(d: Float): Unit = tempBufferAddress {
-        if (Platform.os.isWindows) glClearDepthExt(d) else glClearDepthfExt(d)
+        if (Platform.os.isWindows) glClearDepthExt(d.toDouble()) else glClearDepthfExt(d)
     }
     override fun clearStencil(s: Int): Unit = tempBufferAddress { glClearStencilExt(s.convert()) }
     override fun colorMask(red: Boolean, green: Boolean, blue: Boolean, alpha: Boolean): Unit = tempBufferAddress { glColorMaskExt(red.toInt().convert(), green.toInt().convert(), blue.toInt().convert(), alpha.toInt().convert()) }
@@ -49,7 +49,7 @@ abstract class NativeBaseKmlGl : KmlGlWithExtensions() {
     override fun depthFunc(func: Int): Unit = tempBufferAddress { glDepthFuncExt(func.convert()) }
     override fun depthMask(flag: Boolean): Unit = tempBufferAddress { glDepthMaskExt(flag.toInt().convert()) }
     override fun depthRangef(n: Float, f: Float): Unit = tempBufferAddress {
-        if (Platform.os.isWindows) glDepthRangeExt(n, f) else glDepthRangefExt(n, f)
+        if (Platform.os.isWindows) glDepthRangeExt(n.toDouble(), f.toDouble()) else glDepthRangefExt(n, f)
     }
     override fun detachShader(program: Int, shader: Int): Unit = tempBufferAddress { glDetachShaderExt(program.convert(), shader.convert()) }
     override fun disable(cap: Int): Unit = tempBufferAddress { glDisableExt(cap.convert()) }
@@ -215,9 +215,9 @@ abstract class NativeBaseKmlGl : KmlGlWithExtensions() {
         val glGetIntegervExt by GLFunc<(GLenum, GLintPtr) -> GLvoid>()
         val glGetBooleanvExt by GLFunc<(GLenum, GLbooleanPtr) -> GLvoid>()
         val glGenTexturesExt by GLFunc<(GLsizei, GLuintPtr) -> GLvoid>()
-        val glDepthRangeExt by GLFunc<(GLfloat, GLfloat) -> GLvoid>()
+        val glDepthRangeExt by GLFunc<(GLdouble, GLdouble) -> GLvoid>()
         val glDepthRangefExt by GLFunc<(GLfloat, GLfloat) -> GLvoid>()
-        val glClearDepthExt by GLFunc<(GLfloat) -> GLvoid>()
+        val glClearDepthExt by GLFunc<(GLdouble) -> GLvoid>()
         val glClearDepthfExt by GLFunc<(GLfloat) -> GLvoid>()
         val glDrawArraysExt by GLFunc<(GLenum, GLint, GLsizei) -> GLvoid>()
         val glDrawElementsExt by GLFunc<(GLenum, GLsizei, GLenum, GLvoidPtr) -> GLvoid>()
