@@ -4,9 +4,8 @@ import com.soywiz.korim.bitmap.Bitmap
 import com.soywiz.korim.bitmap.BitmapSlice
 import com.soywiz.korim.bitmap.BmpSlice
 import com.soywiz.korim.bitmap.asumePremultiplied
-import com.soywiz.korim.bitmap.copy
+import com.soywiz.korim.bitmap.virtFrame
 import com.soywiz.korim.format.readBitmapSlice
-import com.soywiz.korim.format.withImageOrientation
 import com.soywiz.korio.file.VfsFile
 
 class Atlas(val textures: Map<String, BitmapSlice<Bitmap>>, val info: AtlasInfo = AtlasInfo()) : AtlasLookup {
@@ -18,13 +17,8 @@ class Atlas(val textures: Map<String, BitmapSlice<Bitmap>>, val info: AtlasInfo 
     inner class Entry(val info: AtlasInfo.Region, val page: AtlasInfo.Page) {
         val texture = textures[page.fileName]
             ?: error("Can't find '${page.fileName}' in ${textures.keys}")
-        val slice = texture.sliceWithBmpCoords(info.frame.toRectangleInt(), page.createBmpCoords(info), info.name)
-            .let {
-                it.copy(
-                    virtFrame = info.virtFrame?.toRectangleInt(),
-                    bmpCoords = it.bmpCoords!!.withImageOrientation(info.imageOrientation)
-                )
-            }
+        val slice = texture.slice(info.frame.toRectangleInt(), info.name, info.imageOrientation)
+            .virtFrame(info.virtFrame?.toRectangleInt())
         val name get() = info.name
         // @TODO: Use name instead
         val filename get() = info.name
