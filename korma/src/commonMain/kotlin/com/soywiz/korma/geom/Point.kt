@@ -8,13 +8,13 @@ import com.soywiz.korma.interpolation.MutableInterpolable
 import com.soywiz.korma.interpolation.interpolate
 import com.soywiz.korma.math.clamp
 import com.soywiz.korma.math.isAlmostZero
-import com.soywiz.korma.math.min
 import kotlin.math.absoluteValue
 import kotlin.math.acos
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.hypot
 import kotlin.math.round
+import kotlin.math.sqrt
 
 interface IPoint {
     val x: Double
@@ -317,6 +317,17 @@ data class Point(
 
     fun rotate(rotation: Angle, out: Point = Point()): Point =
         out.setToPolar(Angle.between(0.0, 0.0, this.x, this.y) + rotation, this.length)
+
+    fun setLength(length: Double): Point {
+        val len2 = length * length
+        val oldLen2 = this.x * this.x + this.y * this.y
+        if (oldLen2 != 0.0 && oldLen2 != len2) {
+            val scalar = sqrt((len2 / oldLen2))
+            this.x *= scalar
+            this.y *= scalar
+        }
+        return this
+    }
 }
 
 
