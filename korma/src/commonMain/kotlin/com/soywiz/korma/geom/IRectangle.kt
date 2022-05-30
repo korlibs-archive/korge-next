@@ -21,9 +21,12 @@ interface IRectangle {
             Rectangle(x, y, width, height)
 
         // Creates a rectangle from 2 points where the (x,y) is the top left point
-        // with the same width and height as the point.
+        // with the same width and height as the point. The 2 points provided can be
+        // in any arbitrary order, the rectangle will be created from the projected
+        // rectangle of the 2 points.
         //
-        // Rect XY   Point 2
+        // Here is one example
+        // Rect XY   point1
         // │        │
         // ▼        ▼
         // ┌────────┐
@@ -32,7 +35,19 @@ interface IRectangle {
         // └────────┘
         // ▲
         // │
-        // Point 1
+        // point2
+        //
+        // Here is another example
+        // point1 (Rect XY)
+        // │
+        // ▼
+        // ┌────────┐
+        // │        │
+        // │        │
+        // └────────┘
+        //          ▲
+        //          │
+        //        point2
         operator fun invoke(point1: IPoint, point2: IPoint): Rectangle {
             val topLeftX = minOf(point1.x, point2.x)
             val topLeftY = minOf(point1.y, point2.y)
