@@ -1362,11 +1362,18 @@ abstract class AG(val checked: Boolean = false) : AGFeatures, Extra by Extra.Mix
     //////////////
 
     private var programCount = 0
-    private val programs = FastIdentityMap<Program, FastIdentityMap<ProgramConfig, AgProgram>>()
+    // @TODO: Simplify this. Why do we need external? Maybe we could copy external textures into normal ones to avoid issues
+    //private val programs = FastIdentityMap<Program, FastIdentityMap<ProgramConfig, AgProgram>>()
+    //private val programs = HashMap<Program, FastIdentityMap<ProgramConfig, AgProgram>>()
+    //private val normalPrograms = FastIdentityMap<Program, AgProgram>()
+    //private val externalPrograms = FastIdentityMap<Program, AgProgram>()
+    private val normalPrograms = HashMap<Program, AgProgram>()
+    private val externalPrograms = HashMap<Program, AgProgram>()
 
     @JvmOverloads
     fun getProgram(program: Program, config: ProgramConfig = ProgramConfig.DEFAULT): AgProgram {
-        return programs.getOrPut(program) { FastIdentityMap() }.getOrPut(config) { AgProgram(program, config) }
+        val map = if (config.externalTextureSampler) externalPrograms else normalPrograms
+        return map.getOrPut(program) { AgProgram(program, config) }
     }
 
     inner class AgProgram(val program: Program, val programConfig: ProgramConfig) {
