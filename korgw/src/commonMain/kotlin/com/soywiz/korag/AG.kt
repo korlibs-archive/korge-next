@@ -1361,7 +1361,7 @@ abstract class AG(val checked: Boolean = false) : AGFeatures, Extra by Extra.Mix
 
     //////////////
 
-
+    private var programCount = 0
     private val programs = FastIdentityMap<Program, FastIdentityMap<ProgramConfig, AgProgram>>()
 
     @JvmOverloads
@@ -1376,6 +1376,7 @@ abstract class AG(val checked: Boolean = false) : AGFeatures, Extra by Extra.Mix
         fun ensure(list: AGList) {
             if (cachedVersion != contextVersion) {
                 val time = measureTime {
+                    programCount++
                     programId = list.createProgram(program, programConfig)
                     cachedVersion = contextVersion
                 }
@@ -1396,7 +1397,10 @@ abstract class AG(val checked: Boolean = false) : AGFeatures, Extra by Extra.Mix
         }
 
         fun close(list: AGList) {
-            if (programId != 0) list.deleteProgram(programId)
+            if (programId != 0) {
+                programCount--
+                list.deleteProgram(programId)
+            }
             programId = 0
         }
     }
@@ -1594,6 +1598,7 @@ abstract class AG(val checked: Boolean = false) : AGFeatures, Extra by Extra.Mix
         out.renderBuffersCount = this.renderBufferCount
         out.texturesCreated = this.createdTextureCount
         out.texturesDeleted = this.deletedTextureCount
+        out.programCount = this.programCount
         return out
     }
 
@@ -1606,9 +1611,10 @@ abstract class AG(val checked: Boolean = false) : AGFeatures, Extra by Extra.Mix
         var renderBuffersMemory: ByteUnits = ByteUnits.fromBytes(0),
         var texturesCreated: Int = 0,
         var texturesDeleted: Int = 0,
+        var programCount: Int = 0,
     ) {
         override fun toString(): String =
-            "AGStats(textures[$texturesCount] = $texturesMemory, buffers[$buffersCount] = $buffersMemory, renderBuffers[$renderBuffersCount] = $renderBuffersMemory)"
+            "AGStats(textures[$texturesCount] = $texturesMemory, buffers[$buffersCount] = $buffersMemory, renderBuffers[$renderBuffersCount] = $renderBuffersMemory, programs[$programCount])"
     }
 }
 
