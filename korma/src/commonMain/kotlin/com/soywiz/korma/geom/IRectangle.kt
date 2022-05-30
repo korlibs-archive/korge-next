@@ -49,11 +49,11 @@ interface IRectangle {
         //          │
         //        point2
         operator fun invoke(point1: IPoint, point2: IPoint): Rectangle {
-            val topLeftX = minOf(point1.x, point2.x)
-            val topLeftY = minOf(point1.y, point2.y)
-            val bottomRightX = maxOf(point1.x, point2.x)
-            val bottomRightY = maxOf(point1.y, point2.y)
-            return Rectangle(topLeftX, topLeftY, bottomRightX - topLeftX, bottomRightY - topLeftY)
+            val left = minOf(point1.x, point2.x)
+            val top = minOf(point1.y, point2.y)
+            val right = maxOf(point1.x, point2.x)
+            val bottom = maxOf(point1.y, point2.y)
+            return Rectangle(left, top, right - left, bottom - top)
         }
     }
 }
