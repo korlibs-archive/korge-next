@@ -109,4 +109,39 @@ class BitmapSliceTest {
         assertFailsWith<IllegalStateException> { sliceVirtFrame.readPixels(9, 18, 2, 2) }
         assertFailsWith<IllegalStateException> { sliceVirtFrame.readPixels(8, 19, 2, 2) }
     }
+
+    @Test
+    fun testTransformFrame() {
+        val baseSlice = Bitmap32(5, 10).slice().virtFrame(2, 2, 10, 20)
+
+        var slice: BmpCoordsWithT<Bitmap> = baseSlice
+        assertEquals(2, slice.frameOffsetX)
+        assertEquals(2, slice.frameOffsetY)
+        assertEquals(10, slice.frameWidth)
+        assertEquals(20, slice.frameHeight)
+
+        slice = baseSlice.rotatedRight()
+        assertEquals(8, slice.frameOffsetX)
+        assertEquals(2, slice.frameOffsetY)
+        assertEquals(20, slice.frameWidth)
+        assertEquals(10, slice.frameHeight)
+
+        slice = baseSlice.rotatedLeft()
+        assertEquals(2, slice.frameOffsetX)
+        assertEquals(3, slice.frameOffsetY)
+        assertEquals(20, slice.frameWidth)
+        assertEquals(10, slice.frameHeight)
+
+        slice = baseSlice.flippedY()
+        assertEquals(2, slice.frameOffsetX)
+        assertEquals(8, slice.frameOffsetY)
+        assertEquals(10, slice.frameWidth)
+        assertEquals(20, slice.frameHeight)
+
+        slice = baseSlice.flippedX()
+        assertEquals(3, slice.frameOffsetX)
+        assertEquals(2, slice.frameOffsetY)
+        assertEquals(10, slice.frameWidth)
+        assertEquals(20, slice.frameHeight)
+    }
 }
