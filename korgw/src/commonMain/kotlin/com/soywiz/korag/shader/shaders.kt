@@ -281,8 +281,8 @@ data class Program(val vertex: VertexShader, val fragment: FragmentShader, val n
 	val attributes = vertex.attributes + fragment.attributes
     val cachedHashCode = (vertex.hashCode() * 11) + (fragment.hashCode() * 7) + name.hashCode()
     override fun hashCode(): Int = cachedHashCode
-    override fun equals(other: Any?): Boolean = (other is Program) && (this.vertex == other.vertex)
-        && (this.fragment == other.fragment) && (this.name == other.name)
+    override fun equals(other: Any?): Boolean = (this === other) || ((other is Program) && (this.vertex == other.vertex)
+        && (this.fragment == other.fragment) && (this.name == other.name))
 
     override fun close() {
 	}
@@ -789,7 +789,7 @@ data class Shader(val type: ShaderType, val stm: Program.Stm, val funcs: List<Fu
         }.visit(stm)
     }.toSet()
 
-    override fun equals(other: Any?): Boolean = other is Shader && (this.type == other.type) && (this.cachedHashCode == other.cachedHashCode) && (this.stm == other.stm) && (this.funcs == other.funcs)
+    override fun equals(other: Any?): Boolean = (this === other) || (other is Shader && (this.type == other.type) && (this.cachedHashCode == other.cachedHashCode) && (this.stm == other.stm) && (this.funcs == other.funcs))
     override fun hashCode(): Int = cachedHashCode
 }
 
