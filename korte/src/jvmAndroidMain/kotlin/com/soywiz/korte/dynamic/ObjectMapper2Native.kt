@@ -39,7 +39,15 @@ open class JvmObjectMapper2 : ObjectMapper2() {
     val KClass<*>.classInfo by WeakPropertyThis<KClass<*>, ClassReflectCache<*>> { ClassReflectCache(this) }
 
     override fun hasProperty(instance: Any, key: String): Boolean {
-        if (instance is DynamicType<*>) return instance.dynamicShape.hasProp(key)
+        if (instance is DynamicType<*>) {
+            val dynamicShape = try {
+                instance.dynamicShape
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                throw e
+            }
+            return dynamicShape.hasProp(key)
+        }
         return key in instance::class.classInfo.propByName
     }
 

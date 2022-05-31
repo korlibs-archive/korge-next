@@ -22,9 +22,12 @@ android-build-gradle = { module = "com.android.tools.build:gradle", version.ref 
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 gradle-publish-plugin = { module = "com.gradle.publish:plugin-publish-plugin", version.ref = "gradle-publish-plugin" }
 closure-compiler = { module = "com.google.javascript:closure-compiler", version.ref = "closure-compiler" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 
 [bundles]
 jna = ["jna-core", "jna-platform"]
 
-#[plugins]
+[plugins]
+serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
 #jmh = { id = "me.champeau.jmh", version = "0.6.5" }
