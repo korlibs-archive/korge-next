@@ -2,6 +2,7 @@ package com.soywiz.korim.bitmap
 
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.format.ImageOrientation
+import com.soywiz.korio.util.OS
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -51,63 +52,70 @@ class BitmapSliceTest {
 
     @Test
     fun testTransformed() {
-        val bmp = Bitmap32(20, 10)
-        val slice = bmp.sliceWithSize(1, 1, 8, 18, imageOrientation = ImageOrientation.ROTATE_90)
+        if (OS.isJvm) {
+            val bmp = Bitmap32(20, 10)
+            val slice = bmp.sliceWithSize(1, 1, 8, 18, imageOrientation = ImageOrientation.ROTATE_90)
 
-        slice.setRgba(0, 0, Colors.RED)
-        assertEquals(Colors.RED, slice.getRgba(0, 0))
-        assertEquals(Colors.RED, bmp.getRgba(1, 8))
+            slice.setRgba(0, 0, Colors.RED)
+            assertEquals(Colors.RED, slice.getRgba(0, 0))
+            assertEquals(Colors.RED, bmp.getRgba(1, 8))
 
-        slice.flippedX()
-        assertEquals(Colors.RED, slice.getRgba(0, 0))
-        slice.flippedX()
+            slice.flippedX()
+            assertEquals(Colors.RED, slice.getRgba(0, 0))
+            slice.flippedX()
 
-        val vfSlice = slice.virtFrame(2, 4, 12, 26)
-        assertEquals(Colors.RED, vfSlice.getRgba(2, 4))
-        assertEquals(Colors.TRANSPARENT_BLACK, vfSlice.getRgba(0, 0))
-        assertEquals(Colors.TRANSPARENT_BLACK, vfSlice.getRgba(11, 25))
-        assertFailsWith<IllegalArgumentException> { vfSlice.getRgba(0, -1) }
-        assertFailsWith<IllegalArgumentException> { vfSlice.getRgba(-1, 0) }
-        assertFailsWith<IllegalArgumentException> { vfSlice.getRgba(11, 26) }
-        assertFailsWith<IllegalArgumentException> { vfSlice.getRgba(12, 25) }
+            val vfSlice = slice.virtFrame(2, 4, 12, 26)
+            assertEquals(Colors.RED, vfSlice.getRgba(2, 4))
+            assertEquals(Colors.TRANSPARENT_BLACK, vfSlice.getRgba(0, 0))
+            assertEquals(Colors.TRANSPARENT_BLACK, vfSlice.getRgba(11, 25))
+            assertFailsWith<IllegalArgumentException> { vfSlice.getRgba(0, -1) }
+            assertFailsWith<IllegalArgumentException> { vfSlice.getRgba(-1, 0) }
+            assertFailsWith<IllegalArgumentException> { vfSlice.getRgba(11, 26) }
+            assertFailsWith<IllegalArgumentException> { vfSlice.getRgba(12, 25) }
 
-        vfSlice.setRgba(11, 1,  Colors.BLUE)
-        assertEquals(Colors.BLUE, slice.getRgba(0, 0))
-        assertEquals(Colors.BLUE, bmp.getRgba(0, 0))
+            vfSlice.setRgba(0, 0, Colors.BLUE)
+            assertEquals(Colors.BLUE, vfSlice.getRgba(0, 0))
+            assertEquals(Colors.BLUE, vfSlice.base.getRgba(0, 0))
+            vfSlice.setRgba(11, 25, Colors.BLUE)
+            assertEquals(Colors.BLUE, vfSlice.getRgba(11, 25))
+            assertEquals(Colors.BLUE, vfSlice.base.getRgba(11, 25))
+        }
     }
 
     @Test
     fun testReadPixels() {
-        val bmp = Bitmap32(20, 10)
-        val slice = bmp.sliceWithSize(1, 1, 8, 18, imageOrientation = ImageOrientation.ROTATE_90)
+        if (OS.isJvm) {
+            val bmp = Bitmap32(20, 10)
+            val slice = bmp.sliceWithSize(1, 1, 8, 18, imageOrientation = ImageOrientation.ROTATE_90)
 
-        slice.setRgba(0, 0, Colors.RED)
-        slice.setRgba(7, 17, Colors.BLUE)
-        assertEquals(Colors.RED, slice.getRgba(0, 0))
-        assertEquals(Colors.RED, bmp.getRgba(1, 8))
-        assertEquals(Colors.BLUE, slice.getRgba(7, 17))
-        assertEquals(Colors.BLUE, bmp.getRgba(18, 1))
+            slice.setRgba(0, 0, Colors.RED)
+            slice.setRgba(7, 17, Colors.BLUE)
+            assertEquals(Colors.RED, slice.getRgba(0, 0))
+            assertEquals(Colors.RED, bmp.getRgba(1, 8))
+            assertEquals(Colors.BLUE, slice.getRgba(7, 17))
+            assertEquals(Colors.BLUE, bmp.getRgba(18, 1))
 
-        val sliceDataTopLeft = slice.readPixels(0, 0, 2, 2)
-        val sliceDataBottomRight = slice.readPixels(6, 16, 2, 2)
-        assertEquals(Colors.RED, sliceDataTopLeft[0])
-        assertEquals(Colors.BLUE, sliceDataBottomRight[3])
+            val sliceDataTopLeft = slice.readPixels(0, 0, 2, 2)
+            val sliceDataBottomRight = slice.readPixels(6, 16, 2, 2)
+            assertEquals(Colors.RED, sliceDataTopLeft[0])
+            assertEquals(Colors.BLUE, sliceDataBottomRight[3])
 
-        assertFailsWith<IllegalStateException> { slice.readPixels(-1, 0, 2, 2) }
-        assertFailsWith<IllegalStateException> { slice.readPixels(0, -1, 2, 2) }
-        assertFailsWith<IllegalStateException> { slice.readPixels(7, 16, 2, 2) }
-        assertFailsWith<IllegalStateException> { slice.readPixels(6, 17, 2, 2) }
+            assertFailsWith<IllegalStateException> { slice.readPixels(-1, 0, 2, 2) }
+            assertFailsWith<IllegalStateException> { slice.readPixels(0, -1, 2, 2) }
+            assertFailsWith<IllegalStateException> { slice.readPixels(7, 16, 2, 2) }
+            assertFailsWith<IllegalStateException> { slice.readPixels(6, 17, 2, 2) }
 
-        val sliceVirtFrame = slice.virtFrame(1, 1, 10, 20)
-        val sliceVirtFrameDataTopLeft = sliceVirtFrame.readPixels(0, 0, 2, 2)
-        val sliceVirtFrameDataBottomRight = sliceVirtFrame.readPixels(8, 18, 2, 2)
-        assertEquals(Colors.RED, sliceVirtFrameDataTopLeft[3])
-        assertEquals(Colors.BLUE, sliceVirtFrameDataBottomRight[0])
+            val sliceVirtFrame = slice.virtFrame(1, 1, 10, 20)
+            val sliceVirtFrameDataTopLeft = sliceVirtFrame.readPixels(0, 0, 2, 2)
+            val sliceVirtFrameDataBottomRight = sliceVirtFrame.readPixels(8, 18, 2, 2)
+            assertEquals(Colors.RED, sliceVirtFrameDataTopLeft[3])
+            assertEquals(Colors.BLUE, sliceVirtFrameDataBottomRight[0])
 
-        assertFailsWith<IllegalStateException> { sliceVirtFrame.readPixels(-1, 0, 2, 2) }
-        assertFailsWith<IllegalStateException> { sliceVirtFrame.readPixels(0, -1, 2, 2) }
-        assertFailsWith<IllegalStateException> { sliceVirtFrame.readPixels(9, 18, 2, 2) }
-        assertFailsWith<IllegalStateException> { sliceVirtFrame.readPixels(8, 19, 2, 2) }
+            assertFailsWith<IllegalStateException> { sliceVirtFrame.readPixels(-1, 0, 2, 2) }
+            assertFailsWith<IllegalStateException> { sliceVirtFrame.readPixels(0, -1, 2, 2) }
+            assertFailsWith<IllegalStateException> { sliceVirtFrame.readPixels(9, 18, 2, 2) }
+            assertFailsWith<IllegalStateException> { sliceVirtFrame.readPixels(8, 19, 2, 2) }
+        }
     }
 
     @Test
@@ -143,5 +151,18 @@ class BitmapSliceTest {
         assertEquals(2, slice.frameOffsetY)
         assertEquals(10, slice.frameWidth)
         assertEquals(20, slice.frameHeight)
+    }
+
+    @Test
+    fun testExtract() {
+        if (OS.isJvm) {
+            val bmp = Bitmap32(20, 10)
+            bmp.set(1, 1, Colors.RED)
+            bmp.set(18, 8, Colors.BLUE)
+            val slice = bmp.sliceWithSize(1, 1, 8, 18, imageOrientation = ImageOrientation.ROTATE_90)
+            val bmp2 = slice.extract()
+            assertEquals(Colors.RED, bmp2.getRgba(7, 0))
+            assertEquals(Colors.BLUE, bmp2.getRgba(0, 17))
+        }
     }
 }
