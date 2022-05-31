@@ -10,6 +10,7 @@ import com.soywiz.korma.math.clamp
 import com.soywiz.korma.math.isAlmostZero
 import kotlin.math.absoluteValue
 import kotlin.math.acos
+import kotlin.math.atan2
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.hypot
@@ -318,16 +319,24 @@ data class Point(
     fun rotate(rotation: Angle, out: Point = Point()): Point =
         out.setToPolar(Angle.between(0.0, 0.0, this.x, this.y) + rotation, this.length)
 
-    fun setLength(length: Double): Point {
-        val len2 = length * length
-        val oldLen2 = this.x * this.x + this.y * this.y
-        if (oldLen2 != 0.0 && oldLen2 != len2) {
-            val scalar = sqrt((len2 / oldLen2))
-            this.x *= scalar
-            this.y *= scalar
-        }
+    fun changeLength(length: Float): Point = changeLength(length.toDouble())
+    fun changeLength(length: Int): Point = changeLength(length.toDouble())
+    fun changeLength(length: Double): Point {
+        if (this.length == 0.0 || this.length == length) return this
+        val currentLength2 = this.x * this.x + this.y * this.y
+        val newLength2 = length * length
+        val scalar = sqrt((newLength2 / currentLength2))
+        this.x *= scalar
+        this.y *= scalar
         return this
     }
+
+    val angle: Angle
+        get() {
+            var angle: Double = atan2(this.y, this.x) * RAD2DEG
+            if (angle < 0) angle += 360.0
+            return angle.degrees
+        }
 }
 
 

@@ -1,9 +1,7 @@
 package com.soywiz.korma.geom
 
-import kotlin.math.hypot
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 
 class PointTest {
     @Test
@@ -18,51 +16,55 @@ class PointTest {
     }
 
     @Test
-    fun test_WHEN_set_new_length_MUST_recalculate_point_coordinates() {
-        /* GIVEN */
-        val posX = 11.1
-        val posY = 22.2
-        val point = Point(posX, posY)
-        assertEquals(point.length, hypot(posX, posY))
-
-        /* WHEN */
-        val newLength = 33.3
-        point.setLength(newLength)
-
-        /* THEN */
-        assertEquals(newLength, point.length)
-        assertNotEquals(point.x, posX)
-        assertNotEquals(point.y, posY)
+    fun testAngle() {
+        assertEquals(0.degrees, Point().setToZero().angle)
+        assertEquals(45.degrees, Point().setToOne().angle)
+        assertEquals(0.degrees, Point().setToRight().angle)
+        assertEquals(90.degrees, Point().setToDown().angle)
+        assertEquals(180.degrees, Point().setToLeft().angle)
+        assertEquals(270.degrees, Point().setToUp().angle)
     }
 
     @Test
-    fun test_GIVEN_point_at_zero_WHEN_set_new_length_CANT_change_coordinates() {
-        /* GIVEN */
-        val point = Point()
-        assertEquals(point.length, 0.0)
+    fun testChangeLength_WITH_different_types_MUST_keep_angle_degrees() {
+        val point = Point(5, 5)
+        assertEquals(45.degrees, point.angle)
 
-        /* WHEN */
-        point.setLength(20.0)
+        // Double
+        point.changeLength(10.0)
+        assertEquals(10.0, point.length)
+        assertEquals(45.degrees, point.angle)
 
-        /* THEN */
-        assertEquals(point.length, 0.0)
+        // Float
+        point.changeLength(20f)
+        assertEquals(20.0, point.length)
+        assertEquals(45.degrees, point.angle)
+
+        // Int
+        point.changeLength(40)
+        assertEquals(40.0, point.length)
+        assertEquals(45.degrees, point.angle)
     }
 
     @Test
-    fun test_WHEN_set_same_length_CANT_change_coordinates() {
-        /* GIVEN */
-        val posX = 11.1
-        val posY = 22.2
-        val point = Point(posX, posY)
-        assertEquals(point.length, hypot(posX, posY))
+    fun testChangeLength_ISNOT_accurate_in_all_scenarios() {
+        val point = Point(5, 5)
+        assertEquals(45.degrees, point.angle)
 
-        /* WHEN */
-        val newLength = hypot(posX, posY)
-        point.setLength(newLength)
+        point.changeLength(30.0)
+        assertEquals(29.999999999999996, point.length)
+    }
 
-        /* THEN */
-        assertEquals(newLength, point.length)
-        assertEquals(point.x, posX)
-        assertEquals(point.y, posY)
+    @Test
+    fun testChangeLength_WITH_point_at_zero_CANT_change_length() {
+        // Given
+        val point = Point().setToZero()
+        assertEquals(0.0, point.length)
+
+        // When
+        point.changeLength(20.0)
+
+        // Then
+        assertEquals(0.0, point.length)
     }
 }

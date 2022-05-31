@@ -7,7 +7,6 @@ import com.soywiz.korma.interpolation.interpolate
 import com.soywiz.korma.math.isAlmostEquals
 import kotlin.math.PI
 import kotlin.math.absoluteValue
-import kotlin.math.atan2
 
 @PublishedApi internal const val PI2 = PI * 2.0
 @PublishedApi internal const val DEG2RAD = PI / 180.0
