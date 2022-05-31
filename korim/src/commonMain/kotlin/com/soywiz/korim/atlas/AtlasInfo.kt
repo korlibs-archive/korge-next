@@ -1,8 +1,6 @@
 package com.soywiz.korim.atlas
 
 import com.soywiz.kds.ListReader
-import com.soywiz.korim.bitmap.BmpCoordsWithInstance
-import com.soywiz.korim.bitmap.BmpCoordsWithT
 import com.soywiz.korim.format.ImageOrientation
 import com.soywiz.korio.dynamic.KDynamic
 import com.soywiz.korio.serialization.json.Json
