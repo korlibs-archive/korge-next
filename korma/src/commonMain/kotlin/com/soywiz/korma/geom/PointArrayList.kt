@@ -72,7 +72,6 @@ open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.M
     private val xList = DoubleArrayList(capacity)
     private val yList = DoubleArrayList(capacity)
     override val size get() = xList.size
-    val capacity: Int get() = xList.capacity
 
     fun isEmpty() = size == 0
     fun isNotEmpty() = size != 0
