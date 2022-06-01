@@ -11,6 +11,12 @@ interface ILine {
 data class Line(override val a: Point, override val b: Point) : ILine {
     private val temp = Point()
 
+    val minX: Double get() = kotlin.math.min(a.x, b.x)
+    val maxX: Double get() = kotlin.math.max(a.x, b.x)
+
+    val minY: Double get() = kotlin.math.min(a.y, b.y)
+    val maxY: Double get() = kotlin.math.max(a.y, b.y)
+
     fun round(): Line {
         a.round()
         b.round()
