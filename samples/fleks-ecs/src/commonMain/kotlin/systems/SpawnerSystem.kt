@@ -9,8 +9,8 @@ class SpawnerSystem : IteratingSystem(
     interval = EachFrame
 ) {
 
-    private val positions = Inject.componentMapper<Position>()
-    private val spawners = Inject.componentMapper<Spawner>()
+    private val positions = Injections.componentMapper<Position>()
+    private val spawners = Injections.componentMapper<Spawner>()
 
     override fun onTickEntity(entity: Entity) {
         val spawner = spawners[entity]

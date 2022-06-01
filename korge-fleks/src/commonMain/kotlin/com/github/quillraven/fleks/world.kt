@@ -23,7 +23,7 @@ class WorldConfiguration {
     var entityCapacity = 512
 
     @PublishedApi
-    internal val systemFactory = mutableMapOf<KClass<*>, () -> IntervalSystem>()
+    internal val systemFactory = mutableMapOf<KClass<*>, (injections: Injections) -> IntervalSystem>()
 
     @PublishedApi
     internal val injectables = mutableMapOf<String, Injectable>()
@@ -41,7 +41,7 @@ class WorldConfiguration {
      * @param factory A function which creates an object of type [T].
      * @throws [FleksSystemAlreadyAddedException] if the system was already added before.
      */
-    inline fun <reified T : IntervalSystem> system(noinline factory: () -> T) {
+    inline fun <reified T : IntervalSystem> system(noinline factory: (injections: Injections) -> T) {
         val systemType = T::class
         if (systemType in systemFactory) {
             throw FleksSystemAlreadyAddedException(systemType)
@@ -146,6 +146,8 @@ class World(
         val worldCfg = WorldConfiguration().apply(cfg)
         componentService = ComponentService(worldCfg.componentFactory)
         entityService = EntityService(worldCfg.entityCapacity, componentService)
+        val injections = Injections()
+
         val injectables = worldCfg.injectables
 
         // Add world to inject object so that component listeners can get it form injectables, too
@@ -174,6 +176,13 @@ class World(
      */
     inline fun entity(configuration: EntityCreateCfg.(Entity) -> Unit = {}): Entity {
         return entityService.create(configuration)
+    }
+
+    /**
+     * Updates an [entity] using the given [configuration] to add and remove components.
+     */
+    inline fun configureEntity(entity: Entity, configuration: EntityUpdateCfg.(Entity) -> Unit) {
+        entityService.configureEntity(entity, configuration)
     }
 
     /**

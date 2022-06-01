@@ -35,6 +35,9 @@ include(":korvi")
 include(":korge")
 include(":korge-gradle-plugin")
 
+include(":samples:fleks-ecs")
+
+
 if (!inCI) {
     include(":korge-sandbox")
 }

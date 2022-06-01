@@ -1,11 +1,16 @@
 package com.github.quillraven.fleks
 
-import com.soywiz.korio.async.*
-import kotlin.test.*
+import com.soywiz.korio.async.suspendTestNoJs
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 private data class ComponentTestComponent(var x: Int = 0)
 
-private class ComponentTestComponentListener : ComponentListener<ComponentTestComponent> {
+private class ComponentTestComponentListener(override val injections: Injections) : ComponentListener<ComponentTestComponent> {
     var numAddCalls = 0
     var numRemoveCalls = 0
     lateinit var cmpCalled: ComponentTestComponent
@@ -163,7 +168,7 @@ internal class ComponentTest {
     @Test
     fun addComponentListener() {
         val cmpService = ComponentService(componentFactory)
-        val listener = ComponentTestComponentListener()
+        val listener = ComponentTestComponentListener(Injections())
         val mapper = cmpService.mapper<ComponentTestComponent>()
 
         mapper.addComponentListenerInternal(listener)
@@ -174,7 +179,7 @@ internal class ComponentTest {
     @Test
     fun removeComponentListener() {
         val cmpService = ComponentService(componentFactory)
-        val listener = ComponentTestComponentListener()
+        val listener = ComponentTestComponentListener(Injections())
         val mapper = cmpService.mapper<ComponentTestComponent>()
         mapper.addComponentListenerInternal(listener)
 
@@ -187,7 +192,7 @@ internal class ComponentTest {
     fun addComponentWithComponentListener() {
         val cmpService = ComponentService(componentFactory)
         val mapper = cmpService.mapper<ComponentTestComponent>()
-        val listener = ComponentTestComponentListener()
+        val listener = ComponentTestComponentListener(Injections())
         mapper.addComponentListener(listener)
         val expectedEntity = Entity(1)
 
@@ -205,7 +210,7 @@ internal class ComponentTest {
         val mapper = cmpService.mapper<ComponentTestComponent>()
         val expectedEntity = Entity(1)
         mapper.addInternal(expectedEntity)
-        val listener = ComponentTestComponentListener()
+        val listener = ComponentTestComponentListener(Injections())
         mapper.addComponentListener(listener)
 
         val expectedCmp = mapper.addInternal(expectedEntity)

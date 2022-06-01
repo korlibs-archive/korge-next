@@ -9,6 +9,7 @@ import kotlin.math.max
  * gets added or removed from an [entity][Entity].
  */
 interface ComponentListener<T> {
+    val injections: Injections
     fun onComponentAdded(entity: Entity, component: T)
     fun onComponentRemoved(entity: Entity, component: T)
 }

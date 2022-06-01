@@ -20,8 +20,8 @@ class SpriteSystem : IteratingSystem(
     interval = EachFrame
 ) {
 
-    private val positions = Inject.componentMapper<Position>()
-    private val sprites = Inject.componentMapper<Sprite>()
+    private val positions = Injections.componentMapper<Position>()
+    private val sprites = Injections.componentMapper<Sprite>()
 
     override fun onInit() {
     }
@@ -37,9 +37,9 @@ class SpriteSystem : IteratingSystem(
 
     class SpriteListener : ComponentListener<Sprite> {
 
-        private val world = Inject.dependency<World>()
-        private val layerContainer = Inject.dependency<Container>("layer0")
-        private val assets = Inject.dependency<Assets>()
+        private val world = Injections.dependency<World>()
+        private val layerContainer = Injections.dependency<Container>("layer0")
+        private val assets = Injections.dependency<Assets>()
 
         override fun onComponentAdded(entity: Entity, component: Sprite) {
             // Set animation object

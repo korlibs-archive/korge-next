@@ -2,7 +2,9 @@ package com.github.quillraven.fleks
 
 import com.github.quillraven.fleks.collection.BitArray
 import com.github.quillraven.fleks.collection.compareEntity
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 
 internal class FamilyTest {
     private fun createCmpBitmask(cmpIdx: Int): BitArray? {
@@ -114,7 +116,7 @@ internal class FamilyTest {
         family.updateActiveEntities()
 
         // sort descending by entity id
-        family.sort(compareEntity { e1, e2 -> e2.id.compareTo(e1.id) })
+        family.sort(compareEntity(Injections()) { e1, e2 -> e2.id.compareTo(e1.id) })
 
         assertEquals(2, family.entitiesBag[0])
         assertEquals(1, family.entitiesBag[1])

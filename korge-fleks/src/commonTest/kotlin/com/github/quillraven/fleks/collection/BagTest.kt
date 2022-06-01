@@ -1,7 +1,12 @@
 package com.github.quillraven.fleks.collection
 
-import com.soywiz.korio.async.*
-import kotlin.test.*
+import com.github.quillraven.fleks.Injections
+import com.soywiz.korio.async.suspendTestNoJs
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 internal class BagTest {
 
@@ -215,7 +220,7 @@ internal class BagTest {
         val bag = IntBag()
         repeat(6) { bag.add(6 - it) }
 
-        bag.sort(compareEntity { e1, e2 -> e1.id.compareTo(e2.id) })
+        bag.sort(compareEntity(Injections.EMPTY) { e1, e2 -> e1.id.compareTo(e2.id) })
 
         repeat(6) {
             assertEquals(it + 1, bag[it])
@@ -227,7 +232,7 @@ internal class BagTest {
         val bag = IntBag()
         repeat(8) { bag.add(8 - it) }
 
-        bag.sort(compareEntity { e1, e2 -> e1.id.compareTo(e2.id) })
+        bag.sort(compareEntity(Injections.EMPTY) { e1, e2 -> e1.id.compareTo(e2.id) })
 
         repeat(8) {
             assertEquals(it + 1, bag[it])
@@ -239,7 +244,7 @@ internal class BagTest {
         val bag = IntBag()
         repeat(51) { bag.add(51 - it) }
 
-        bag.sort(compareEntity { e1, e2 -> e1.id.compareTo(e2.id) })
+        bag.sort(compareEntity(Injections.EMPTY) { e1, e2 -> e1.id.compareTo(e2.id) })
 
         repeat(51) {
             assertEquals(it + 1, bag[it])

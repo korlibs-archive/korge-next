@@ -11,9 +11,9 @@ class CollisionSystem : IteratingSystem(
 //    interval = Fixed(500f)  // for testing every 500 millisecond
 ) {
 
-    private val positions  = Inject.componentMapper<Position>()
-    private val destructs = Inject.componentMapper<Destruct>()
-    private val impulses = Inject.componentMapper<Impulse>()
+    private val positions  = Injections.componentMapper<Position>()
+    private val destructs = Injections.componentMapper<Destruct>()
+    private val impulses = Injections.componentMapper<Impulse>()
 
     override fun onInit() {
     }

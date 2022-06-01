@@ -1,7 +1,7 @@
 package systems
 
 import com.github.quillraven.fleks.Entity
-import com.github.quillraven.fleks.Inject
+import com.github.quillraven.fleks.Injections
 import com.github.quillraven.fleks.IteratingSystem
 import components.*
 import entities.createExplosionArtefact
@@ -14,8 +14,8 @@ class DestructSystem : IteratingSystem(
     allOfComponents = arrayOf(Destruct::class)
 ) {
 
-    private val positions = Inject.componentMapper<Position>()
-    private val destructs = Inject.componentMapper<Destruct>()
+    private val positions = Injections.componentMapper<Position>()
+    private val destructs = Injections.componentMapper<Destruct>()
 
     override fun onTickEntity(entity: Entity) {
         val destruct = destructs[entity]

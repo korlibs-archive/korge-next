@@ -13,8 +13,8 @@ class MoveSystem : IteratingSystem(
     interval = EachFrame
 ) {
 
-    private val positions = Inject.componentMapper<Position>()
-    private val rigidbodies = Inject.componentMapper<Rigidbody>()
+    private val positions = Injections.componentMapper<Position>()
+    private val rigidbodies = Injections.componentMapper<Rigidbody>()
 
     override fun onInit() {}
 
