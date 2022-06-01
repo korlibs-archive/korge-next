@@ -66,6 +66,7 @@ fun IPoint.distanceTo(x: Float, y: Float): Double = this.distanceTo(x.toDouble()
 infix fun IPoint.dot(that: IPoint): Double = this.x * that.x + this.y * that.y
 fun IPoint.distanceTo(that: IPoint): Double = distanceTo(that.x, that.y)
 fun IPoint.angleTo(other: IPoint): Angle = Angle.between(this.x, this.y, other.x, other.y)
+val IPoint.angle: Angle get() = Angle.between(0.0, 0.0, this.x, this.y)
 fun IPoint.transformed(mat: Matrix, out: Point = Point()): Point = out.setToTransform(mat, this)
 operator fun IPoint.get(component: Int) = when (component) {
     0 -> x; 1 -> y
@@ -262,11 +263,11 @@ data class Point(
     fun setToDiv(a: Point, s: Float): Point = setToDiv(a, s.toDouble())
     operator fun plusAssign(that: Point) { setTo(this.x + that.x, this.y + that.y) }
 
-    operator fun plus(that: Point): Point = Point(this.x + that.x, this.y + that.y)
-    operator fun minus(that: Point): Point = Point(this.x - that.x, this.y - that.y)
-    operator fun times(that: Point): Point = Point(this.x * that.x, this.y * that.y)
-    operator fun div(that: Point): Point = Point(this.x / that.x, this.y / that.y)
-    infix fun dot(that: Point): Double = this.x * that.x + this.y * that.y
+    operator fun plus(that: IPoint): Point = Point(this.x + that.x, this.y + that.y)
+    operator fun minus(that: IPoint): Point = Point(this.x - that.x, this.y - that.y)
+    operator fun times(that: IPoint): Point = Point(this.x * that.x, this.y * that.y)
+    operator fun div(that: IPoint): Point = Point(this.x / that.x, this.y / that.y)
+    infix fun dot(that: IPoint): Double = this.x * that.x + this.y * that.y
 
     operator fun times(scale: Double): Point = Point(this.x * scale, this.y * scale)
     operator fun times(scale: Float): Point = this * scale.toDouble()
