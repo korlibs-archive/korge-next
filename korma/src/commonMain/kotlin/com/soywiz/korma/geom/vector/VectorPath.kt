@@ -13,6 +13,7 @@ import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.PointArrayList
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.bezier.Bezier
+import com.soywiz.korma.geom.bezier.BezierCurve
 import com.soywiz.korma.geom.bezier.Curve
 import com.soywiz.korma.geom.bezier.Curves
 import com.soywiz.korma.geom.bezier.toCurves
@@ -551,20 +552,33 @@ fun VectorPath.applyTransform(m: Matrix?): VectorPath {
     return this
 }
 
-fun VectorPath.getCurvesLists(): List<Curves> = arrayListOf<List<Curve>>().also { out ->
+fun VectorPath.getCurvesLists(): List<Curves> = arrayListOf<Curves>().also { out ->
+    var currentClosed = false
     var current = arrayListOf<Curve>()
     fun flush() {
         if (current.isEmpty()) return
-        out.add(current)
+        out.add(Curves(current, currentClosed))
+        currentClosed = false
         current = arrayListOf()
     }
     visitEdges(
-        line = { x0, y0, x1, y1 -> current += Curve.Line(x0, y0, x1, y1) },
-        quad = { x0, y0, x1, y1, x2, y2 -> current += Bezier.Quad(x0, y0, x1, y1, x2, y2) },
-        cubic = { x0, y0, x1, y1, x2, y2, x3, y3 -> current += Bezier.Cubic(x0, y0, x1, y1, x2, y2, x3, y3) },
-        move = { x, y -> flush() }
+        //line = { x0, y0, x1, y1 -> current += Curve.Line(x0, y0, x1, y1) },
+        //quad = { x0, y0, x1, y1, x2, y2 -> current += Bezier.Quad(x0, y0, x1, y1, x2, y2) },
+        //cubic = { x0, y0, x1, y1, x2, y2, x3, y3 -> current += Bezier.Cubic(x0, y0, x1, y1, x2, y2, x3, y3) },
+
+        line = { x0, y0, x1, y1 -> current += BezierCurve(x0, y0, x1, y1) },
+        quad = { x0, y0, x1, y1, x2, y2 -> current += BezierCurve(x0, y0, x1, y1, x2, y2) },
+        cubic = { x0, y0, x1, y1, x2, y2, x3, y3 -> current += BezierCurve(x0, y0, x1, y1, x2, y2, x3, y3) },
+        move = { x, y -> flush() },
+        close = {
+            currentClosed = true
+            flush()
+        }
     )
     flush()
-}.map { it.toCurves() }
+}
 
-fun VectorPath.getCurves(): Curves = getCurvesLists().flatMap { it.curves }.toCurves()
+fun VectorPath.getCurves(): Curves {
+    val curvesList = getCurvesLists()
+    return curvesList.flatMap { it.curves }.toCurves(curvesList.lastOrNull()?.closed ?: false)
+}
