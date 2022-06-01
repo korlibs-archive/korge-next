@@ -13,6 +13,9 @@ import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.PointArrayList
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.bezier.Bezier
+import com.soywiz.korma.geom.bezier.Curve
+import com.soywiz.korma.geom.bezier.Curves
+import com.soywiz.korma.geom.bezier.toCurves
 import com.soywiz.korma.internal.niceStr
 import kotlin.native.concurrent.ThreadLocal
 
@@ -76,7 +79,9 @@ open class VectorPath(
         line: (x0: Double, y0: Double, x1: Double, y1: Double) -> Unit,
         quad: (x0: Double, y0: Double, x1: Double, y1: Double, x2: Double, y2: Double) -> Unit,
         cubic: (x0: Double, y0: Double, x1: Double, y1: Double, x2: Double, y2: Double, x3: Double, y3: Double) -> Unit,
-        close: () -> Unit
+        close: () -> Unit = {},
+        move: (x: Double, y: Double) -> Unit = { x, y -> },
+        dummy: Unit = Unit // Prevents tailing lambda
     ) {
         var mx = 0.0
         var my = 0.0
@@ -86,6 +91,7 @@ open class VectorPath(
             moveTo = { x, y ->
                 mx = x; my = y
                 lx = x; ly = y
+                move(x, y)
             },
             lineTo = { x, y ->
                 line(lx, ly, x, y)
@@ -544,3 +550,21 @@ fun VectorPath.applyTransform(m: Matrix?): VectorPath {
     }
     return this
 }
+
+fun VectorPath.getCurvesLists(): List<Curves> = arrayListOf<List<Curve>>().also { out ->
+    var current = arrayListOf<Curve>()
+    fun flush() {
+        if (current.isEmpty()) return
+        out.add(current)
+        current = arrayListOf()
+    }
+    visitEdges(
+        line = { x0, y0, x1, y1 -> current += Curve.Line(x0, y0, x1, y1) },
+        quad = { x0, y0, x1, y1, x2, y2 -> current += Bezier.Quad(x0, y0, x1, y1, x2, y2) },
+        cubic = { x0, y0, x1, y1, x2, y2, x3, y3 -> current += Bezier.Cubic(x0, y0, x1, y1, x2, y2, x3, y3) },
+        move = { x, y -> flush() }
+    )
+    flush()
+}.map { it.toCurves() }
+
+fun VectorPath.getCurves(): Curves = getCurvesLists().flatMap { it.curves }.toCurves()

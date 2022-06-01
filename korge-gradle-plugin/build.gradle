@@ -1,4 +1,5 @@
 import org.apache.tools.ant.taskdefs.optional.unix.Symlink
+import org.gradle.api.publish.maven.internal.publication.DefaultMavenPom
 
 import java.nio.file.Files
 
@@ -13,6 +14,8 @@ plugins {
 
 description = "Multiplatform Game Engine written in Kotlin"
 group = "com.soywiz.korlibs.korge.plugins"
+//group = "com.soywiz.korge"
+//this.name = "com.soywiz.korge.gradle.plugin"
 
 pluginBundle {
 	website = "https://korge.soywiz.com/"
@@ -23,6 +26,7 @@ pluginBundle {
 gradlePlugin {
 	plugins {
 		create("korge") {
+            //PluginDeclaration decl = it
 			id = "com.soywiz.korge"
 			displayName = "Korge"
 			description = "Multiplatform Game Engine for Kotlin"
@@ -30,6 +34,17 @@ gradlePlugin {
 		}
 	}
 }
+
+/*
+afterEvaluate {
+    GenerateMavenPom generatePomFileForKorgePluginMarkerMavenPublication = tasks.findByName("generatePomFileForKorgePluginMarkerMavenPublication")
+    generatePomFileForKorgePluginMarkerMavenPublication.pom.licenses {
+        it.license {
+            it.name = "MIT"
+        }
+    }
+}
+*/
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -80,20 +95,23 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
     kotlinOptions.suppressWarnings = true
 }
 
-def publishAllPublications = false
+//def publishAllPublications = false
 
 def publishJvmPublicationToMavenLocal = tasks.register("publishJvmPublicationToMavenLocal", Task) {
-    dependsOn(publishAllPublications ? "publishToMavenLocal" : "publishPluginMavenPublicationToMavenLocal")
+    //dependsOn(publishAllPublications ? "publishToMavenLocal" : "publishPluginMavenPublicationToMavenLocal")
+    dependsOn("publishPluginMavenPublicationToMavenLocal")
+    dependsOn("publishKorgePluginMarkerMavenPublicationToMavenLocal")
 }
 
-afterEvaluate {
-    def publishTaskOrNull = tasks.findByName(
-        publishAllPublications ? "publishAllPublicationsToMavenRepository" : "publishPluginMavenPublicationToMavenRepository"
-    )
+// publishKorgePluginMarkerMavenPublicationToMavenLocal
 
-    if (publishTaskOrNull != null) {
+afterEvaluate {
+    //def publishTaskOrNull = tasks.findByName(publishAllPublications ? "publishAllPublicationsToMavenRepository" : "publishPluginMavenPublicationToMavenRepository")
+
+    if (tasks.findByName("publishKorgePluginMarkerMavenPublicationToMavenRepository") != null) {
         def publishJvmPublicationToMavenRepository = tasks.register("publishJvmPublicationToMavenRepository", Task) {
-            dependsOn(publishTaskOrNull)
+            dependsOn("publishPluginMavenPublicationToMavenRepository")
+            dependsOn("publishKorgePluginMarkerMavenPublicationToMavenRepository")
         }
     }
 }

@@ -8,7 +8,9 @@ import com.soywiz.korge.tiled.*
 import com.soywiz.korge.ui.*
 import com.soywiz.korge.view.*
 import com.soywiz.korge.view.animation.*
+import com.soywiz.korge.view.filter.ColorMatrixFilter
 import com.soywiz.korge.view.text
+import com.soywiz.korge.view.vector.gpuShapeView
 import com.soywiz.korim.annotation.*
 import com.soywiz.korim.atlas.*
 import com.soywiz.korim.bitmap.*
@@ -16,7 +18,11 @@ import com.soywiz.korim.bitmap.trace.*
 import com.soywiz.korim.color.*
 import com.soywiz.korim.font.*
 import com.soywiz.korim.format.*
+import com.soywiz.korim.paint.BitmapPaint
+import com.soywiz.korim.paint.LinearGradientPaint
+import com.soywiz.korim.paint.toPaint
 import com.soywiz.korim.text.*
+import com.soywiz.korim.vector.ShapeBuilder
 import com.soywiz.korio.file.std.*
 import com.soywiz.korio.stream.*
 import com.soywiz.korma.geom.*
@@ -35,7 +41,11 @@ suspend fun main() = Korge(
     multithreaded = true,
     //debugAg = true,
 ) {
-    mainEasing()
+    mainCircleColor()
+    //mainFilterSwitch()
+    //mainVectorFill()
+    //mainEasing()
+    //mainTweenPoint()
     //mainBezier()
     //mainGpuVectorRendering()
     //mainClipping()
@@ -80,7 +90,8 @@ suspend fun main() = Korge(
     //mainTrimmedAtlas()
     //mainRotateCircle()
     //mainImageTrace()
-    //mainEmoji()
+    mainEmoji()
+    //mainUITreeView()
     //Bunnymark().apply { bunnymarkMain() }
     //bezierSample()
     //particlesMain()
@@ -92,7 +103,6 @@ suspend fun main() = Korge(
     //println("HELLO WORLD!")
     //withContext(Dispatchers.Unconfined) {
 }
-
 
 //suspend fun main() {
 //    for (n in 0 until 1000) {
@@ -116,6 +126,11 @@ suspend fun main() = Korge(
 //        println(sw.elapsed)
 //    }
 //}
+
+suspend fun Stage.mainCircleColor() {
+    colorMul = Colors.RED.withAd(0.9)
+    circle(100.0)
+}
 
 suspend fun Stage.rotatedTexture() {
     //val tex = resourcesVfs["korim.png"].readBitmapSlice().rotateRight()
@@ -191,11 +206,22 @@ suspend fun Stage.mainImageTrace() {
 
 @OptIn(KorimInternal::class)
 suspend fun Stage.mainEmoji() {
+    println("coroutineContext: $coroutineContext")
+    image(resourcesVfs["korge.png"].readBitmap())
     //val fontEmojiOther = localVfs("C:/temp/emoji.ttf").takeIfExists()?.readTtfFont()
     val fontEmojiOther = SystemFont("emoji")
     val fontEmojiApple = localVfs("C:/temp/AppleColorEmoji.ttf").takeIfExists()?.readTtfFont()
     val fontEmojiSystem = SystemFont.getEmojiFont()
     val font0 = DefaultTtfFont.withFallback(SystemFont.getDefaultFont())
+    println("fontEmojiOther=$fontEmojiOther")
+    println("fontEmojiApple=$fontEmojiApple")
+    println("fontEmojiSystem=$fontEmojiSystem")
+    println("font0=$font0")
+    println("fontList=${kotlin.runCatching { localVfs("/system/fonts").listNames() }}")
+    println("/System/Library/Fonts/Cache=${kotlin.runCatching { localVfs("/System/Library/Fonts/Cache").listNames() }}")
+    println("/System/Library/Fonts=${kotlin.runCatching { localVfs("/System/Library/Fonts").listNames() }}")
+    println("/System/Library/Fonts/Core=${kotlin.runCatching { localVfs("/System/Library/Fonts/Core").listNames() }}")
+    println("listFontNamesWithFiles=${kotlin.runCatching { SystemFont.listFontNamesWithFiles() }}")
     //val font0 = localVfs("C:/temp/FrankRuhlHofshi-Regular-ttf.ttf").readTtfFont()
     //val font0 = SystemFont.getDefaultFont().ttf
     //val font0 = SystemFont("Arial Unicode").ttf
