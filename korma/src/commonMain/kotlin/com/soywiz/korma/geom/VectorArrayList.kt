@@ -10,14 +10,18 @@ interface IVectorArrayList : Extra {
     fun get(index: Int, dim: Int): Double
 }
 
+fun IVectorArrayList.getX(index: Int): Double = get(index, 0)
+fun IVectorArrayList.getY(index: Int): Double = get(index, 1)
+fun IVectorArrayList.getZ(index: Int): Double = get(index, 2)
+
 class VectorArrayList(
     override val dimensions: Int,
-    capacity: Int = 6,
+    capacity: Int = 7,
 ) : IVectorArrayList, Extra by Extra.Mixin() {
     val data = DoubleArrayList(capacity * dimensions)
 
     override var closed: Boolean = false
-    override val size: Int = data.size / dimensions
+    override val size: Int get() = data.size / dimensions
 
     override fun get(index: Int, dim: Int): Double = data[index * dimensions + dim]
     fun set(index: Int, dim: Int, value: Double) {
@@ -30,5 +34,25 @@ class VectorArrayList(
     fun add(vararg values: Double) {
         if (values.size != dimensions) error("Invalid dimensions ${values.size} != $dimensions")
         data.add(values)
+    }
+
+    fun vectorToStringBuilder(index: Int, out: StringBuilder) {
+        out.append("[")
+        for (dim in 0 until dimensions) {
+            if (dim != 0) out.append(", ")
+            out.append(get(index, dim))
+        }
+        out.append("]")
+    }
+
+    fun vectorToString(index: Int): String = buildString { vectorToStringBuilder(index, this) }
+
+    override fun toString(): String = buildString {
+        append("VectorArrayList[${this@VectorArrayList.size}](")
+        for (n in 0 until this@VectorArrayList.size) {
+            if (n != 0) append(", ")
+            this@VectorArrayList.vectorToStringBuilder(n, this)
+        }
+        append(")")
     }
 }
