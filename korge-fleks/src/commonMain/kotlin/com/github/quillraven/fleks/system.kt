@@ -260,7 +260,7 @@ fun IteratingSystem.createEmptyComparator(): EntityComparator {
 class SystemService(
     world: World,
     systemFactory: MutableMap<KClass<*>, (injections: Injections) -> IntervalSystem>,
-    injectables: MutableMap<String, Injectable>
+    injections: Injections
 ) {
     @PublishedApi
     internal val systems: Array<IntervalSystem>
@@ -268,7 +268,7 @@ class SystemService(
     init {
         // Configure injector before instantiating systems
         val compService = world.componentService
-        val injections = Injections(injectables, compService.mappers)
+
         // Create systems
         val entityService = world.entityService
         val allFamilies = mutableListOf<Family>()

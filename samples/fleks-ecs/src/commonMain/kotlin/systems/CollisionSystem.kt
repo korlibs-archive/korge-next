@@ -1,19 +1,23 @@
 package systems
 
-import com.github.quillraven.fleks.*
+import com.github.quillraven.fleks.EachFrame
+import com.github.quillraven.fleks.Entity
+import com.github.quillraven.fleks.Injections
+import com.github.quillraven.fleks.IteratingSystem
 import components.Destruct
 import components.Impulse
 import components.Position
 
-class CollisionSystem : IteratingSystem(
+class CollisionSystem(injections: Injections) : IteratingSystem(
+    injections,
     allOfComponents = arrayOf(Position::class),
     interval = EachFrame
 //    interval = Fixed(500f)  // for testing every 500 millisecond
 ) {
 
-    private val positions  = Injections.componentMapper<Position>()
-    private val destructs = Injections.componentMapper<Destruct>()
-    private val impulses = Injections.componentMapper<Impulse>()
+    private val positions  = injections.componentMapper<Position>()
+    private val destructs = injections.componentMapper<Destruct>()
+    private val impulses = injections.componentMapper<Impulse>()
 
     override fun onInit() {
     }

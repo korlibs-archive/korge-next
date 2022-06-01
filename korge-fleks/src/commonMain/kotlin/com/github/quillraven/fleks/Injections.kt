@@ -1,10 +1,5 @@
 package com.github.quillraven.fleks
 
-data class InjectionsBuilder(
-    val injectObjects: MutableMap<String, Injectable> = mutableMapOf(),
-    val mapperObjects: MutableMap<String, ComponentMapper<*>> = mutableMapOf()
-)
-
 /**
  * An [injector][Injections] which is used to inject objects from outside the [IntervalSystem].
  *

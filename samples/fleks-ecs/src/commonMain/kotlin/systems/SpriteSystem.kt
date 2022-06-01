@@ -1,27 +1,31 @@
 package systems
 
+import assets.Assets
 import com.github.quillraven.fleks.ComponentListener
+import com.github.quillraven.fleks.EachFrame
 import com.github.quillraven.fleks.Entity
-import com.github.quillraven.fleks.*
+import com.github.quillraven.fleks.Injections
+import com.github.quillraven.fleks.IteratingSystem
+import com.github.quillraven.fleks.World
 import com.soywiz.korge.view.Container
 import com.soywiz.korge.view.addTo
 import com.soywiz.korim.format.ImageAnimation
-import components.*
+import components.Position
 import components.Sprite
-import assets.Assets
 
 /**
  * This System takes care of displaying sprites (image-animation objects) on the screen. It takes the image configuration from
  * [Sprite] component to setup graphics from Assets and create an ImageAnimationView object for displaying in the Container.
  *
  */
-class SpriteSystem : IteratingSystem(
+class SpriteSystem(injections: Injections) : IteratingSystem(
+    injections,
     allOfComponents = arrayOf(Sprite::class, Position::class),
     interval = EachFrame
 ) {
 
-    private val positions = Injections.componentMapper<Position>()
-    private val sprites = Injections.componentMapper<Sprite>()
+    private val positions = injections.componentMapper<Position>()
+    private val sprites = injections.componentMapper<Sprite>()
 
     override fun onInit() {
     }
@@ -35,11 +39,11 @@ class SpriteSystem : IteratingSystem(
         sprite.imageAnimView.y = pos.y
     }
 
-    class SpriteListener : ComponentListener<Sprite> {
+    class SpriteListener(override val injections: Injections) : ComponentListener<Sprite> {
 
-        private val world = Injections.dependency<World>()
-        private val layerContainer = Injections.dependency<Container>("layer0")
-        private val assets = Injections.dependency<Assets>()
+        private val world = injections.dependency<World>()
+        private val layerContainer = injections.dependency<Container>("layer0")
+        private val assets = injections.dependency<Assets>()
 
         override fun onComponentAdded(entity: Entity, component: Sprite) {
             // Set animation object

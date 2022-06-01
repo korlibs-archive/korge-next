@@ -29,7 +29,7 @@ class WorldConfiguration {
     internal val injectables = mutableMapOf<String, Injectable>()
 
     @PublishedApi
-    internal val compListenerFactory = mutableMapOf<String, () -> ComponentListener<*>>()
+    internal val compListenerFactory = mutableMapOf<String, (injections: Injections) -> ComponentListener<*>>()
 
     @PublishedApi
     internal val componentFactory = mutableMapOf<String, () -> Any>()
@@ -91,7 +91,7 @@ class WorldConfiguration {
      * @throws [FleksComponentAlreadyAddedException] if the component was already added before.
      * @throws [FleksInjectableTypeHasNoName] if the dependency type has no T::class.simpleName.
      */
-    inline fun <reified T : Any> component(noinline compFactory: () -> T, noinline listenerFactory: (() -> ComponentListener<T>)? = null) {
+    inline fun <reified T : Any> component(noinline compFactory: () -> T, noinline listenerFactory: ((injections: Injections) -> ComponentListener<T>)? = null) {
         val compType = T::class.simpleName ?: throw FleksInjectableTypeHasNoName(T::class)
 
         if (compType in componentFactory) {
@@ -146,20 +146,20 @@ class World(
         val worldCfg = WorldConfiguration().apply(cfg)
         componentService = ComponentService(worldCfg.componentFactory)
         entityService = EntityService(worldCfg.entityCapacity, componentService)
-        val injections = Injections()
-
         val injectables = worldCfg.injectables
 
         // Add world to inject object so that component listeners can get it form injectables, too
         // Set "used" to true to make this injectable not mandatory
         injectables["World"] = Injectable(this, true)
 
-        systemService = SystemService(this, worldCfg.systemFactory, injectables)
+        val injections = Injections(injectables, componentService.mappers)
+
+        systemService = SystemService(this, worldCfg.systemFactory, injections)
 
         // create and register ComponentListener
         worldCfg.compListenerFactory.forEach {
             val compType = it.key
-            val listener = it.value.invoke()
+            val listener = it.value.invoke(injections)
             val mapper = componentService.mapper(compType)
             mapper.addComponentListenerInternal(listener)
         }

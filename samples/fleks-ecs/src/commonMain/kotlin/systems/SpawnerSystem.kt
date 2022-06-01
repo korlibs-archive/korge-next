@@ -1,16 +1,21 @@
 package systems
 
-import com.github.quillraven.fleks.*
-import components.*
+import com.github.quillraven.fleks.EachFrame
+import com.github.quillraven.fleks.Entity
+import com.github.quillraven.fleks.Injections
+import com.github.quillraven.fleks.IteratingSystem
+import components.Position
+import components.Spawner
 import entities.createMeteoriteObject
 
-class SpawnerSystem : IteratingSystem(
+class SpawnerSystem(injections: Injections) : IteratingSystem(
+    injections,
     allOfComponents = arrayOf(Spawner::class),
     interval = EachFrame
 ) {
 
-    private val positions = Injections.componentMapper<Position>()
-    private val spawners = Injections.componentMapper<Spawner>()
+    private val positions = injections.componentMapper<Position>()
+    private val spawners = injections.componentMapper<Spawner>()
 
     override fun onTickEntity(entity: Entity) {
         val spawner = spawners[entity]
