@@ -27,7 +27,7 @@ data class Curves(val curves: List<Curve>) : Curve {
         val end: Double,
         val bounds: Rectangle,
     ) {
-        fun contains(pos: Double): Boolean = pos >= start && pos <= end
+        fun contains(pos: Double): Boolean = pos in start..end
 
         val length: Double get() = end - start
     }
@@ -96,7 +96,7 @@ interface Curve {
             target.setTo(t.interpolate(x0, x1), t.interpolate(y0, y1))
                 //.also { println("Line.calc[t=$t] -> $target") }
 
-        override fun length(steps: Int): Double = kotlin.math.hypot(x1 - x0, y1 - y0)
+        override fun length(steps: Int): Double = hypot(x1 - x0, y1 - y0)
 
         override fun recommendedDivisions(): Int = lineRecommendedSteps(x0, y0, x1, y1)
 
