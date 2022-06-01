@@ -217,30 +217,29 @@ class BezierCurve(
         return kotlin.math.abs(kotlin.math.acos(s)) < kotlin.math.PI / 3.0
     }
 
-    fun toSub(t1: Double, t2: Double, parent: BezierCurve? = null): SubBezierCurve = SubBezierCurve(this, t1, t2, parent)
-
     class SubBezierCurve(val curve: BezierCurve, val t1: Double, val t2: Double, val parent: BezierCurve?) {
         val boundingBox: IRectangle get() = curve.boundingBox
 
-        override fun toString(): String = "SubBezierCurve[$t1..$t2]($curve)"
         fun split(t: Double): Split {
             val hull = curve.hull(t)
             return Split(
                 base = curve,
                 t = t,
-                left = when (curve.order) {
+                left = SubBezierCurve(when (curve.order) {
                     2 -> BezierCurve(PointArrayList(hull.getPoint(0), hull.getPoint(3), hull.getPoint(5)))
                     3 -> BezierCurve(PointArrayList(hull.getPoint(0), hull.getPoint(4), hull.getPoint(7), hull.getPoint(9)))
                     else -> TODO()
-                }.toSub(t1, t.convertRange(0.0, 1.0, t1, t2)),
-                right = when (curve.order) {
+                }, t1, t.convertRange(0.0, 1.0, t1, t2), parent),
+                right = SubBezierCurve(when (curve.order) {
                     2 -> BezierCurve(PointArrayList(hull.getPoint(5), hull.getPoint(4), hull.getPoint(2)))
                     3 -> BezierCurve(PointArrayList(hull.getPoint(9), hull.getPoint(8), hull.getPoint(6), hull.getPoint(3)))
                     else -> TODO()
-                }.toSub(t.convertRange(0.0, 1.0, t1, t2), t2),
+                }, t.convertRange(0.0, 1.0, t1, t2), t2, parent),
                 hull = hull
             )
         }
+
+        override fun toString(): String = "SubBezierCurve[$t1..$t2]($curve)"
     }
 
     fun reduce(): List<SubBezierCurve> {
