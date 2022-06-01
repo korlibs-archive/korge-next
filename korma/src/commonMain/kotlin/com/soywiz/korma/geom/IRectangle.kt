@@ -58,6 +58,8 @@ interface IRectangle {
     }
 }
 
+fun IRectangle.clone(): Rectangle = Rectangle(x, y, width, height)
+
 @Deprecated(
     "Properties with underscores are deprecated and will be removed soon",
     ReplaceWith("x"),
