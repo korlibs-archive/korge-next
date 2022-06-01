@@ -359,6 +359,11 @@ class BezierCurve(
         //return out.setTo(-out.y, out.x)
     }
 
+    override fun normal(t: Double, target: Point): Point {
+        normal(t, normalize = true, target)
+        return target
+    }
+
     fun hull(t: Double, out: PointArrayList = PointArrayList()): IPointArrayList {
         var p = this.points
         out.add(p, 0)
