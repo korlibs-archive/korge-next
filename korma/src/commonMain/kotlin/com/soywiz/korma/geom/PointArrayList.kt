@@ -7,11 +7,18 @@ import com.soywiz.kds.SortOps
 import com.soywiz.kds.genericSort
 import kotlin.math.round
 
-interface IPointArrayList : Extra {
-    val closed: Boolean
-    val size: Int
+interface IPointArrayList : IVectorArrayList, Extra {
+    override val dimensions: Int get() = 2
+    override fun get(index: Int, dim: Int): Double = if (dim == 0) getX(index) else getY(index)
     fun getX(index: Int): Double
     fun getY(index: Int): Double
+}
+
+//fun IPointArrayList.getComponent(index: Int, component: Int): Double = if (component == 0) getX(index) else getY(index)
+
+fun IPointArrayList.getComponentList(component: Int, out: DoubleArray = DoubleArray(size)): DoubleArray {
+    for (n in 0 until size) out[n] = get(n, component)
+    return out
 }
 
 val IPointArrayList.firstX: Double get() = getX(0)
@@ -65,6 +72,7 @@ open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.M
     private val xList = DoubleArrayList(capacity)
     private val yList = DoubleArrayList(capacity)
     override val size get() = xList.size
+    val capacity: Int get() = xList.capacity
 
     fun isEmpty() = size == 0
     fun isNotEmpty() = size != 0
@@ -75,6 +83,19 @@ open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.M
     }
 
     companion object {
+        operator fun invoke(vararg values: Double): PointArrayList {
+            val size = values.size / 2
+            val out = PointArrayList(size)
+            for (n in 0 until size) out.add(values[n * 2 + 0], values[n * 2 + 1])
+            return out
+        }
+        operator fun invoke(vararg values: Int): PointArrayList {
+            val size = values.size / 2
+            val out = PointArrayList(size)
+            for (n in 0 until size) out.add(values[n * 2 + 0], values[n * 2 + 1])
+            return out
+        }
+
         operator fun invoke(capacity: Int = 7, callback: PointArrayList.() -> Unit): PointArrayList = PointArrayList(capacity).apply(callback)
         operator fun invoke(points: List<IPoint>): PointArrayList = PointArrayList(points.size) {
             for (n in points.indices) add(points[n].x, points[n].y)
@@ -95,6 +116,9 @@ open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.M
     fun add(p: IPoint) = add(p.x, p.y)
     fun add(p: IPointArrayList) = this.apply { p.fastForEach { x, y -> add(x, y) } }
     fun addReverse(p: IPointArrayList) = this.apply { p.fastForEachReverse { x, y -> add(x, y) } }
+    fun add(p: IPointArrayList, index: Int) {
+        add(p.getX(index), p.getY(index))
+    }
 
     fun copyFrom(other: IPointArrayList): PointArrayList = this.apply { clear() }.apply { add(other) }
     fun clone(out: PointArrayList = PointArrayList()): PointArrayList = out.clear().add(this)
