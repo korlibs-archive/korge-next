@@ -6,6 +6,7 @@ import com.soywiz.korio.util.OS
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 
 class BitmapSliceTest {
     @Test
@@ -153,16 +154,41 @@ class BitmapSliceTest {
         assertEquals(20, slice.frameHeight)
     }
 
-    @Test
-    fun testExtract() {
-        if (OS.isJvm) {
-            val bmp = Bitmap32(20, 10)
-            bmp.set(1, 1, Colors.RED)
-            bmp.set(18, 8, Colors.BLUE)
-            val slice = bmp.sliceWithSize(1, 1, 8, 18, imageOrientation = ImageOrientation.ROTATE_90)
-            val bmp2 = slice.extract()
-            assertEquals(Colors.RED, bmp2.getRgba(7, 0))
-            assertEquals(Colors.BLUE, bmp2.getRgba(0, 17))
-        }
+    fun testExtract90(bmp: Bitmap) {
+        bmp.setRgba(0, 0, Colors.WHITE)
+        bmp.setRgba(1, 1, Colors.RED)
+        bmp.setRgba(18, 8, Colors.BLUE)
+        bmp.setRgba(19, 9, Colors.WHITE)
+        val slice = bmp.sliceWithSize(1, 1, 8, 18, imageOrientation = ImageOrientation.ROTATE_90).virtFrame(2, 2, 12, 22)
+        val bmp2 = slice.extract()
+        assertNotEquals(Colors.WHITE, bmp2.getRgba(10, 1))
+        assertEquals(Colors.RED, bmp2.getRgba(9, 2))
+        assertEquals(Colors.BLUE, bmp2.getRgba(2, 19))
+        assertNotEquals(Colors.WHITE, bmp2.getRgba(1, 20))
     }
+
+    fun testExtract270(bmp: Bitmap) {
+        bmp.setRgba(0, 0, Colors.WHITE)
+        bmp.setRgba(1, 1, Colors.RED)
+        bmp.setRgba(18, 8, Colors.BLUE)
+        bmp.setRgba(19, 9, Colors.WHITE)
+        val slice = bmp.sliceWithSize(1, 1, 8, 18, imageOrientation = ImageOrientation.ROTATE_270).virtFrame(2, 2, 12, 22)
+        val bmp2 = slice.extract()
+        assertNotEquals(Colors.WHITE, bmp2.getRgba(1, 20))
+        assertEquals(Colors.RED, bmp2.getRgba(2, 19))
+        assertEquals(Colors.BLUE, bmp2.getRgba(9, 2))
+        assertNotEquals(Colors.WHITE, bmp2.getRgba(10, 1))
+    }
+
+    @Test
+    fun textExtractBitmap32() {
+        testExtract90(Bitmap32(20, 10))
+        testExtract270(Bitmap32(20, 10))
+    }
+
+    @Test
+    fun textExtractNativeImage() {
+        testExtract90(NativeImage(20, 10))
+        testExtract270(NativeImage(20, 10))
+     }
 }
