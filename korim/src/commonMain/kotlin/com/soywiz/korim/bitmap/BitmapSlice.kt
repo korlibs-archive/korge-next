@@ -567,6 +567,38 @@ abstract class BmpSlice(
     open fun slice(rect: RectangleInt, name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BmpSlice =
         BitmapSlice(bmp, rect, name, imageOrientation = imageOrientation, parentCoords = this)
     open fun slice(rect: Rectangle, name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BmpSlice = slice(rect.toInt(), name, imageOrientation)
+
+    internal fun <T: Bitmap> extractWithBase(base: T): T
+    {
+        val out: T
+        val x = (min(min(tl_x, tr_x), min(bl_x, br_x)) * baseWidth).roundToInt()
+        val y = (min(min(tl_y, tr_y), min(bl_y, br_y)) * baseHeight).roundToInt()
+        val rotated = (width > 1 && tl_x == tr_x) || (height > 1 && tl_y == bl_y)
+        val reverseX = width > 1 && if (rotated) tl_y > br_y else tl_x > br_x
+        val reverseY = height > 1 && if (rotated) tl_x > br_x else tl_y > br_y
+
+        if (frameOffsetX == 0 && frameOffsetY == 0 && frameWidth == width && frameHeight == height) {
+            out = base.extract(x, y, width, height)
+        } else {
+            out = base.createWithThisFormatTyped(frameWidth, frameHeight)
+            if (!rotated) {
+                bmp.copyUnchecked(x, y, out, frameOffsetX, frameOffsetY, width, height)
+            } else {
+                val rgbaArray = RgbaArray(width)
+                for (x0 in 0 until height) {
+                    bmp.readPixelsUnsafe(x + x0, y, 1, width, rgbaArray)
+                    out.writePixelsUnsafe(frameOffsetX, frameOffsetY + x0, width, 1, rgbaArray)
+                }
+            }
+        }
+        if (reverseX) {
+            out.flipX()
+        }
+        if (reverseY) {
+            out.flipY()
+        }
+        return out
+    }
 }
 
 val BmpSlice.nameSure: String get() = name ?: "unknown"
@@ -574,18 +606,7 @@ fun <T : Bitmap> BmpSlice.asBitmapSlice(): BitmapSlice<T> = this as BitmapSlice<
 
 fun BmpSlice.getIntBounds(out: RectangleInt = RectangleInt()) = out.setTo(left, top, width, height)
 
-fun BmpSlice.extract(): Bitmap
-{
-    val out = bmp.createWithThisFormatTyped(frameWidth, frameHeight)
-    for (x in 0 until frameWidth) {
-        for (y in 0 until frameHeight) {
-            basePixelPos(x, y)?.let {
-                out.setInt(x, y, bmp.getInt(it.x, it.y))
-            }
-        }
-    }
-    return out
-}
+fun BmpSlice.extract(): Bitmap = this.extractWithBase(bmpBase)
 
 class BitmapSlice<out T : Bitmap>(
     override val bmp: T,
@@ -608,17 +629,7 @@ class BitmapSlice<out T : Bitmap>(
 
     val premultiplied get() = bmp.premultiplied
 
-    fun extract(): T {
-        val out = bmp.createWithThisFormatTyped(frameWidth, frameHeight)
-        for (x in 0 until frameWidth) {
-            for (y in 0 until frameHeight) {
-                basePixelPos(x, y)?.let {
-                    out.setInt(x, y, bmp.getInt(it.x, it.y))
-                }
-            }
-        }
-        return out
-    }
+    fun extract(): T = extractWithBase(bmp)
 
     override fun sliceWithBounds(left: Int, top: Int, right: Int, bottom: Int, name: String?, imageOrientation: ImageOrientation): BitmapSlice<T> = slice(RectangleInt(left, top, right - left, bottom - top), name, imageOrientation)
     override fun sliceWithSize(x: Int, y: Int, width: Int, height: Int, name: String?, imageOrientation: ImageOrientation): BitmapSlice<T> = slice(RectangleInt(x, y, width, height), name, imageOrientation)
