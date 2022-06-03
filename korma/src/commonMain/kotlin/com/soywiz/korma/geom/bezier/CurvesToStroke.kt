@@ -75,6 +75,25 @@ fun Curves.toStrokePoints(width: Double, join: LineJoin = LineJoin.MITER, startC
         }
     }
 
+    fun generateCap(curr: Curve, ratio: Double, kind: LineCap) {
+        when (kind) {
+            LineCap.SQUARE -> {
+                // @TODO:
+                // BUTT
+                addTwoPoints(curr.calc(ratio), curr.normal(ratio), width) // Not right
+            }
+            LineCap.ROUND -> {
+                // @TODO:
+                // BUTT
+                addTwoPoints(curr.calc(ratio), curr.normal(ratio), width) // Not right
+            }
+            LineCap.BUTT -> {
+                // BUTT
+                addTwoPoints(curr.calc(ratio), curr.normal(ratio), width)
+            }
+        }
+    }
+
     //println("closed: $closed")
 
     for (n in curves.indices) {
@@ -86,8 +105,7 @@ fun Curves.toStrokePoints(width: Double, join: LineJoin = LineJoin.MITER, startC
             if (closed) {
                 generateJoin(curves.getCyclic(n - 1), curr)
             } else {
-                // BUTT
-                addTwoPoints(curr.calc(0.0), curr.normal(0.0), width)
+                generateCap(curr, 0.0, startCap)
             }
         }
 
@@ -111,8 +129,7 @@ fun Curves.toStrokePoints(width: Double, join: LineJoin = LineJoin.MITER, startC
             if (closed) {
                 generateJoin(curr, next)
             } else {
-                // BUTT
-                addTwoPoints(curr.calc(1.0), curr.normal(1.0), width)
+                generateCap(curr, 1.0, endCap)
             }
         }
     }
