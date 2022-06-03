@@ -322,12 +322,8 @@ data class Point(
     fun changeLength(length: Float): Point = changeLength(length.toDouble())
     fun changeLength(length: Int): Point = changeLength(length.toDouble())
     fun changeLength(length: Double): Point {
-        if (this.length == 0.0 || this.length == length) return this
-        val currentLength2 = this.x * this.x + this.y * this.y
-        val newLength2 = length * length
-        val scalar = sqrt((newLength2 / currentLength2))
-        this.x *= scalar
-        this.y *= scalar
+        this.normalize()
+        this.setTo(this.x * length, this.y * length)
         return this
     }
 
