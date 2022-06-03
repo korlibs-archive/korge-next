@@ -51,7 +51,11 @@ suspend fun Stage.mainStrokesExperiment() {
 
     println("path=$path")
 
-    addChild(DebugVertexView(points.vector))
+    addChild(DebugVertexView(points.vector).also { it.color = Colors.WHITE })
+    val strokeSize = 180.0
+    for (n in 0 until 16) {
+        addChild(DebugVertexView(curves.splitByLength(n * strokeSize * 2, n * strokeSize * 2 + strokeSize).toStrokePoints(10.0).vector).also { it.color = Colors.BLUEVIOLET })
+    }
 
     val circle = circle(16.0, Colors.PURPLE).centered
     launchImmediately {
@@ -64,16 +68,12 @@ suspend fun Stage.mainStrokesExperiment() {
     if (true) {
     //if (false) {
         graphics {
-            fill(Colors.RED) {
-                this.text("Hello, this is a test. Oh nice! Text following paths! How cool is that? Really cool? or not at all?\nCOOL, COOL, COOL, let's rock this path a bit more because it is cool, yeah!", DefaultTtfFont, textSize = 32.0, x = 0.0, y = 0.0, renderer = DefaultStringTextRenderer.aroundPath(path))
-            }
-            /*
-            stroke(Colors.RED, StrokeInfo(thickness = 3.0)) {
-                forEachRatio01(200) { ratio ->
-                    val p = curves.calc(ratio)
-                    if (ratio == 0.0) moveTo(p) else lineTo(p)
-                }
-            }
+            //stroke(Colors.RED, StrokeInfo(thickness = 3.0)) {
+            //    forEachRatio01(200) { ratio ->
+            //        val p = curves.calc(ratio)
+            //        if (ratio == 0.0) moveTo(p) else lineTo(p)
+            //    }
+            //}
             stroke(Colors.GREEN, StrokeInfo(thickness = 2.0)) {
                 forEachRatio01(200) { ratio ->
                     val t = curves.ratioFromLength(ratio * curves.length)
@@ -83,8 +83,9 @@ suspend fun Stage.mainStrokesExperiment() {
                     line(p, p + n * 10)
                 }
             }
-
-             */
+            fill(Colors.RED) {
+                this.text("Hello, this is a test. Oh nice! Text following paths! How cool is that? Really cool? or not at all?\nCOOL, COOL, COOL, let's rock this path a bit more because it is cool, yeah!", DefaultTtfFont, textSize = 32.0, x = 0.0, y = 0.0, renderer = DefaultStringTextRenderer.aroundPath(path))
+            }
         }
     }
 }

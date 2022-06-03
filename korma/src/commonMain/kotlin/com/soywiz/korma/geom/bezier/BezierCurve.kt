@@ -1,8 +1,6 @@
 package com.soywiz.korma.geom.bezier
 
 import com.soywiz.kds.DoubleArrayList
-import com.soywiz.kds.binarySearch
-import com.soywiz.kds.forEachRatio01
 import com.soywiz.kds.iterators.fastForEach
 import com.soywiz.kds.mapDouble
 import com.soywiz.korma.geom.Angle
@@ -206,49 +204,6 @@ class BezierCurve(
         return kotlin.math.abs(kotlin.math.acos(s)) < kotlin.math.PI / 3.0
     }
 
-    class SubBezierCurve(val curve: BezierCurve, val t1: Double, val t2: Double, val parent: BezierCurve?) {
-        val boundingBox: IRectangle get() = curve.boundingBox
-
-        fun split(t: Double): Split {
-            val hull = curve.hull(t)
-            return Split(
-                base = curve,
-                t = t,
-                left = SubBezierCurve(
-                    when (curve.order) {
-                        2 -> BezierCurve(PointArrayList(hull.getPoint(0), hull.getPoint(3), hull.getPoint(5)))
-                        3 -> BezierCurve(
-                            PointArrayList(
-                                hull.getPoint(0),
-                                hull.getPoint(4),
-                                hull.getPoint(7),
-                                hull.getPoint(9)
-                            )
-                        )
-                        else -> TODO()
-                    }, t1, t.convertRange(0.0, 1.0, t1, t2), parent
-                ),
-                right = SubBezierCurve(
-                    when (curve.order) {
-                        2 -> BezierCurve(PointArrayList(hull.getPoint(5), hull.getPoint(4), hull.getPoint(2)))
-                        3 -> BezierCurve(
-                            PointArrayList(
-                                hull.getPoint(9),
-                                hull.getPoint(8),
-                                hull.getPoint(6),
-                                hull.getPoint(3)
-                            )
-                        )
-                        else -> TODO()
-                    }, t.convertRange(0.0, 1.0, t1, t2), t2, parent
-                ),
-                hull = hull
-            )
-        }
-
-        override fun toString(): String = "SubBezierCurve[$t1..$t2]($curve)"
-    }
-
     /** Returns the [t] values where the curve changes its sign */
     fun inflections(): DoubleArray {
         if (points.size < 4) return doubleArrayOf()
@@ -410,6 +365,12 @@ class BezierCurve(
     }
 
     fun hull(t: Double, out: PointArrayList = PointArrayList()): IPointArrayList {
+        if (order < 2) error("Can't compute hull of order=$order < 2")
+        return hullOrNull(t, out)!!
+    }
+
+    fun hullOrNull(t: Double, out: PointArrayList = PointArrayList()): IPointArrayList? {
+        if (order < 2) return null
         var p = this.points
         out.add(p, 0)
         out.add(p, 1)
@@ -431,25 +392,12 @@ class BezierCurve(
         return out
     }
 
-    fun split(t1: Double, t2: Double): SubBezierCurve {
-        val split = split(t1)
-        return SubBezierCurve(split.rightCurve.split(map(t2, t1, 1.0, 0.0, 1.0)).leftCurve, t1, t2, this)
-    }
+    fun split(t0: Double, t1: Double): SubBezierCurve =
+        SubBezierCurve(splitRight(t0).splitLeft(map(t1, t0, 1.0, 0.0, 1.0)).curve, t0, t1, this)
 
-    fun split(t: Double): Split {
-        return SubBezierCurve(this, 0.0, 1.0, null).split(t)
-    }
-
-    data class Split(
-        val base: BezierCurve,
-        val left: SubBezierCurve,
-        val right: SubBezierCurve,
-        val t: Double,
-        val hull: IPointArrayList
-    ) {
-        val leftCurve: BezierCurve get() = left.curve
-        val rightCurve: BezierCurve get() = right.curve
-    }
+    fun split(t: Double): CurveSplit = SubBezierCurve(this).split(t)
+    fun splitLeft(t: Double): SubBezierCurve = SubBezierCurve(this).splitLeft(t)
+    fun splitRight(t: Double): SubBezierCurve = SubBezierCurve(this).splitRight(t)
 
     class Extrema(
         val xt: DoubleArray, val yt: DoubleArray

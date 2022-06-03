@@ -62,25 +62,22 @@ data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
     }
 
     @PublishedApi
-    internal inline fun <T> findTInCurve(t: Double, block: (curve: Curve, ratioInCurve: Double) -> T): T {
+    internal inline fun <T> findTInCurve(t: Double, block: (info: CurveInfo, ratioInCurve: Double) -> T): T {
         val pos = t * length
         val info = findInfo(t)
         val posInCurve = pos - info.startLength
         val ratioInCurve = posInCurve / info.length
-        return block(info.curve, ratioInCurve)
+        return block(info, ratioInCurve)
     }
 
-    override fun calc(t: Double, target: Point): Point {
-        return findTInCurve(t) { curve, ratioInCurve -> curve.calc(ratioInCurve, target) }
-    }
+    override fun calc(t: Double, target: Point): Point =
+        findTInCurve(t) { info, ratioInCurve -> info.curve.calc(ratioInCurve, target) }
 
-    override fun normal(t: Double, target: Point): Point {
-        return findTInCurve(t) { curve, ratioInCurve -> curve.normal(ratioInCurve, target) }
-    }
+    override fun normal(t: Double, target: Point): Point =
+        findTInCurve(t) { info, ratioInCurve -> info.curve.normal(ratioInCurve, target) }
 
-    override fun tangent(t: Double, target: Point): Point {
-        return findTInCurve(t) { curve, ratioInCurve -> curve.tangent(ratioInCurve, target) }
-    }
+    override fun tangent(t: Double, target: Point): Point =
+        findTInCurve(t) { info, ratioInCurve -> info.curve.tangent(ratioInCurve, target) }
 
     override fun ratioFromLength(length: Double): Double {
         if (length <= 0.0) return 0.0
@@ -88,8 +85,8 @@ data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
 
         val curveIndex = infos.binarySearch {
             when {
-                length < it.startLength -> +1
-                length > it.endLength -> -1
+                it.endLength < length -> -1
+                it.startLength > length -> +1
                 else -> 0
             }
         }
@@ -103,6 +100,36 @@ data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
         val lengthInCurve = length - info.startLength
         val ratioInCurve = info.curve.ratioFromLength(lengthInCurve)
         return ratioInCurve.convertRange(0.0, 1.0, info.startRatio, info.endRatio)
+    }
+
+    fun splitLeftByLength(len: Double): Curves = splitLeft(ratioFromLength(len))
+    fun splitRightByLength(len: Double): Curves = splitRight(ratioFromLength(len))
+    fun splitByLength(len0: Double, len1: Double): Curves = split(ratioFromLength(len0), ratioFromLength(len1))
+
+    fun splitLeft(t: Double): Curves = split(0.0, t)
+    fun splitRight(t: Double): Curves = split(t, 1.0)
+
+    fun split(t0: Double, t1: Double): Curves {
+        if (t0 > t1) return split(t1, t0)
+        check(t0 <= t1)
+
+        if (t0 == t1) return Curves(emptyList(), closed = false)
+
+        return Curves(findTInCurve(t0) { info0, ratioInCurve0 ->
+            findTInCurve(t1) { info1, ratioInCurve1 ->
+                if (info0.index == info1.index) {
+                    listOf((info0.curve as BezierCurve).split(ratioInCurve0, ratioInCurve1).curve)
+                } else {
+                    val curveFirst = (info0.curve as BezierCurve).splitRight(ratioInCurve0).curve
+                    val curveLast = (info1.curve as BezierCurve).splitLeft(ratioInCurve1).curve
+                    buildList {
+                        add(curveFirst)
+                        for (index in info0.index + 1 until info1.index) add(infos[index].curve)
+                        add(curveLast)
+                    }
+                }
+            }
+        }, closed = false)
     }
 
     override fun length(steps: Int): Double = length
