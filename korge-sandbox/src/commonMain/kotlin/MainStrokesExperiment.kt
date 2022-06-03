@@ -1,5 +1,10 @@
 import com.soywiz.kds.forEachRatio01
+import com.soywiz.klock.seconds
+import com.soywiz.korge.tween.get
+import com.soywiz.korge.tween.tween
 import com.soywiz.korge.view.Stage
+import com.soywiz.korge.view.centered
+import com.soywiz.korge.view.circle
 import com.soywiz.korge.view.debug.DebugVertexView
 import com.soywiz.korge.view.graphics
 import com.soywiz.korim.color.Colors
@@ -8,10 +13,12 @@ import com.soywiz.korim.text.DefaultStringTextRenderer
 import com.soywiz.korim.text.aroundPath
 import com.soywiz.korim.text.text
 import com.soywiz.korim.vector.StrokeInfo
+import com.soywiz.korio.async.launchImmediately
 import com.soywiz.korma.geom.Matrix
 import com.soywiz.korma.geom.bezier.BezierCurve
 import com.soywiz.korma.geom.bezier.StrokePointsMode
 import com.soywiz.korma.geom.bezier.toStrokePoints
+import com.soywiz.korma.geom.get
 import com.soywiz.korma.geom.shape.buildVectorPath
 import com.soywiz.korma.geom.vector.applyTransform
 import com.soywiz.korma.geom.vector.getCurves
@@ -20,6 +27,7 @@ import com.soywiz.korma.geom.vector.lineTo
 import com.soywiz.korma.geom.vector.moveTo
 import com.soywiz.korma.geom.vector.quadTo
 import com.soywiz.korma.geom.vector.transformed
+import com.soywiz.korma.interpolation.Easing
 
 suspend fun Stage.mainStrokesExperiment() {
     val path = buildVectorPath {
@@ -44,6 +52,11 @@ suspend fun Stage.mainStrokesExperiment() {
     println("path=$path")
 
     addChild(DebugVertexView(points.vector))
+
+    val circle = circle(16.0, Colors.PURPLE).centered
+    launchImmediately {
+        circle.tween(circle::pos[path], time = 5.seconds, easing = Easing.LINEAR)
+    }
 
     if (true) {
     //if (false) {

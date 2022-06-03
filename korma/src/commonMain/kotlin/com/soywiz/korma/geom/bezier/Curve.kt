@@ -1,5 +1,6 @@
 package com.soywiz.korma.geom.bezier
 
+import com.soywiz.kds.forEachRatio01
 import com.soywiz.korma.geom.IPointArrayList
 import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.PointArrayList
@@ -72,14 +73,23 @@ interface Curve {
     }
 }
 
-fun Curve.getPoints(count: Int = this.recommendedDivisions(), out: PointArrayList = PointArrayList()): IPointArrayList {
-    val c1 = count - 1
+@PublishedApi
+internal fun Curve._getPoints(count: Int = this.recommendedDivisions(), equidistant: Boolean = false, out: PointArrayList = PointArrayList()): IPointArrayList {
     val temp = Point()
-    for (n in 0..c1) {
-        val ratio = n.toDouble() / c1
-        val point = calc(ratio, temp)
+    val curveLength = length()
+    forEachRatio01(count) { ratio ->
+        val t = if (equidistant) ratioFromLength(ratio * curveLength) else ratio
+        val point = calc(t, temp)
         //println("${this::class.simpleName}: ratio: $ratio, point=$point")
         out.add(point)
     }
     return out
+}
+
+fun Curve.getPoints(count: Int = this.recommendedDivisions(), out: PointArrayList = PointArrayList()): IPointArrayList {
+    return _getPoints(count, equidistant = false, out = out)
+}
+
+fun Curve.getEquidistantPoints(count: Int = this.recommendedDivisions(), out: PointArrayList = PointArrayList()): IPointArrayList {
+    return _getPoints(count, equidistant = true, out = out)
 }
