@@ -11,7 +11,7 @@ class CurvesToStrokeTest {
         val path = buildVectorPath {
             line(0, 0, 100, 100)
         }
-        val strokePoints = path.getCurves().toStrokePoints(10.0)
+        val strokePoints = path.getCurves().toStrokePoints(10.0).vector
         for (n in 0 until strokePoints.size) {
             println(strokePoints.vectorToString(n))
         }

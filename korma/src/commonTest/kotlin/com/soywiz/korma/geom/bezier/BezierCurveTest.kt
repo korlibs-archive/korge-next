@@ -64,4 +64,22 @@ class BezierCurveTest {
             BezierCurve(Point(0, 0), Point(-50, -200), Point(150, 150), Point(110, 120)).selfIntersections().toList()
         )
     }
+
+    @Test
+    fun testInflections() {
+        val curve = BezierCurve(100, 25, 10, 90, 110, 100, 150, 195)
+
+        assertEquals(
+            listOf(0.6300168840449997),
+            curve.inflections().toList()
+        )
+        println(curve.lut)
+        println(curve.length)
+        //println(curve.lut.estimateAtLength(10.0))
+        println(curve.lut.estimateAtLength(-10.0))
+        println(curve.lut.estimateAtLength(10.0))
+        println(curve.lut.estimateAtLength(100.0))
+        println(curve.lut.estimateAtLength(200.0))
+        println(curve.lut.estimateAtLength(10000.0))
+    }
 }

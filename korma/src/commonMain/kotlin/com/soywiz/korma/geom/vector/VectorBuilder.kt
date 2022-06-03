@@ -165,7 +165,7 @@ fun VectorBuilder.arc(x: Double, y: Double, r: Double, start: Angle, end: Angle)
 fun VectorBuilder.arc(x: Float, y: Float, r: Float, start: Angle, end: Angle) = arc(x.toDouble(), y.toDouble(), r.toDouble(), start, end)
 fun VectorBuilder.arc(x: Int, y: Int, r: Int, start: Angle, end: Angle) = arc(x.toDouble(), y.toDouble(), r.toDouble(), start, end)
 
-fun VectorBuilder.circle(point: Point, radius: Double) = arc(point.x, point.y, radius, 0.degrees, 360.degrees)
+fun VectorBuilder.circle(point: IPoint, radius: Double) = arc(point.x, point.y, radius, 0.degrees, 360.degrees)
 fun VectorBuilder.circle(x: Double, y: Double, radius: Double) = arc(x, y, radius, 0.degrees, 360.degrees)
 fun VectorBuilder.circle(x: Float, y: Float, radius: Float) = circle(x.toDouble(), y.toDouble(), radius.toDouble())
 fun VectorBuilder.circle(x: Int, y: Int, radius: Int) = circle(x.toDouble(), y.toDouble(), radius.toDouble())
@@ -293,7 +293,7 @@ fun VectorBuilder.quadTo(controlX: Int, controlY: Int, anchorX: Int, anchorY: In
 fun VectorBuilder.cubicTo(cx1: Float, cy1: Float, cx2: Float, cy2: Float, ax: Float, ay: Float) = cubicTo(cx1.toDouble(), cy1.toDouble(), cx2.toDouble(), cy2.toDouble(), ax.toDouble(), ay.toDouble())
 fun VectorBuilder.cubicTo(cx1: Int, cy1: Int, cx2: Int, cy2: Int, ax: Int, ay: Int) = cubicTo(cx1.toDouble(), cy1.toDouble(), cx2.toDouble(), cy2.toDouble(), ax.toDouble(), ay.toDouble())
 
-fun VectorBuilder.line(p0: Point, p1: Point) = line(p0.x, p0.y, p1.x, p1.y)
+fun VectorBuilder.line(p0: IPoint, p1: IPoint) = line(p0.x, p0.y, p1.x, p1.y)
 fun VectorBuilder.line(x0: Double, y0: Double, x1: Double, y1: Double) = moveTo(x0, y0).also { lineTo(x1, y1) }
 fun VectorBuilder.line(x0: Float, y0: Float, x1: Float, y1: Float) = line(x0.toDouble(), y0.toDouble(), x1.toDouble(), y1.toDouble())
 fun VectorBuilder.line(x0: Int, y0: Int, x1: Int, y1: Int) = line(x0.toDouble(), y0.toDouble(), x1.toDouble(), y1.toDouble())
@@ -306,8 +306,8 @@ fun VectorBuilder.cubic(x0: Double, y0: Double, cx1: Double, cy1: Double, cx2: D
 fun VectorBuilder.cubic(x0: Float, y0: Float, cx1: Float, cy1: Float, cx2: Float, cy2: Float, ax: Float, ay: Float) = cubic(x0.toDouble(), y0.toDouble(), cx1.toDouble(), cy1.toDouble(), cx2.toDouble(), cy2.toDouble(), ax.toDouble(), ay.toDouble())
 fun VectorBuilder.cubic(x0: Int, y0: Int, cx1: Int, cy1: Int, cx2: Int, cy2: Int, ax: Int, ay: Int) = cubic(x0.toDouble(), y0.toDouble(), cx1.toDouble(), cy1.toDouble(), cx2.toDouble(), cy2.toDouble(), ax.toDouble(), ay.toDouble())
 
-fun VectorBuilder.quad(o: Point, c: Point, a: Point) = quad(o.x, o.y, c.x, c.y, a.x, a.y)
-fun VectorBuilder.cubic(o: Point, c1: Point, c2: Point, a: Point) = cubic(o.x, o.y, c1.x, c1.y, c2.x, c2.y, a.x, a.y)
+fun VectorBuilder.quad(o: IPoint, c: IPoint, a: IPoint) = quad(o.x, o.y, c.x, c.y, a.x, a.y)
+fun VectorBuilder.cubic(o: IPoint, c1: IPoint, c2: IPoint, a: IPoint) = cubic(o.x, o.y, c1.x, c1.y, c2.x, c2.y, a.x, a.y)
 
 fun VectorBuilder.quad(curve: Bezier.Quad) = quad(curve.p0, curve.p1, curve.p2)
 fun VectorBuilder.cubic(curve: Bezier.Cubic) = cubic(curve.p0, curve.p1, curve.p2, curve.p3)

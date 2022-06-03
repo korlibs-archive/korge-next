@@ -311,6 +311,7 @@ data class Point(
         Point().setToInterpolated(ratio, this, other)
 
     override fun setToInterpolated(ratio: Double, l: Point, r: Point): Point = setToInterpolated(ratio, l.x, l.y, r.x, r.y)
+    fun setToInterpolated(ratio: Double, l: IPoint, r: IPoint): Point = setToInterpolated(ratio, l.x, l.y, r.x, r.y)
 
     fun setToInterpolated(ratio: Double, lx: Double, ly: Double, rx: Double, ry: Double): Point =
         this.setTo(ratio.interpolate(lx, rx), ratio.interpolate(ly, ry))

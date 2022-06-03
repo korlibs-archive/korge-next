@@ -41,7 +41,8 @@ suspend fun main() = Korge(
     multithreaded = true,
     //debugAg = true,
 ) {
-    mainCircleColor()
+    mainStrokesExperiment()
+    //mainCircleColor()
     //mainFilterSwitch()
     //mainVectorFill()
     //mainEasing()
@@ -90,7 +91,7 @@ suspend fun main() = Korge(
     //mainTrimmedAtlas()
     //mainRotateCircle()
     //mainImageTrace()
-    mainEmoji()
+    //mainEmoji()
     //mainUITreeView()
     //Bunnymark().apply { bunnymarkMain() }
     //bezierSample()

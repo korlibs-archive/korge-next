@@ -23,6 +23,8 @@ interface Bezier : Curve {
         p1x: Double = 0.0, p1y: Double = 0.0,
         p2x: Double = 0.0, p2y: Double = 0.0,
     ) : Bezier {
+        override val order: Int get() = 2
+
         val p0 = Point(p0x, p0y)
         val p1 = Point(p1x, p1y)
         val p2 = Point(p2x, p2y)
@@ -55,6 +57,10 @@ interface Bezier : Curve {
             TODO("Not yet implemented")
         }
 
+        override fun tangent(t: Double, target: Point): Point {
+            TODO("Not yet implemented")
+        }
+
         // http://fontforge.github.io/bezier.html
         fun toCubic(out: Cubic = Cubic()): Cubic {
             return out.setTo(
@@ -74,6 +80,8 @@ interface Bezier : Curve {
         p2x: Double = 0.0, p2y: Double = 0.0,
         p3x: Double = 0.0, p3y: Double = 0.0,
     ) : Bezier {
+        override val order: Int get() = 3
+
         val p0 = Point(p0x, p0y)
         val p1 = Point(p1x, p1y)
         val p2 = Point(p2x, p2y)
@@ -140,6 +148,10 @@ interface Bezier : Curve {
             cubicCalc(p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, t, target)
 
         override fun normal(t: Double, target: Point): Point {
+            TODO("Not yet implemented")
+        }
+
+        override fun tangent(t: Double, target: Point): Point {
             TODO("Not yet implemented")
         }
 

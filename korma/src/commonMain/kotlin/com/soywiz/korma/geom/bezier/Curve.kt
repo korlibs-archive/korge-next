@@ -10,9 +10,12 @@ import kotlin.math.max
 import kotlin.math.min
 
 interface Curve {
+    val order: Int
     fun getBounds(target: Rectangle = Rectangle()): Rectangle
     fun normal(t: Double, target: Point = Point()): Point
+    fun tangent(t: Double, target: Point = Point()): Point
     fun calc(t: Double, target: Point = Point()): Point
+    fun ratioFromLength(length: Double): Double = TODO()
     fun length(steps: Int = recommendedDivisions()): Double
     fun recommendedDivisions(): Int = DEFAULT_STEPS
 
@@ -20,6 +23,7 @@ interface Curve {
         val x0: Double = 0.0, val y0: Double = 0.0,
         val x1: Double = 0.0, val y1: Double = 0.0,
     ) : Bezier {
+        override val order: Int get() = 1
         val tangent = Point(x1 - x0, y1 - y0).also { it.normalize() }
 
         override fun getBounds(target: Rectangle): Rectangle =
@@ -36,6 +40,11 @@ interface Curve {
         override fun normal(t: Double, target: Point): Point {
             target.copyFrom(tangent)
             target.setToNormal()
+            return target
+        }
+
+        override fun tangent(t: Double, target: Point): Point {
+            target.copyFrom(tangent)
             return target
         }
 

@@ -111,6 +111,10 @@ data class Line(override val a: Point, override val b: Point) : ILine {
     //        (q.y <= max(p.y, r.y)) && (q.y >= min(p.y, r.y)))
 
     companion object {
+        fun fromPointAndDirection(point: Point, direction: Point): Line = Line(point.x, point.y, point.x + direction.x, point.y + direction.y)
+        fun fromPointAngle(point: Point, angle: Angle): Line =
+            Line(point.x, point.y, point.x + angle.cosine, point.y + angle.sine)
+
         fun length(Ax: Double, Ay: Double, Bx: Double, By: Double): Double = kotlin.math.hypot(Bx - Ax, By - Ay)
 
         inline fun getIntersectXY(Ax: Double, Ay: Double, Bx: Double, By: Double, Cx: Double, Cy: Double, Dx: Double, Dy: Double, out: (x: Double, y: Double) -> Unit): Boolean {

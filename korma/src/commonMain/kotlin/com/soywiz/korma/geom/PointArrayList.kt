@@ -82,16 +82,13 @@ open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.M
     }
 
     companion object {
-        operator fun invoke(vararg values: Double): PointArrayList {
-            val size = values.size / 2
+        operator fun invoke(vararg values: Double): PointArrayList = fromGen(values.size) { values[it] }
+        operator fun invoke(vararg values: Float): PointArrayList = fromGen(values.size) { values[it].toDouble() }
+        operator fun invoke(vararg values: Int): PointArrayList = fromGen(values.size) { values[it].toDouble() }
+        inline fun fromGen(count: Int, gen: (Int) -> Double): PointArrayList {
+            val size = count / 2
             val out = PointArrayList(size)
-            for (n in 0 until size) out.add(values[n * 2 + 0], values[n * 2 + 1])
-            return out
-        }
-        operator fun invoke(vararg values: Int): PointArrayList {
-            val size = values.size / 2
-            val out = PointArrayList(size)
-            for (n in 0 until size) out.add(values[n * 2 + 0], values[n * 2 + 1])
+            for (n in 0 until size) out.add(gen(n * 2 + 0), gen(n * 2 + 1))
             return out
         }
 

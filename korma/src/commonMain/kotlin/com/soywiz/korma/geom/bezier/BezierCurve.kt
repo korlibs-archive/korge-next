@@ -1,6 +1,8 @@
 package com.soywiz.korma.geom.bezier
 
 import com.soywiz.kds.DoubleArrayList
+import com.soywiz.kds.binarySearch
+import com.soywiz.kds.forEachRatio01
 import com.soywiz.kds.iterators.fastForEach
 import com.soywiz.kds.mapDouble
 import com.soywiz.korma.geom.Angle
@@ -13,9 +15,13 @@ import com.soywiz.korma.geom.PointArrayList
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.bottom
 import com.soywiz.korma.geom.fastForEach
+import com.soywiz.korma.geom.firstX
+import com.soywiz.korma.geom.firstY
 import com.soywiz.korma.geom.get
 import com.soywiz.korma.geom.getComponentList
 import com.soywiz.korma.geom.getPoint
+import com.soywiz.korma.geom.lastX
+import com.soywiz.korma.geom.lastY
 import com.soywiz.korma.geom.left
 import com.soywiz.korma.geom.radians
 import com.soywiz.korma.geom.right
@@ -43,6 +49,7 @@ class BezierCurve(
 ) : Curve {
     constructor(vararg points: IPoint) : this(PointArrayList(*points))
     constructor(vararg points: Double) : this(PointArrayList(*points))
+    constructor(vararg points: Float) : this(PointArrayList(*points))
     constructor(vararg points: Int) : this(PointArrayList(*points))
 
     override fun getBounds(target: Rectangle): Rectangle {
@@ -65,13 +72,15 @@ class BezierCurve(
     }
 
     val dims: Int get() = 2 // Always 2D for now
-    val order: Int get() = points.size - 1
+    override val order: Int get() = points.size - 1
     val dpoints: List<IPointArrayList> by lazy { derive(points) }
-    val direction: Angle by lazy { Angle.between(
-        points.getX(0), points.getY(0),
-        points.getX(order), points.getY(order),
-        points.getX(1), points.getY(1),
-    ) }
+    val direction: Angle by lazy {
+        Angle.between(
+            points.getX(0), points.getY(0),
+            points.getX(order), points.getY(order),
+            points.getX(1), points.getY(1),
+        )
+    }
     val clockwise: Boolean by lazy { direction > 0.radians }
     val extrema: Extrema by lazy {
         val out = (0 until dims).map { dim ->
@@ -100,6 +109,7 @@ class BezierCurve(
             //println("[$n]: min=$min, max=$max")
             return min to max
         }
+
         val xdim = dimBounds(0)
         val ydim = dimBounds(1)
         Rectangle.fromBounds(
@@ -123,13 +133,33 @@ class BezierCurve(
         z * sum
     }
 
-    data class LUT(val points: PointArrayList, val ts: DoubleArrayList) {
-        constructor(capacity: Int) : this(PointArrayList(capacity), DoubleArrayList(capacity))
+    data class LUT(val curve: BezierCurve, val points: PointArrayList, val ts: DoubleArrayList, val estimatedLengths: DoubleArrayList) {
+        constructor(curve: BezierCurve, capacity: Int) : this(
+            curve,
+            PointArrayList(capacity),
+            DoubleArrayList(capacity),
+            DoubleArrayList(capacity)
+        )
 
+        val estimatedLength: Double get() = estimatedLengths.last()
         val steps: Int get() = points.size - 1
         val size: Int get() = points.size
         val temp = Point()
+        private var accumulatedLength: Double = 0.0
+
+        fun clear() {
+            points.clear()
+            ts.clear()
+            estimatedLengths.clear()
+            accumulatedLength = 0.0
+        }
+
         fun add(t: Double, p: IPoint) {
+            accumulatedLength += if (points.isNotEmpty()) kotlin.math.hypot(
+                p.x - points.lastX,
+                p.y - points.lastY
+            ) else 0.0
+            estimatedLengths.add(accumulatedLength)
             points.add(p)
             ts.add(t)
         }
@@ -149,15 +179,97 @@ class BezierCurve(
             return ClosestResult(mdist = mdist, mpos = mpos)
         }
 
+        data class EstimateResult(var point: Point = Point(), var ratio: Double = 0.0, var length: Double = 0.0)
+
+        fun EstimateResult.setAtIndexRatio(index: Int, ratio: Double): EstimateResult {
+            val ratio0 = ts[index]
+            val length0 = estimatedLengths[index]
+            val pointX0 = points.getX(index)
+            val pointY0 = points.getY(index)
+            if (ratio == 0.0) {
+                this.ratio = ratio0
+                this.length = length0
+                this.point.setTo(pointX0, pointY0)
+            } else {
+                val ratio1 = ts[index + 1]
+                val length1 = estimatedLengths[index + 1]
+                val pointX1 = points.getX(index + 1)
+                val pointY1 = points.getY(index + 1)
+                this.ratio = ratio.interpolate(ratio0, ratio1)
+                this.length = ratio.interpolate(length0, length1)
+                this.point.setToInterpolated(ratio, pointX0, pointY0, pointX1, pointY1)
+            }
+
+            return this
+        }
+
+        private fun estimateAt(
+            values: DoubleArrayList,
+            value: Double,
+            out: EstimateResult = EstimateResult()
+        ): EstimateResult {
+            val result = values.binarySearch(value)
+            if (result.found) return out.setAtIndexRatio(result.index, 0.0)
+            val index = result.nearIndex
+            if (value <= 0.0) return out.setAtIndexRatio(0, 0.0)
+            if (index >= values.size - 1) return out.setAtIndexRatio(points.size - 1, 0.0)
+            // @TODO: Since we have the curve, we can try to be more accurate and actually find a better point between found points
+            val ratio0 = values[index]
+            val ratio1 = values[index + 1]
+            val ratio = value.convertRange(ratio0, ratio1, 0.0, 1.0)
+            return out.setAtIndexRatio(index, ratio)
+        }
+
+        fun estimateAtRatio(t: Double, out: EstimateResult = EstimateResult()): EstimateResult {
+            return estimateAt(ts, t, out)
+        }
+
+        fun estimateAtEquidistantRatio(ratio: Double, out: EstimateResult = EstimateResult()): EstimateResult {
+            return estimateAtLength(estimatedLength * ratio, out)
+        }
+
+        fun estimateAtLength(length: Double, out: EstimateResult = EstimateResult()): EstimateResult {
+            return estimateAt(estimatedLengths, length, out)
+        }
+
+        fun toEquidistantLUT(out: LUT = LUT(curve, points.size)): LUT {
+            val steps = this.steps
+            val length = estimatedLength
+            val result = EstimateResult()
+            forEachRatio01(steps) { ratio ->
+                val len = length * ratio
+                val est = estimateAtLength(len, result)
+                add(est.ratio, est.point)
+            }
+            return out
+        }
+
         override fun toString(): String =
-            "Bezier.LUT(${(0 until size).joinToString(", ") { "${ts[it]}: ${points.getPoint(it)}" }})"
+            "Bezier.LUT(${
+                (0 until size).joinToString(", ") {
+                    "${ts[it]},len=${estimatedLengths[it]}: ${
+                        points.getPoint(
+                            it
+                        )
+                    }"
+                }
+            })"
     }
 
     val lut: LUT by lazy {
         getLUT()
     }
 
-    fun getLUT(steps: Int = 100, out: LUT = LUT(steps + 1)): LUT {
+    val equidistantLUT: LUT by lazy {
+        lut.toEquidistantLUT()
+    }
+
+    override fun ratioFromLength(length: Double): Double {
+        return lut.estimateAtLength(length).ratio
+    }
+
+    fun getLUT(steps: Int = 100, out: LUT = LUT(this, steps + 1)): LUT {
+        out.clear()
         for (n in 0..steps) {
             val t = n.toDouble() / steps.toDouble()
             compute(t, out.temp)
@@ -225,21 +337,68 @@ class BezierCurve(
             return Split(
                 base = curve,
                 t = t,
-                left = SubBezierCurve(when (curve.order) {
-                    2 -> BezierCurve(PointArrayList(hull.getPoint(0), hull.getPoint(3), hull.getPoint(5)))
-                    3 -> BezierCurve(PointArrayList(hull.getPoint(0), hull.getPoint(4), hull.getPoint(7), hull.getPoint(9)))
-                    else -> TODO()
-                }, t1, t.convertRange(0.0, 1.0, t1, t2), parent),
-                right = SubBezierCurve(when (curve.order) {
-                    2 -> BezierCurve(PointArrayList(hull.getPoint(5), hull.getPoint(4), hull.getPoint(2)))
-                    3 -> BezierCurve(PointArrayList(hull.getPoint(9), hull.getPoint(8), hull.getPoint(6), hull.getPoint(3)))
-                    else -> TODO()
-                }, t.convertRange(0.0, 1.0, t1, t2), t2, parent),
+                left = SubBezierCurve(
+                    when (curve.order) {
+                        2 -> BezierCurve(PointArrayList(hull.getPoint(0), hull.getPoint(3), hull.getPoint(5)))
+                        3 -> BezierCurve(
+                            PointArrayList(
+                                hull.getPoint(0),
+                                hull.getPoint(4),
+                                hull.getPoint(7),
+                                hull.getPoint(9)
+                            )
+                        )
+                        else -> TODO()
+                    }, t1, t.convertRange(0.0, 1.0, t1, t2), parent
+                ),
+                right = SubBezierCurve(
+                    when (curve.order) {
+                        2 -> BezierCurve(PointArrayList(hull.getPoint(5), hull.getPoint(4), hull.getPoint(2)))
+                        3 -> BezierCurve(
+                            PointArrayList(
+                                hull.getPoint(9),
+                                hull.getPoint(8),
+                                hull.getPoint(6),
+                                hull.getPoint(3)
+                            )
+                        )
+                        else -> TODO()
+                    }, t.convertRange(0.0, 1.0, t1, t2), t2, parent
+                ),
                 hull = hull
             )
         }
 
         override fun toString(): String = "SubBezierCurve[$t1..$t2]($curve)"
+    }
+
+    /** Returns the [t] values where the curve changes its sign */
+    fun inflections(): DoubleArray {
+        if (points.size < 4) return doubleArrayOf()
+
+        // FIXME: TODO: add in inflection abstraction for quartic+ curves?
+        val p = align(points, Line(points.firstX, points.firstY, points.lastX, points.lastY))
+        val a = p.getX(2) * p.getY(1)
+        val b = p.getX(3) * p.getY(1)
+        val c = p.getX(1) * p.getY(2)
+        val d = p.getX(3) * p.getY(2)
+        val v1 = 18.0 * (-3.0 * a + 2.0 * b + 3.0 * c - d)
+        val v2 = 18.0 * (3.0 * a - b - 3.0 * c)
+        val v3 = 18.0 * (c - a)
+
+        if (v1.isAlmostEquals(0.0)) {
+            if (!v2.isAlmostEquals(0.0)) {
+                val t = -v3 / v2;
+                if (t in 0.0..1.0) return doubleArrayOf(t)
+            }
+            return doubleArrayOf()
+        }
+        val d2 = 2.0 * v1
+        if (d2.isAlmostEquals(0.0)) return doubleArrayOf()
+        val trm = v2 * v2 - 4.0 * v1 * v3
+        if (trm < 0) return doubleArrayOf()
+        val sq = kotlin.math.sqrt(trm)
+        return listOf((sq - v2) / d2, -(v2 + sq) / d2).filter { it in 0.0..1.0 }.toDoubleArray()
     }
 
     fun reduce(): List<SubBezierCurve> {
@@ -278,12 +437,14 @@ class BezierCurve(
                             return listOf()
                         }
                         segment = p1.split(t1, t2)
-                        pass2.add(SubBezierCurve(
-                            segment.curve,
-                            map(t1, 0.0, 1.0, p1Curve.t1, p1Curve.t2),
-                            map(t2, 0.0, 1.0, p1Curve.t1, p1Curve.t2),
-                            this
-                        ))
+                        pass2.add(
+                            SubBezierCurve(
+                                segment.curve,
+                                map(t1, 0.0, 1.0, p1Curve.t1, p1Curve.t2),
+                                map(t2, 0.0, 1.0, p1Curve.t1, p1Curve.t2),
+                                this
+                            )
+                        )
                         t1 = t2
                         break
                     }
@@ -292,12 +453,14 @@ class BezierCurve(
             }
             if (t1 < 1.0) {
                 val segment = p1.split(t1, 1.0)
-                pass2.add(SubBezierCurve(
-                    segment.curve,
-                    map(t1, 0.0, 1.0, p1Curve.t1, p1Curve.t2),
-                    p1Curve.t2,
-                    this
-                ))
+                pass2.add(
+                    SubBezierCurve(
+                        segment.curve,
+                        map(t1, 0.0, 1.0, p1Curve.t1, p1Curve.t2),
+                        p1Curve.t2,
+                        this
+                    )
+                )
             }
         }
         return pass2
@@ -364,6 +527,11 @@ class BezierCurve(
         return target
     }
 
+    override fun tangent(t: Double, target: Point): Point {
+        derivative(t, normalize = true, out = target)
+        return target
+    }
+
     fun hull(t: Double, out: PointArrayList = PointArrayList()): IPointArrayList {
         var p = this.points
         out.add(p, 0)
@@ -395,7 +563,13 @@ class BezierCurve(
         return SubBezierCurve(this, 0.0, 1.0, null).split(t)
     }
 
-    data class Split(val base: BezierCurve, val left: SubBezierCurve, val right: SubBezierCurve, val t: Double, val hull: IPointArrayList) {
+    data class Split(
+        val base: BezierCurve,
+        val left: SubBezierCurve,
+        val right: SubBezierCurve,
+        val t: Double,
+        val hull: IPointArrayList
+    ) {
         val leftCurve: BezierCurve get() = left.curve
         val rightCurve: BezierCurve get() = right.curve
     }
@@ -486,9 +660,10 @@ class BezierCurve(
             val t2 = t * t
             return when (order) {
                 1 -> {
+                    println("compute: t=$t, mt=$mt")
                     out.setTo(
-                        (mt * p.getX(0)) + (t * (mt * p.getX(1))),
-                        (mt * p.getY(0)) + (t * (mt * p.getY(1))),
+                        (mt * p.getX(0)) + (t * p.getX(1)),
+                        (mt * p.getY(0)) + (t * p.getY(1)),
                     )
                 }
                 2 -> {
@@ -538,7 +713,11 @@ class BezierCurve(
 
         private fun crt(v: Double): Double = if (v < 0.0) -(-v).pow(1.0 / 3.0) else v.pow(1.0 / 3.0)
 
-        private fun align(points: IPointArrayList, line: Line, out: PointArrayList = PointArrayList()): IPointArrayList {
+        private fun align(
+            points: IPointArrayList,
+            line: Line,
+            out: PointArrayList = PointArrayList()
+        ): IPointArrayList {
             val p1 = line.a
             val p2 = line.b
             val tx = p1.x
@@ -676,7 +855,11 @@ class BezierCurve(
             }
         }
 
-        private fun curveintersects(c1: List<SubBezierCurve>, c2: List<SubBezierCurve>, threshold: Double = 0.5): List<Pair<Double, Double>> {
+        private fun curveintersects(
+            c1: List<SubBezierCurve>,
+            c2: List<SubBezierCurve>,
+            threshold: Double = 0.5
+        ): List<Pair<Double, Double>> {
             val pairs = arrayListOf<Pair<SubBezierCurve, SubBezierCurve>>()
             // step 1: pair off any overlapping segments
             c1.fastForEach { l ->
@@ -690,7 +873,11 @@ class BezierCurve(
             return pairs.flatMap { pairiteration(it.first, it.second, threshold) }
         }
 
-        private fun pairiteration(c1: SubBezierCurve, c2: SubBezierCurve, threshold: Double = 0.5): List<Pair<Double, Double>> {
+        private fun pairiteration(
+            c1: SubBezierCurve,
+            c2: SubBezierCurve,
+            threshold: Double = 0.5
+        ): List<Pair<Double, Double>> {
             val c1b = c1.boundingBox
             val c2b = c2.boundingBox
             val r = 100000.0

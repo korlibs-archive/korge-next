@@ -15,6 +15,14 @@ inline fun mapWhileInt(cond: (index: Int) -> Boolean, gen: (Int) -> Int): IntArr
 inline fun mapWhileFloat(cond: (index: Int) -> Boolean, gen: (Int) -> Float): FloatArray = FloatArrayList().apply { while (cond(this.size)) this += gen(this.size) }.toFloatArray()
 inline fun mapWhileDouble(cond: (index: Int) -> Boolean, gen: (Int) -> Double): DoubleArray = DoubleArrayList().apply { while (cond(this.size)) this += gen(this.size) }.toDoubleArray()
 
+inline fun forEachRatio01(steps: Int, block: (ratio: Double) -> Unit) {
+    val NS = steps - 1
+    for (n in 0..NS) {
+        val ratio = n.toDouble() / NS.toDouble()
+        block(ratio)
+    }
+}
+
 fun <T> List<T>.getCyclic(index: Int) = this[index umod this.size]
 fun <T> List<T>.getCyclicOrNull(index: Int) = this.getOrNull(index umod this.size)
 fun <T> Array<T>.getCyclic(index: Int) = this[index umod this.size]
