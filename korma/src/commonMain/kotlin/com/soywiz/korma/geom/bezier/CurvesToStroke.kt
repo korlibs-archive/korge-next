@@ -1,5 +1,6 @@
 package com.soywiz.korma.geom.bezier
 
+import com.soywiz.kds.forEachRatio01
 import com.soywiz.kds.getCyclic
 import com.soywiz.korma.geom.IPoint
 import com.soywiz.korma.geom.Line
@@ -94,6 +95,13 @@ fun Curves.toStrokePoints(width: Double, join: LineJoin = LineJoin.MITER, startC
         }
     }
 
+    fun generateCurvePoints(curr: Curve, nsteps: Int = 20) {
+        // @TODO: Here we could generate curve information to render in the shader with a plain simple quadratic bezier to reduce the number of points and make the curve as accurate as possible
+        forEachRatio01(nsteps, include0 = false, include1 = false) {
+            addTwoPoints(curr.calc(it), curr.normal(it), width)
+        }
+    }
+
     //println("closed: $closed")
 
     for (n in curves.indices) {
@@ -111,12 +119,7 @@ fun Curves.toStrokePoints(width: Double, join: LineJoin = LineJoin.MITER, startC
 
         // Generate intermediate points for curves (no for plain lines)
         if (curr.order != 1) {
-            // @TODO: Here we could generate curve information to render in the shader with a plain simple quadratic bezier to reduce the number of points and make the curve as accurate as possible
-            val nsteps = 20
-            for (n in 1 until nsteps) {
-                val ratio = n.toDouble() / nsteps
-                addTwoPoints(curr.calc(ratio), curr.normal(ratio), width)
-            }
+            generateCurvePoints(curr)
         }
 
         // Generate join

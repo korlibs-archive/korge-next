@@ -39,16 +39,11 @@ suspend fun Stage.mainStrokesExperiment() {
     val path = buildVectorPath {
         //this.circle(400, 300, 200)
         this.star(6, 200.0, 300.0, x = 400.0, y = 300.0)
-        /*
-        moveTo(100, 300)
-
-        //lineTo(500, 500)
-
-        quadTo(100, 500, 500, 500)
-        lineTo(500, 200)
-        lineTo(800, 200)
-        quadTo(600, 300, 800, 500)
-         */
+        //moveTo(100, 300)
+        //quadTo(100, 500, 500, 500)
+        //lineTo(500, 200)
+        //lineTo(800, 200)
+        //quadTo(600, 300, 800, 500)
     }
         //.applyTransform(Matrix().translate(-100, -200))
     val curves = path.getCurves()
