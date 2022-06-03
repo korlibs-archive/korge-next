@@ -429,7 +429,7 @@ class KorgeExtension(val project: Project) {
     }
 
     fun supportFleks() {
-        dependencyMulti("com.soywiz.korlibs.korge2:korge-fleks:${BuildVersions.KORGE}", registerPlugin = false)
+        project.dependencies.add("commonMainImplementation", "io.github.quillraven.fleks:Fleks:${BuildVersions.FLEKS}")
     }
 
     fun supportBox2d() {

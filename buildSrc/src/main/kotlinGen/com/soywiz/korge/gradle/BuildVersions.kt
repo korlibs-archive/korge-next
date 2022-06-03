@@ -8,6 +8,8 @@ object BuildVersions {
     const val COROUTINES = "1.6.1"
     const val ANDROID_BUILD = "7.0.3"
     const val KOTLIN_SERIALIZATION = "1.3.2"
+    // https://github.com/Quillraven/Fleks/tree/kmp
+    const val FLEKS = "1.0-KMP-RC1"
     const val KRYPTO = "2.0.0.999"
     const val KLOCK = "2.0.0.999"
     const val KDS = "2.0.0.999"
