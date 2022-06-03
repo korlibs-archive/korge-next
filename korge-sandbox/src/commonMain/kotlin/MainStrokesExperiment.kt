@@ -2,9 +2,12 @@ import com.soywiz.kds.forEachRatio01
 import com.soywiz.klock.seconds
 import com.soywiz.korge.tween.get
 import com.soywiz.korge.tween.tween
+import com.soywiz.korge.view.Container
 import com.soywiz.korge.view.Stage
+import com.soywiz.korge.view.addUpdater
 import com.soywiz.korge.view.centered
 import com.soywiz.korge.view.circle
+import com.soywiz.korge.view.container
 import com.soywiz.korge.view.debug.DebugVertexView
 import com.soywiz.korge.view.graphics
 import com.soywiz.korim.color.Colors
@@ -17,6 +20,7 @@ import com.soywiz.korio.async.launchImmediately
 import com.soywiz.korma.geom.Matrix
 import com.soywiz.korma.geom.bezier.BezierCurve
 import com.soywiz.korma.geom.bezier.StrokePointsMode
+import com.soywiz.korma.geom.bezier.toDashes
 import com.soywiz.korma.geom.bezier.toStrokePoints
 import com.soywiz.korma.geom.get
 import com.soywiz.korma.geom.shape.buildVectorPath
@@ -51,10 +55,37 @@ suspend fun Stage.mainStrokesExperiment() {
 
     println("path=$path")
 
+
+
     addChild(DebugVertexView(points.vector).also { it.color = Colors.WHITE })
-    val strokeSize = 180.0
-    for (n in 0 until 16) {
-        addChild(DebugVertexView(curves.splitByLength(n * strokeSize * 2, n * strokeSize * 2 + strokeSize).toStrokePoints(10.0).vector).also { it.color = Colors.BLUEVIOLET })
+
+    fun generateDashes(offset: Double): Container {
+        return Container().apply {
+            val strokeSize = 180.0
+            for (c in curves.toDashes(doubleArrayOf(180.0, 50.0), offset = offset)) {
+                addChild(DebugVertexView(c.toStrokePoints(10.0).vector).also { it.color = Colors.BLUEVIOLET })
+            }
+        }
+    }
+
+    class OffsetInfo {
+        var offset = 0.0
+    }
+
+    val container = container {
+    }
+    val offsetInfo = OffsetInfo()
+    addUpdater {
+        container.removeChildren()
+        container.addChild(generateDashes(offsetInfo.offset))
+
+    }
+
+    launchImmediately {
+        while (true) {
+            tween(offsetInfo::offset[200.0], time = 5.seconds)
+            tween(offsetInfo::offset[0.0], time = 5.seconds)
+        }
     }
 
     val circle = circle(16.0, Colors.PURPLE).centered

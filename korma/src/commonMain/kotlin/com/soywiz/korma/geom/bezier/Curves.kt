@@ -1,5 +1,6 @@
 package com.soywiz.korma.geom.bezier
 
+import com.soywiz.kds.getCyclic
 import com.soywiz.kds.iterators.fastForEach
 import com.soywiz.korma.geom.BoundsBuilder
 import com.soywiz.korma.geom.Point
@@ -58,6 +59,8 @@ data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
                 else -> +1
             }
         }
+        if (t < 0.0) return infos.first()
+        if (t > 1.0) return infos.last()
         return infos.getOrNull(index) ?: error("OUTSIDE")
     }
 
@@ -135,3 +138,20 @@ data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
     override fun length(steps: Int): Double = length
 }
 
+fun Curves.toDashes(pattern: DoubleArray, offset: Double = 0.0): List<Curves> {
+    check(!pattern.all { it <= 0.0 })
+    val length = this.length
+    var current = offset
+    var dashNow = true
+    var index = 0
+    val out = arrayListOf<Curves>()
+    while (current < length) {
+        val len = pattern.getCyclic(index++)
+        if (dashNow) {
+            out += splitByLength(current, current + len)
+        }
+        current += len
+        dashNow = !dashNow
+    }
+    return out
+}

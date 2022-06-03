@@ -26,6 +26,9 @@ inline fun forEachRatio01(steps: Int, block: (ratio: Double) -> Unit) {
 fun <T> List<T>.getCyclic(index: Int) = this[index umod this.size]
 fun <T> List<T>.getCyclicOrNull(index: Int) = this.getOrNull(index umod this.size)
 fun <T> Array<T>.getCyclic(index: Int) = this[index umod this.size]
+fun IntArray.getCyclic(index: Int) = this[index umod this.size]
+fun FloatArray.getCyclic(index: Int) = this[index umod this.size]
+fun DoubleArray.getCyclic(index: Int) = this[index umod this.size]
 fun IntArrayList.getCyclic(index: Int) = this.getAt(index umod this.size)
 fun FloatArrayList.getCyclic(index: Int) = this.getAt(index umod this.size)
 fun DoubleArrayList.getCyclic(index: Int) = this.getAt(index umod this.size)
