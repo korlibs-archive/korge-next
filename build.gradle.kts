@@ -981,6 +981,8 @@ object BuildVersions {
     const val COROUTINES = "${libs.versions.kotlinx.coroutines.get()}"
     const val ANDROID_BUILD = "$androidBuildGradleVersion"
     const val KOTLIN_SERIALIZATION = "${libs.versions.kotlinx.serialization.get()}"
+    // https://github.com/Quillraven/Fleks/tree/kmp
+    const val FLEKS = "1.0-KMP-RC1"
     const val KRYPTO = "$projectVersion"
     const val KLOCK = "$projectVersion"
     const val KDS = "$projectVersion"
@@ -992,7 +994,7 @@ object BuildVersions {
     const val KORGW = "$projectVersion"
     const val KORGE = "$projectVersion"
 
-    val ALL_PROPERTIES by lazy { listOf(::GIT, ::KRYPTO, ::KLOCK, ::KDS, ::KMEM, ::KORMA, ::KORIO, ::KORIM, ::KORAU, ::KORGW, ::KORGE, ::KOTLIN, ::JNA, ::COROUTINES, ::ANDROID_BUILD, ::KOTLIN_SERIALIZATION) }
+    val ALL_PROPERTIES by lazy { listOf(::GIT, ::KRYPTO, ::KLOCK, ::KDS, ::KMEM, ::KORMA, ::KORIO, ::KORIM, ::KORAU, ::KORGW, ::KORGE, ::KOTLIN, ::JNA, ::COROUTINES, ::ANDROID_BUILD, ::KOTLIN_SERIALIZATION, ::FLEKS) }
     val ALL by lazy { ALL_PROPERTIES.associate { it.name to it.get() } }
 }
 """.trimIndent()
