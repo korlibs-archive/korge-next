@@ -234,7 +234,7 @@ fun ITextRendererActions.aroundPath(curve: Curve): ITextRendererActions {
                     this.y = rpos.y
                     this.transform.rotate(normal.angle - 90.degrees)
 
-                    println("PUT: oldX=$oldX, oldY=$oldY, x=$x, y=$y, codePoint=$codePoint")
+                    //println("PUT: oldX=$oldX, oldY=$oldY, x=$x, y=$y, codePoint=$codePoint")
                     return original.put(codePoint)
                 } finally {
                     this.x = oldX

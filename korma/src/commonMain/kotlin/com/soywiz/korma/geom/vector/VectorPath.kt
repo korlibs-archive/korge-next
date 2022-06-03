@@ -193,6 +193,8 @@ open class VectorPath(
         version++
     }
 
+    val isLastCommandClose: Boolean get() = if (commands.isEmpty()) false else commands.last() == Command.CLOSE
+
     fun removeLastCommand() {
         if (commands.isEmpty()) return
         val command = commands.removeAt(commands.size - 1)

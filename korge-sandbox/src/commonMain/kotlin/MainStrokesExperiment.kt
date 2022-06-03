@@ -55,7 +55,10 @@ suspend fun Stage.mainStrokesExperiment() {
 
     val circle = circle(16.0, Colors.PURPLE).centered
     launchImmediately {
-        circle.tween(circle::pos[path], time = 5.seconds, easing = Easing.LINEAR)
+        while (true) {
+            circle.tween(circle::pos.get(path, includeLastPoint = true, reversed = false), time = 5.seconds, easing = Easing.LINEAR)
+            circle.tween(circle::pos.get(path, includeLastPoint = true, reversed = true), time = 5.seconds, easing = Easing.LINEAR)
+        }
     }
 
     if (true) {
