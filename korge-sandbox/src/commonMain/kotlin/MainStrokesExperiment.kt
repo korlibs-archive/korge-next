@@ -3,16 +3,23 @@ import com.soywiz.korge.view.Stage
 import com.soywiz.korge.view.debug.DebugVertexView
 import com.soywiz.korge.view.graphics
 import com.soywiz.korim.color.Colors
+import com.soywiz.korim.font.DefaultTtfFont
+import com.soywiz.korim.text.DefaultStringTextRenderer
+import com.soywiz.korim.text.aroundPath
+import com.soywiz.korim.text.text
 import com.soywiz.korim.vector.StrokeInfo
+import com.soywiz.korma.geom.Matrix
 import com.soywiz.korma.geom.bezier.BezierCurve
 import com.soywiz.korma.geom.bezier.StrokePointsMode
 import com.soywiz.korma.geom.bezier.toStrokePoints
 import com.soywiz.korma.geom.shape.buildVectorPath
+import com.soywiz.korma.geom.vector.applyTransform
 import com.soywiz.korma.geom.vector.getCurves
 import com.soywiz.korma.geom.vector.line
 import com.soywiz.korma.geom.vector.lineTo
 import com.soywiz.korma.geom.vector.moveTo
 import com.soywiz.korma.geom.vector.quadTo
+import com.soywiz.korma.geom.vector.transformed
 
 suspend fun Stage.mainStrokesExperiment() {
     val path = buildVectorPath {
@@ -25,6 +32,7 @@ suspend fun Stage.mainStrokesExperiment() {
         lineTo(800, 200)
         quadTo(600, 300, 800, 500)
     }
+        //.applyTransform(Matrix().translate(-100, -200))
     val curves = path.getCurves()
 
     println(curves.curves.joinToString("\n"))
@@ -40,6 +48,10 @@ suspend fun Stage.mainStrokesExperiment() {
     if (true) {
     //if (false) {
         graphics {
+            fill(Colors.RED) {
+                this.text("Hello, this is a test. Oh nice! Text following paths! How cool is that? Really cool? or not at all?\nCOOL, COOL, COOL, let's rock this path a bit more because it is cool, yeah!", DefaultTtfFont, textSize = 32.0, x = 0.0, y = 0.0, renderer = DefaultStringTextRenderer.aroundPath(path))
+            }
+            /*
             stroke(Colors.RED, StrokeInfo(thickness = 3.0)) {
                 forEachRatio01(200) { ratio ->
                     val p = curves.calc(ratio)
@@ -55,6 +67,8 @@ suspend fun Stage.mainStrokesExperiment() {
                     line(p, p + n * 10)
                 }
             }
+
+             */
         }
     }
 }

@@ -107,3 +107,4 @@ data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
 
     override fun length(steps: Int): Double = length
 }
+

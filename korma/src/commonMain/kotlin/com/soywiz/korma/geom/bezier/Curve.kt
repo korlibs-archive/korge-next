@@ -9,6 +9,19 @@ import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
 
+fun Curve.calcOffset(t: Double, offset: Double, out: Point = Point()): Point {
+    calc(t, out)
+    val px = out.x
+    val py = out.y
+    normal(t, out)
+    val nx = out.x
+    val ny = out.y
+    return out.setTo(
+        px + nx * offset,
+        py + ny * offset,
+    )
+}
+
 interface Curve {
     val order: Int
     fun getBounds(target: Rectangle = Rectangle()): Rectangle
