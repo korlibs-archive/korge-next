@@ -3,7 +3,9 @@ package com.soywiz.korma.geom.bezier
 import com.soywiz.korma.geom.shape.buildVectorPath
 import com.soywiz.korma.geom.vector.getCurves
 import com.soywiz.korma.geom.vector.line
+import com.soywiz.korma.geom.vector.star
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class CurvesToStrokeTest {
     @Test
@@ -16,5 +18,13 @@ class CurvesToStrokeTest {
             println(strokePoints.vectorToString(n))
         }
         println(strokePoints)
+    }
+
+    @Test
+    fun testClosed() {
+        val path = buildVectorPath {
+            star(6, 10.0, 20.0)
+        }
+        assertEquals(true, path.getCurves().closed)
     }
 }

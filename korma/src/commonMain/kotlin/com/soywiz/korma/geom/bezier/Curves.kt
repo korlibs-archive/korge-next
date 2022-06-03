@@ -9,9 +9,9 @@ import com.soywiz.korma.math.convertRange
 import kotlin.jvm.JvmName
 
 @JvmName("ListCurves_toCurves")
-fun List<Curves>.toCurves(closed: Boolean = false) = Curves(this.flatMap { it.curves }, closed)
+fun List<Curves>.toCurves(closed: Boolean = this.last().closed) = Curves(this.flatMap { it.curves }, closed)
 @JvmName("ListCurve_toCurves")
-fun List<Curve>.toCurves(closed: Boolean = false) = Curves(this, closed)
+fun List<Curve>.toCurves(closed: Boolean) = Curves(this, closed)
 
 data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
     override val order: Int get() = -1

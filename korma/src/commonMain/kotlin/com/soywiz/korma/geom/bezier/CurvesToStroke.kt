@@ -49,15 +49,46 @@ fun Curves.toStrokePoints(width: Double, join: LineJoin = LineJoin.MITER, startC
         addPoint(pos, normal, -width)
     }
 
+    fun generateJoin(curr: Curve, next: Curve) {
+        val currTangent = curr.tangent(1.0)
+        val nextTangent = next.tangent(0.0)
+
+        val commonPoint = curr.calc(1.0)
+
+        val line0a = Line.fromPointAndDirection(commonPoint + curr.normal(1.0) * width, currTangent)
+        val line0b = Line.fromPointAndDirection(commonPoint + next.normal(1.0) * width, nextTangent)
+
+        val line1a = Line.fromPointAndDirection(commonPoint + curr.normal(1.0) * -width, currTangent)
+        val line1b = Line.fromPointAndDirection(commonPoint + next.normal(1.0) * -width, nextTangent)
+
+        val p0 = line0a.getLineIntersectionPoint(line0b)
+        val p1 = line1a.getLineIntersectionPoint(line1b)
+        if (p0 != null && p1 != null) {
+            //if (false) {
+            val d0 = p0 - commonPoint
+            val d1 = commonPoint - p1
+
+            addPoint(commonPoint, d0.normalized, d0.length)
+            addPoint(commonPoint, d1.normalized, -d1.length)
+        } else {
+            addTwoPoints(curr.calc(1.0), curr.normal(1.0), width)
+        }
+    }
+
+    //println("closed: $closed")
+
     for (n in curves.indices) {
-        val prev = curves.getCyclic(n - 1)
         val curr = curves.getCyclic(n + 0)
         val next = curves.getCyclic(n + 1)
 
         // Generate start cap
         if (n == 0) {
-            // BUTT
-            addTwoPoints(curr.calc(0.0), curr.normal(0.0), width)
+            if (closed) {
+                generateJoin(curves.getCyclic(n - 1), curr)
+            } else {
+                // BUTT
+                addTwoPoints(curr.calc(0.0), curr.normal(0.0), width)
+            }
         }
 
         // Generate intermediate points for curves (no for plain lines)
@@ -72,34 +103,17 @@ fun Curves.toStrokePoints(width: Double, join: LineJoin = LineJoin.MITER, startC
 
         // Generate join
         if (n < curves.size - 1) {
-            val currTangent = curr.tangent(1.0)
-            val nextTangent = next.tangent(0.0)
-
-            val commonPoint = curr.calc(1.0)
-
-            val line0a = Line.fromPointAndDirection(commonPoint + curr.normal(1.0) * width, currTangent)
-            val line0b = Line.fromPointAndDirection(commonPoint + next.normal(1.0) * width, nextTangent)
-
-            val line1a = Line.fromPointAndDirection(commonPoint + curr.normal(1.0) * -width, currTangent)
-            val line1b = Line.fromPointAndDirection(commonPoint + next.normal(1.0) * -width, nextTangent)
-
-            val p0 = line0a.getLineIntersectionPoint(line0b)
-            val p1 = line1a.getLineIntersectionPoint(line1b)
-            if (p0 != null && p1 != null) {
-            //if (false) {
-                val d0 = p0 - commonPoint
-                val d1 = commonPoint - p1
-
-                addPoint(commonPoint, d0.normalized, d0.length)
-                addPoint(commonPoint, d1.normalized, -d1.length)
-            } else {
-                addTwoPoints(curr.calc(1.0), curr.normal(1.0), width)
-            }
+            generateJoin(curr, next)
         }
         // Generate end cap
         else {
-            // BUTT
-            addTwoPoints(curr.calc(1.0), curr.normal(1.0), width)
+            //println("closed=$closed")
+            if (closed) {
+                generateJoin(curr, next)
+            } else {
+                // BUTT
+                addTwoPoints(curr.calc(1.0), curr.normal(1.0), width)
+            }
         }
     }
     return StrokePoints(out, mode)
