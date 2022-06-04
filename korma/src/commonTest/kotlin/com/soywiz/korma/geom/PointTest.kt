@@ -52,7 +52,7 @@ class PointTest {
         assertEquals(45.degrees, point.angle)
 
         point.changeLength(30.0)
-        assertEquals(29.999999999999996, point.length)
+        assertEquals(30.0, point.length, 0.01)
     }
 
     @Test

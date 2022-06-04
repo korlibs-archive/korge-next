@@ -2,6 +2,7 @@
 
 package com.soywiz.korma.geom
 
+import com.soywiz.korma.geom.Angle.Companion.atan2
 import com.soywiz.korma.internal.niceStr
 import com.soywiz.korma.interpolation.Interpolable
 import com.soywiz.korma.interpolation.MutableInterpolable
@@ -10,7 +11,6 @@ import com.soywiz.korma.math.clamp
 import com.soywiz.korma.math.isAlmostZero
 import kotlin.math.absoluteValue
 import kotlin.math.acos
-import kotlin.math.atan2
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.hypot
@@ -321,6 +321,7 @@ data class Point(
     fun changeLength(length: Float): Point = changeLength(length.toDouble())
     fun changeLength(length: Int): Point = changeLength(length.toDouble())
     fun changeLength(length: Double): Point {
+        if (this.length == 0.0 || this.length == length) return this
         this.normalize()
         this.setTo(this.x * length, this.y * length)
         return this
@@ -328,7 +329,7 @@ data class Point(
 
     val angle: Angle
         get() {
-            var angle: Double = atan2(this.y, this.x) * RAD2DEG
+            var angle = atan2(this.y, this.x).degrees
             if (angle < 0) angle += 360.0
             return angle.degrees
         }
