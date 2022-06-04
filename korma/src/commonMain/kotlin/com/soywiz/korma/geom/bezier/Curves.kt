@@ -14,6 +14,8 @@ fun List<Curves>.toCurves(closed: Boolean = this.last().closed) = Curves(this.fl
 fun List<Curve>.toCurves(closed: Boolean) = Curves(this, closed)
 
 data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
+    constructor(vararg curves: Curve, closed: Boolean = false) : this(curves.toList(), closed)
+
     override val order: Int get() = -1
 
     data class CurveInfo(
@@ -123,12 +125,10 @@ data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
                 if (info0.index == info1.index) {
                     listOf((info0.curve as BezierCurve).split(ratioInCurve0, ratioInCurve1).curve)
                 } else {
-                    val curveFirst = (info0.curve as BezierCurve).splitRight(ratioInCurve0).curve
-                    val curveLast = (info1.curve as BezierCurve).splitLeft(ratioInCurve1).curve
                     buildList {
-                        add(curveFirst)
+                        if (ratioInCurve0 != 1.0) add((info0.curve as BezierCurve).splitRight(ratioInCurve0).curve)
                         for (index in info0.index + 1 until info1.index) add(infos[index].curve)
-                        add(curveLast)
+                        if (ratioInCurve1 != 0.0) add((info1.curve as BezierCurve).splitLeft(ratioInCurve1).curve)
                     }
                 }
             }
