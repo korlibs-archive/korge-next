@@ -170,6 +170,9 @@ open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.M
         }
     }
 
+    override fun equals(other: Any?): Boolean = other is PointArrayList && xList == other.xList && yList == other.yList
+    override fun hashCode(): Int = xList.hashCode() + yList.hashCode() * 7
+
     override fun toString(): String {
         val sb = StringBuilder()
         sb.append('[')

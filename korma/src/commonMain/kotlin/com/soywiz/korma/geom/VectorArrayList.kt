@@ -85,6 +85,9 @@ class VectorArrayList(
 
     fun vectorToString(index: Int): String = buildString { vectorToStringBuilder(index, this) }
 
+    override fun equals(other: Any?): Boolean = other is VectorArrayList && this.dimensions == other.dimensions && this.data == other.data
+    override fun hashCode(): Int = data.hashCode()
+
     override fun toString(): String = buildString {
         append("VectorArrayList[${this@VectorArrayList.size}](\n")
         for (n in 0 until this@VectorArrayList.size) {

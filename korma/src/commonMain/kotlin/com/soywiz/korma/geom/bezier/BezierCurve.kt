@@ -63,6 +63,8 @@ class BezierCurve(
         return this.length
     }
 
+    override fun equals(other: Any?): Boolean = other is BezierCurve && this.points == other.points
+    override fun hashCode(): Int = points.hashCode()
     override fun toString(): String = "BezierCurve($points)"
 
     init {
