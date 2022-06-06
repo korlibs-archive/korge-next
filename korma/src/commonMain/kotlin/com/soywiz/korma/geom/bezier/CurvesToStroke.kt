@@ -172,6 +172,7 @@ class StrokePointsBuilder(val width: Double, override val mode: StrokePointsMode
 
             //println("angleB=$angleB")
 
+            // @TODO: We cannot do this with the tangent lines, we should actually intersect the outline curves for this to work as expected
             //val p6 = p3
             //val p6 = if (angleB < 45.degrees) p5 else p3
             val p6 = p5
