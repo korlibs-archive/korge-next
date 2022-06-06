@@ -84,31 +84,27 @@ class StrokePointsBuilder(val width: Double, val mode: StrokePointsMode = Stroke
 
         //println("miterLength=$miterLength, miterLimit=$miterLimit, sign=$direction")
 
-        if (kind != LineJoin.MITER || miterLength > miterLimit) {
+        //if (kind != LineJoin.MITER || miterLength > miterLimit) {
+        run {
+            val p1 = if (direction < 0.0) currLine0.projectedPoint(commonPoint) else nextLine1.projectedPoint(commonPoint)
+            val p2 = if (direction < 0.0) nextLine0.projectedPoint(commonPoint) else currLine1.projectedPoint(commonPoint)
+            // @TODO: We should try to find the common edge (except when the two lines overlaps), to avoid overlapping in normal curves
+            val p3 = if (direction < 0.0) Line.lineIntersectionPoint(currLine1, nextLine1) else Line.lineIntersectionPoint(currLine0, nextLine0)
             if (direction < 0.0) {
-                val p1 = currLine0.projectedPoint(commonPoint)
-                val p2 = nextLine0.projectedPoint(commonPoint)
-                val p3 = Line.lineIntersectionPoint(currLine1, nextLine1)
-                if (p3 != null) {
-                    addPoint(p1, Point(0, 0), 0.0)
-                    addPoint(p3, Point(0, 0), 0.0)
-                    addPoint(p2, Point(0, 0), 0.0)
-                    addPoint(p3, Point(0, 0), 0.0)
-                    return
-                }
+                addPoint(p1, Point(0, 0), 0.0)
+                if (p3 != null) addPoint(p3, Point(0, 0), 0.0)
+                addPoint(p2, Point(0, 0), 0.0)
+                if (p3 != null) addPoint(p3, Point(0, 0), 0.0)
+            } else {
+                if (p3 != null) addPoint(p3, Point(0, 0), 0.0)
+                addPoint(p2, Point(0, 0), 0.0)
+                if (p3 != null) addPoint(p3, Point(0, 0), 0.0)
+                addPoint(p1, Point(0, 0), 0.0)
             }
-            if (direction > 0.0) {
-                val p1 = currLine1.projectedPoint(commonPoint)
-                val p2 = nextLine1.projectedPoint(commonPoint)
-                val p3 = Line.lineIntersectionPoint(currLine0, nextLine0)
-                if (p3 != null) {
-                    addPoint(p3, Point(0, 0), 0.0)
-                    addPoint(p1, Point(0, 0), 0.0)
-                    addPoint(p3, Point(0, 0), 0.0)
-                    addPoint(p2, Point(0, 0), 0.0)
-                    return
-                }
-            }
+            //addPoint(p1, Point(0, 0), 0.0)
+            //addCurvePointsCap(p2, p1, 0.5)
+            //addPoint(p2, Point(0, 0), 0.0)
+            return
         }
 
         //if (false) {
@@ -135,7 +131,7 @@ class StrokePointsBuilder(val width: Double, val mode: StrokePointsMode = Stroke
                         val p3 = mid + normal * -width
                         val a = if (ratio == 0.0) p0 else p3
                         val b = if (ratio == 0.0) p3 else p0
-                        addCurvePointsCap(mid, a, b, ratio)
+                        addCurvePointsCap(a, b, ratio, mid)
                     }
                     else -> error("Can't happen")
                 }
@@ -146,7 +142,7 @@ class StrokePointsBuilder(val width: Double, val mode: StrokePointsMode = Stroke
         }
     }
 
-    fun addCurvePointsCap(mid: IPoint, p0: IPoint, p3: IPoint, ratio: Double, nsteps: Int = NSTEPS) {
+    fun addCurvePointsCap(p0: IPoint, p3: IPoint, ratio: Double, mid: IPoint = Point.middle(p0, p3), nsteps: Int = NSTEPS) {
         val angleStart = Angle.between(mid, p0)
         val angleEnd = Angle.between(mid, p3)
 

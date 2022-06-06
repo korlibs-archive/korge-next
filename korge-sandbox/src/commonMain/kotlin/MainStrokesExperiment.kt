@@ -78,7 +78,7 @@ suspend fun Stage.mainStrokesExperiment2() {
     val points = curves.toStrokePoints(10.0, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH)
     //addChild(DebugVertexView(points.vector, type = AG.DrawType.LINE_STRIP).also { it.color = Colors.WHITE })
     val dbv = debugVertexView(points.vector, type = AG.DrawType.TRIANGLE_STRIP) { color = Colors.WHITE }
-    val dbv3 = debugVertexView(type = AG.DrawType.LINE_STRIP) { color = Colors.BLUE }
+    val dbv3 = debugVertexView(type = AG.DrawType.LINE_STRIP) { color = Colors.BLUE.withAd(0.1) }
     val dbv2 = debugVertexView(type = AG.DrawType.POINTS) { color = Colors.RED }
 
     var alternate = false
@@ -129,12 +129,12 @@ suspend fun Stage.mainStrokesExperiment2() {
             //delay(0.3.seconds)
             //dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).vector
             //dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).also {
-            dbv.points = curves.toStrokePoints(5.0, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).also {
+            val strokeWidth = 20.0
+            val points = curves.toStrokePoints(strokeWidth, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).also {
                 //it.scale(0.5)
             }.vector
-            dbv3.points = curves.toStrokePoints(5.0, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).also {
-                //it.scale(0.5)
-            }.vector
+            dbv.points = points
+            dbv3.points = points
             dbv2.points = PointArrayList().also {
                 for (c in curves.curves) {
                     val bc = c as BezierCurve
