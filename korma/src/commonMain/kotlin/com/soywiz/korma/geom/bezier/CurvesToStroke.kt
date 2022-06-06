@@ -4,8 +4,10 @@ import com.soywiz.kds.forEachRatio01
 import com.soywiz.kds.getCyclic
 import com.soywiz.korma.geom.Angle
 import com.soywiz.korma.geom.IPoint
+import com.soywiz.korma.geom.IPointArrayList
 import com.soywiz.korma.geom.Line
 import com.soywiz.korma.geom.Point
+import com.soywiz.korma.geom.PointArrayList
 import com.soywiz.korma.geom.VectorArrayList
 import com.soywiz.korma.geom.absoluteValue
 import com.soywiz.korma.geom.degrees
@@ -13,11 +15,16 @@ import com.soywiz.korma.geom.fastForEachGeneric
 import com.soywiz.korma.geom.interpolate
 import com.soywiz.korma.geom.lineIntersectionPoint
 import com.soywiz.korma.geom.minus
+import com.soywiz.korma.geom.mutable
 import com.soywiz.korma.geom.plus
 import com.soywiz.korma.geom.projectedPoint
+import com.soywiz.korma.geom.umod
 import com.soywiz.korma.geom.vector.LineCap
 import com.soywiz.korma.geom.vector.LineJoin
+import com.soywiz.korma.interpolation.interpolate
+import com.soywiz.korma.math.clamp
 import kotlin.math.absoluteValue
+import kotlin.math.sign
 
 // @TODO
 //private fun Curves.toStrokeCurves(join: LineJoin, startCap: LineCap, endCap: LineCap): Curves {
@@ -33,7 +40,12 @@ enum class StrokePointsMode {
  * A generic stroke points with either [x, y] or [x, y, dx, dy, scale] components when having separate components,
  * it is possible to later scale the stroke without regenerating it by adjusting the [scale] component
  */
-data class StrokePoints(val vector: VectorArrayList, val mode: StrokePointsMode) {
+interface StrokePoints {
+    val vector: VectorArrayList
+    val debugPoints: IPointArrayList
+    val debugSegments: List<Line>
+    val mode: StrokePointsMode
+
     fun scale(scale: Double) {
         if (mode == StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH) {
             vector.fastForEachGeneric {
@@ -43,17 +55,20 @@ data class StrokePoints(val vector: VectorArrayList, val mode: StrokePointsMode)
     }
 }
 
-class StrokePointsBuilder(val width: Double, val mode: StrokePointsMode = StrokePointsMode.NON_SCALABLE_POS) {
+class StrokePointsBuilder(val width: Double, override val mode: StrokePointsMode = StrokePointsMode.NON_SCALABLE_POS, val generateDebug: Boolean = false) : StrokePoints {
     val NSTEPS = 20
 
-    val out: VectorArrayList = VectorArrayList(dimensions = when (mode) {
+    override val vector: VectorArrayList = VectorArrayList(dimensions = when (mode) {
         StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH -> 5 // x, y, dx, dy, length
         StrokePointsMode.NON_SCALABLE_POS -> 2 // x, y
     })
 
+    override val debugPoints: PointArrayList = PointArrayList()
+    override val debugSegments: ArrayList<Line> = arrayListOf()
+
     fun addPoint(pos: IPoint, normal: IPoint, width: Double) = when (mode) {
-        StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH -> out.add(pos.x, pos.y, normal.x, normal.y, width)
-        StrokePointsMode.NON_SCALABLE_POS -> out.add(pos.x + normal.x * width, pos.y + normal.y * width)
+        StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH -> vector.add(pos.x, pos.y, normal.x, normal.y, width)
+        StrokePointsMode.NON_SCALABLE_POS -> vector.add(pos.x + normal.x * width, pos.y + normal.y * width)
     }
 
     fun addTwoPoints(pos: IPoint, normal: IPoint, width: Double) {
@@ -77,26 +92,28 @@ class StrokePointsBuilder(val width: Double, val mode: StrokePointsMode = Stroke
         val intersection0 = Line.lineIntersectionPoint(currLine0, nextLine0)
         val intersection1 = Line.lineIntersectionPoint(currLine1, nextLine1)
         if (intersection0 == null || intersection1 == null) {
-            addTwoPoints(commonPoint, currNormal, width)
+            //println("direction=$direction, currTangent=$currTangent, nextTangent=$nextTangent")
+            val signChanged = currTangent.x.sign != nextTangent.x.sign || currTangent.y.sign != nextTangent.y.sign
+            addTwoPoints(commonPoint, currNormal, if (signChanged) -width else width)
             return
         }
 
+        val direction = Point.crossProduct(currTangent, nextTangent)
         val miterLength = Point.distance(intersection0, intersection1)
         val miterLimit = miterLimitRatio * width
 
-        val direction = Point.crossProduct(currTangent, nextTangent)
 
         //println("miterLength=$miterLength, miterLimit=$miterLimit, sign=$direction")
 
         // Miter
         val angle = Angle.atan2(nextTangent) - Angle.atan2(currTangent)
-        if (angle.absoluteValue < 15.degrees) {
-            val d0 = intersection0 - commonPoint
-            val d1 = commonPoint - intersection1
-            addPoint(commonPoint, d0.normalized, d0.length)
-            addPoint(commonPoint, d1.normalized, -d1.length)
-            return
-        }
+        //if (angle.absoluteValue < 15.degrees) {
+        //    val d0 = intersection0 - commonPoint
+        //    val d1 = commonPoint - intersection1
+        //    addPoint(commonPoint, d0.normalized, d0.length)
+        //    addPoint(commonPoint, d1.normalized, -d1.length)
+        //    return
+        //}
 
         //println("angle=$angle, currTangent=$currTangent, nextTangent=$nextTangent")
 
@@ -111,25 +128,57 @@ class StrokePointsBuilder(val width: Double, val mode: StrokePointsMode = Stroke
             var p3: IPoint? = when {
                 //angle.absoluteValue > 190.degrees -> null
                 //else -> null
-                direction < 0.0 -> Line.lineIntersectionPoint(currLine1, nextLine1)
+                direction <= 0.0 -> Line.lineIntersectionPoint(currLine1, nextLine1)
                 else -> Line.lineIntersectionPoint(currLine0, nextLine0)
             }
 
-            //p3 = p2
-
+            val p4Line = if (direction < 0.0) nextLine1 else nextLine0
+            val p4 = p4Line.projectedPoint(commonPoint)
+            //val p5 = Line.fromPointAndDirection(commonPoint, currTangent).getLineIntersectionPoint(p4Line)
             if (p3 == null) {
+                p3 = p4
+            }
+
+            //val d3 = Point.distance(commonPoint, p3!!)
+            //val d4 = Point.distance(commonPoint, p4)
+
+            //if (p5 != null) {
+            val angleB = (angle + 180.degrees).absoluteValue
+            val angle2 = (angle umod 180.degrees).absoluteValue
+            val angle3 = if (angle2 > 90.degrees) 180.degrees - angle2 else angle2
+            val ratio = (angle3.ratio.absoluteValue * 4).clamp(0.0, 1.0)
+            val p5 = ratio.interpolate(p4, p3!!.mutable)
+            //println("angle3=$angle3, angle2=$angle2, ratio=$ratio")
+            //}
+            //p3 = if (Point.distance(p3, p4) < width) p3 else p4
+
+            if (generateDebug) {
+                debugSegments.add(nextLine1.scalePoints(1000.0).clone())
+                debugSegments.add(currLine1.scalePoints(1000.0).clone())
+                debugSegments.add(nextLine0.scalePoints(1000.0).clone())
+                debugSegments.add(currLine0.scalePoints(1000.0).clone())
+                debugSegments.add(Line.fromPointAndDirection(commonPoint, currTangent).scalePoints(1000.0).clone())
+                debugSegments.add(Line.fromPointAndDirection(commonPoint, nextTangent).scalePoints(1000.0).clone())
+                debugPoints.add(p3)
+                debugPoints.add(p4)
+                debugPoints.add(p5)
+            }
+
+            //println("angleB=$angleB")
+
+            //val p6 = p3
+            //val p6 = if (angleB < 45.degrees) p5 else p3
+            val p6 = p3
+
+            if (direction < 0.0) {
                 addPoint(p1, Point(0, 0), 0.0)
+                addPoint(p6, Point(0, 0), 0.0)
                 addPoint(p2, Point(0, 0), 0.0)
-                addPoint(p1, Point(0, 0), 0.0)
-            } else if (direction < 0.0) {
-                addPoint(p1, Point(0, 0), 0.0)
-                addPoint(p3, Point(0, 0), 0.0)
-                addPoint(p2, Point(0, 0), 0.0)
-                addPoint(p3, Point(0, 0), 0.0)
+                addPoint(p6, Point(0, 0), 0.0)
             } else {
-                addPoint(p3, Point(0, 0), 0.0)
+                addPoint(p6, Point(0, 0), 0.0)
                 addPoint(p2, Point(0, 0), 0.0)
-                addPoint(p3, Point(0, 0), 0.0)
+                addPoint(p6, Point(0, 0), 0.0)
                 addPoint(p1, Point(0, 0), 0.0)
             }
             //addPoint(p1, Point(0, 0), 0.0)
@@ -188,7 +237,7 @@ class StrokePointsBuilder(val width: Double, val mode: StrokePointsMode = Stroke
         if (ratio == 0.0) addTwoPoints(mid, Point.fromPolar(angleStart), width)
     }
 
-    fun addCurvePoints(curr: Curve, nsteps: Int = NSTEPS) {
+    fun addCurvePoints(curr: Curve, nsteps: Int = (curr.length() / 10.0).clamp(20.0, 100.0).toInt()) {
         // @TODO: Here we could generate curve information to render in the shader with a plain simple quadratic bezier to reduce the number of points and make the curve as accurate as possible
         forEachRatio01(nsteps, include0 = false, include1 = false) {
             addTwoPoints(curr.calc(it), curr.normal(it), width)
@@ -231,14 +280,12 @@ class StrokePointsBuilder(val width: Double, val mode: StrokePointsMode = Stroke
             }
         }
     }
-
-    fun strokePoints(): StrokePoints = StrokePoints(out, mode)
 }
 
 /** Useful for drawing */
-fun Curves.toStrokePoints(width: Double, join: LineJoin = LineJoin.MITER, startCap: LineCap = LineCap.BUTT, endCap: LineCap = LineCap.BUTT, miterLimit: Double = 10.0, mode: StrokePointsMode = StrokePointsMode.NON_SCALABLE_POS): StrokePoints {
+fun Curves.toStrokePoints(width: Double, join: LineJoin = LineJoin.MITER, startCap: LineCap = LineCap.BUTT, endCap: LineCap = LineCap.BUTT, miterLimit: Double = 10.0, mode: StrokePointsMode = StrokePointsMode.NON_SCALABLE_POS, generateDebug: Boolean = false): StrokePoints {
     //println("closed: $closed")
-    return StrokePointsBuilder(width, mode).also {
+    return StrokePointsBuilder(width, mode, generateDebug).also {
         it.addAllCurvesPoints(this, join, startCap, endCap, miterLimit)
-    }.strokePoints()
+    }
 }

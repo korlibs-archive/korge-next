@@ -1,5 +1,6 @@
 package com.soywiz.korma.geom
 
+import com.soywiz.korma.annotations.KormaExperimental
 import com.soywiz.korma.math.almostEquals
 import com.soywiz.korma.math.clamp
 
@@ -11,6 +12,8 @@ interface ILine {
 data class Line(override val a: Point, override val b: Point) : ILine {
     private val temp = Point()
 
+    fun clone(): Line = Line(a.copy(), b.copy())
+
     val minX: Double get() = kotlin.math.min(a.x, b.x)
     val maxX: Double get() = kotlin.math.max(a.x, b.x)
 
@@ -21,6 +24,10 @@ data class Line(override val a: Point, override val b: Point) : ILine {
         a.round()
         b.round()
         return this
+    }
+
+    fun setTo(a: IPoint, b: IPoint): Line {
+        return setTo(a.x, a.y, b.x, b.y)
     }
 
     fun setTo(x0: Double, y0: Double, x1: Double, y1: Double): Line {
@@ -48,16 +55,40 @@ data class Line(override val a: Point, override val b: Point) : ILine {
         return Point.distance(p, v + (w - v) * t);
     }
 
+    @KormaExperimental
+    fun scalePoints(scale: Double): Line {
+        val dx = this.dx
+        val dy = this.dy
+        x0 -= dx * scale
+        y0 -= dy * scale
+        x1 += dx * scale
+        y1 += dy * scale
+        //val p1 = getIntersectXY(rect.topLeft, rect.topRight, this.a, this.b)
+        //val p2 = getIntersectXY(rect.bottomLeft, rect.bottomRight, this.a, this.b)
+        //val p3 = getIntersectXY(rect.topLeft, rect.bottomLeft, this.a, this.b)
+        //val p4 = getIntersectXY(rect.topRight, rect.bottomRight, this.a, this.b)
+        //if (p1 != null) {
+        //    if (Line(this.a, p1!!.mutable).angle.isAlmostEquals(this.angle)) {
+        //        this.setTo(this.a, p1!!.mutable)
+        //    }
+        //    if (Line(p1!!.mutable, this.b).angle.isAlmostEquals(this.angle)) {
+        //        this.setTo(p1!!.mutable, this.b)
+        //    }
+        //}
+        //println("p1=$p1, p2=$p2, p3=$p3, p4=$p4")
+        return this
+    }
+
     constructor() : this(Point(), Point())
     constructor(x0: Double, y0: Double, x1: Double, y1: Double) : this(Point(x0, y0), Point(x1, y1))
     constructor(x0: Float, y0: Float, x1: Float, y1: Float) : this(Point(x0, y0), Point(x1, y1))
     constructor(x0: Int, y0: Int, x1: Int, y1: Int) : this(Point(x0, y0), Point(x1, y1))
 
-    var x0: Double get() = a.x ; set(value) { a.x = value }
-    var y0: Double get() = a.y ; set(value) { a.y = value }
+    var x0: Double by a::x
+    var y0: Double by a::y
 
-    var x1: Double get() = b.x ; set(value) { b.x = value }
-    var y1: Double get() = b.y ; set(value) { b.y = value }
+    var x1: Double by b::x
+    var y1: Double by b::y
 
     val dx: Double get() = x1 - x0
     val dy: Double get() = y1 - y0

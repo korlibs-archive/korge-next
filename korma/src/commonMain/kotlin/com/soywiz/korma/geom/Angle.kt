@@ -133,6 +133,8 @@ operator fun Angle.times(scale: Float): Angle = this * scale.toDouble()
 operator fun Angle.div(scale: Float): Angle = this / scale.toDouble()
 operator fun Angle.times(scale: Int): Angle = this * scale.toDouble()
 operator fun Angle.div(scale: Int): Angle = this / scale.toDouble()
+operator fun Angle.rem(angle: Angle): Angle = Angle.fromRatio(this.ratio % angle.ratio)
+infix fun Angle.umod(angle: Angle): Angle = Angle.fromRatio(this.ratio umod angle.ratio)
 
 operator fun Angle.div(other: Angle): Double = this.ratio / other.ratio // Ratio
 operator fun Angle.plus(other: Angle): Angle = Angle.fromRatio(this.ratio + other.ratio)

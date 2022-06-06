@@ -1,4 +1,6 @@
 import com.soywiz.kds.forEachRatio01
+import com.soywiz.kds.getCyclic
+import com.soywiz.kds.iterators.fastForEach
 import com.soywiz.klock.seconds
 import com.soywiz.korag.AG
 import com.soywiz.korev.Key
@@ -9,7 +11,6 @@ import com.soywiz.korge.tween.tween
 import com.soywiz.korge.view.Container
 import com.soywiz.korge.view.Stage
 import com.soywiz.korge.view.addUpdater
-import com.soywiz.korge.view.bounds
 import com.soywiz.korge.view.centered
 import com.soywiz.korge.view.circle
 import com.soywiz.korge.view.container
@@ -23,7 +24,6 @@ import com.soywiz.korim.text.DefaultStringTextRenderer
 import com.soywiz.korim.text.aroundPath
 import com.soywiz.korim.text.text
 import com.soywiz.korim.vector.StrokeInfo
-import com.soywiz.korio.async.delay
 import com.soywiz.korio.async.launchImmediately
 import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.PointArrayList
@@ -32,10 +32,12 @@ import com.soywiz.korma.geom.bezier.BezierCurve
 import com.soywiz.korma.geom.bezier.StrokePointsMode
 import com.soywiz.korma.geom.bezier.toDashes
 import com.soywiz.korma.geom.bezier.toStrokePoints
+import com.soywiz.korma.geom.fastForEach
+import com.soywiz.korma.geom.fastForEachWithIndex
 import com.soywiz.korma.geom.firstPoint
 import com.soywiz.korma.geom.lastPoint
 import com.soywiz.korma.geom.shape.buildVectorPath
-import com.soywiz.korma.geom.vector.LineCap
+import com.soywiz.korma.geom.vector.circle
 import com.soywiz.korma.geom.vector.curve
 import com.soywiz.korma.geom.vector.getCurves
 import com.soywiz.korma.geom.vector.line
@@ -46,48 +48,31 @@ import com.soywiz.korma.geom.vector.star
 import com.soywiz.korma.interpolation.Easing
 
 suspend fun Stage.mainStrokesExperiment2() {
-    //graphics {
-    val g = graphics {
-    //val g = gpuShapeView {
-        updateShape {
-            fill(Colors.RED) {
-                //circle(0, 0, 100)
-                curve(Bezier.Cubic(
-                    Point(0, 0) + Point(200, 200),
-                    Point(0, -50) + Point(200, 200),
-                    Point(50, -50) + Point(200, 200),
-                    Point(50, 0) + Point(200, 200),
-                ))
-                close()
-                //line(0, 0, 100, 100)
-            }
-        }
-    }
-    println(g.getBounds())
-
-    val path = buildVectorPath {
-        //this.circle(400, 300, 200)
-        moveTo(100, 300)
-        //lineTo(300, 400)
-        quadTo(100, 600, 300, 400)
-        //lineTo(500, 300)
-        lineTo(200, 300)
-        //moveTo(100, 300)
-        //quadTo(100, 500, 500, 500)
-        //lineTo(500, 200)
-        //lineTo(800, 200)
-        //quadTo(600, 300, 800, 500)
-    }
+    val path = buildVectorPath {}
     val curves = path.getCurves()
     val points = curves.toStrokePoints(10.0, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH)
     //addChild(DebugVertexView(points.vector, type = AG.DrawType.LINE_STRIP).also { it.color = Colors.WHITE })
     val dbv = debugVertexView(points.vector, type = AG.DrawType.TRIANGLE_STRIP) { color = Colors.WHITE }
     val dbv3 = debugVertexView(type = AG.DrawType.LINE_STRIP) { color = Colors.BLUE.withAd(0.1) }
     val dbv2 = debugVertexView(type = AG.DrawType.POINTS) { color = Colors.RED }
+    val dbv4 = gpuShapeView {  }
+    //val dbv4 = graphics {  }
 
     var alternate = false
+    var pathScale = 1.0
+    var strokeWidth = 20.0
+    var debug = true
+    var closed = false
+    var quad = false
     keys {
         up(Key.SPACE) { alternate = !alternate }
+        up(Key.N0) { debug = !debug }
+        up(Key.N1) { closed = !closed }
+        up(Key.N2) { quad = !quad }
+        up(Key.UP) { pathScale *= 1.1 }
+        up(Key.DOWN) { pathScale *= 0.9 }
+        down(Key.LEFT) { strokeWidth *= 0.9 }
+        down(Key.RIGHT) { strokeWidth *= 1.1 }
     }
 
     var startX = 100.0
@@ -107,13 +92,13 @@ suspend fun Stage.mainStrokesExperiment2() {
             }
 
             val path = buildVectorPath {
-                //this.circle(400, 300, 200)
                 moveTo(startX, startY)
-                //moveTo(mouseX, mouseY)
-                //lineTo(300, 400)
                 quadTo(100, 600, 300, 400)
-                //lineTo(mouseX, mouseY)
-                lineTo(endX, endY)
+                when {
+                    quad -> quadTo(endX - 50, endY - 50, endX, endY)
+                    else -> lineTo(endX, endY)
+                }
+                if (closed) this.close()
             }
             //val path = buildVectorPath {
             //    //this.circle(400, 300, 200)
@@ -134,12 +119,37 @@ suspend fun Stage.mainStrokesExperiment2() {
             //delay(0.3.seconds)
             //dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).vector
             //dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).also {
-            val strokeWidth = 20.0
-            val points = curves.toStrokePoints(strokeWidth, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).also {
-                //it.scale(0.5)
-            }.vector
-            dbv.points = points
-            dbv3.points = points
+            val pointsInfo = curves.toStrokePoints(strokeWidth, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH, generateDebug = debug).also {
+                it.scale(pathScale)
+            }
+            dbv.points = pointsInfo.vector
+            dbv3.points = pointsInfo.vector
+            dbv4.updateShape {
+                pointsInfo.debugSegments.fastForEach { line ->
+                    stroke(Colors.GREEN, lineWidth = 1.5) {
+                        //println("line=$line")
+                        this.line(line.a, line.b)
+                    }
+                }
+                PointArrayList().also {
+                    for (c in curves.curves) {
+                        val bc = c as BezierCurve
+                        it.add(bc.points.firstPoint())
+                        it.add(bc.points.lastPoint())
+                    }
+                }.fastForEach { x, y ->
+                    fill(Colors.RED.withAd(0.5)) {
+                        this.circle(x, y, 2.0)
+                    }
+                }
+                val debugPointColors = listOf(Colors.RED, Colors.PURPLE, Colors.MAGENTA)
+                pointsInfo.debugPoints.fastForEachWithIndex { index, x, y ->
+                    val color = debugPointColors.getCyclic(index)
+                    fill(color.withAd(0.5)) {
+                        this.circle(x, y, 3.0)
+                    }
+                }
+            }
             dbv2.points = PointArrayList().also {
                 for (c in curves.curves) {
                     val bc = c as BezierCurve
