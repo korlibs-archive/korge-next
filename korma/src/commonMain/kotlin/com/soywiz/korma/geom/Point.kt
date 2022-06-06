@@ -146,6 +146,7 @@ data class Point(
         fun fromPolar(angle: Angle, length: Double = 1.0, out: Point = Point()): Point = fromPolar(0.0, 0.0, angle, length, out)
         fun fromPolar(base: IPoint, angle: Angle, length: Double = 1.0, out: Point = Point()): Point = fromPolar(base.x, base.y, angle, length, out)
 
+        fun direction(a: IPoint, b: IPoint, out: Point = Point()): Point = out.setTo(b.x - a.x, b.y - b.y)
         fun middle(a: IPoint, b: IPoint, out: Point = Point()): Point = out.setTo((a.x + b.x) * 0.5, (a.y + b.y) * 0.5)
         fun angleArc(a: IPoint, b: IPoint): Angle = Angle.fromRadians(acos((a.dot(b)) / (a.length * b.length)))
         @Deprecated("")

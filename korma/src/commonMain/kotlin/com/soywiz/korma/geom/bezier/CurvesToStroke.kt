@@ -2,11 +2,18 @@ package com.soywiz.korma.geom.bezier
 
 import com.soywiz.kds.forEachRatio01
 import com.soywiz.kds.getCyclic
+import com.soywiz.korma.geom.Angle
 import com.soywiz.korma.geom.IPoint
 import com.soywiz.korma.geom.Line
 import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.VectorArrayList
+import com.soywiz.korma.geom.degrees
 import com.soywiz.korma.geom.fastForEachGeneric
+import com.soywiz.korma.geom.firstPoint
+import com.soywiz.korma.geom.interpolate
+import com.soywiz.korma.geom.lastPoint
+import com.soywiz.korma.geom.plus
+import com.soywiz.korma.geom.unaryMinus
 import com.soywiz.korma.geom.vector.LineCap
 import com.soywiz.korma.geom.vector.LineJoin
 
@@ -96,29 +103,13 @@ class StrokePointsBuilder(val width: Double, val mode: StrokePointsMode = Stroke
                         addTwoPoints(curr.calc(ratio) + derivate * width, curr.normal(ratio), width) // Not right
                     }
                     LineCap.ROUND -> {
-                        val p0 = curr.calc(ratio) + curr.normal(ratio) * width
-                        val p1 = curr.calc(ratio) + derivate * (width * 1.5) + curr.normal(ratio) * width
-                        val p2 = curr.calc(ratio) + derivate * (width * 1.5) + curr.normal(ratio) * -width
-                        val p3 = curr.calc(ratio) + curr.normal(ratio) * -width
-                        //println("---")
-                        //println("p0=$p0")
-                        //println("p1=$p1")
-                        //println("p2=$p2")
-                        //println("p3=$p3")
-                        val nsteps = NSTEPS
-                        val curve = if (ratio == 1.0) BezierCurve(p3, p2, p1, p0) else BezierCurve(p0, p1, p2, p3)
-                        val pointZero = Point(0, 0)
-                        forEachRatio01(nsteps, include0 = true, include1 = true) {
-                            val pe = curve.calc(it)
-                            val pd = (pe - p0)
-                            val pdLen = pd.length
-                            pd.normalize()
-                            addPoint(p0, pointZero, 0.0)
-                            //addPoint(curr.calc(it), curr.normal(it), width)
-                            addPoint(p0, pd, pdLen)
-                        }
-                        //addPoint(p0, Point(0, 0), width)
-                        //addPoint(p3, Point(0, 0), -width)
+                        val mid = curr.calc(ratio)
+                        val normal = curr.normal(ratio)
+                        val p0 = mid + normal * width
+                        val p3 = mid + normal * -width
+                        val a = if (ratio == 0.0) p0 else p3
+                        val b = if (ratio == 0.0) p3 else p0
+                        addCurvePointsCap2(mid, a, b, ratio)
                     }
                     else -> error("Can't happen")
                 }
@@ -127,6 +118,21 @@ class StrokePointsBuilder(val width: Double, val mode: StrokePointsMode = Stroke
                 addTwoPoints(curr.calc(ratio), curr.normal(ratio), width)
             }
         }
+    }
+
+    fun addCurvePointsCap2(mid: IPoint, p0: IPoint, p3: IPoint, ratio: Double, nsteps: Int = NSTEPS) {
+        val angleStart = Angle.between(mid, p0)
+        val angleEnd = Angle.between(mid, p3)
+
+        if (ratio == 1.0) addTwoPoints(mid, Point.fromPolar(angleEnd), width)
+        val addAngle = if (Point.crossProduct(p0, p3) <= 0.0) Angle.ZERO else Angle.HALF
+        forEachRatio01(nsteps, include0 = true, include1 = true) { it ->
+            val angle = it.interpolate(angleStart, angleEnd)
+            val dir = Point.fromPolar(angle + addAngle)
+            addPoint(mid, dir, 0.0)
+            addPoint(mid, dir, width)
+        }
+        if (ratio == 0.0) addTwoPoints(mid, Point.fromPolar(angleStart), width)
     }
 
     fun addCurvePoints(curr: Curve, nsteps: Int = NSTEPS) {

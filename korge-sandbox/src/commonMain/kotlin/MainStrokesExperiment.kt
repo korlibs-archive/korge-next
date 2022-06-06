@@ -85,12 +85,27 @@ suspend fun Stage.mainStrokesExperiment2() {
 
     launchImmediately {
         while (true) {
+            //val path = buildVectorPath {
+            //    //this.circle(400, 300, 200)
+            //    moveTo(100, 300)
+            //    lineTo(300, 400)
+            //    //lineTo(500, 300)
+            //    lineTo(200, 300)
+            //    //moveTo(100, 300)
+            //    //quadTo(100, 500, 500, 500)
+            //    //lineTo(500, 200)
+            //    //lineTo(800, 200)
+            //    //quadTo(600, 300, 800, 500)
+            //}
+            val curves = path.getCurves()
             //dbv.points = curves.toStrokePoints(5.0, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).vector
             //delay(0.3.seconds)
             //dbv.points = curves.toStrokePoints(10.0, endCap = LineCap.SQUARE, startCap = LineCap.SQUARE, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).vector
             //delay(0.3.seconds)
             //dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).vector
-            dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).vector
+            dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).also {
+                //it.scale(0.5)
+            }.vector
             delay(0.3.seconds)
         }
     }
