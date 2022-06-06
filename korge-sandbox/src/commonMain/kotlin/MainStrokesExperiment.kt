@@ -1,5 +1,6 @@
 import com.soywiz.kds.forEachRatio01
 import com.soywiz.klock.seconds
+import com.soywiz.korag.AG
 import com.soywiz.korge.tween.get
 import com.soywiz.korge.tween.tween
 import com.soywiz.korge.view.Container
@@ -9,31 +10,91 @@ import com.soywiz.korge.view.centered
 import com.soywiz.korge.view.circle
 import com.soywiz.korge.view.container
 import com.soywiz.korge.view.debug.DebugVertexView
+import com.soywiz.korge.view.debug.debugVertexView
 import com.soywiz.korge.view.graphics
+import com.soywiz.korge.view.vector.gpuShapeView
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.font.DefaultTtfFont
 import com.soywiz.korim.text.DefaultStringTextRenderer
 import com.soywiz.korim.text.aroundPath
 import com.soywiz.korim.text.text
 import com.soywiz.korim.vector.StrokeInfo
+import com.soywiz.korio.async.delay
 import com.soywiz.korio.async.launchImmediately
-import com.soywiz.korma.geom.Matrix
+import com.soywiz.korma.geom.Point
+import com.soywiz.korma.geom.PointArrayList
+import com.soywiz.korma.geom.bezier.Bezier
 import com.soywiz.korma.geom.bezier.BezierCurve
 import com.soywiz.korma.geom.bezier.StrokePointsMode
 import com.soywiz.korma.geom.bezier.toDashes
 import com.soywiz.korma.geom.bezier.toStrokePoints
-import com.soywiz.korma.geom.get
+import com.soywiz.korma.geom.firstPoint
+import com.soywiz.korma.geom.lastPoint
 import com.soywiz.korma.geom.shape.buildVectorPath
-import com.soywiz.korma.geom.vector.applyTransform
-import com.soywiz.korma.geom.vector.circle
+import com.soywiz.korma.geom.vector.LineCap
+import com.soywiz.korma.geom.vector.curve
 import com.soywiz.korma.geom.vector.getCurves
 import com.soywiz.korma.geom.vector.line
 import com.soywiz.korma.geom.vector.lineTo
 import com.soywiz.korma.geom.vector.moveTo
-import com.soywiz.korma.geom.vector.quadTo
 import com.soywiz.korma.geom.vector.star
-import com.soywiz.korma.geom.vector.transformed
 import com.soywiz.korma.interpolation.Easing
+
+suspend fun Stage.mainStrokesExperiment2() {
+    //graphics {
+    //graphics { // @TODO: This is not working!
+    gpuShapeView {
+        updateShape {
+            fill(Colors.RED) {
+                //this.circle(0, 0, 100)
+                curve(Bezier.Cubic(
+                    Point(0, 0) + Point(200, 200),
+                    Point(0, -50) + Point(200, 200),
+                    Point(50, -50) + Point(200, 200),
+                    Point(50, 0) + Point(200, 200)
+                ))
+                close()
+                //line(0, 0, 100, 100)
+            }
+        }
+    }
+
+    val path = buildVectorPath {
+        //this.circle(400, 300, 200)
+        moveTo(100, 300)
+        lineTo(300, 400)
+        //lineTo(500, 300)
+        lineTo(200, 300)
+        //moveTo(100, 300)
+        //quadTo(100, 500, 500, 500)
+        //lineTo(500, 200)
+        //lineTo(800, 200)
+        //quadTo(600, 300, 800, 500)
+    }
+    val curves = path.getCurves()
+    val points = curves.toStrokePoints(10.0, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH)
+    //addChild(DebugVertexView(points.vector, type = AG.DrawType.LINE_STRIP).also { it.color = Colors.WHITE })
+    val dbv = debugVertexView(points.vector, type = AG.DrawType.TRIANGLE_STRIP) { color = Colors.WHITE }
+    debugVertexView(PointArrayList().also {
+        for (c in curves.curves) {
+            val bc = c as BezierCurve
+            it.add(bc.points.firstPoint())
+            it.add(bc.points.lastPoint())
+        }
+    }, type = AG.DrawType.POINTS) { color = Colors.RED }
+
+    launchImmediately {
+        while (true) {
+            //dbv.points = curves.toStrokePoints(5.0, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).vector
+            //delay(0.3.seconds)
+            //dbv.points = curves.toStrokePoints(10.0, endCap = LineCap.SQUARE, startCap = LineCap.SQUARE, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).vector
+            //delay(0.3.seconds)
+            //dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).vector
+            dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).vector
+            delay(0.3.seconds)
+        }
+    }
+}
 
 suspend fun Stage.mainStrokesExperiment() {
     val path = buildVectorPath {

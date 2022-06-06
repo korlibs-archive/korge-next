@@ -7,11 +7,21 @@ import com.soywiz.korag.shader.FragmentShader
 import com.soywiz.korag.shader.Uniform
 import com.soywiz.korag.shader.VarType
 import com.soywiz.korge.render.RenderContext
+import com.soywiz.korge.view.Container
 import com.soywiz.korge.view.View
+import com.soywiz.korge.view.ViewDslMarker
+import com.soywiz.korge.view.addTo
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
 import com.soywiz.korma.geom.IVectorArrayList
 import com.soywiz.korma.geom.fastForEachGeneric
+
+inline fun Container.debugVertexView(
+    points: IVectorArrayList,
+    color: RGBA = Colors.WHITE,
+    type: AG.DrawType = AG.DrawType.TRIANGLE_STRIP,
+    callback: @ViewDslMarker DebugVertexView.() -> Unit = {}
+): DebugVertexView = DebugVertexView(points, color, type).addTo(this, callback)
 
 class DebugVertexView(points: IVectorArrayList, var color: RGBA = Colors.WHITE, type: AG.DrawType = AG.DrawType.TRIANGLE_STRIP) : View() {
     companion object {
@@ -27,6 +37,7 @@ class DebugVertexView(points: IVectorArrayList, var color: RGBA = Colors.WHITE, 
         set(value) {
             if (field !== value) {
                 field = value
+                updatedPoints()
             }
         }
     var type: AG.DrawType = type

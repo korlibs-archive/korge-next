@@ -41,7 +41,8 @@ suspend fun main() = Korge(
     multithreaded = true,
     //debugAg = true,
 ) {
-    mainStrokesExperiment()
+    mainStrokesExperiment2()
+    //mainStrokesExperiment()
     //mainCircleColor()
     //mainFilterSwitch()
     //mainVectorFill()

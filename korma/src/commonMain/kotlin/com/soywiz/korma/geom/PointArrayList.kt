@@ -25,6 +25,8 @@ val IPointArrayList.firstX: Double get() = getX(0)
 val IPointArrayList.firstY: Double get() = getY(0)
 val IPointArrayList.lastX: Double get() = getX(size - 1)
 val IPointArrayList.lastY: Double get() = getY(size - 1)
+fun IPointArrayList.firstPoint(out: Point = Point()): Point = out.setTo(firstX, firstY)
+fun IPointArrayList.lastPoint(out: Point = Point()): Point = out.setTo(lastX, lastY)
 
 fun IPointArrayList.orientation(): Orientation {
     if (size < 3) return Orientation.COLLINEAR
@@ -331,4 +333,11 @@ open class PointIntArrayList(capacity: Int = 7) : IPointIntArrayList, Extra by E
         override fun compare(p: PointIntArrayList, l: Int, r: Int): Int = PointInt.compare(p.getX(l), p.getY(l), p.getX(r), p.getY(r))
         override fun swap(subject: PointIntArrayList, indexL: Int, indexR: Int) = subject.swap(indexL, indexR)
     }
+}
+
+inline fun <T> Iterable<T>.mapPoint(temp: Point = Point(), out: PointArrayList = PointArrayList(), block: Point.(value: T) -> Point): PointArrayList {
+    for (v in this) {
+        out.add(block(temp, v))
+    }
+    return out
 }
