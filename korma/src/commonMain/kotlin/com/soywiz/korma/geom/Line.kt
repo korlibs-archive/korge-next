@@ -29,7 +29,7 @@ data class Line(override val a: Point, override val b: Point) : ILine {
         return this
     }
 
-    fun setToPolar(x: Double, y: Double, angle: Angle, length: Double): Line {
+    fun setToPolar(x: Double, y: Double, angle: Angle, length: Double = 1.0): Line {
         setTo(x, y, x + angle.cosine * length, y + angle.sine * length)
         return this
     }
@@ -111,9 +111,11 @@ data class Line(override val a: Point, override val b: Point) : ILine {
     //        (q.y <= max(p.y, r.y)) && (q.y >= min(p.y, r.y)))
 
     companion object {
-        fun fromPointAndDirection(point: Point, direction: Point): Line = Line(point.x, point.y, point.x + direction.x, point.y + direction.y)
-        fun fromPointAngle(point: Point, angle: Angle): Line =
-            Line(point.x, point.y, point.x + angle.cosine, point.y + angle.sine)
+        fun fromPointAndDirection(point: Point, direction: Point, scale: Double = 1.0, out: Line = Line()): Line {
+            return out.setTo(point.x, point.y, point.x + direction.x * scale, point.y + direction.y * scale)
+        }
+        fun fromPointAngle(point: Point, angle: Angle, length: Double = 1.0, out: Line = Line()): Line =
+            out.setToPolar(point.x, point.y, angle, length)
 
         fun length(Ax: Double, Ay: Double, Bx: Double, By: Double): Double = kotlin.math.hypot(Bx - Ax, By - Ay)
 
@@ -157,21 +159,21 @@ data class LineIntersection(
     override fun toString(): String = "LineIntersection($line, intersection=$intersection)"
 }
 
-// @TODO: Should we create a common interface make projectedPoint part of it? (for eample to project other kind of shapes)
-// https://math.stackexchange.com/questions/62633/orthogonal-projection-of-a-point-onto-a-line
-// http://www.sunshine2k.de/coding/java/PointOnLine/PointOnLine.html
-fun ILine.projectedPoint(point: IPoint, out: Point = Point()): Point {
+fun Line.Companion.projectedPoint(
+    v1x: Double,
+    v1y: Double,
+    v2x: Double,
+    v2y: Double,
+    px: Double,
+    py: Double,
+    out: Point = Point()
+): Point {
     // return this.getIntersectionPoint(Line(point, Point.fromPolar(point, this.angle + 90.degrees)))!!
-
-    val v1 = this.a
-    val v2 = this.b
-    val p = point
-
     // get dot product of e1, e2
-    val e1x = v2.x - v1.x
-    val e1y = v2.y - v1.y
-    val e2x = p.x - v1.x
-    val e2y = p.y - v1.y
+    val e1x = v2x - v1x
+    val e1y = v2y - v1y
+    val e2x = px - v1x
+    val e2y = py - v1y
     val valDp = Point.dot(e1x, e1y, e2x, e2y)
     // get length of vectors
 
@@ -181,7 +183,7 @@ fun ILine.projectedPoint(point: IPoint, out: Point = Point()): Point {
     // What happens if lenLineE1 or lenLineE2 are zero?, it would be a division by zero.
     // Does that mean that the point is on the line, and we should use it?
     if (lenLineE1 == 0.0 || lenLineE2 == 0.0) {
-        return out.copyFrom(p)
+        return out.setTo(px, py)
     }
 
     val cos = valDp / (lenLineE1 * lenLineE2)
@@ -189,5 +191,29 @@ fun ILine.projectedPoint(point: IPoint, out: Point = Point()): Point {
     // length of v1P'
     val projLenOfLine = cos * lenLineE2
 
-    return out.setTo((v1.x + (projLenOfLine * e1x) / lenLineE1), (v1.y + (projLenOfLine * e1y) / lenLineE1))
+    return out.setTo((v1x + (projLenOfLine * e1x) / lenLineE1), (v1y + (projLenOfLine * e1y) / lenLineE1))
 }
+
+fun Line.Companion.projectedPoint(
+    v1: IPoint,
+    v2: IPoint,
+    point: IPoint,
+    out: Point = Point()
+): Point = projectedPoint(v1.x, v1.y, v2.x, v2.y, point.x, point.y, out)
+
+fun Line.Companion.lineIntersectionPoint(
+    l1: Line,
+    l2: Line,
+    out: Point = Point()
+): Point? = l1.getLineIntersectionPoint(l2, out)
+
+fun Line.Companion.segmentIntersectionPoint(
+    l1: Line,
+    l2: Line,
+    out: Point = Point()
+): Point? = l1.getSegmentIntersectionPoint(l2, out)
+
+// @TODO: Should we create a common interface make projectedPoint part of it? (for ecample to project other kind of shapes)
+// https://math.stackexchange.com/questions/62633/orthogonal-projection-of-a-point-onto-a-line
+// http://www.sunshine2k.de/coding/java/PointOnLine/PointOnLine.html
+fun ILine.projectedPoint(point: IPoint, out: Point = Point()): Point = Line.projectedPoint(a, b, point, out)

@@ -14,10 +14,12 @@ import com.soywiz.korge.view.addTo
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
 import com.soywiz.korma.geom.IVectorArrayList
+import com.soywiz.korma.geom.VectorArrayList
 import com.soywiz.korma.geom.fastForEachGeneric
+import com.soywiz.korma.geom.vectorArrayListOf
 
 inline fun Container.debugVertexView(
-    points: IVectorArrayList,
+    points: IVectorArrayList = VectorArrayList(5),
     color: RGBA = Colors.WHITE,
     type: AG.DrawType = AG.DrawType.TRIANGLE_STRIP,
     callback: @ViewDslMarker DebugVertexView.() -> Unit = {}

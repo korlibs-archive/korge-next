@@ -1,6 +1,9 @@
 import com.soywiz.kds.forEachRatio01
 import com.soywiz.klock.seconds
 import com.soywiz.korag.AG
+import com.soywiz.korev.Key
+import com.soywiz.korge.input.keys
+import com.soywiz.korge.time.delayFrame
 import com.soywiz.korge.tween.get
 import com.soywiz.korge.tween.tween
 import com.soywiz.korge.view.Container
@@ -75,16 +78,38 @@ suspend fun Stage.mainStrokesExperiment2() {
     val points = curves.toStrokePoints(10.0, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH)
     //addChild(DebugVertexView(points.vector, type = AG.DrawType.LINE_STRIP).also { it.color = Colors.WHITE })
     val dbv = debugVertexView(points.vector, type = AG.DrawType.TRIANGLE_STRIP) { color = Colors.WHITE }
-    debugVertexView(PointArrayList().also {
-        for (c in curves.curves) {
-            val bc = c as BezierCurve
-            it.add(bc.points.firstPoint())
-            it.add(bc.points.lastPoint())
-        }
-    }, type = AG.DrawType.POINTS) { color = Colors.RED }
+    val dbv3 = debugVertexView(type = AG.DrawType.LINE_STRIP) { color = Colors.BLUE }
+    val dbv2 = debugVertexView(type = AG.DrawType.POINTS) { color = Colors.RED }
+
+    var alternate = false
+    keys {
+        up(Key.SPACE) { alternate = !alternate }
+    }
+
+    var startX = 100.0
+    var startY = 300.0
+
+    var endX = 200.0
+    var endY = 300.0
 
     launchImmediately {
         while (true) {
+            if (alternate) {
+                startX = mouseX
+                startY = mouseY
+            } else {
+                endX = mouseX
+                endY = mouseY
+            }
+
+            val path = buildVectorPath {
+                //this.circle(400, 300, 200)
+                moveTo(startX, startY)
+                //moveTo(mouseX, mouseY)
+                lineTo(300, 400)
+                //lineTo(mouseX, mouseY)
+                lineTo(endX, endY)
+            }
             //val path = buildVectorPath {
             //    //this.circle(400, 300, 200)
             //    moveTo(100, 300)
@@ -103,10 +128,22 @@ suspend fun Stage.mainStrokesExperiment2() {
             //dbv.points = curves.toStrokePoints(10.0, endCap = LineCap.SQUARE, startCap = LineCap.SQUARE, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).vector
             //delay(0.3.seconds)
             //dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).vector
-            dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).also {
+            //dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).also {
+            dbv.points = curves.toStrokePoints(5.0, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).also {
                 //it.scale(0.5)
             }.vector
-            delay(0.3.seconds)
+            dbv3.points = curves.toStrokePoints(5.0, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).also {
+                //it.scale(0.5)
+            }.vector
+            dbv2.points = PointArrayList().also {
+                for (c in curves.curves) {
+                    val bc = c as BezierCurve
+                    it.add(bc.points.firstPoint())
+                    it.add(bc.points.lastPoint())
+                }
+            }
+            //delay(0.3.seconds)
+            delayFrame()
         }
     }
 }

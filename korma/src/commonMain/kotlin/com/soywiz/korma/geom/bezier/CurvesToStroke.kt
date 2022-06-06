@@ -7,13 +7,11 @@ import com.soywiz.korma.geom.IPoint
 import com.soywiz.korma.geom.Line
 import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.VectorArrayList
-import com.soywiz.korma.geom.degrees
 import com.soywiz.korma.geom.fastForEachGeneric
-import com.soywiz.korma.geom.firstPoint
 import com.soywiz.korma.geom.interpolate
-import com.soywiz.korma.geom.lastPoint
+import com.soywiz.korma.geom.lineIntersectionPoint
 import com.soywiz.korma.geom.plus
-import com.soywiz.korma.geom.unaryMinus
+import com.soywiz.korma.geom.projectedPoint
 import com.soywiz.korma.geom.vector.LineCap
 import com.soywiz.korma.geom.vector.LineJoin
 
@@ -59,38 +57,66 @@ class StrokePointsBuilder(val width: Double, val mode: StrokePointsMode = Stroke
         addPoint(pos, normal, -width)
     }
 
-    fun addJoin(curr: Curve, next: Curve, kind: LineJoin, miterLimit: Double) {
-        when (kind) {
-            LineJoin.MITER -> {
-            }
-            LineJoin.BEVEL -> {
-            }
-            LineJoin.ROUND -> {
-            }
-        }
-        val currTangent = curr.tangent(1.0)
-        val nextTangent = next.tangent(0.0)
-
+    fun addJoin(curr: Curve, next: Curve, kind: LineJoin, miterLimitRatio: Double) {
         val commonPoint = curr.calc(1.0)
+        val currTangent = curr.tangent(1.0)
+        val currNormal = curr.normal(1.0)
+        val nextTangent = next.tangent(0.0)
+        val nextNormal = next.normal(0.0)
 
-        val line0a = Line.fromPointAndDirection(commonPoint + curr.normal(1.0) * width, currTangent)
-        val line0b = Line.fromPointAndDirection(commonPoint + next.normal(1.0) * width, nextTangent)
+        val currLine0 = Line.fromPointAndDirection(commonPoint + currNormal * width, currTangent)
+        val currLine1 = Line.fromPointAndDirection(commonPoint + currNormal * -width, currTangent)
 
-        val line1a = Line.fromPointAndDirection(commonPoint + curr.normal(1.0) * -width, currTangent)
-        val line1b = Line.fromPointAndDirection(commonPoint + next.normal(1.0) * -width, nextTangent)
+        val nextLine0 = Line.fromPointAndDirection(commonPoint + nextNormal * width, nextTangent)
+        val nextLine1 = Line.fromPointAndDirection(commonPoint + nextNormal * -width, nextTangent)
 
-        val p0 = line0a.getLineIntersectionPoint(line0b)
-        val p1 = line1a.getLineIntersectionPoint(line1b)
-        if (p0 != null && p1 != null) {
-            //if (false) {
-            val d0 = p0 - commonPoint
-            val d1 = commonPoint - p1
-
-            addPoint(commonPoint, d0.normalized, d0.length)
-            addPoint(commonPoint, d1.normalized, -d1.length)
-        } else {
-            addTwoPoints(curr.calc(1.0), curr.normal(1.0), width)
+        val intersection0 = Line.lineIntersectionPoint(currLine0, nextLine0)
+        val intersection1 = Line.lineIntersectionPoint(currLine1, nextLine1)
+        if (intersection0 == null || intersection1 == null) {
+            addTwoPoints(commonPoint, currNormal, width)
+            return
         }
+
+        val miterLength = Point.distance(intersection0, intersection1)
+        val miterLimit = miterLimitRatio * width
+
+        val direction = Point.crossProduct(currTangent, nextTangent)
+
+        //println("miterLength=$miterLength, miterLimit=$miterLimit, sign=$direction")
+
+        if (kind != LineJoin.MITER || miterLength > miterLimit) {
+            if (direction < 0.0) {
+                val p1 = currLine0.projectedPoint(commonPoint)
+                val p2 = nextLine0.projectedPoint(commonPoint)
+                val p3 = Line.lineIntersectionPoint(currLine1, nextLine1)
+                if (p3 != null) {
+                    addPoint(p1, Point(0, 0), 0.0)
+                    addPoint(p3, Point(0, 0), 0.0)
+                    addPoint(p2, Point(0, 0), 0.0)
+                    addPoint(p3, Point(0, 0), 0.0)
+                    return
+                }
+            }
+            if (direction > 0.0) {
+                val p1 = currLine1.projectedPoint(commonPoint)
+                val p2 = nextLine1.projectedPoint(commonPoint)
+                val p3 = Line.lineIntersectionPoint(currLine0, nextLine0)
+                if (p3 != null) {
+                    addPoint(p3, Point(0, 0), 0.0)
+                    addPoint(p1, Point(0, 0), 0.0)
+                    addPoint(p3, Point(0, 0), 0.0)
+                    addPoint(p2, Point(0, 0), 0.0)
+                    return
+                }
+            }
+        }
+
+        //if (false) {
+        val d0 = intersection0 - commonPoint
+        val d1 = commonPoint - intersection1
+
+        addPoint(commonPoint, d0.normalized, d0.length)
+        addPoint(commonPoint, d1.normalized, -d1.length)
     }
 
     fun addCap(curr: Curve, ratio: Double, kind: LineCap) {
@@ -109,7 +135,7 @@ class StrokePointsBuilder(val width: Double, val mode: StrokePointsMode = Stroke
                         val p3 = mid + normal * -width
                         val a = if (ratio == 0.0) p0 else p3
                         val b = if (ratio == 0.0) p3 else p0
-                        addCurvePointsCap2(mid, a, b, ratio)
+                        addCurvePointsCap(mid, a, b, ratio)
                     }
                     else -> error("Can't happen")
                 }
@@ -120,13 +146,13 @@ class StrokePointsBuilder(val width: Double, val mode: StrokePointsMode = Stroke
         }
     }
 
-    fun addCurvePointsCap2(mid: IPoint, p0: IPoint, p3: IPoint, ratio: Double, nsteps: Int = NSTEPS) {
+    fun addCurvePointsCap(mid: IPoint, p0: IPoint, p3: IPoint, ratio: Double, nsteps: Int = NSTEPS) {
         val angleStart = Angle.between(mid, p0)
         val angleEnd = Angle.between(mid, p3)
 
         if (ratio == 1.0) addTwoPoints(mid, Point.fromPolar(angleEnd), width)
         val addAngle = if (Point.crossProduct(p0, p3) <= 0.0) Angle.ZERO else Angle.HALF
-        forEachRatio01(nsteps, include0 = true, include1 = true) { it ->
+        forEachRatio01(nsteps, include0 = true, include1 = true) {
             val angle = it.interpolate(angleStart, angleEnd)
             val dir = Point.fromPolar(angle + addAngle)
             addPoint(mid, dir, 0.0)
