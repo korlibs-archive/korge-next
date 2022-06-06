@@ -13,9 +13,11 @@ import com.soywiz.korma.geom.absoluteValue
 import com.soywiz.korma.geom.degrees
 import com.soywiz.korma.geom.fastForEachGeneric
 import com.soywiz.korma.geom.interpolate
+import com.soywiz.korma.geom.length
 import com.soywiz.korma.geom.lineIntersectionPoint
 import com.soywiz.korma.geom.minus
 import com.soywiz.korma.geom.mutable
+import com.soywiz.korma.geom.normalized
 import com.soywiz.korma.geom.plus
 import com.soywiz.korma.geom.projectedPoint
 import com.soywiz.korma.geom.umod
@@ -69,6 +71,10 @@ class StrokePointsBuilder(val width: Double, override val mode: StrokePointsMode
     fun addPoint(pos: IPoint, normal: IPoint, width: Double) = when (mode) {
         StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH -> vector.add(pos.x, pos.y, normal.x, normal.y, width)
         StrokePointsMode.NON_SCALABLE_POS -> vector.add(pos.x + normal.x * width, pos.y + normal.y * width)
+    }
+
+    fun addPointRelative(center: IPoint, pos: IPoint, sign: Double = 1.0) {
+        addPoint(center, (pos - center).normalized, (pos - center).length * sign)
     }
 
     fun addTwoPoints(pos: IPoint, normal: IPoint, width: Double) {
@@ -168,18 +174,19 @@ class StrokePointsBuilder(val width: Double, override val mode: StrokePointsMode
 
             //val p6 = p3
             //val p6 = if (angleB < 45.degrees) p5 else p3
-            val p6 = p3
+            val p6 = p5
+            //val p6 = p3
 
             if (direction < 0.0) {
-                addPoint(p1, Point(0, 0), 0.0)
-                addPoint(p6, Point(0, 0), 0.0)
-                addPoint(p2, Point(0, 0), 0.0)
-                addPoint(p6, Point(0, 0), 0.0)
+                addPointRelative(commonPoint, p1)
+                addPointRelative(commonPoint, p6)
+                addPointRelative(commonPoint, p2)
+                addPointRelative(commonPoint, p6)
             } else {
-                addPoint(p6, Point(0, 0), 0.0)
-                addPoint(p2, Point(0, 0), 0.0)
-                addPoint(p6, Point(0, 0), 0.0)
-                addPoint(p1, Point(0, 0), 0.0)
+                addPointRelative(commonPoint, p6)
+                addPointRelative(commonPoint, p2)
+                addPointRelative(commonPoint, p6)
+                addPointRelative(commonPoint, p1)
             }
             //addPoint(p1, Point(0, 0), 0.0)
             //addCurvePointsCap(p2, p1, 0.5)
