@@ -55,6 +55,7 @@ inline class Angle private constructor(
     @Suppress("MemberVisibilityCanBePrivate")
     companion object {
         inline val ZERO get() = fromRatio(0.0)
+        inline val QUARTER get() = fromRatio(0.25)
         inline val HALF get() = fromRatio(0.5)
         inline val FULL get() = fromRatio(1.0)
 
@@ -76,6 +77,7 @@ inline class Angle private constructor(
         inline fun tan01(ratio: Double) = kotlin.math.tan(PI2 * ratio)
 
         inline fun atan2(x: Double, y: Double): Angle = fromRadians(kotlin.math.atan2(x, y))
+        inline fun atan2(p: IPoint): Angle = atan2(p.x, p.y)
 
         inline fun degreesToRadians(degrees: Double): Double = degrees * DEG2RAD
         inline fun radiansToDegrees(radians: Double): Double = radians * RAD2DEG

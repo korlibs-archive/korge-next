@@ -9,6 +9,7 @@ import com.soywiz.korge.tween.tween
 import com.soywiz.korge.view.Container
 import com.soywiz.korge.view.Stage
 import com.soywiz.korge.view.addUpdater
+import com.soywiz.korge.view.bounds
 import com.soywiz.korge.view.centered
 import com.soywiz.korge.view.circle
 import com.soywiz.korge.view.container
@@ -40,32 +41,35 @@ import com.soywiz.korma.geom.vector.getCurves
 import com.soywiz.korma.geom.vector.line
 import com.soywiz.korma.geom.vector.lineTo
 import com.soywiz.korma.geom.vector.moveTo
+import com.soywiz.korma.geom.vector.quadTo
 import com.soywiz.korma.geom.vector.star
 import com.soywiz.korma.interpolation.Easing
 
 suspend fun Stage.mainStrokesExperiment2() {
     //graphics {
-    //graphics { // @TODO: This is not working!
-    gpuShapeView {
+    val g = graphics {
+    //val g = gpuShapeView {
         updateShape {
             fill(Colors.RED) {
-                //this.circle(0, 0, 100)
+                //circle(0, 0, 100)
                 curve(Bezier.Cubic(
                     Point(0, 0) + Point(200, 200),
                     Point(0, -50) + Point(200, 200),
                     Point(50, -50) + Point(200, 200),
-                    Point(50, 0) + Point(200, 200)
+                    Point(50, 0) + Point(200, 200),
                 ))
                 close()
                 //line(0, 0, 100, 100)
             }
         }
     }
+    println(g.getBounds())
 
     val path = buildVectorPath {
         //this.circle(400, 300, 200)
         moveTo(100, 300)
-        lineTo(300, 400)
+        //lineTo(300, 400)
+        quadTo(100, 600, 300, 400)
         //lineTo(500, 300)
         lineTo(200, 300)
         //moveTo(100, 300)
@@ -106,7 +110,8 @@ suspend fun Stage.mainStrokesExperiment2() {
                 //this.circle(400, 300, 200)
                 moveTo(startX, startY)
                 //moveTo(mouseX, mouseY)
-                lineTo(300, 400)
+                //lineTo(300, 400)
+                quadTo(100, 600, 300, 400)
                 //lineTo(mouseX, mouseY)
                 lineTo(endX, endY)
             }

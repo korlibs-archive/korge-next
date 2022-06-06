@@ -7,13 +7,17 @@ import com.soywiz.korma.geom.IPoint
 import com.soywiz.korma.geom.Line
 import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.VectorArrayList
+import com.soywiz.korma.geom.absoluteValue
+import com.soywiz.korma.geom.degrees
 import com.soywiz.korma.geom.fastForEachGeneric
 import com.soywiz.korma.geom.interpolate
 import com.soywiz.korma.geom.lineIntersectionPoint
+import com.soywiz.korma.geom.minus
 import com.soywiz.korma.geom.plus
 import com.soywiz.korma.geom.projectedPoint
 import com.soywiz.korma.geom.vector.LineCap
 import com.soywiz.korma.geom.vector.LineJoin
+import kotlin.math.absoluteValue
 
 // @TODO
 //private fun Curves.toStrokeCurves(join: LineJoin, startCap: LineCap, endCap: LineCap): Curves {
@@ -84,21 +88,48 @@ class StrokePointsBuilder(val width: Double, val mode: StrokePointsMode = Stroke
 
         //println("miterLength=$miterLength, miterLimit=$miterLimit, sign=$direction")
 
+        // Miter
+        val angle = Angle.atan2(nextTangent) - Angle.atan2(currTangent)
+        if (angle.absoluteValue < 15.degrees) {
+            val d0 = intersection0 - commonPoint
+            val d1 = commonPoint - intersection1
+            addPoint(commonPoint, d0.normalized, d0.length)
+            addPoint(commonPoint, d1.normalized, -d1.length)
+            return
+        }
+
+        //println("angle=$angle, currTangent=$currTangent, nextTangent=$nextTangent")
+
         //if (kind != LineJoin.MITER || miterLength > miterLimit) {
         run {
+            //val angle = Angle.between(nextTangent * 10.0, currTangent * 10.0)
             val p1 = if (direction < 0.0) currLine0.projectedPoint(commonPoint) else nextLine1.projectedPoint(commonPoint)
             val p2 = if (direction < 0.0) nextLine0.projectedPoint(commonPoint) else currLine1.projectedPoint(commonPoint)
             // @TODO: We should try to find the common edge (except when the two lines overlaps), to avoid overlapping in normal curves
-            val p3 = if (direction < 0.0) Line.lineIntersectionPoint(currLine1, nextLine1) else Line.lineIntersectionPoint(currLine0, nextLine0)
-            if (direction < 0.0) {
+
+            //println("direction=$direction")
+            var p3: IPoint? = when {
+                //angle.absoluteValue > 190.degrees -> null
+                //else -> null
+                direction < 0.0 -> Line.lineIntersectionPoint(currLine1, nextLine1)
+                else -> Line.lineIntersectionPoint(currLine0, nextLine0)
+            }
+
+            //p3 = p2
+
+            if (p3 == null) {
                 addPoint(p1, Point(0, 0), 0.0)
-                if (p3 != null) addPoint(p3, Point(0, 0), 0.0)
                 addPoint(p2, Point(0, 0), 0.0)
-                if (p3 != null) addPoint(p3, Point(0, 0), 0.0)
+                addPoint(p1, Point(0, 0), 0.0)
+            } else if (direction < 0.0) {
+                addPoint(p1, Point(0, 0), 0.0)
+                addPoint(p3, Point(0, 0), 0.0)
+                addPoint(p2, Point(0, 0), 0.0)
+                addPoint(p3, Point(0, 0), 0.0)
             } else {
-                if (p3 != null) addPoint(p3, Point(0, 0), 0.0)
+                addPoint(p3, Point(0, 0), 0.0)
                 addPoint(p2, Point(0, 0), 0.0)
-                if (p3 != null) addPoint(p3, Point(0, 0), 0.0)
+                addPoint(p3, Point(0, 0), 0.0)
                 addPoint(p1, Point(0, 0), 0.0)
             }
             //addPoint(p1, Point(0, 0), 0.0)

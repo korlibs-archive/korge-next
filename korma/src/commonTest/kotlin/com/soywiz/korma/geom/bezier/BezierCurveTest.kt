@@ -82,4 +82,17 @@ class BezierCurveTest {
         println(curve.lut.estimateAtLength(200.0))
         println(curve.lut.estimateAtLength(10000.0))
     }
+
+    @Test
+    fun testBoundingBox() {
+        //println(BezierCurve(0,0, 0,-50, 50,-50, 50,0).extrema)
+        assertEquals(
+            Rectangle(0.0, -37.5, 50.0, 37.5),
+            BezierCurve(0,0, 0,-50, 50,-50, 50,0).boundingBox
+        )
+        assertEquals(
+            Rectangle(0.0, -37.5, 50.0, 37.5),
+            Bezier.cubicBounds(0.0,0.0, 0.0,-50.0, 50.0,-50.0, 50.0,0.0)
+        )
+    }
 }

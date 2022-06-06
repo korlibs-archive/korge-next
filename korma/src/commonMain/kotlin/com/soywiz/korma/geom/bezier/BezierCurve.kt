@@ -33,6 +33,7 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
+import kotlin.reflect.KProperty0
 
 /**
  * Port of the operations of the library Bezier.JS with some adjustments,
@@ -84,9 +85,12 @@ class BezierCurve(
     val clockwise: Boolean by lazy { direction > 0.radians }
     val extrema: Extrema by lazy {
         val out = (0 until dims).map { dim ->
-            var result = droots(dpoints[0].getComponentList(dim))
+            val p = dpoints[0].getComponentList(dim)
+            //println("extrema dim=$dim, p=${p.toList()}, droots=${droots(p).toList()}")
+            var result = droots(p)
             if (order == 3) {
-                result += droots(dpoints[1].getComponentList(dim))
+                val p = dpoints[1].getComponentList(dim)
+                result += droots(p)
             }
             result.filter { it in 0.0..1.0 }.sorted().distinct().toDoubleArray()
         }
@@ -665,7 +669,7 @@ class BezierCurve(
                         val v1 = -(m1 + m2) / d
                         val v2 = -(-m1 + m2) / d
                         return doubleArrayOf(v1, v2)
-                    } else if (b != 0.0 && d == 0.0) {
+                    } else if (b != c && d == 0.0) {
                         return doubleArrayOf((2 * b - c) / (2 * (b - c)))
                     }
                     return doubleArrayOf()
