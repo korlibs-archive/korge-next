@@ -479,23 +479,20 @@ abstract class BmpSlice(
     val rotated: Boolean = imageOrientation == ImageOrientation.ROTATE_90 || imageOrientation == ImageOrientation.ROTATE_270
     val rotatedAngle: Int = 0
 
+    val isRotatedInBmpDeg90 = (width > 1 && tl_x == tr_x) || (height > 1 && tl_y == bl_y)
+
     private val pixelOffsets: IntArray by lazy {
         val x = (tl_x * baseWidth).roundToInt()
         val y = (tl_y * baseHeight).roundToInt()
-        if (tl_x == tr_x) {
-            intArrayOf(
-                if (tl_x > br_x) x - 1 else x,
-                if (tl_y > br_y) y - 1 else y,
-                0, if (tl_x < br_x) 1 else -1,
-                0, if (tl_y < br_y) 1 else -1
-            )
+        val xOff = if (tl_x > br_x) x - 1 else x
+        val yOff = if (tl_y > br_y) y - 1 else y
+        val xDir = if (tl_x < br_x) 1 else -1
+        val yDir = if (tl_y < br_y) 1 else -1
+
+        if (isRotatedInBmpDeg90) {
+            intArrayOf(xOff, yOff, 0, xDir, 0, yDir)
         } else {
-            intArrayOf(
-                if (tl_x > br_x) x - 1 else x,
-                if (tl_y > br_y) y - 1 else y,
-                if (tl_x < br_x) 1 else -1, 0,
-                if (tl_y < br_y) 1 else -1, 0
-            )
+            intArrayOf(xOff, yOff, xDir, 0, yDir, 0)
         }
     }
 
@@ -573,7 +570,7 @@ abstract class BmpSlice(
         val out: T
         val x = (min(min(tl_x, tr_x), min(bl_x, br_x)) * baseWidth).roundToInt()
         val y = (min(min(tl_y, tr_y), min(bl_y, br_y)) * baseHeight).roundToInt()
-        val rotated = (width > 1 && tl_x == tr_x) || (height > 1 && tl_y == bl_y)
+        val rotated = isRotatedInBmpDeg90
         val reverseX = width > 1 && if (rotated) tl_y > br_y else tl_x > br_x
         val reverseY = height > 1 && if (rotated) tl_x > br_x else tl_y > br_y
 
