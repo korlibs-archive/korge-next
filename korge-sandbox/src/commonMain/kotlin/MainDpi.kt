@@ -10,9 +10,11 @@ import com.soywiz.korge.view.xy
 suspend fun Stage.mainDpi() {
     val text = text("-").scale(2.0)
 
-    solidRect(views.virtualPixelsPerCm * 2, views.virtualPixelsPerCm * 2).xy(0, 400)
+    val rect = solidRect(views.virtualPixelsPerCm * 2, views.virtualPixelsPerCm * 2).xy(0, 400)
 
     intervalAndNow(0.5.seconds) {
+        rect.width = views.virtualPixelsPerCm * 2
+        rect.height = views.virtualPixelsPerCm * 2
         text.text = """
             nativeWidth: ${stage.views.nativeWidth}, ${stage.views.nativeHeight}
             devicePixelRatio: ${stage.views.devicePixelRatio}
