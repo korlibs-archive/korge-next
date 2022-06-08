@@ -118,7 +118,9 @@ class Views constructor(
     private val INCH_TO_CM = 2.54
 
     val devicePixelRatio: Double get() = ag.devicePixelRatio
+    /** Approximate on iOS */
     val pixelsPerInch: Double get() = ag.pixelsPerInch
+    /** Approximate on iOS */
     val pixelsPerCm: Double get() = ag.pixelsPerInch / INCH_TO_CM
     val virtualPixelsPerInch: Double get() = pixelsPerInch / globalToWindowScaleAvg
     val virtualPixelsPerCm: Double get() = virtualPixelsPerInch / INCH_TO_CM

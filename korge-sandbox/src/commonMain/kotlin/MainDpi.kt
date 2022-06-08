@@ -15,6 +15,7 @@ suspend fun Stage.mainDpi() {
     intervalAndNow(0.5.seconds) {
         text.text = """
             nativeWidth: ${stage.views.nativeWidth}, ${stage.views.nativeHeight}
+            devicePixelRatio: ${stage.views.devicePixelRatio}
             virtualWidth: ${stage.views.virtualWidth}, ${stage.views.virtualHeight}
             pixelsPerInch: ${stage.views.pixelsPerInch}
             pixelsPerCm: ${stage.views.pixelsPerCm}
