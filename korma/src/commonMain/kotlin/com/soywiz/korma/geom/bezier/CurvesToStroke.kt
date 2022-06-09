@@ -245,7 +245,8 @@ class StrokePointsBuilder(val width: Double, override val mode: StrokePointsMode
         if (ratio == 0.0) addTwoPoints(mid, Point.fromPolar(angleStart), width)
     }
 
-    fun addCurvePoints(curr: Curve, nsteps: Int = (curr.length() / 10.0).clamp(20.0, 100.0).toInt()) {
+    // @TODO: instead of nsteps we should have some kind of threshold regarding to how much information do we lose at 1:1 scale
+    fun addCurvePoints(curr: Curve, nsteps: Int = (curr.length() / 10.0).clamp(10.0, 100.0).toInt()) {
         // @TODO: Here we could generate curve information to render in the shader with a plain simple quadratic bezier to reduce the number of points and make the curve as accurate as possible
         forEachRatio01(nsteps, include0 = false, include1 = false) {
             addTwoPoints(curr.calc(it), curr.normal(it), width)
