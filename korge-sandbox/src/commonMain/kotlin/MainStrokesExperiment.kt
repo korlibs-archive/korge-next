@@ -25,9 +25,7 @@ import com.soywiz.korim.text.aroundPath
 import com.soywiz.korim.text.text
 import com.soywiz.korim.vector.StrokeInfo
 import com.soywiz.korio.async.launchImmediately
-import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.PointArrayList
-import com.soywiz.korma.geom.bezier.Bezier
 import com.soywiz.korma.geom.bezier.BezierCurve
 import com.soywiz.korma.geom.bezier.StrokePointsMode
 import com.soywiz.korma.geom.bezier.toDashes
@@ -38,11 +36,8 @@ import com.soywiz.korma.geom.firstPoint
 import com.soywiz.korma.geom.lastPoint
 import com.soywiz.korma.geom.shape.buildVectorPath
 import com.soywiz.korma.geom.vector.circle
-import com.soywiz.korma.geom.vector.curve
 import com.soywiz.korma.geom.vector.getCurves
 import com.soywiz.korma.geom.vector.line
-import com.soywiz.korma.geom.vector.lineTo
-import com.soywiz.korma.geom.vector.moveTo
 import com.soywiz.korma.geom.vector.quadTo
 import com.soywiz.korma.geom.vector.star
 import com.soywiz.korma.interpolation.Easing
@@ -52,7 +47,7 @@ suspend fun Stage.mainStrokesExperiment2() {
     val curves = path.getCurves()
     val points = curves.toStrokePoints(10.0, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH)
     //addChild(DebugVertexView(points.vector, type = AG.DrawType.LINE_STRIP).also { it.color = Colors.WHITE })
-    val dbv = debugVertexView(points.vector, type = AG.DrawType.TRIANGLE_STRIP) { color = Colors.WHITE }
+    val dbv = debugVertexView(listOf(points.vector), type = AG.DrawType.TRIANGLE_STRIP) { color = Colors.WHITE }
     val dbv3 = debugVertexView(type = AG.DrawType.LINE_STRIP) { color = Colors.BLUE.withAd(0.1) }
     val dbv2 = debugVertexView(type = AG.DrawType.POINTS) { color = Colors.RED }
     val dbv4 = gpuShapeView {  }
@@ -64,11 +59,13 @@ suspend fun Stage.mainStrokesExperiment2() {
     var debug = true
     var closed = false
     var quad = false
+    var dashes = true
     keys {
         up(Key.SPACE) { alternate = !alternate }
         up(Key.N0) { debug = !debug }
         up(Key.N1) { closed = !closed }
         up(Key.N2) { quad = !quad }
+        up(Key.N3) { dashes = !dashes }
         up(Key.UP) { pathScale *= 1.1 }
         up(Key.DOWN) { pathScale *= 0.9 }
         down(Key.LEFT) { strokeWidth *= 0.9 }
@@ -119,18 +116,35 @@ suspend fun Stage.mainStrokesExperiment2() {
             //delay(0.3.seconds)
             //dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).vector
             //dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).also {
-            val pointsInfo = curves.toStrokePoints(strokeWidth, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH, generateDebug = debug).also {
-                it.scale(pathScale)
-            }
-            dbv.points = pointsInfo.vector
-            dbv3.points = pointsInfo.vector
-            dbv4.updateShape {
-                pointsInfo.debugSegments.fastForEach { line ->
-                    stroke(Colors.GREEN, lineWidth = 1.5) {
-                        //println("line=$line")
-                        this.line(line.a, line.b)
+            val pointsInfoList = curves
+                .let {
+                    if (dashes) {
+                        it.toDashes(doubleArrayOf(30.0, 10.0))
+                    } else {
+                        listOf(it)
                     }
                 }
+                .map { it.toStrokePoints(strokeWidth, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH, generateDebug = debug) }
+            dbv.pointsList = pointsInfoList.map { it.vector }
+            dbv3.pointsList = pointsInfoList.map { it.vector }
+            dbv4.updateShape {
+                pointsInfoList.fastForEach { pointsInfo ->
+                    pointsInfo.debugSegments.fastForEach { line ->
+                        stroke(Colors.GREEN, lineWidth = 1.5) {
+                            //println("line=$line")
+                            this.line(line.a, line.b)
+                        }
+                    }
+
+                    val debugPointColors = listOf(Colors.RED, Colors.PURPLE, Colors.MAGENTA)
+                    pointsInfo.debugPoints.fastForEachWithIndex { index, x, y ->
+                        val color = debugPointColors.getCyclic(index)
+                        fill(color.withAd(0.5)) {
+                            this.circle(x, y, 3.0)
+                        }
+                    }
+                }
+
                 PointArrayList().also {
                     for (c in curves.curves) {
                         val bc = c as BezierCurve
@@ -142,21 +156,15 @@ suspend fun Stage.mainStrokesExperiment2() {
                         this.circle(x, y, 2.0)
                     }
                 }
-                val debugPointColors = listOf(Colors.RED, Colors.PURPLE, Colors.MAGENTA)
-                pointsInfo.debugPoints.fastForEachWithIndex { index, x, y ->
-                    val color = debugPointColors.getCyclic(index)
-                    fill(color.withAd(0.5)) {
-                        this.circle(x, y, 3.0)
-                    }
-                }
+
             }
-            dbv2.points = PointArrayList().also {
+            dbv2.pointsList = listOf(PointArrayList().also {
                 for (c in curves.curves) {
                     val bc = c as BezierCurve
                     it.add(bc.points.firstPoint())
                     it.add(bc.points.lastPoint())
                 }
-            }
+            })
             //delay(0.3.seconds)
             delayFrame()
         }
@@ -186,13 +194,13 @@ suspend fun Stage.mainStrokesExperiment() {
 
 
 
-    addChild(DebugVertexView(points.vector).also { it.color = Colors.WHITE })
+    addChild(DebugVertexView(listOf(points.vector)).also { it.color = Colors.WHITE })
 
     fun generateDashes(offset: Double): Container {
         return Container().apply {
             val strokeSize = 180.0
             for (c in curves.toDashes(doubleArrayOf(180.0, 50.0), offset = offset)) {
-                addChild(DebugVertexView(c.toStrokePoints(10.0).vector).also { it.color = Colors.BLUEVIOLET })
+                addChild(DebugVertexView(listOf(c.toStrokePoints(10.0).vector)).also { it.color = Colors.BLUEVIOLET })
             }
         }
     }
