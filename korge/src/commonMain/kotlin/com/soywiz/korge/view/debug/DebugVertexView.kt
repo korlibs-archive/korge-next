@@ -42,6 +42,8 @@ class DebugVertexView(pointsList: List<IVectorArrayList>, var color: RGBA = Colo
                 updatedPoints()
             }
         }
+
+    @Deprecated("Use pointsList instead")
     var points: IVectorArrayList
         get() = pointsList.firstOrNull() ?: VectorArrayList(5)
         set(value) { pointsList = listOf(value) }

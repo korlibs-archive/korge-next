@@ -30,6 +30,7 @@ import com.soywiz.korma.geom.bezier.BezierCurve
 import com.soywiz.korma.geom.bezier.StrokePointsMode
 import com.soywiz.korma.geom.bezier.toDashes
 import com.soywiz.korma.geom.bezier.toStrokePoints
+import com.soywiz.korma.geom.bezier.toStrokePointsList
 import com.soywiz.korma.geom.fastForEach
 import com.soywiz.korma.geom.fastForEachWithIndex
 import com.soywiz.korma.geom.firstPoint
@@ -187,16 +188,14 @@ suspend fun Stage.mainStrokesExperiment() {
     println("path=$path")
 
 
-
     addChild(DebugVertexView(listOf(points.vector)).also { it.color = Colors.WHITE })
 
-    fun generateDashes(offset: Double): Container {
-        return Container().apply {
-            val strokeSize = 180.0
-            for (c in curves.toDashes(doubleArrayOf(180.0, 50.0), offset = offset)) {
-                addChild(DebugVertexView(listOf(c.toStrokePoints(10.0).vector)).also { it.color = Colors.BLUEVIOLET })
-            }
-        }
+    fun generateDashes(offset: Double): Container = Container().apply {
+        addChild(DebugVertexView(curves
+            .toDashes(doubleArrayOf(180.0, 50.0), offset = offset)
+            .toStrokePointsList(10.0)
+            .map { it.vector }
+        ).also { it.color = Colors.BLUEVIOLET })
     }
 
     class OffsetInfo {

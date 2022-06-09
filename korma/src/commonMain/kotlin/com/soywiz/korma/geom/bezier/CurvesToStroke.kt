@@ -123,8 +123,8 @@ class StrokePointsBuilder(val width: Double, override val mode: StrokePointsMode
 
         //println("angle=$angle, currTangent=$currTangent, nextTangent=$nextTangent")
 
-        //if (kind != LineJoin.MITER || miterLength > miterLimit) {
-        run {
+        if (kind != LineJoin.MITER || miterLength > miterLimit) {
+        //run {
             //val angle = Angle.between(nextTangent * 10.0, currTangent * 10.0)
             val p1 = if (direction < 0.0) currLine0.projectedPoint(commonPoint) else nextLine1.projectedPoint(commonPoint)
             val p2 = if (direction < 0.0) nextLine0.projectedPoint(commonPoint) else currLine1.projectedPoint(commonPoint)
@@ -298,3 +298,6 @@ fun Curves.toStrokePoints(width: Double, join: LineJoin = LineJoin.MITER, startC
         it.addAllCurvesPoints(this, join, startCap, endCap, miterLimit)
     }
 }
+
+fun List<Curves>.toStrokePointsList(width: Double, join: LineJoin = LineJoin.MITER, startCap: LineCap = LineCap.BUTT, endCap: LineCap = LineCap.BUTT, miterLimit: Double = 10.0, mode: StrokePointsMode = StrokePointsMode.NON_SCALABLE_POS, generateDebug: Boolean = false): List<StrokePoints> =
+    this.map { it.toStrokePoints(width, join, startCap, endCap, miterLimit, mode, generateDebug) }
