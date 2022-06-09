@@ -117,13 +117,7 @@ suspend fun Stage.mainStrokesExperiment2() {
             //dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).vector
             //dbv.points = curves.toStrokePoints(5.0, endCap = LineCap.ROUND, startCap = LineCap.ROUND, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH).also {
             val pointsInfoList = curves
-                .let {
-                    if (dashes) {
-                        it.toDashes(doubleArrayOf(30.0, 10.0))
-                    } else {
-                        listOf(it)
-                    }
-                }
+                .toDashes(if (dashes) doubleArrayOf(30.0, 10.0) else null)
                 .map { it.toStrokePoints(strokeWidth, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH, generateDebug = debug) }
             dbv.pointsList = pointsInfoList.map { it.vector }
             dbv3.pointsList = pointsInfoList.map { it.vector }

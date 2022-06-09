@@ -2,7 +2,9 @@ package com.soywiz.korma.geom.bezier
 
 import com.soywiz.kds.getCyclic
 
-fun Curves.toDashes(pattern: DoubleArray, offset: Double = 0.0): List<Curves> {
+fun Curves.toDashes(pattern: DoubleArray?, offset: Double = 0.0): List<Curves> {
+    if (pattern == null) return listOf(this)
+
     check(!pattern.all { it <= 0.0 })
     val length = this.length
     var current = offset
