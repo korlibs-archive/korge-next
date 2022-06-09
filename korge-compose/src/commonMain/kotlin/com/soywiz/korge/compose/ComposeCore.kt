@@ -7,6 +7,21 @@ import com.soywiz.korge.view.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
+/*
+suspend fun main() = Korge(width = 256, height = 64) {
+    setComposeContent {
+        var count by remember { mutableStateOf(0) }
+        VStack {
+            Text("$count")
+            HStack {
+                Button("-") { count-- }
+                Button("+") { count++ }
+            }
+        }
+    }
+}
+ */
+
 // We would implement an Applier class like the following, which would teach compose how to
 // manage a tree of Nodes.
 // https://developer.android.com/reference/kotlin/androidx/compose/runtime/Applier
