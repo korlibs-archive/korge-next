@@ -8,7 +8,9 @@ import androidx.compose.runtime.setValue
 import com.soywiz.klock.milliseconds
 import com.soywiz.korev.Key
 import com.soywiz.korge.compose.Button
+import com.soywiz.korge.compose.Canvas
 import com.soywiz.korge.compose.HStack
+import com.soywiz.korge.compose.KeyDown
 import com.soywiz.korge.compose.NodeApplier
 import com.soywiz.korge.compose.Text
 import com.soywiz.korge.compose.VStack
