@@ -95,4 +95,12 @@ class BezierCurveTest {
             Bezier.cubicBounds(0.0,0.0, 0.0,-50.0, 50.0,-50.0, 50.0,0.0)
         )
     }
+    @Test
+    fun testCurvature() {
+        val result = BezierCurve(0,0, 0,-50, 50,-50, 50,0).curvature(0.1)
+        assertEquals(0.019829466587348795, result.k)
+        assertEquals(50.43000000000001, result.r)
+        assertEquals(0.00007738330725929297, result.dk)
+        assertEquals(0.00007738330725929297, result.adk)
+    }
 }

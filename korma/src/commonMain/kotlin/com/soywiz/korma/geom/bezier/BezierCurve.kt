@@ -28,6 +28,7 @@ import com.soywiz.korma.interpolation.interpolate
 import com.soywiz.korma.math.convertRange
 import com.soywiz.korma.math.isAlmostEquals
 import kotlin.jvm.JvmName
+import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -207,7 +208,7 @@ class BezierCurve(
         val n2 = this.normal(1.0)
         val s = n1.x * n2.x + n1.y * n2.y
         //if (this._3d) s += n1.z * n2.z
-        return kotlin.math.abs(kotlin.math.acos(s)) < kotlin.math.PI / 3.0
+        return abs(kotlin.math.acos(s)) < kotlin.math.PI / 3.0
     }
 
     /** Returns the [t] values where the curve changes its sign */
@@ -226,7 +227,7 @@ class BezierCurve(
 
         if (v1.isAlmostEquals(0.0)) {
             if (!v2.isAlmostEquals(0.0)) {
-                val t = -v3 / v2;
+                val t = -v3 / v2
                 if (t in 0.0..1.0) return doubleArrayOf(t)
             }
             return doubleArrayOf()
@@ -270,7 +271,7 @@ class BezierCurve(
                     var segment = p1.split(t1, t2)
                     if (!segment.curve.simple()) {
                         t2 -= step
-                        if (kotlin.math.abs(t1 - t2) < step) {
+                        if (abs(t1 - t2) < step) {
                             // we can never form a reduction
                             return listOf()
                         }
@@ -307,7 +308,7 @@ class BezierCurve(
     fun overlaps(curve: BezierCurve): Boolean {
         val lbbox = this.boundingBox
         val tbbox = curve.boundingBox
-        return bboxoverlap(lbbox, tbbox);
+        return bboxoverlap(lbbox, tbbox)
     }
 
     fun selfIntersections(threshold: Double = 0.5, out: DoubleArrayList = DoubleArrayList()): DoubleArrayList {
@@ -321,7 +322,7 @@ class BezierCurve(
             val result = curveintersects(left, right, threshold)
             results.add(result.mapDouble { it.first })
         }
-        return results;
+        return results
     }
 
     fun intersections(line: Line): DoubleArray {
@@ -375,6 +376,10 @@ class BezierCurve(
         return hullOrNull(t, out)!!
     }
 
+    fun curvature(t: Double, kOnly: Boolean = false): Curvature {
+        return curvature(t, dpoints[0], dpoints[1], dims, kOnly)
+    }
+
     fun hullOrNull(t: Double, out: PointArrayList = PointArrayList()): IPointArrayList? {
         if (order < 2) return null
         var p = this.points
@@ -418,6 +423,13 @@ class BezierCurve(
         override fun toString(): String = "Extrema(x=${xt.contentToString()}, y=${yt.contentToString()})"
     }
 
+    data class Curvature(
+        val k: Double = 0.0,
+        val r: Double = 0.0,
+        val dk: Double = 0.0,
+        val adk: Double = 0.0,
+    )
+
     companion object {
         // Legendre-Gauss abscissae with n=24 (x_i values, defined at i=n as the roots of the nth order Legendre polynomial Pn(x))
         val T_VALUES = doubleArrayOf(
@@ -439,12 +451,62 @@ class BezierCurve(
             0.028531388628933663, 0.028531388628933663, 0.0123412297999872, 0.0123412297999872
         )
 
+        private fun curvature(t: Double, d1: IPointArrayList, d2: IPointArrayList, dims: Int, kOnly: Boolean = false): Curvature {
+            val d = compute(t, d1)
+            val dd = compute(t, d2)
+            val qdsum = d.x * d.x + d.y * d.y
+
+            val num = if (dims >= 3) {
+                TODO()
+                //sqrt(
+                //    pow(d.y * dd.z - dd.y * d.z, 2) +
+                //        pow(d.z * dd.x - dd.z * d.x, 2) +
+                //        pow(d.x * dd.y - dd.x * d.y, 2)
+                //);
+            } else {
+                d.x * dd.y - d.y * dd.x
+            }
+
+            val dnm = if (dims >= 3) {
+                //pow(qdsum + d.z * d.z, 3.0 / 2.0);
+                TODO()
+            } else {
+                qdsum.pow(3.0 / 2.0)
+            }
+
+            if (num == 0.0 || dnm == 0.0) {
+                return Curvature(k = 0.0, r = 0.0)
+            }
+
+            val k = num / dnm
+            val r = dnm / num
+
+            // We're also computing the derivative of kappa, because
+            // there is value in knowing the rate of change for the
+            // curvature along the curve. And we're just going to
+            // ballpark it based on an epsilon.
+            return when {
+                !kOnly -> {
+                    // compute k'(t) based on the interval before, and after it,
+                    // to at least try to not introduce forward/backward pass bias.
+                    val pk = curvature(t - 0.001, d1, d2, dims, true).k
+                    val nk = curvature(t + 0.001, d1, d2, dims, true).k
+                    val dk = (nk - k + (k - pk)) / 2
+                    val adk = (abs(nk - k) + abs(k - pk)) / 2
+                    Curvature(k, r, dk, adk)
+                }
+                else -> {
+                    Curvature(k, r)
+                }
+            }
+        }
+
         val IRectangle.midX: Double get() = (left + right) * 0.5
         val IRectangle.midY: Double get() = (top + bottom) * 0.5
 
         private fun bboxoverlap(a: IRectangle, b: IRectangle): Boolean {
-            if (kotlin.math.abs(a.midX - b.midX) >= ((a.width + b.width) / 2.0)) return false
-            if (kotlin.math.abs(a.midY - b.midY) >= ((a.height + b.height) / 2.0)) return false
+            if (abs(a.midX - b.midX) >= ((a.width + b.width) / 2.0)) return false
+            if (abs(a.midY - b.midY) >= ((a.height + b.height) / 2.0)) return false
             return true
 
             //return a.intersects(b)
@@ -740,7 +802,7 @@ class BezierCurve(
 
             val results = arrayListOf<Pair<Double, Double>>()
 
-            if (pairs.isEmpty()) return results;
+            if (pairs.isEmpty()) return results
 
             //println("pairs[${pairs.size}]=$pairs")
             pairs.forEach { pair ->
