@@ -3,16 +3,21 @@ package com.soywiz.korge.compose
 import androidx.compose.runtime.*
 import com.soywiz.korge.input.*
 import com.soywiz.korge.ui.*
+import com.soywiz.korim.color.Colors
+import com.soywiz.korim.color.RGBA
 
 @Composable
-fun Text(text: String, onClick: () -> Unit = {}) {
+fun Text(text: String, color: RGBA = Colors.WHITE, onClick: () -> Unit = {}) {
     ComposeNode<UIText, NodeApplier>({
         UIText("DUMMY", height = UIButton.DEFAULT_HEIGHT).also {
             println("Created UIText")
         }
     }) {
         set(text) { this.text = it }
-        set(onClick) { this.onClick { onClick() } }
+        set(color) { this.colorMul = it }
+        set(onClick) {
+            this.onClick { onClick() }
+        }
     }
 }
 
