@@ -27,6 +27,7 @@ import com.soywiz.korma.geom.top
 import com.soywiz.korma.interpolation.interpolate
 import com.soywiz.korma.math.convertRange
 import com.soywiz.korma.math.isAlmostEquals
+import com.soywiz.korma.math.normalizeZero
 import kotlin.jvm.JvmName
 import kotlin.math.abs
 import kotlin.math.absoluteValue
@@ -875,16 +876,16 @@ class BezierCurve(
                         val m2 = -a + b
                         val v1 = -(m1 + m2) / d
                         val v2 = -(-m1 + m2) / d
-                        return doubleArrayOf(v1, v2)
+                        return doubleArrayOf(v1.normalizeZero(), v2.normalizeZero())
                     } else if (b != c && d == 0.0) {
-                        return doubleArrayOf((2 * b - c) / (2 * (b - c)))
+                        return doubleArrayOf(((2 * b - c) / (2 * (b - c))).normalizeZero())
                     }
                     return doubleArrayOf()
                 }
                 2 -> {
                     val a = p[0]
                     val b = p[1]
-                    if (a != b) return doubleArrayOf(a / (a - b))
+                    if (a != b) return doubleArrayOf((a / (a - b)).normalizeZero())
                     return doubleArrayOf()
                 }
                 else -> {
@@ -968,5 +969,13 @@ class BezierCurve(
 
         fun lli4(p1: IPoint, p2: IPoint, p3: IPoint, p4: IPoint, out: Point = Point()): IPoint? =
             lli8(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, out)
+
+        internal fun cubicFromPoints(point: Point, point1: Point, point2: Point, t: Double = 0.5): BezierCurve {
+            TODO("Not yet implemented")
+        }
+
+        internal fun quadraticFromPoints(point: Point, point1: Point, point2: Point, t: Double = 0.5): BezierCurve {
+            TODO("Not yet implemented")
+        }
     }
 }

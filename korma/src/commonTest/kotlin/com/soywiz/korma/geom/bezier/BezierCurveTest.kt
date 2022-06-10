@@ -1,5 +1,6 @@
 package com.soywiz.korma.geom.bezier
 
+import com.soywiz.korma.geom.Line
 import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.clone
@@ -149,6 +150,44 @@ class BezierCurveTest {
                 )
             ),
             curves.map { it.curve }
+        )
+    }
+
+    @Test
+    fun testExtremaHasCorrectExtrema() {
+        val extrema = BezierCurve(330, 592, 330, 557, 315, 522, 315, 485).extrema
+
+        assertEquals(
+            listOf(
+                listOf(0.0, 0.5, 1.0),
+                listOf(0.0, 0.5, 1.0),
+                listOf(0.0),
+            ),
+            listOf(extrema.allt.toList(), extrema.xt.toList(), extrema.yt.toList())
+        )
+    }
+
+    @Test
+    fun testLutYieldsNP1Points() {
+        val b = BezierCurve(0, 0, 0, 1, 1, 1, 1, 0)
+        val lut = b.getLUT(100)
+        assertEquals(101, lut.size)
+    }
+
+    @Test
+    fun testLineCurveIntersection() {
+        val b = BezierCurve(76, 250, 77, 150, 220, 50);
+        val line = Line(13, 140, 213, 140)
+        val intersections = b.intersections(line)
+        assertEquals(listOf(0.55), intersections.toList())
+    }
+
+    @Test
+    fun testProjectsOntoTheCorrectOnCurvePoint() {
+        val b = BezierCurve(0, 0, 100, 0, 100, 100)
+        assertEquals(
+            BezierCurve.ProjectedPoint(p = Point(75, 25), t = 0.5, d = 7.0710678118654755),
+            b.project(Point(80, 20))
         )
     }
 }
