@@ -4,6 +4,8 @@ import com.soywiz.korma.geom.Line
 import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.clone
+import com.soywiz.korma.geom.roundDecimalPlaces
+import com.soywiz.korma.math.roundDecimalPlaces
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -110,12 +112,12 @@ class BezierCurveTest {
         val curves = BezierCurve(0,0, 0,-50, 50,-50, 50,0).offset(10.0)
         assertEquals(
             listOf(
-                BezierCurve(10.0, 0.0, 10.0, -13.090411452448924, 22.66758470244078, -13.202994002068822, 5.033087892627453, 8.641066268990588),
-                BezierCurve(5.033087892627444, 8.641066268990594, 29.402954093376508, -5.553441063987988, 28.051297926770598, 0.0, 0.0, 10.0),
-                BezierCurve(0.0, 10.0, 17.70561015300635, 10.0, 6.563418098274272, 11.083241937539142, -8.604422975318894, 5.095478904068228),
-                BezierCurve(-8.604422975318895, 5.095478904068228, -9.076954343898215, 4.297544138581006, 0.0, 0.28924760595944715, -10.0, 0.0)
+                BezierCurve(10.0, 0.0, 10.0, -13.09, 22.67, -13.20, 5.03, 8.64),
+                BezierCurve(5.03, 8.64, 29.40, -5.55, 28.05, 0.0, 0.0, 10.0),
+                BezierCurve(0.0, 10.0, 17.71, 10.0, 6.56, 11.08, -8.60, 5.10),
+                BezierCurve(-8.60, 5.10, -9.08, 4.30, 0.0, 0.29, -10.0, 0.0)
             ),
-            curves
+            curves.map { it.roundDecimalPlaces(2) }
         )
     }
 

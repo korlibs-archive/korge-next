@@ -23,6 +23,7 @@ import com.soywiz.korma.geom.lastY
 import com.soywiz.korma.geom.left
 import com.soywiz.korma.geom.radians
 import com.soywiz.korma.geom.right
+import com.soywiz.korma.geom.roundDecimalPlaces
 import com.soywiz.korma.geom.top
 import com.soywiz.korma.interpolation.interpolate
 import com.soywiz.korma.math.convertRange
@@ -51,6 +52,8 @@ class BezierCurve(
     constructor(vararg points: Double) : this(PointArrayList(*points))
     constructor(vararg points: Float) : this(PointArrayList(*points))
     constructor(vararg points: Int) : this(PointArrayList(*points))
+
+    fun roundDecimalPlaces(places: Int): BezierCurve = BezierCurve(points.roundDecimalPlaces(places))
 
     override fun getBounds(target: Rectangle): Rectangle {
         return target.copyFrom(boundingBox)
