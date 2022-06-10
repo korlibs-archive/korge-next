@@ -1,5 +1,7 @@
+package com.soywiz.korge.composable
+
+/*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ComposeNode
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,29 +13,13 @@ import com.soywiz.korge.compose.Button
 import com.soywiz.korge.compose.Canvas
 import com.soywiz.korge.compose.HStack
 import com.soywiz.korge.compose.KeyDown
-import com.soywiz.korge.compose.NodeApplier
 import com.soywiz.korge.compose.Text
 import com.soywiz.korge.compose.VStack
-import com.soywiz.korge.compose.setComposeContent
-import com.soywiz.korge.input.keys
-import com.soywiz.korge.view.DummyView
-import com.soywiz.korge.view.Stage
-import com.soywiz.korge.view.View
-import com.soywiz.korge.view.ViewRenderPhase
-import com.soywiz.korge.view.addUpdater
-import com.soywiz.korge.view.vector.GpuShapeView
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.interpolate
-import com.soywiz.korim.vector.Context2d
 import com.soywiz.korio.async.delay
 import com.soywiz.korma.geom.vector.roundRect
 import kotlin.coroutines.cancellation.CancellationException
-
-suspend fun Stage.mainComposable() {
-    setComposeContent(this) {
-        App()
-    }
-}
 
 @Composable
 fun App() {
@@ -64,10 +50,11 @@ fun App() {
         }
         Canvas {
             fill(color) {
-                roundRect(0.0, 0.0, 100.0, 100.0, 20 * ratio, 20 * ratio)
+                roundRect(0.0, 0.0, 100.0, 100.0, 50 * ratio, 50 * ratio)
             }
         }
     }
     KeyDown(Key.DOWN) { count-- }
     KeyDown(Key.UP) { count++ }
 }
+*/
