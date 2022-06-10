@@ -72,6 +72,7 @@ allprojects {
         mavenLocal().content { excludeGroup("Kotlin/Native") }
 		mavenCentral().content { excludeGroup("Kotlin/Native") }
         google().content { excludeGroup("Kotlin/Native") }
+        maven { url = uri("https://maven.pkg.jetbrains.space/public/p/compose/dev") }
 		maven { url = uri("https://plugins.gradle.org/m2/") }.content { excludeGroup("Kotlin/Native") }
         if (kotlinVersion.contains("eap") || kotlinVersion.contains("-")) {
             maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/temporary").content { excludeGroup("Kotlin/Native") }
