@@ -34,7 +34,6 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
-import kotlin.reflect.KProperty0
 
 /**
  * Port of the operations of the library Bezier.JS with some adjustments,
@@ -146,6 +145,21 @@ class BezierCurve(
         lut.toEquidistantLUT()
     }
 
+    private val aligned: IPointArrayList by lazy {
+        align(points, Line(points.firstX, points.firstY, points.lastX, points.lastY))
+    }
+
+    private val baseLength: Double by lazy {
+        kotlin.math.hypot(
+            points.getX(order) - points.getX(0),
+            points.getY(order) - points.getY(0)
+        )
+    }
+
+    val isLinear: Boolean by lazy {
+        (0 until aligned.size).sumOf { aligned.getY(it).absoluteValue } < baseLength / 50.0
+    }
+
     override fun ratioFromLength(length: Double): Double {
         return lut.estimateAtLength(length).ratio
     }
@@ -198,17 +212,25 @@ class BezierCurve(
     //private var BezierCurve._t1: Double by Extra.Property { 0.0 }
     //private var BezierCurve._t2: Double by Extra.Property { 0.0 }
 
-    fun simple(): Boolean {
+    /**
+     * Determines if this [BezierCurve] is simple.
+     *
+     * Simpleness is defined as having all control
+     * points on the same side of the baseline
+     * (cubics having the additional constraint that the control-to-end-point lines may not cross),
+     * and an angle between the end point normals no greater than 60 degrees.
+     */
+    val isSimple: Boolean by lazy {
         if (this.order == 3) {
             val a1 = angle(this.points.getPoint(0), this.points.getPoint(3), this.points.getPoint(1))
             val a2 = angle(this.points.getPoint(0), this.points.getPoint(3), this.points.getPoint(2))
-            if ((a1 > 0.0 && a2 < 0.0) || (a1 < 0.0 && a2 > 0.0)) return false
+            if ((a1 > 0.0 && a2 < 0.0) || (a1 < 0.0 && a2 > 0.0)) return@lazy false
         }
         val n1 = this.normal(0.0)
         val n2 = this.normal(1.0)
         val s = n1.x * n2.x + n1.y * n2.y
         //if (this._3d) s += n1.z * n2.z
-        return abs(kotlin.math.acos(s)) < kotlin.math.PI / 3.0
+        return@lazy abs(kotlin.math.acos(s)) < kotlin.math.PI / 3.0
     }
 
     /** Returns the [t] values where the curve changes its sign */
@@ -216,7 +238,8 @@ class BezierCurve(
         if (points.size < 4) return doubleArrayOf()
 
         // FIXME: TODO: add in inflection abstraction for quartic+ curves?
-        val p = align(points, Line(points.firstX, points.firstY, points.lastX, points.lastY))
+        //val p = align(points, Line(points.firstX, points.firstY, points.lastX, points.lastY))
+        val p = aligned
         val a = p.getX(2) * p.getY(1)
         val b = p.getX(3) * p.getY(1)
         val c = p.getX(1) * p.getY(2)
@@ -240,7 +263,14 @@ class BezierCurve(
         return listOf((sq - v2) / d2, -(v2 + sq) / d2).filter { it in 0.0..1.0 }.toDoubleArray()
     }
 
+    /**
+     * Gets a list of [isSimple] bezier sub bezier curves.
+     */
+    fun toSimpleList(): List<SubBezierCurve> = reduce()
+
     fun reduce(): List<SubBezierCurve> {
+        if (isLinear) return listOf(SubBezierCurve(this))
+
         val step = 0.01
         val pass1 = arrayListOf<SubBezierCurve>()
         val pass2 = arrayListOf<SubBezierCurve>()
@@ -248,7 +278,7 @@ class BezierCurve(
         var extrema = this.extrema.allt
 
         if (extrema.indexOfFirst { it == 0.0 } < 0) extrema = doubleArrayOf(0.0) + extrema
-        if (extrema.indexOfFirst { it == 1.0 } < 0) extrema = extrema + doubleArrayOf(1.0)
+        if (extrema.indexOfFirst { it == 1.0 } < 0) extrema += doubleArrayOf(1.0)
 
         run {
             var t1 = extrema[0]
@@ -269,7 +299,7 @@ class BezierCurve(
                 t2 = t1 + step
                 while (t2 <= 1 + step) {
                     var segment = p1.split(t1, t2)
-                    if (!segment.curve.simple()) {
+                    if (!segment.curve.isSimple) {
                         t2 -= step
                         if (abs(t1 - t2) < step) {
                             // we can never form a reduction
@@ -309,6 +339,121 @@ class BezierCurve(
         val lbbox = this.boundingBox
         val tbbox = curve.boundingBox
         return bboxoverlap(lbbox, tbbox)
+    }
+
+    /**
+     * This function creates a new curve, offset along the curve normals,
+     * at distance [d]. Note that deep magic lies here and the offset curve
+     * of a Bezier curve cannot ever be another Bezier curve.
+     *
+     * As such, this function "cheats" and yields an array of curves which,
+     * taken together, form a single continuous curve equivalent
+     * to what a theoretical offset curve would be.
+     */
+    fun offset(d: Double): List<BezierCurve> =
+        this.toSimpleList().map { it.curve.scaleSimple { d } }
+
+    /**
+     * A coordinate is returned, representing the point on the curve at
+     * [t]=..., offset along its normal by a distance [d]
+     */
+    fun offset(t: Double, d: Double, out: Point = Point()): IPoint {
+        // @TODO: Optimize to avoid allocations
+        val pos = calc(t)
+        val normal = normal(t)
+        return out.copyFrom(pos + normal * d)
+    }
+
+    /**
+     * Scales a curve with respect to the intersection
+     * between the end point normals at a [d] distance.
+     *
+     * Note that this will only work if that point exists,
+     * which is only guaranteed for simple segments.
+     *
+     * You can call [isSimple] to check if this is suitable,
+     * and [toSimpleList] to get a list of simple curves.
+     */
+    fun scaleSimple(d: Double): BezierCurve = scaleSimple { d }
+    fun scaleSimple(d0: Double, d1: Double): BezierCurve = scaleSimple { if (it < 0.5) d0 else d1 }
+    fun scaleSimple(d: (Double) -> Double): BezierCurve {
+        val r0 = d(0.0)
+        val r1 = d(1.0)
+
+        if (isLinear) {
+            val nv = this.normal(0.0)
+            return BezierCurve(
+                this.points.getX(0) + (nv.x * r0),
+                this.points.getY(0) + (nv.y * r0),
+                this.points.getX(1) + (nv.x * r1),
+                this.points.getY(1) + (nv.y * r1),
+            )
+        }
+
+        val c0 = calc(0.0)
+        val c1 = calc(1.0)
+        val n0 = normal(0.0)
+        val n1 = normal(1.0)
+        val v = listOf(this.offset(0.0, 10.0), this.offset(1.0, 10.0))
+        val o = lli4(v[0], c0, v[1], c1)
+            ?: error("cannot scale this curve. Try reducing it first.")
+        val np = PointArrayList(this.points.size)
+
+        val singleDist = r0 == r1 && r0 == d(0.5)
+
+        // move all points by distance 'd' wrt the origin 'o',
+        // and move end points by fixed distance along normal.
+        for (n in 0..order) {
+            when (n) {
+                0 -> np.add(r0 * n0.x, r0 * n0.y)
+                order -> np.add(r1 * n1.x, r1 * n1.y)
+                else -> {
+                    when {
+                        singleDist -> {
+                            val t = n - 1
+                            val p = np.getPoint(t * order)
+                            val d = this.derivative(t.toDouble())
+                            val p2 = Point(p.x + d.x, p.y + d.y)
+                            np.add(lli4(p, p2, o, points.getPoint(t + 1)) ?: error("Invalid curve"))
+                        }
+                        else -> {
+                            val t = n - 1
+                            val pX = points.getX(t + 1)
+                            val pY = points.getY(t + 1)
+                            var ovX = pX - o.x
+                            var ovY = pY - o.y
+                            var rc = d((t + 1) / order.toDouble())
+                            if (!clockwise) rc = -rc
+                            val m = kotlin.math.hypot(ovX, ovY)
+                            ovX /= m
+                            ovY /= m
+                            np.add(pX + rc * ovX, pY + rc * ovY)
+                        }
+                    }
+                }
+            }
+        }
+
+        return BezierCurve(np)
+    }
+
+    private fun raise(): BezierCurve {
+        val p = this.points
+        val np = PointArrayList()
+        np.add(p.getX(0), p.getY(0))
+        val k = p.size
+        for (i in 1 until k) {
+            val piX = p.getX(i)
+            val piY = p.getY(i)
+            val pimX = p.getX(i - 1)
+            val pimY = p.getY(i - 1)
+            np.add(
+                ((k - i) / k) * piX + (i.toDouble() / k.toDouble()) * pimX,
+                ((k - i) / k) * piY + (i.toDouble() / k.toDouble()) * pimY,
+            )
+        }
+        np.add(p, k - 1)
+        return BezierCurve(np)
     }
 
     fun selfIntersections(threshold: Double = 0.5, out: DoubleArrayList = DoubleArrayList()): DoubleArrayList {
@@ -413,7 +558,7 @@ class BezierCurve(
     class Extrema(
         val xt: DoubleArray, val yt: DoubleArray
     ) {
-        val allt: DoubleArray = (xt + yt).sortedArray()
+        val allt: DoubleArray = (xt + yt).distinct().toDoubleArray().sortedArray()
         fun dimt(index: Int): DoubleArray = if (index == 0) xt else yt
 
         override fun equals(other: Any?): Boolean =
@@ -812,5 +957,16 @@ class BezierCurve(
             //return results.filterIndexed { index, pair -> results.indexOf(pair) == index }
             return results.distinct()
         }
+
+        private fun lli8(x1: Double, y1: Double, x2: Double, y2: Double, x3: Double, y3: Double, x4: Double, y4: Double, out: Point = Point()): IPoint? {
+            val d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+            if (d == 0.0) return null
+            val nx = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)
+            val ny = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)
+            return out.setTo(nx / d, ny / d)
+        }
+
+        fun lli4(p1: IPoint, p2: IPoint, p3: IPoint, p4: IPoint, out: Point = Point()): IPoint? =
+            lli8(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, out)
     }
 }
