@@ -44,6 +44,7 @@ if (!inCI) {
 if (!disabledExtraKorgeLibs) {
     include(":luak")
     include(":kbox2d")
+    include(":korge-compose-runtime")
     include(":korge-compose")
     include(":korge-dragonbones")
     include(":korge-spine")

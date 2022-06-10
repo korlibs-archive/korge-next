@@ -55,31 +55,6 @@ class NodeApplier(root: View) : AbstractApplier<View>(root) {
     }
 }
 
-// A function like the following could be created to create a composition provided a root Node.
-fun View.setComposeContent(
-    views: Views = stage!!.views,
-    content: @Composable () -> Unit
-): Composition {
-    val context = MonotonicClockImpl(views) + views.coroutineContext
-
-    val snapshotManager = GlobalSnapshotManager(views.gameWindow.coroutineDispatcher)
-    snapshotManager.ensureStarted()
-
-    val recomposer = Recomposer(context)
-
-    CoroutineScope(context).launch(start = CoroutineStart.UNDISPATCHED) {
-        println("runRecomposeAndApplyChanges")
-        recomposer.runRecomposeAndApplyChanges()
-    }
-
-    //CoroutineScope(context).launch(start = CoroutineStart.UNDISPATCHED) {
-    //}
-
-    return ControlledComposition(NodeApplier(this), recomposer).apply {
-        setContent(content)
-    }
-}
-
 class GlobalSnapshotManager(val dispatcher: CoroutineDispatcher) {
     private var started = false
     private var commitPending = false

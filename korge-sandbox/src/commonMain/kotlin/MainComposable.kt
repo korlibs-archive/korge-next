@@ -11,7 +11,7 @@ import com.soywiz.korge.compose.setComposeContent
 import com.soywiz.korge.view.Stage
 
 suspend fun Stage.mainComposable() {
-    setComposeContent {
+    setComposeContent(this) {
         var count by remember { mutableStateOf(0) }
         VStack {
             Text("$count")
