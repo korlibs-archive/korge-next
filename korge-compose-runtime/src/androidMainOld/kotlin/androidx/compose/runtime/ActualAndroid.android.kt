@@ -36,7 +36,8 @@ internal actual object Trace {
     }
 }
 
-internal actual typealias CheckResult = androidx.annotation.CheckResult
+//internal actual typealias CheckResult = androidx.annotation.CheckResult
+actual annotation class CheckResult(actual val suggest: String)
 
 /**
  * This is an inaccurate implementation that will only be used when running linked against
