@@ -17,6 +17,7 @@
 package androidx.compose.runtime
 
 import androidx.compose.runtime.snapshots.SnapshotMutableState
+import com.soywiz.klock.PerformanceCounter
 import kotlinx.coroutines.delay
 
 internal actual object Trace {
@@ -73,7 +74,7 @@ private object SixtyFpsMonotonicFrameClock : MonotonicFrameClock {
         onFrame: (Long) -> R
     ): R {
         delay(1000L / fps)
-        return onFrame(System.nanoTime())
+        return onFrame(PerformanceCounter.nanoseconds.toLong())
     }
 }
 
