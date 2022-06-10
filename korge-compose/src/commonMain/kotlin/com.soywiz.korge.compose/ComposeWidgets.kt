@@ -2,18 +2,25 @@ package com.soywiz.korge.compose
 
 import androidx.compose.runtime.*
 import com.soywiz.korev.Key
+import com.soywiz.korge.annotations.KorgeExperimental
 import com.soywiz.korge.input.*
 import com.soywiz.korge.ui.*
 import com.soywiz.korge.view.DummyView
+import com.soywiz.korge.view.SolidRect
+import com.soywiz.korge.view.View
 import com.soywiz.korge.view.addUpdater
 import com.soywiz.korge.view.vector.GpuShapeView
+import com.soywiz.korim.bitmap.Bitmaps
+import com.soywiz.korim.bitmap.BmpSlice
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
 import com.soywiz.korim.vector.Context2d
+import com.soywiz.korma.geom.Anchor
+import com.soywiz.korma.geom.ScaleMode
 
 @Composable
 fun Text(text: String, color: RGBA = Colors.WHITE, onClick: () -> Unit = {}) {
-    ComposeNode<UIText, NodeApplier>({
+    ComposeKorgeView({
         UIText("DUMMY", height = UIButton.DEFAULT_HEIGHT).also {
             println("Created UIText")
         }
@@ -28,7 +35,7 @@ fun Text(text: String, color: RGBA = Colors.WHITE, onClick: () -> Unit = {}) {
 
 @Composable
 fun Button(text: String, onClick: () -> Unit = {}) {
-    ComposeNode<UIButton, NodeApplier>({
+    ComposeKorgeView({
         UIButton().also {
             println("Created UIButton")
         }
@@ -40,20 +47,22 @@ fun Button(text: String, onClick: () -> Unit = {}) {
 
 @Composable
 fun VStack(content: @Composable () -> Unit) {
-    ComposeNode<UIVerticalStack, NodeApplier>(::UIVerticalStack, {}, content)
+    ComposeKorgeView(::UIVerticalStack, {}, content)
 }
 
 @Composable
 fun HStack(content: @Composable () -> Unit) {
-    ComposeNode<UIHorizontalStack, NodeApplier>(::UIHorizontalStack, {}, content)
+    ComposeKorgeView(::UIHorizontalStack, {}, content)
 }
 
 @Composable
+@Deprecated("Let's use Modifier instead")
 fun KeyDown(key: Key, onPress: (Key) -> Unit = {}) {
     KeyDown { if (it == key) onPress(it) }
 }
 
 @Composable
+@Deprecated("Let's use Modifier instead")
 fun KeyDown(onPress: (Key) -> Unit = {}) {
     ComposeNode<DummyView, NodeApplier>({
         DummyView()
@@ -62,17 +71,43 @@ fun KeyDown(onPress: (Key) -> Unit = {}) {
     }
 }
 
+/**
+ * [keys] determine if the object changed to redraw it if required.
+ */
+@OptIn(KorgeExperimental::class)
 @Composable
-fun Canvas(onDraw: Context2d.() -> Unit = {}) {
-    ComposeNode<GpuShapeView, NodeApplier>({
+fun Canvas(vararg keys: Any?, onDraw: Context2d.() -> Unit = {}) {
+    ComposeKorgeView({
         GpuShapeView().also {
             it.updateShape { onDraw() }
-        }.also {
-            it.addUpdater { dt ->
-                it.updateShape { onDraw() }
-            }
         }
     }) {
+        set(keys.toList()) {
+            this.updateShape(onDraw)
+        }
     }
 }
 
+
+@Composable
+fun Box(modifier: Modifier = Modifier, content: @Composable () -> Unit = {}) {
+    ComposeKorgeView(
+        { SolidRect(100.0, 100.0, Colors.WHITE) },
+        {
+            set(modifier) { applyModifiers(modifier) }
+        },
+        content
+    )
+}
+
+@Composable
+fun Image(bitmap: BmpSlice?, modifier: Modifier = Modifier, content: @Composable () -> Unit = {}) {
+    ComposeKorgeView(
+        { UIImage(100.0, 100.0, Bitmaps.transparent, ScaleMode.SHOW_ALL, Anchor.CENTER) },
+        {
+            set(bitmap) { this.bitmap = bitmap ?: Bitmaps.transparent }
+            set(modifier) { applyModifiers(modifier) }
+        },
+        content
+    )
+}

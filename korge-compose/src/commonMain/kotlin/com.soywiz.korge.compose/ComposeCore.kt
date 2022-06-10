@@ -124,6 +124,25 @@ class MonotonicClockImpl(val views: Views) : MonotonicFrameClock {
     }
 }
 
+
+@Suppress("NONREADONLY_CALL_IN_READONLY_COMPOSABLE")
+@Composable
+inline fun <T : View> ComposeKorgeView(
+    noinline factory: () -> T,
+    update: @DisallowComposableCalls Updater<T>.() -> Unit,
+    content: @Composable () -> Unit
+) {
+    ComposeNode<T, NodeApplier>(factory, update, content)
+}
+
+@Composable inline fun <T : View> ComposeKorgeView(
+    noinline factory: () -> T,
+    update: @DisallowComposableCalls Updater<T>.() -> Unit
+) {
+    ComposeNode<T, NodeApplier>(factory, update)
+}
+
+/*
 // TOOLS
 
 fun Container.removeChildAt(index: Int): Boolean {
@@ -140,3 +159,4 @@ fun Container.swapChildrenAt(indexA: Int, indexB: Int) {
     val b = getChildAtOrNull(indexB) ?: return
     swapChildren(a, b)
 }
+*/
