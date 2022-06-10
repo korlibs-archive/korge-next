@@ -1,3 +1,4 @@
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,33 +15,39 @@ import com.soywiz.korge.time.delay
 import com.soywiz.korge.view.Stage
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.interpolate
+import com.soywiz.korio.async.delay
 import kotlin.coroutines.cancellation.CancellationException
 
 suspend fun Stage.mainComposable() {
     setComposeContent(this) {
-        var color by remember { mutableStateOf(Colors.RED) }
-        var count by remember { mutableStateOf(0) }
-        LaunchedEffect(count) {
-            println("LaunchedEffect=$count..started")
-            try {
-                val nsteps = 20
-                for (n in 0..nsteps) {
-                    val ratio = n.toDouble() / nsteps.toDouble()
-                    color = ratio.interpolate(Colors.RED, Colors.WHITE)
-                    delay(10.milliseconds)
-                }
-                println("LaunchedEffect=$count..ended")
-            } catch (e: CancellationException) {
-                println("LaunchedEffect=$count..cancelled")
+        App()
+    }
+}
+
+@Composable
+fun App() {
+    var color by remember { mutableStateOf(Colors.RED) }
+    var count by remember { mutableStateOf(0) }
+    LaunchedEffect(count) {
+        println("LaunchedEffect=$count..started")
+        try {
+            val nsteps = 20
+            for (n in 0..nsteps) {
+                val ratio = n.toDouble() / nsteps.toDouble()
+                color = ratio.interpolate(Colors.RED, Colors.WHITE)
+                delay(10.milliseconds)
             }
-            //stage!!.tween(::color[Colors.BLUE])
+            println("LaunchedEffect=$count..ended")
+        } catch (e: CancellationException) {
+            println("LaunchedEffect=$count..cancelled")
         }
-        VStack {
-            Text("$count", color)
-            HStack {
-                Button("-") { count-- }
-                Button("+") { count++ }
-            }
+        //stage!!.tween(::color[Colors.BLUE])
+    }
+    VStack {
+        Text("$count", color)
+        HStack {
+            Button("-") { count-- }
+            Button("+") { count++ }
         }
     }
 }
