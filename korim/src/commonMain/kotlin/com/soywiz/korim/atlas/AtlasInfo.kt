@@ -99,19 +99,9 @@ data class AtlasInfo(
         val imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL,
     ) {
 
-        val srcWidth = when (imageOrientation.rotation) {
-            ImageOrientation.Rotation.R90, ImageOrientation.Rotation.R270 ->
-                frame.h
-            else ->
-                frame.w
-        }
+        val srcWidth = if (imageOrientation.isRotatedDeg90CwOrCcw) frame.h else frame.w
 
-        val srcHeight = when (imageOrientation.rotation) {
-            ImageOrientation.Rotation.R90, ImageOrientation.Rotation.R270 ->
-                frame.w
-            else ->
-                frame.h
-        }
+        val srcHeight = if (imageOrientation.isRotatedDeg90CwOrCcw) frame.w else frame.h
 
         @Deprecated("Use primary constructor")
         constructor(
@@ -150,7 +140,7 @@ data class AtlasInfo(
         }
 
         @Deprecated("Use imageOrientation", ReplaceWith("imageOrientation == ImageOrientation.ROTATE_90", imports = ["com.soywiz.korim.format.ImageOrientation"]))
-        var rotated: Boolean = imageOrientation.rotation in arrayOf(ImageOrientation.Rotation.R90, ImageOrientation.Rotation.R270)
+        var rotated: Boolean = imageOrientation.isRotatedDeg90CwOrCcw
             private set
 
         @Deprecated("Use virtFrame", ReplaceWith("Size(virtFrame?.w ?: frame.w, virtFrame?.h ?: frame.h)"))
