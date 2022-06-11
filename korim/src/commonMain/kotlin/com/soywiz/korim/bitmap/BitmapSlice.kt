@@ -1,7 +1,6 @@
 package com.soywiz.korim.bitmap
 
 import com.soywiz.kds.Extra
-import com.soywiz.kds.getCyclic
 import com.soywiz.kmem.clamp
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
@@ -20,8 +19,6 @@ import com.soywiz.korma.geom.RectangleInt
 import com.soywiz.korma.geom.SizeInt
 import com.soywiz.korma.geom.setBoundsTo
 import com.soywiz.korma.geom.setTo
-import com.soywiz.korma.geom.size
-import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -56,8 +53,76 @@ interface BmpCoordsWithT<T : ISizeInt> : BmpCoords, Closeable, Resourceable<BmpC
     val frameWidth: Int get() = virtFrame?.width ?: width
     val frameHeight: Int get() = virtFrame?.height ?: height
     val area: Int get() = width * height
+    val isRotatedInBaseDeg90 get() = (width > 1 && tl_x == tr_x) || (height > 1 && tl_y == bl_y)
     override fun close() = Unit
     val sizeString: String get() = "${width}x${height}"
+
+    fun subCoords(bounds: RectangleInt, imageOrientation: ImageOrientation): BmpCoordsWithT<T> {
+        // Assure bounds are inside this slide
+        if (bounds.x < 0) {
+            bounds.width += bounds.x
+            bounds.x = 0
+        }
+        if (bounds.y < 0) {
+            bounds.height += bounds.y
+            bounds.y = 0
+        }
+        if (imageOrientation.isRotatedDeg90CwOrCcw) {
+            bounds.width = bounds.width.clamp(0, height - bounds.y)
+            bounds.height = bounds.height.clamp(0, width - bounds.x)
+        } else {
+            bounds.width = bounds.width.clamp(0, width - bounds.x)
+            bounds.height = bounds.height.clamp(0, height - bounds.y)
+        }
+
+        val tlX: Float
+        val tlY: Float
+        val trX: Float
+        val trY: Float
+        val brX: Float
+        val brY: Float
+        val blX: Float
+        val blY: Float
+
+        // Calculate bmpCoords based on parentCoords
+        val dx = br_x - tl_x
+        val dy = br_y - tl_y
+        val x = bounds.x.toFloat()
+        val y = bounds.y.toFloat()
+        val w = bounds.width.toFloat()
+        val h = bounds.height.toFloat()
+        val bw = width.toFloat()
+        val bh = height.toFloat()
+
+        if (isRotatedInBaseDeg90) {
+            // Base is rotated
+            val xDim = if (imageOrientation.isRotatedDeg90CwOrCcw) w else h
+            val yDim = if (imageOrientation.isRotatedDeg90CwOrCcw) h else w
+            tlX = tl_x + y / bh * dx
+            tlY = tl_y + x / bw * dy
+            brX = tlX + xDim / bh * dx
+            brY = tlY + yDim / bw * dy
+            trX = tlX
+            trY = brY
+            blX = brX
+            blY = tlY
+        } else {
+            // Base is not rotated
+            val xDim = if (imageOrientation.isRotatedDeg90CwOrCcw) h else w
+            val yDim = if (imageOrientation.isRotatedDeg90CwOrCcw) w else h
+            tlX = tl_x + x / bw * dx
+            tlY = tl_y + y / bh * dy
+            brX = tlX + xDim / bw * dx
+            brY = tlY + yDim / bh * dy
+            trX = brX
+            trY = tlY
+            blX = tlX
+            blY = brY
+        }
+
+        return copy(base, tlX, tlY, trX, trY, brX, brY, blX, blY)
+            .withImageOrientation(imageOrientation)
+    }
 }
 
 // @TODO: Fix & enable to support slicing transformed textures
@@ -297,24 +362,23 @@ abstract class BmpSlice(
     bmpBase: Bitmap,
     val bounds: RectangleInt,
     override val name: String? = null,
-    imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL,
     final override val virtFrame: RectangleInt? = null,
-    parentCoords: BitmapCoords? = null,
-    bmpCoords: BmpCoordsWithT<ISizeInt>? = null
+    bmpCoords: BmpCoordsWithT<*> = BmpCoordsWithInstance(bmpBase, 0f, 0f, 1f, 0f, 1f, 1f, 0f, 1f),
 ) : Extra, BitmapCoords {
 
-    @Deprecated("Use imageOrientation instead of rotation")
+    @Deprecated("rotated is ignored. Use bmpCoords")
     constructor(
         bmpBase: Bitmap,
         bounds: RectangleInt,
         name: String? = null,
         rotated: Boolean = false,
-        virtFrame: RectangleInt? = null
-    ): this(bmpBase, bounds, name, if (rotated) ImageOrientation.ROTATE_90 else ImageOrientation.ORIGINAL, virtFrame)
+        virtFrame: RectangleInt? = null,
+        bmpCoords: BmpCoordsWithT<*> = BmpCoordsWithInstance(bmpBase, 0f, 0f, 1f, 0f, 1f, 1f, 0f, 1f),
+    ): this(bmpBase, bounds, name, virtFrame) {
+        this.rotated = rotated
+    }
 
     var bmpBase: Bitmap = bmpBase
-        private set
-    var imageOrientation: ImageOrientation = imageOrientation
         private set
 
     override val base get() = bmpBase
@@ -329,7 +393,7 @@ abstract class BmpSlice(
     val right get() = bounds.right
     val bottom get() = bounds.bottom
 
-    var bmpCoords: BmpCoordsWithT<ISizeInt>
+    var bmpCoords: BmpCoordsWithT<*> = bmpCoords
         private set
 
     init {
@@ -343,121 +407,6 @@ abstract class BmpSlice(
         }
         if (bounds.width < 0) bounds.width = 0
         if (bounds.height < 0) bounds.height = 0
-        if (bmpCoords != null) {
-            this.bmpCoords = bmpCoords.withImageOrientation(imageOrientation)
-        } else {
-            val tlX: Float
-            val tlY: Float
-            val trX: Float
-            val trY: Float
-            val brX: Float
-            val brY: Float
-            val blX: Float
-            val blY: Float
-
-            if (parentCoords != null) {
-                // Calculate bmpCoords based on parentCoords
-                val dx = parentCoords.br_x - parentCoords.tl_x
-                val dy = parentCoords.br_y - parentCoords.tl_y
-                val x = bounds.x.toFloat()
-                val y = bounds.y.toFloat()
-                val w = bounds.width.toFloat()
-                val h = bounds.height.toFloat()
-                val bw = parentCoords.width.toFloat()
-                val bh = parentCoords.height.toFloat()
-
-                if (parentCoords.tl_x == parentCoords.tr_x) {
-                    // Base is rotated
-                    tlX = parentCoords.tl_x + y / bh * dx
-                    tlY = parentCoords.tl_y + x / bw * dy
-                    when (imageOrientation.rotation) {
-                        ImageOrientation.Rotation.R90, ImageOrientation.Rotation.R270 -> {
-                            brX = tlX + w / bh * dx
-                            brY = tlY + h / bw * dy
-                        }
-                        else -> {
-                            brX = tlX + h / bh * dx
-                            brY = tlY + w / bw * dy
-                        }
-                    }
-                    trX = tlX
-                    trY = brY
-                    blX = brX
-                    blY = tlY
-                } else {
-                    // Base is not rotated
-                    tlX = parentCoords.tl_x + x / bw * dx
-                    tlY = parentCoords.tl_y + y / bh * dy
-                    when (imageOrientation.rotation) {
-                        ImageOrientation.Rotation.R90, ImageOrientation.Rotation.R270 -> {
-                            brX = tlX + h / bw * dx
-                            brY = tlY + w / bh * dy
-                        }
-                        else -> {
-                            brX = tlX + w / bw * dx
-                            brY = tlY + h / bh * dy
-                        }
-                    }
-                    trX = brX
-                    trY = tlY
-                    blX = tlX
-                    blY = brY
-                }
-            } else {
-                // Calculate bmpCoords based on bounds
-                val tl = Point(bounds.left.toFloat() / bmpBase.width.toFloat(), bounds.top.toFloat() / bmpBase.height.toFloat())
-                val br = Point(bounds.right.toFloat() / bmpBase.width.toFloat(), bounds.bottom.toFloat() / bmpBase.height.toFloat())
-                val tr = Point(br.x, tl.y)
-                val bl = Point(tl.x, br.y)
-
-                val points = arrayOf(tl, tr, br, bl)
-                val offset = imageOrientation.rotation.ordinal
-
-                val p0 = points.getCyclic(offset + 0)
-                val p1 = points.getCyclic(offset + 1)
-                val p2 = points.getCyclic(offset + 2)
-                val p3 = points.getCyclic(offset + 3)
-
-                tlX = p0.x.toFloat()
-                tlY = p0.y.toFloat()
-                trX = p1.x.toFloat()
-                trY = p1.y.toFloat()
-                brX = p2.x.toFloat()
-                brY = p2.y.toFloat()
-                blX = p3.x.toFloat()
-                blY = p3.y.toFloat()
-            }
-            val pMinX = min(parentCoords?.tl_x ?: 0f, parentCoords?.br_x ?: 0f)
-            val pMinY = min(parentCoords?.tl_y ?: 0f, parentCoords?.br_y ?: 0f)
-            val pMaxX = max(parentCoords?.tl_x ?: 1f, parentCoords?.br_x ?: 1f)
-            val pMaxY = max(parentCoords?.tl_y ?: 1f, parentCoords?.br_y ?: 1f)
-            val coords = arrayOf(
-                tlX.clamp(pMinX, pMaxX), tlY.clamp(pMinY, pMaxY),
-                trX.clamp(pMinX, pMaxX), trY.clamp(pMinY, pMaxY),
-                brX.clamp(pMinX, pMaxX), brY.clamp(pMinY, pMaxY),
-                blX.clamp(pMinX, pMaxX), blY.clamp(pMinY, pMaxY)
-            )
-            val minX = coords.slice(0..6 step 2).minOrNull()!!
-            val minY = coords.slice(1..7 step 2).minOrNull()!!
-
-            for (i in 0..6 step 2) {
-                if (coords[i] == minX && coords[i + 1] == minY) {
-                    val rotated = imageOrientation.rotation == ImageOrientation.Rotation.R90 || imageOrientation.rotation == ImageOrientation.Rotation.R270
-                    if ((tlX == trX && !rotated) || (tlX != trX && rotated)) {
-                        // rotated
-                        bounds.height = ((coords[(i + 4) % 8] - coords[i]) * bmpBase.width).roundToInt()
-                        bounds.width = ((coords[(i + 5) % 8] - coords[i + 1]) * bmpBase.height).roundToInt()
-                    } else {
-                        bounds.width = ((coords[(i + 4) % 8] - coords[i]) * bmpBase.width).roundToInt()
-                        bounds.height = ((coords[(i + 5) % 8] - coords[i + 1]) * bmpBase.height).roundToInt()
-                    }
-                    break
-                }
-            }
-
-            this.bmpCoords = BmpCoordsWithInstance<ISizeInt>(bounds.size, coords[0], coords[1], coords[2], coords[3], coords[4], coords[5], coords[6], coords[7])
-                .withImageOrientation(imageOrientation)
-        }
     }
 
     val trimmed: Boolean = virtFrame != null
@@ -475,11 +424,11 @@ abstract class BmpSlice(
     override val bl_x: Float get() = this.bmpCoords.bl_x
     override val bl_y: Float get() = this.bmpCoords.bl_y
 
-    @Deprecated("Use imageOrientation")
-    val rotated: Boolean = imageOrientation == ImageOrientation.ROTATE_90 || imageOrientation == ImageOrientation.ROTATE_270
+    @Deprecated("This value has no effect")
+    var rotated: Boolean = false
+        private set
+    @Deprecated("This value has no effect")
     val rotatedAngle: Int = 0
-
-    val isRotatedInBmpDeg90 = (width > 1 && tl_x == tr_x) || (height > 1 && tl_y == bl_y)
 
     private val pixelOffsets: IntArray by lazy {
         val x = (tl_x * baseWidth).roundToInt()
@@ -489,7 +438,7 @@ abstract class BmpSlice(
         val xDir = if (tl_x < br_x) 1 else -1
         val yDir = if (tl_y < br_y) 1 else -1
 
-        if (isRotatedInBmpDeg90) {
+        if (isRotatedInBaseDeg90) {
             intArrayOf(xOff, yOff, 0, xDir, 0, yDir)
         } else {
             intArrayOf(xOff, yOff, xDir, 0, yDir, 0)
@@ -553,7 +502,6 @@ abstract class BmpSlice(
                     0f, 0f, 1f, 0f, 1f, 1f, 0f, 1f
                 )
                 intArrayOf(0, 0, 1, 0, 1, 0).copyInto(pixelOffsets)
-                imageOrientation = ImageOrientation.ORIGINAL
                 bmpBase.setRgba(x, y, value)
             }
         }
@@ -562,7 +510,7 @@ abstract class BmpSlice(
     open fun sliceWithBounds(left: Int, top: Int, right: Int, bottom: Int, name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BmpSlice = slice(RectangleInt(left, top, right - left, bottom - top), name, imageOrientation)
     open fun sliceWithSize(x: Int, y: Int, width: Int, height: Int, name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BmpSlice = slice(RectangleInt(x, y, width, height), name, imageOrientation)
     open fun slice(rect: RectangleInt, name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BmpSlice =
-        BitmapSlice(bmp, rect, name, imageOrientation = imageOrientation, parentCoords = this)
+        BitmapSlice(bmp, rect, name, bmpCoords = subCoords(rect, imageOrientation))
     open fun slice(rect: Rectangle, name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BmpSlice = slice(rect.toInt(), name, imageOrientation)
 
     internal fun <T: Bitmap> extractWithBase(base: T): T
@@ -570,7 +518,7 @@ abstract class BmpSlice(
         val out: T
         val x = (min(min(tl_x, tr_x), min(bl_x, br_x)) * baseWidth).roundToInt()
         val y = (min(min(tl_y, tr_y), min(bl_y, br_y)) * baseHeight).roundToInt()
-        val rotated = isRotatedInBmpDeg90
+        val rotated = isRotatedInBaseDeg90
         val reverseX = width > 1 && if (rotated) tl_y > br_y else tl_x > br_x
         val reverseY = height > 1 && if (rotated) tl_x > br_x else tl_y > br_y
 
@@ -609,20 +557,18 @@ class BitmapSlice<out T : Bitmap>(
     override val bmp: T,
     bounds: RectangleInt,
     name: String? = null,
-    imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL,
     virtFrame: RectangleInt? = null,
-    parentCoords: BitmapCoords? = null,
-    bmpCoords: BmpCoordsWithT<ISizeInt>? = null,
-) : BmpSlice(bmp, bounds, name, imageOrientation, virtFrame, parentCoords, bmpCoords), Extra by Extra.Mixin() {
+    bmpCoords: BmpCoordsWithT<*> = BmpCoordsWithInstance(bmp, 0f, 0f, 1f, 0f, 1f, 1f, 0f, 1f),
+) : BmpSlice(bmp, bounds, name, virtFrame, bmpCoords), Extra by Extra.Mixin() {
 
-    @Deprecated("Use imageOrientation instead of rotation")
+    @Deprecated("Use bmpCoords")
     constructor(
         bmp: T,
         bounds: RectangleInt,
         name: String? = null,
         rotated: Boolean = false,
         virtFrame: RectangleInt? = null,
-    ): this(bmp, bounds, name, if (rotated) ImageOrientation.ROTATE_90 else ImageOrientation.ORIGINAL, virtFrame)
+    ): this(bmp, bounds, name, virtFrame)
 
     val premultiplied get() = bmp.premultiplied
 
@@ -631,7 +577,7 @@ class BitmapSlice<out T : Bitmap>(
     override fun sliceWithBounds(left: Int, top: Int, right: Int, bottom: Int, name: String?, imageOrientation: ImageOrientation): BitmapSlice<T> = slice(RectangleInt(left, top, right - left, bottom - top), name, imageOrientation)
     override fun sliceWithSize(x: Int, y: Int, width: Int, height: Int, name: String?, imageOrientation: ImageOrientation): BitmapSlice<T> = slice(RectangleInt(x, y, width, height), name, imageOrientation)
     override fun slice(rect: RectangleInt, name: String?, imageOrientation: ImageOrientation): BitmapSlice<T> =
-        BitmapSlice(bmp, rect, name, imageOrientation = imageOrientation, parentCoords = this)
+        BitmapSlice(bmp, rect, name, bmpCoords = this.subCoords(rect, imageOrientation))
     override fun slice(rect: Rectangle, name: String?, imageOrientation: ImageOrientation): BitmapSlice<T> = slice(rect.toInt(), name, imageOrientation)
 
     fun split(width: Int, height: Int): List<BitmapSlice<T>> = splitInRows(width, height)
@@ -649,7 +595,7 @@ class BitmapSlice<out T : Bitmap>(
         }
     }
 
-    fun withName(name: String? = null) = copy(name = name, imageOrientation = this.imageOrientation)
+    fun withName(name: String? = null) = copy(name = name)
 
     override fun toString(): String = "BitmapSlice($name:${SizeInt(bounds.width, bounds.height)})"
 }
@@ -667,14 +613,13 @@ inline fun <T : Bitmap> BitmapSlice<T>.copy(
     bmp: T = this.bmp,
     bounds: RectangleInt = this.bounds,
     name: String? = this.name,
-    imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL,
     virtFrame: RectangleInt? = this.virtFrame,
-    bmpCoords: BmpCoordsWithT<ISizeInt>? = null
-) = BitmapSlice(bmp, bounds, name, imageOrientation, virtFrame, this, bmpCoords)
+    bmpCoords: BmpCoordsWithT<*>
+) = BitmapSlice(bmp, bounds, name, virtFrame, bmpCoords)
 
 fun BitmapSlice<Bitmap>.virtFrame(rect: RectangleInt?) =
     if (rect != null)
-        copy(imageOrientation = ImageOrientation.ORIGINAL, virtFrame = rect, bmpCoords = this.bmpCoords)
+        copy(virtFrame = rect, bmpCoords = this.bmpCoords)
     else
         this
 fun BitmapSlice<Bitmap>.virtFrame(x: Int, y: Int, w: Int, h: Int) = virtFrame(RectangleInt(x, y, w, h))
@@ -689,7 +634,14 @@ fun BitmapSliceCompat(
 	name: String = "unknown"
 ) = BitmapSlice(bmp, frame.toInt(), name = name, rotated = rotated)
 
-fun <T : Bitmap> T.slice(bounds: RectangleInt = RectangleInt(0, 0, width, height), name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BitmapSlice<T> = BitmapSlice(this, bounds, name, imageOrientation, parentCoords = BmpCoordsWithInstance(this, 0f, 0f, 1f, 0f, 1f, 1f, 0f, 1f))
+fun <T : Bitmap> T.slice(bounds: RectangleInt = RectangleInt(0, 0, width, height), name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BitmapSlice<T> = BitmapSlice(this, RectangleInt(0, 0, width, height), name, bmpCoords = BmpCoordsWithInstance(this, 0f, 0f, 1f, 0f, 1f, 1f, 0f, 1f))
+    .let {
+        if (bounds != it.bounds || imageOrientation != ImageOrientation.ORIGINAL) {
+            it.slice(bounds, name, imageOrientation)
+        } else {
+            it
+        }
+    }
 fun <T : Bitmap> T.sliceWithBounds(left: Int, top: Int, right: Int, bottom: Int, name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BitmapSlice<T> = slice(RectangleInt(left, top, right - left, bottom - top), name, imageOrientation)
 fun <T : Bitmap> T.sliceWithSize(x: Int, y: Int, width: Int, height: Int, name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BitmapSlice<T> = slice(RectangleInt(x, y, width, height), name, imageOrientation)
 
