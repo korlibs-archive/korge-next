@@ -445,11 +445,13 @@ abstract class BmpSlice(
         }
     }
 
+    private val tmpPoint: PointInt by lazy { PointInt() }
+
     fun isValidBasePixelPos(x: Int, y: Int): Boolean = x in 0 until frameWidth && y in 0 until frameHeight
 
-    fun basePixelPos(x: Int, y: Int, out: PointInt = PointInt()): PointInt? = if (isValidBasePixelPos(x, y)) basePixelPosUnsafe(x, y, out) else throw IllegalArgumentException("Point $x,$y is not in bounds of slice")
+    fun basePixelPos(x: Int, y: Int, out: PointInt = tmpPoint): PointInt? = if (isValidBasePixelPos(x, y)) basePixelPosUnsafe(x, y, out) else throw IllegalArgumentException("Point $x,$y is not in bounds of slice")
 
-    fun basePixelPosUnsafe(x: Int, y: Int, out: PointInt = PointInt()): PointInt? = out.also {
+    fun basePixelPosUnsafe(x: Int, y: Int, out: PointInt = tmpPoint): PointInt? = out.also {
         val offsetX = x - frameOffsetX
         val offsetY = y - frameOffsetY
         if (offsetX < 0 || offsetY < 0 || offsetX >= width || offsetY >= height)
