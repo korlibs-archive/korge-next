@@ -37,12 +37,12 @@ data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
         var pos = 0.0
         curves.mapIndexed { index, curve ->
             val start = pos
-            pos += curve.length()
+            pos += curve.length
             CurveInfo(index, curve, start, pos, curve.getBounds())
         }
 
     }
-    val length: Double by lazy { infos.sumOf { it.length } }
+    override val length: Double by lazy { infos.sumOf { it.length } }
     private val bb = BoundsBuilder()
 
     val CurveInfo.startRatio: Double get() = this.startLength / this@Curves.length
@@ -137,6 +137,4 @@ data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
             }
         }, closed = false)
     }
-
-    override fun length(steps: Int): Double = length
 }

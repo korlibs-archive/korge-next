@@ -13,6 +13,7 @@ import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.PointArrayList
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.bottom
+import com.soywiz.korma.geom.clone
 import com.soywiz.korma.geom.fastForEach
 import com.soywiz.korma.geom.firstX
 import com.soywiz.korma.geom.firstY
@@ -22,9 +23,9 @@ import com.soywiz.korma.geom.getPoint
 import com.soywiz.korma.geom.lastX
 import com.soywiz.korma.geom.lastY
 import com.soywiz.korma.geom.left
-import com.soywiz.korma.geom.map
 import com.soywiz.korma.geom.mapPoints
 import com.soywiz.korma.geom.mutable
+import com.soywiz.korma.geom.pointArrayListOf
 import com.soywiz.korma.geom.radians
 import com.soywiz.korma.geom.right
 import com.soywiz.korma.geom.roundDecimalPlaces
@@ -34,7 +35,6 @@ import com.soywiz.korma.math.convertRange
 import com.soywiz.korma.math.isAlmostEquals
 import com.soywiz.korma.math.normalizeZero
 import com.soywiz.korma.math.roundDecimalPlaces
-import kotlin.jvm.JvmName
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.atan2
@@ -67,10 +67,6 @@ class BezierCurve(
     override fun calc(t: Double, target: Point): Point {
         this.compute(t, target)
         return target
-    }
-
-    override fun length(steps: Int): Double {
-        return this.length
     }
 
     override fun equals(other: Any?): Boolean = other is BezierCurve && this.points == other.points
@@ -132,8 +128,7 @@ class BezierCurve(
     }
 
     /** Calculates the length of this curve .*/
-    @get:JvmName("getLength2")
-    val length: Double by lazy {
+    override val length: Double by lazy {
         val z = 0.5
         var sum = 0.0
         val temp = Point()
@@ -681,6 +676,87 @@ class BezierCurve(
         return toSimpleList().map { it.curve.toQuad() }
     }
 
+    fun outline(d1: Double, d2: Double = d1, d3: Double = d1, d4: Double = d2): Curves {
+        if (this.isLinear) {
+            // TODO: find the actual extrema, because they might
+            //       be before the start, or past the end.
+
+            val n = this.normal(0.0);
+            val start = this.points.getPoint(0)
+            val end = this.points.getPoint(this.points.size - 1)
+
+            val fline = run {
+                val s = Point(start.x + n.x * d1, start.y + n.y * d1)
+                val e = Point(end.x + n.x * d3, end.y + n.y * d3)
+                val mid = Point((s.x + e.x) / 2.0, (s.y + e.y) / 2.0)
+                pointArrayListOf(s, mid, e)
+            }
+
+            val bline = run {
+                val s = Point(start.x - n.x * d2, start.y - n.y * d2)
+                val e = Point(end.x - n.x * d4, end.y - n.y * d4)
+                val mid = Point((s.x + e.x) / 2.0, (s.y + e.y) / 2.0)
+                pointArrayListOf(e, mid, s)
+            };
+
+            val ls = makeline(bline.getPoint(2), fline.getPoint(0))
+            val le = makeline(fline.getPoint(2), bline.getPoint(0))
+            val segments = listOf(ls, BezierCurve(fline), le, BezierCurve(bline))
+            return Curves(segments, closed = true)
+        }
+
+        val reduced = this.reduce()
+        val len = reduced.size
+        val fcurves = arrayListOf<BezierCurve>()
+
+        var bcurves0 = arrayListOf<BezierCurve>()
+        val tlen = this.length
+        val graduated = d3 != d1 && d4 != d2
+
+        var p: Double = 0.0
+        var alen = 0.0
+
+        fun linearDistanceFunction(s: Double, e: Double, tlen: Double, alen: Double, slen: Double): (Double) -> Double =
+            fun (v: Double): Double {
+                val f1 = alen / tlen
+                val f2 = (alen + slen) / tlen
+                val d = e - s
+                return map(v, 0.0, 1.0, s + f1 * d, s + f2 * d);
+            }
+
+        // form curve oulines
+        for (segment in reduced.map { it.curve }) {
+            val slen = segment.length
+            if (graduated) {
+                fcurves.add(
+                    segment.scaleSimple(linearDistanceFunction(d1, d3, tlen, alen, slen))
+                )
+                bcurves0.add(
+                    segment.scaleSimple(linearDistanceFunction(-d2, -d4, tlen, alen, slen))
+                )
+            } else {
+                fcurves.add(segment.scaleSimple(d1));
+                bcurves0.add(segment.scaleSimple(-d2));
+            }
+            alen += slen;
+        }
+
+        // reverse the "return" outline
+        val bcurves = bcurves0
+            .map { BezierCurve(it.points.clone().also { it.reverse() }) }
+            .reversed()
+
+        // form the endcaps as lines
+        val fs = fcurves[0].points.getPoint(0)
+        val fe = fcurves[len - 1].points.getPoint(fcurves[len - 1].points.size - 1)
+        val bs = bcurves[len - 1].points.getPoint(bcurves[len - 1].points.size - 1)
+        val be = bcurves[0].points.getPoint(0)
+        val ls = makeline(bs, fs)
+        val le = makeline(fe, be)
+
+        return (listOf(ls) + fcurves + le + bcurves).toCurves(closed = true)
+    }
+
     fun translate(dx: Double, dy: Double): BezierCurve =
         BezierCurve(points.mapPoints { x, y, out -> out.setTo(x + dx, y + dy) })
 
@@ -1078,7 +1154,7 @@ class BezierCurve(
             return out.setTo(nx / d, ny / d)
         }
 
-        fun lli4(p1: IPoint, p2: IPoint, p3: IPoint, p4: IPoint, out: Point = Point()): IPoint? =
+        private fun lli4(p1: IPoint, p2: IPoint, p3: IPoint, p4: IPoint, out: Point = Point()): IPoint? =
             lli8(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, out)
 
         fun cubicFromPoints(S: Point, B: Point, E: Point, t: Double = 0.5, d1: Double? = null): BezierCurve {
@@ -1117,7 +1193,7 @@ class BezierCurve(
             return BezierCurve(p1, abc.A, p3);
         }
 
-        internal fun getABC(order: Int, S: IPoint, B: IPoint, E: IPoint, t: Double = 0.5): ABCResult {
+        private fun getABC(order: Int, S: IPoint, B: IPoint, E: IPoint, t: Double = 0.5): ABCResult {
             val u = projectionratio(t, order)
             val um = 1.0 - u
             val C = Point(
@@ -1163,5 +1239,8 @@ class BezierCurve(
             val dy = p1.y - p2.y
             return kotlin.math.sqrt(dx * dx + dy * dy)
         }
+
+        private fun makeline(p1: IPoint, p2: IPoint): BezierCurve =
+            BezierCurve(p1.x, p1.y, (p1.x + p2.x) / 2, (p1.y + p2.y) / 2, p2.x, p2.y)
     }
 }

@@ -81,6 +81,11 @@ fun IPointArrayList.contains(x: Double, y: Double): Boolean {
     return false
 }
 
+fun IPointArrayList.clone(out: PointArrayList = PointArrayList(this.size)): PointArrayList {
+    fastForEach { x, y -> out.add(x, y) }
+    return out
+}
+
 open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.Mixin() {
     override var closed: Boolean = false
     private val xList = DoubleArrayList(capacity)
