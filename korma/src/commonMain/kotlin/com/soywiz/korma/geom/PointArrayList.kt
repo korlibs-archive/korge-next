@@ -109,6 +109,13 @@ open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.M
         }
     }
 
+    /**
+     * Adds points with [values] in the format of interleaved (x, y) values.
+     */
+    fun addRaw(vararg values: Double) {
+        for (n in values.indices step 2) add(values[n], values[n + 1])
+    }
+
     fun add(x: Double, y: Double) = this.apply {
         xList += x
         yList += y
@@ -218,6 +225,14 @@ open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.M
         override fun swap(subject: PointArrayList, indexL: Int, indexR: Int) = subject.swap(indexL, indexR)
     }
 }
+
+fun pointArrayListOf(vararg values: Double): PointArrayList {
+    if ((values.size % 2) != 0) error("values not multiple of 2 (x, y) but '${values.size}'")
+    val points = PointArrayList(values.size / 2)
+    points.addRaw(*values)
+    return points
+}
+fun pointArrayListOf(vararg values: IPoint): PointArrayList = PointArrayList(*values)
 
 //////////////////////////////////////
 

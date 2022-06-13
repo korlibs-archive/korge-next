@@ -4,7 +4,10 @@ import com.soywiz.korma.geom.IPointArrayList
 import com.soywiz.korma.geom.IRectangle
 import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.PointArrayList
+import com.soywiz.korma.geom.roundDecimalPlaces
+import com.soywiz.korma.internal.niceStr
 import com.soywiz.korma.math.convertRange
+import com.soywiz.korma.math.roundDecimalPlaces
 
 data class CurveSplit(
     val base: BezierCurve,
@@ -15,6 +18,14 @@ data class CurveSplit(
 ) {
     val leftCurve: BezierCurve get() = left.curve
     val rightCurve: BezierCurve get() = right.curve
+
+    fun roundDecimalPlaces(places: Int) = CurveSplit(
+        base.roundDecimalPlaces(places),
+        left.roundDecimalPlaces(places),
+        right.roundDecimalPlaces(places),
+        t.roundDecimalPlaces(places),
+        hull?.roundDecimalPlaces(places)
+    )
 }
 
 class SubBezierCurve(val curve: BezierCurve, val t1: Double, val t2: Double, val parent: BezierCurve?) {
@@ -68,5 +79,7 @@ class SubBezierCurve(val curve: BezierCurve, val t1: Double, val t2: Double, val
         )
     }
 
-    override fun toString(): String = "SubBezierCurve[$t1..$t2]($curve)"
+    override fun toString(): String = "SubBezierCurve[${t1.niceStr}..${t2.niceStr}]($curve)"
+    fun roundDecimalPlaces(places: Int): SubBezierCurve =
+        SubBezierCurve(curve.roundDecimalPlaces(places), t1.roundDecimalPlaces(places), t2.roundDecimalPlaces(places), parent?.roundDecimalPlaces(places))
 }

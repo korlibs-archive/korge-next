@@ -1,10 +1,12 @@
 package com.soywiz.korma.geom.bezier
 
+import com.soywiz.kds.doubleArrayListOf
 import com.soywiz.korma.geom.Line
 import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.clone
-import com.soywiz.korma.geom.roundDecimalPlaces
+import com.soywiz.korma.geom.mutable
+import com.soywiz.korma.geom.pointArrayListOf
 import com.soywiz.korma.math.roundDecimalPlaces
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,27 +17,55 @@ class BezierCurveTest {
         //val curve = BezierCurve(PointArrayList(Point(0, 0), Point(100, 100), Point(150, 150), Point(250, 300)))
         val curve = BezierCurve(Point(0, 0), Point(-50, -200), Point(150, 150), Point(110, 120))
         //val curve = BezierCurve(PointArrayList(Point(0, 0), Point(100, 100), Point(250, 300)))
-        println(curve.points)
-        println(curve.dpoints)
-        println(curve.derivative(0.0))
-        println(curve.derivative(0.5))
-        println(curve.derivative(1.0))
-        println(curve.normal(0.0))
-        println(curve.normal(0.5))
-        println(curve.normal(1.0))
-        println(curve.compute(0.0))
-        println(curve.compute(0.5))
-        println(curve.compute(1.0))
-        println(curve.getLUT())
-        println(curve.extrema)
-        println(curve.boundingBox)
-        println(curve.length)
-        println(curve.hull(0.5))
-        println(curve.split(0.5))
-        println(curve.split(0.25, 0.75))
-        println(curve.project(Point(-20, -30)))
-        println(curve.reduce())
-        println(curve.selfIntersections())
+        assertEquals("[(0, 0), (-50, -200), (150, 150), (110, 120)]", curve.points.toString())
+        assertEquals("[[(-150, -600), (600, 1050), (-120, -90)], [(1500, 3300), (-1440, -2280)], [(-2940, -5580)]]", curve.dpoints.toString())
+        assertEquals(Point(-150, -600), curve.derivative(0.0))
+        assertEquals(Point(232.5, 352.5), curve.derivative(0.5))
+        assertEquals(Point(-120, -90), curve.derivative(1.0))
+
+        assertEquals(Point(0.97, -0.24), curve.normal(0.0).mutable.setToRoundDecimalPlaces(2))
+        assertEquals(Point(-0.83, 0.55), curve.normal(0.5).mutable.setToRoundDecimalPlaces(2))
+        assertEquals(Point(0.6, -0.8), curve.normal(1.0))
+
+        assertEquals(Point(0, 0), curve.compute(0.0))
+        assertEquals(Point(51.25, -3.75), curve.compute(0.5))
+        assertEquals(Point(110, 120), curve.compute(1.0))
+
+        assertEquals(292.8273626504729, curve.length, 0.00001)
+        assertEquals(
+            listOf(listOf(0.11, 0.51, 0.91), listOf(0.22, 0.59, 0.96)),
+            listOf(
+                curve.extrema.xt.map { it.roundDecimalPlaces(2) },
+                curve.extrema.yt.map { it.roundDecimalPlaces(2) }
+            )
+        )
+        assertEquals(doubleArrayListOf(), curve.selfIntersections())
+
+        assertEquals(101, curve.getLUT().size)
+        assertEquals(
+            Rectangle(x=-8.08, y=-62.06, width=123.41, height=183.90),
+            curve.boundingBox.mutable.roundDecimalPlaces(2)
+        )
+        assertEquals(
+            pointArrayListOf(Point(0, 0), Point(-50, -200), Point(150, 150), Point(110, 120), Point(-25, -100), Point(50, -25), Point(130, 135), Point(12.5, -62.5), Point(90, 55), Point(51.25, -3.75)),
+            curve.hull(0.5)
+        )
+        assertEquals(
+            BezierCurve.ProjectedPoint(p=Point(-6.66, -31.89), t=0.06, d=13.48),
+            curve.project(Point(-20, -30)).roundDecimalPlaces(2)
+        )
+        assertEquals(
+            "CurveSplit(base=BezierCurve([(0, 0), (-50, -200), (150, 150), (110, 120)]), left=SubBezierCurve[0..0.5](BezierCurve([(0, 0), (-25, -100), (12.5, -62.5), (51.25, -3.75)])), right=SubBezierCurve[0.5..1](BezierCurve([(51.25, -3.75), (90, 55), (130, 135), (110, 120)])), t=0.5, hull=[(0, 0), (-50, -200), (150, 150), (110, 120), (-25, -100), (50, -25), (130, 135), (12.5, -62.5), (90, 55), (51.25, -3.75)])",
+            curve.split(0.5).roundDecimalPlaces(2).toString()
+        )
+        assertEquals(
+            "SubBezierCurve[0.25..0.75](BezierCurve([(1.72, -61.41), (23.91, -52.97), (77.97, 34.84), (102.66, 85.78)]))",
+            curve.split(0.25, 0.75).roundDecimalPlaces(2).toString()
+        )
+        assertEquals(
+            "[BezierCurve([(0, 0), (-5.62, -22.48), (-8.08, -38), (-8.08, -47.91)]), BezierCurve([(-8.08, -47.91), (-8.08, -55.51), (-6.63, -59.8), (-4.04, -61.37)]), BezierCurve([(-4.04, -61.37), (-3.27, -61.84), (-2.4, -62.06), (-1.43, -62.06)]), BezierCurve([(-1.43, -62.06), (9.29, -62.06), (31.46, -34.18), (53.62, -0.13)]), BezierCurve([(53.62, -0.13), (59.92, 9.55), (66.22, 19.72), (72.25, 29.89)]), BezierCurve([(72.25, 29.89), (95.78, 69.55), (115.33, 109.22), (115.33, 119.36)]), BezierCurve([(115.33, 119.36), (115.33, 120.54), (115.06, 121.32), (114.51, 121.65)]), BezierCurve([(114.51, 121.65), (114.31, 121.77), (114.06, 121.84), (113.78, 121.84)]), BezierCurve([(113.78, 121.84), (112.91, 121.84), (111.66, 121.25), (110, 120)])]",
+            curve.reduce().map { it.curve.roundDecimalPlaces(2) }.toString()
+        )
     }
 
     @Test
@@ -76,19 +106,22 @@ class BezierCurveTest {
             listOf(0.6300168840449997),
             curve.inflections().toList()
         )
-        println(curve.lut)
-        println(curve.length)
-        //println(curve.lut.estimateAtLength(10.0))
-        println(curve.lut.estimateAtLength(-10.0))
-        println(curve.lut.estimateAtLength(10.0))
-        println(curve.lut.estimateAtLength(100.0))
-        println(curve.lut.estimateAtLength(200.0))
-        println(curve.lut.estimateAtLength(10000.0))
+    }
+
+    @Test
+    fun testLUT() {
+        val curve = BezierCurve(100, 25, 10, 90, 110, 100, 150, 195)
+        assertEquals(101, curve.lut.size)
+        assertEquals(213.86206312975315, curve.length, 0.00001)
+        assertEquals(curve.lut.estimateAtLength(-10.0), CurveLUT.Estimation(point=Point(100, 25), ratio=0.0, length=0.0))
+        assertEquals(curve.lut.estimateAtLength(10.0), CurveLUT.Estimation(point=Point(91.9902598047208, 30.988058641418167), ratio=0.03139852512330205, length=10.0))
+        assertEquals(curve.lut.estimateAtLength(100.0), CurveLUT.Estimation(point=Point(81.66306609423552, 104.91335975767849), ratio=0.5449255066963016, length=100.0))
+        assertEquals(curve.lut.estimateAtLength(200.0), CurveLUT.Estimation(point=Point(144.15932033939768, 182.4364734733693), ratio=0.954162296103267, length=200.0))
+        assertEquals(curve.lut.estimateAtLength(10000.0), CurveLUT.Estimation(point=Point(150, 195), ratio=1.0, length=213.8574065019019))
     }
 
     @Test
     fun testBoundingBox() {
-        //println(BezierCurve(0,0, 0,-50, 50,-50, 50,0).extrema)
         assertEquals(
             Rectangle(0.0, -37.5, 50.0, 37.5),
             BezierCurve(0,0, 0,-50, 50,-50, 50,0).boundingBox

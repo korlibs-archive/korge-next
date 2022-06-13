@@ -21,6 +21,7 @@ import com.soywiz.korma.geom.getPoint
 import com.soywiz.korma.geom.lastX
 import com.soywiz.korma.geom.lastY
 import com.soywiz.korma.geom.left
+import com.soywiz.korma.geom.mutable
 import com.soywiz.korma.geom.radians
 import com.soywiz.korma.geom.right
 import com.soywiz.korma.geom.roundDecimalPlaces
@@ -29,6 +30,7 @@ import com.soywiz.korma.interpolation.interpolate
 import com.soywiz.korma.math.convertRange
 import com.soywiz.korma.math.isAlmostEquals
 import com.soywiz.korma.math.normalizeZero
+import com.soywiz.korma.math.roundDecimalPlaces
 import kotlin.jvm.JvmName
 import kotlin.math.abs
 import kotlin.math.absoluteValue
@@ -211,7 +213,13 @@ class BezierCurve(
         return out
     }
 
-    data class ProjectedPoint(var p: IPoint = IPoint(), var t: Double = 0.0, var d: Double = 0.0)
+    data class ProjectedPoint(var p: IPoint = IPoint(), var t: Double = 0.0, var d: Double = 0.0) {
+        fun roundDecimalPlaces(places: Int): ProjectedPoint = ProjectedPoint(
+            p.mutable.setToRoundDecimalPlaces(places),
+            t.roundDecimalPlaces(places),
+            d.roundDecimalPlaces(places)
+        )
+    }
 
     //private var BezierCurve._t1: Double by Extra.Property { 0.0 }
     //private var BezierCurve._t2: Double by Extra.Property { 0.0 }
