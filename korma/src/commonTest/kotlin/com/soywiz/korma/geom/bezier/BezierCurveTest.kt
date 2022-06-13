@@ -225,4 +225,34 @@ class BezierCurveTest {
             b.project(Point(80, 20))
         )
     }
+
+    @Test
+    fun testToCubic() {
+        // Line
+        assertEquals(
+            BezierCurve(0.0, 0.0, 33.33, 33.33, 66.67, 66.67, 100.0, 100.0),
+            BezierCurve(0, 0, 100, 100).toCubic().roundDecimalPlaces(2)
+        )
+
+        // Quad
+        assertEquals(
+            BezierCurve(0.0, 0.0, 66.67, 0.0, 100.0, 33.33, 100.0, 100.0),
+            BezierCurve(0, 0, 100, 0, 100, 100).toCubic().roundDecimalPlaces(2)
+        )
+
+        // Cubic
+        assertEquals(
+            BezierCurve(0, 0, 50, 60, 90, 30, 100, 100),
+            BezierCurve(0, 0, 50, 60, 90, 30, 100, 100).toCubic().roundDecimalPlaces(2)
+        )
+    }
+
+    @Test
+    fun testToCubicToQuad() {
+        // Quad
+        assertEquals(
+            BezierCurve(0, 0, 100, 80, 100, 100),
+            BezierCurve(0, 0, 100, 80, 100, 100).toCubic().toQuad().roundDecimalPlaces(2)
+        )
+    }
 }

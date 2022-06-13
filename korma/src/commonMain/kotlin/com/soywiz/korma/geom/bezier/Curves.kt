@@ -13,6 +13,9 @@ fun List<Curves>.toCurves(closed: Boolean = this.last().closed) = Curves(this.fl
 @JvmName("ListCurve_toCurves")
 fun List<Curve>.toCurves(closed: Boolean) = Curves(this, closed)
 
+fun Curves.toCurves(closed: Boolean) = this
+fun Curve.toCurves(closed: Boolean) = Curves(listOf(this), closed)
+
 data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
     constructor(vararg curves: Curve, closed: Boolean = false) : this(curves.toList(), closed)
 

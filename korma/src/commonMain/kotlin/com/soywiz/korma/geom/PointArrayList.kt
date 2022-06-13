@@ -68,6 +68,12 @@ fun IPointArrayList.toIPoints(): List<IPoint> = (0 until size).map { getIPoint(i
 
 fun <T> IPointArrayList.map(gen: (x: Double, y: Double) -> T): List<T> = (0 until size).map { gen(getX(it), getY(it)) }
 
+fun IPointArrayList.mapPoints(temp: Point = Point(), gen: (x: Double, y: Double, out: Point) -> IPoint): IPointArrayList {
+    val out = PointArrayList(this.size)
+    fastForEach { x, y -> out.add(gen(x, y, temp)) }
+    return out
+}
+
 fun IPointArrayList.contains(x: Float, y: Float): Boolean = contains(x.toDouble(), y.toDouble())
 fun IPointArrayList.contains(x: Int, y: Int): Boolean = contains(x.toDouble(), y.toDouble())
 fun IPointArrayList.contains(x: Double, y: Double): Boolean {

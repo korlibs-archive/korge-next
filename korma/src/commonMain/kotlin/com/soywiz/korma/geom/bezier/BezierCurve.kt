@@ -8,6 +8,7 @@ import com.soywiz.korma.geom.IPoint
 import com.soywiz.korma.geom.IPointArrayList
 import com.soywiz.korma.geom.IRectangle
 import com.soywiz.korma.geom.Line
+import com.soywiz.korma.geom.Matrix
 import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.PointArrayList
 import com.soywiz.korma.geom.Rectangle
@@ -21,6 +22,8 @@ import com.soywiz.korma.geom.getPoint
 import com.soywiz.korma.geom.lastX
 import com.soywiz.korma.geom.lastY
 import com.soywiz.korma.geom.left
+import com.soywiz.korma.geom.map
+import com.soywiz.korma.geom.mapPoints
 import com.soywiz.korma.geom.mutable
 import com.soywiz.korma.geom.radians
 import com.soywiz.korma.geom.right
@@ -587,6 +590,103 @@ class BezierCurve(
         val adk: Double = 0.0,
     )
 
+    fun toLine(): BezierCurve {
+        val x0 = points.getX(0)
+        val y0 = points.getY(0)
+        val x1 = points.getX(order)
+        val y1 = points.getY(order)
+        return BezierCurve(x0, y0, x1, y1)
+    }
+
+    fun toCubic(): BezierCurve {
+        return when (order) {
+            1 -> {
+                val x0 = points.getX(0)
+                val y0 = points.getY(0)
+                val x1 = points.getX(1)
+                val y1 = points.getY(1)
+                val xd = x1 - x0
+                val yd = y1 - y0
+                val r1 = 1.0 / 3.0
+                val r2 = 2.0 / 3.0
+                BezierCurve(
+                    x0, y0,
+                    x0 + (xd * r1), y0 + (yd * r1),
+                    x0 + (xd * r2), y0 + (yd * r2),
+                    x1, y1,
+                )
+            }
+            2 -> {
+                fun quadToCubic1(v0: Double, v1: Double) = v0 + (v1 - v0) * (2.0 / 3.0)
+                fun quadToCubic2(v1: Double, v2: Double) = v2 + (v1 - v2) * (2.0 / 3.0)
+
+                val x0 = points.getX(0)
+                val y0 = points.getY(0)
+                val xc = points.getX(1)
+                val yc = points.getY(1)
+                val x1 = points.getX(2)
+                val y1 = points.getY(2)
+                BezierCurve(
+                    x0, y0,
+                    quadToCubic1(x0, xc), quadToCubic1(y0, yc),
+                    quadToCubic2(xc, x1), quadToCubic2(yc, y1),
+                    x1, y1
+                )
+            }
+            3 -> this // No conversion
+            else -> TODO("Unsupported higher order curves")
+        }
+    }
+
+    fun toQuad(): BezierCurve {
+        return when (order) {
+            1 -> {
+                val x0 = points.getX(0)
+                val y0 = points.getY(0)
+                val x1 = points.getX(1)
+                val y1 = points.getY(1)
+                BezierCurve(
+                    x0, y0,
+                    (x0 + x1) * 0.5, (y0 + y1) * 0.5,
+                    y0, y1,
+                )
+            }
+            2 -> this // No conversion
+            3 -> {
+                val x0 = points.getX(0)
+                val y0 = points.getY(0)
+                val xc1 = points.getX(1)
+                val yc1 = points.getY(1)
+                val xc2 = points.getX(2)
+                val yc2 = points.getY(2)
+                val x1 = points.getX(3)
+                val y1 = points.getY(3)
+                val xc = -0.25*x0 + .75*xc1 + .75*xc2 -0.25*x1
+                val yc = -0.25*y0 + .75*yc1 + .75*yc2 -0.25*y1
+                return BezierCurve(x0, y0, xc, yc, x1, y1)
+                // @TODO: Is this right
+                //quadraticFromPoints(
+                //    points.getPoint(0),
+                //    compute(0.5),
+                //    points.getPoint(3),
+                //    0.5
+                //)
+            }
+            else -> TODO("Unsupported higher order curves")
+        }
+    }
+
+    fun toQuadList(): List<BezierCurve> {
+        if (this.order == 2) return listOf(this)
+        return toSimpleList().map { it.curve.toQuad() }
+    }
+
+    fun translate(dx: Double, dy: Double): BezierCurve =
+        BezierCurve(points.mapPoints { x, y, out -> out.setTo(x + dx, y + dy) })
+
+    fun transform(m: Matrix): BezierCurve =
+        BezierCurve(points.mapPoints { x, y, out -> m.transform(x, y, out) })
+
     companion object {
         // Legendre-Gauss abscissae with n=24 (x_i values, defined at i=n as the roots of the nth order Legendre polynomial Pn(x))
         val T_VALUES = doubleArrayOf(
@@ -981,12 +1081,87 @@ class BezierCurve(
         fun lli4(p1: IPoint, p2: IPoint, p3: IPoint, p4: IPoint, out: Point = Point()): IPoint? =
             lli8(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, out)
 
-        internal fun cubicFromPoints(point: Point, point1: Point, point2: Point, t: Double = 0.5): BezierCurve {
-            TODO("Not yet implemented")
+        fun cubicFromPoints(S: Point, B: Point, E: Point, t: Double = 0.5, d1: Double? = null): BezierCurve {
+            val abc = getABC(3, S, B, E, t);
+            val d1 = d1 ?: dist(B, abc.C)
+            val d2 = (d1 * (1 - t)) / t
+
+            val selen = dist(S, E)
+            val lx = (E.x - S.x) / selen
+            val ly = (E.y - S.y) / selen
+            val bx1 = d1 * lx
+            val by1 = d1 * ly
+            val bx2 = d2 * lx
+            val by2 = d2 * ly
+            // derivation of new hull coordinates
+            val e1 = Point(B.x - bx1, B.y - by1)
+            val e2 = Point(B.x + bx2, B.y + by2)
+            val A = abc.A
+            val v1 = Point(A.x + (e1.x - A.x) / (1 - t), A.y + (e1.y - A.y) / (1 - t))
+            val v2 = Point(A.x + (e2.x - A.x) / t, A.y + (e2.y - A.y) / t)
+            val nc1 = Point(S.x + (v1.x - S.x) / t, S.y + (v1.y - S.y) / t)
+            val nc2 = Point(
+                E.x + (v2.x - E.x) / (1 - t),
+                E.y + (v2.y - E.y) / (1 - t),
+            )
+            // ...done
+            return BezierCurve(S, nc1, nc2, E);
         }
 
-        internal fun quadraticFromPoints(point: Point, point1: Point, point2: Point, t: Double = 0.5): BezierCurve {
-            TODO("Not yet implemented")
+        fun quadraticFromPoints(p1: IPoint, p2: IPoint, p3: IPoint, t: Double = 0.5): BezierCurve {
+            // shortcuts, although they're really dumb
+            if (t == 0.0) return BezierCurve(p2, p2, p3)
+            if (t == 1.0) return BezierCurve(p1, p2, p2)
+            // real fitting.
+            val abc = BezierCurve.getABC(2, p1, p2, p3, t);
+            return BezierCurve(p1, abc.A, p3);
+        }
+
+        internal fun getABC(order: Int, S: IPoint, B: IPoint, E: IPoint, t: Double = 0.5): ABCResult {
+            val u = projectionratio(t, order)
+            val um = 1.0 - u
+            val C = Point(
+                u * S.x + um * E.x,
+                u * S.y + um * E.y,
+            )
+            val s = abcratio(t, order)
+            val A = Point(
+                B.x + (B.x - C.x) / s,
+                B.y + (B.y - C.y) / s,
+            )
+            return ABCResult(A = A, B = B, C = C, S = S, E = E)
+        }
+
+        data class ABCResult(
+            val A: IPoint,
+            val B: IPoint,
+            val C: IPoint,
+            val S: IPoint,
+            val E: IPoint
+        )
+
+        private fun projectionratio(t: Double = 0.5, n: Int): Double {
+            // see u(t) note on http://pomax.github.io/bezierinfo/#abc
+            if (n != 2 && n != 3) return Double.NaN
+            if (t == 0.0 || t == 1.0) return t
+            val top = (1 - t).pow(n)
+            val bottom = t.pow(n) + top
+            return top / bottom
+        }
+
+        private fun abcratio(t: Double, n: Int): Double {
+            // see ratio(t) note on http://pomax.github.io/bezierinfo/#abc
+            if (n != 2 && n != 3) return Double.NaN
+            if (t == 0.0 || t == 1.0) return t
+            val bottom = (t).pow(n) + (1 - t).pow(n)
+            val top = bottom - 1
+            return abs(top / bottom)
+        }
+
+        private fun dist(p1: IPoint, p2: IPoint): Double {
+            val dx = p1.x - p2.x
+            val dy = p1.y - p2.y
+            return kotlin.math.sqrt(dx * dx + dy * dy)
         }
     }
 }
