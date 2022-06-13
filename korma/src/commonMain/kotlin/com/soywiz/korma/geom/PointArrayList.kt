@@ -5,6 +5,7 @@ import com.soywiz.kds.Extra
 import com.soywiz.kds.IntArrayList
 import com.soywiz.kds.SortOps
 import com.soywiz.kds.genericSort
+import com.soywiz.kds.mapDouble
 import com.soywiz.korma.math.roundDecimalPlaces
 import kotlin.math.round
 
@@ -88,16 +89,15 @@ fun IPointArrayList.clone(out: PointArrayList = PointArrayList(this.size)): Poin
 
 open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.Mixin() {
     override var closed: Boolean = false
-    private val xList = DoubleArrayList(capacity)
-    private val yList = DoubleArrayList(capacity)
-    override val size get() = xList.size
+    private val data = DoubleArrayList(capacity * 2)
+    override val size get() = data.size / 2
 
     fun isEmpty() = size == 0
     fun isNotEmpty() = size != 0
 
-    fun clear() = this.apply {
-        xList.clear()
-        yList.clear()
+    fun clear(): PointArrayList {
+        data.clear()
+        return this
     }
 
     companion object {
@@ -124,12 +124,13 @@ open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.M
      * Adds points with [values] in the format of interleaved (x, y) values.
      */
     fun addRaw(vararg values: Double) {
-        for (n in values.indices step 2) add(values[n], values[n + 1])
+        check(values.size % 2 == 0) { "values not multiple of 2 (x, y) but '${values.size}'" }
+        data.add(values)
     }
 
-    fun add(x: Double, y: Double) = this.apply {
-        xList += x
-        yList += y
+    fun add(x: Double, y: Double): PointArrayList {
+        data.add(x, y)
+        return this
     }
     fun add(x: Float, y: Float) = add(x.toDouble(), y.toDouble())
     fun add(x: Int, y: Int) = add(x.toDouble(), y.toDouble())
@@ -151,38 +152,39 @@ open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.M
         return out
     }
 
-    override fun getX(index: Int) = xList.getAt(index)
-    override fun getY(index: Int) = yList.getAt(index)
+    private fun index(index: Int, offset: Int): Int = index * 2 + offset
 
-    fun insertAt(index: Int, p: PointArrayList) = this.apply {
-        val size = p.size
-        xList.insertAt(index, p.xList.data, 0, size)
-        yList.insertAt(index, p.yList.data, 0, size)
+    override fun getX(index: Int) = data.getAt(index(index, 0))
+    override fun getY(index: Int) = data.getAt(index(index, 1))
+
+    fun insertAt(index: Int, p: PointArrayList): PointArrayList {
+        data.insertAt(index(index, 0), p.data.data, 0, p.data.size)
+        return this
     }
 
-    fun insertAt(index: Int, x: Double, y: Double) = this.apply {
-        xList.insertAt(index, x)
-        yList.insertAt(index, y)
+    fun insertAt(index: Int, x: Double, y: Double): PointArrayList {
+        data.insertAt(index(index, 0), x, y)
+        return this
     }
 
     fun insertAt(index: Int, point: IPoint) = insertAt(index, point.x, point.y)
 
-    fun removeAt(index: Int, count: Int = 1) = this.apply {
-        xList.removeAt(index, count)
-        yList.removeAt(index, count)
+    fun removeAt(index: Int, count: Int = 1): PointArrayList {
+        data.removeAt(index(index, 0), count * 2)
+        return this
     }
 
-    fun setX(index: Int, x: Double) { xList[index] = x }
+    fun setX(index: Int, x: Double) { data[index(index, 0)] = x }
     fun setX(index: Int, x: Int) = setX(index, x.toDouble())
     fun setX(index: Int, x: Float) = setX(index, x.toDouble())
 
-    fun setY(index: Int, y: Double) { yList[index] = y }
+    fun setY(index: Int, y: Double) { data[index(index, 1)] = y }
     fun setY(index: Int, y: Int) = setY(index, y.toDouble())
     fun setY(index: Int, y: Float) = setY(index, y.toDouble())
 
     fun setXY(index: Int, x: Double, y: Double) {
-        xList[index] = x
-        yList[index] = y
+        data[index(index, 0)] = x
+        data[index(index, 1)] = y
     }
     fun setXY(index: Int, x: Int, y: Int) = setXY(index, x.toDouble(), y.toDouble())
     fun setXY(index: Int, x: Float, y: Float) = setXY(index, x.toDouble(), y.toDouble())
@@ -196,8 +198,8 @@ open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.M
         }
     }
 
-    override fun equals(other: Any?): Boolean = other is PointArrayList && xList == other.xList && yList == other.yList
-    override fun hashCode(): Int = xList.hashCode() + yList.hashCode() * 7
+    override fun equals(other: Any?): Boolean = other is PointArrayList && data == other.data
+    override fun hashCode(): Int = data.hashCode()
 
     override fun toString(): String {
         val sb = StringBuilder()
@@ -219,8 +221,8 @@ open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.M
     }
 
     fun swap(indexA: Int, indexB: Int) {
-        xList.swap(indexA, indexB)
-        yList.swap(indexA, indexB)
+        data.swap(index(indexA, 0), index(indexB, 0))
+        data.swap(index(indexA, 1), index(indexB, 1))
     }
 
     fun reverse() {
@@ -237,12 +239,10 @@ open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.M
     }
 }
 
-fun pointArrayListOf(vararg values: Double): PointArrayList {
-    if ((values.size % 2) != 0) error("values not multiple of 2 (x, y) but '${values.size}'")
-    val points = PointArrayList(values.size / 2)
-    points.addRaw(*values)
-    return points
-}
+fun pointArrayListOf(vararg values: Int): PointArrayList =
+    PointArrayList(values.size / 2).also { it.addRaw(*values.mapDouble { it.toDouble() }) }
+fun pointArrayListOf(vararg values: Double): PointArrayList =
+    PointArrayList(values.size / 2).also { it.addRaw(*values) }
 fun pointArrayListOf(vararg values: IPoint): PointArrayList = PointArrayList(*values)
 
 //////////////////////////////////////
