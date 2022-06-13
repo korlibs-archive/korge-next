@@ -1,6 +1,5 @@
 package com.soywiz.korma.geom.bezier
 
-import com.soywiz.kds.getCyclic
 import com.soywiz.kds.iterators.fastForEach
 import com.soywiz.korma.geom.BoundsBuilder
 import com.soywiz.korma.geom.Point
@@ -126,12 +125,12 @@ data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
         return Curves(findTInCurve(t0) { info0, ratioInCurve0 ->
             findTInCurve(t1) { info1, ratioInCurve1 ->
                 if (info0.index == info1.index) {
-                    listOf((info0.curve as BezierCurve).split(ratioInCurve0, ratioInCurve1).curve)
+                    listOf((info0.curve as Bezier).split(ratioInCurve0, ratioInCurve1).curve)
                 } else {
                     buildList {
-                        if (ratioInCurve0 != 1.0) add((info0.curve as BezierCurve).splitRight(ratioInCurve0).curve)
+                        if (ratioInCurve0 != 1.0) add((info0.curve as Bezier).splitRight(ratioInCurve0).curve)
                         for (index in info0.index + 1 until info1.index) add(infos[index].curve)
-                        if (ratioInCurve1 != 0.0) add((info1.curve as BezierCurve).splitLeft(ratioInCurve1).curve)
+                        if (ratioInCurve1 != 0.0) add((info1.curve as Bezier).splitLeft(ratioInCurve1).curve)
                     }
                 }
             }
