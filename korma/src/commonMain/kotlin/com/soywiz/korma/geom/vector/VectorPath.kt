@@ -16,6 +16,7 @@ import com.soywiz.korma.geom.bezier.Bezier
 import com.soywiz.korma.geom.bezier.Curves
 import com.soywiz.korma.geom.bezier.toCurves
 import com.soywiz.korma.internal.niceStr
+import com.soywiz.korma.math.isAlmostEquals
 import kotlin.native.concurrent.ThreadLocal
 
 // @TODO: ThreadLocal on JVM
@@ -108,7 +109,7 @@ class VectorPath(
                 lx = x3; ly = y3
             },
             close = {
-                if ((lx != mx) || (ly != my)) {
+                if (!lx.isAlmostEquals(mx) || !ly.isAlmostEquals(my)) {
                     line(lx, ly, mx, my)
                 }
                 close()

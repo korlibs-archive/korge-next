@@ -57,6 +57,8 @@ class Bezier(
     constructor(vararg points: Double) : this(PointArrayList(*points))
     constructor(vararg points: Float) : this(PointArrayList(*points))
     constructor(vararg points: Int) : this(PointArrayList(*points))
+    @Deprecated("Boxing in K/N debug builds")
+    constructor(vararg points: Number) : this(PointArrayList(*points))
 
     fun roundDecimalPlaces(places: Int): Bezier = Bezier(points.roundDecimalPlaces(places))
 
