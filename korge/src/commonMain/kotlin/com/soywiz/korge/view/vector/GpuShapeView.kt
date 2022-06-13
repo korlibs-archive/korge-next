@@ -82,8 +82,6 @@ open class GpuShapeView(
     // @TODO: Not used, but to be compatible with Graphics
     var autoScaling: Boolean = true
 ) : View(), Anchorable {
-    private val pointCache = FastIdentityMap<VectorPath, PointArrayList>()
-    private val pointListCache = FastIdentityMap<VectorPath, List<PointArrayList>>()
     private val gpuShapeViewCommands = GpuShapeViewCommands()
     private val bb = BoundsBuilder()
     var bufferWidth = 1000
@@ -133,8 +131,6 @@ open class GpuShapeView(
 
     private fun invalidateShape() {
         renderCount = 0
-        pointCache.clear()
-        pointListCache.clear()
         validShape = false
         validShapeBounds = false
         //strokeCache.clear()
@@ -546,26 +542,30 @@ open class GpuShapeView(
 
     private fun getPointsForPath(points: PointArrayList): PointsResult {
         val vertexStart = gpuShapeViewCommands.verticesStart()
-        val bb = BoundsBuilder()
+        val bb = this.bb
         bb.reset()
-        val startIndex = gpuShapeViewCommands.addVertex(0f, 0f)
+        bb.add(points)
+        val xMid = (bb.xmax + bb.xmin) / 2
+        val yMid = (bb.ymax + bb.ymin) / 2
+
+        gpuShapeViewCommands.addVertex(xMid.toFloat(), yMid.toFloat())
         for (n in 0 until points.size + 1) {
-            val x = points.getX(n % points.size).toFloat()
-            val y = points.getY(n % points.size).toFloat()
-            gpuShapeViewCommands.addVertex(x, y)
-            bb.add(x, y)
+            val x = points.getX(n % points.size)
+            val y = points.getY(n % points.size)
+            //val dist = Point.distance(x, y, xMid, yMid)
+            val dist = 0.0
+            gpuShapeViewCommands.addVertex(x.toFloat(), y.toFloat(), lw = dist.toFloat())
         }
-        gpuShapeViewCommands.updateVertex(startIndex, ((bb.xmax + bb.xmin) / 2).toFloat(), ((bb.ymax + bb.ymin) / 2).toFloat())
         val vertexEnd = gpuShapeViewCommands.verticesEnd()
         return PointsResult(bb.getBounds(), points.size + 2, vertexStart, vertexEnd)
     }
 
     private fun getPointsForPath(path: VectorPath): PointsResult {
-        return getPointsForPath(pointCache.getOrPut(path) { path.getPoints2() })
+        return getPointsForPath(path.getPoints2())
     }
 
     private fun getPointsForPathList(path: VectorPath): List<PointsResult> {
-        return pointListCache.getOrPut(path) { path.getPoints2List() }.map { getPointsForPath(it) }
+        return path.getPoints2List().map { getPointsForPath(it) }
     }
 
     var maxRenderCount: Int = 100_000
@@ -636,6 +636,24 @@ open class GpuShapeView(
                     blendMode = BlendMode.NORMAL.factors,
                 )
             }
+            if (antialiased) {
+                //if (true) {
+                //if (false) {
+                //println("globalScale=$globalScale")
+                renderStroke(
+                    stateTransform = shape.transform,
+                    strokePath = shape.path,
+                    paint = shape.paint,
+                    globalAlpha = shape.globalAlpha,
+                    lineWidth = (1.6 * globalScale).clamp(1.4, 1.8), // @TODO: Scale lineWidth based on the global scale and device pixel ratio
+                    scaleMode = LineScaleMode.NONE,
+                    startCap = LineCap.BUTT,
+                    endCap = LineCap.BUTT,
+                    join = LineJoin.MITER,
+                    miterLimit = 0.5,
+                    forceClosed = false,
+                )
+            }
             return
         }
 
@@ -680,7 +698,7 @@ open class GpuShapeView(
                 endCap = LineCap.BUTT,
                 join = LineJoin.MITER,
                 miterLimit = 0.5,
-                forceClosed = true,
+                forceClosed = false,
                 stencil = AG.StencilState(
                     enabled = true,
                     compareMode = AG.CompareMode.NOT_EQUAL,
