@@ -1,28 +1,39 @@
 package com.soywiz.korma.geom.bezier
 
+import com.soywiz.kds.Extra
 import com.soywiz.kds.iterators.fastForEach
+import com.soywiz.korma.annotations.KormaExperimental
 import com.soywiz.korma.geom.BoundsBuilder
+import com.soywiz.korma.geom.IPointArrayList
 import com.soywiz.korma.geom.Point
+import com.soywiz.korma.geom.PointArrayList
 import com.soywiz.korma.geom.Rectangle
+import com.soywiz.korma.geom.fastForEach
+import com.soywiz.korma.geom.firstX
+import com.soywiz.korma.geom.lastX
+import com.soywiz.korma.geom.lastY
 import com.soywiz.korma.math.convertRange
+import com.soywiz.korma.math.isAlmostEquals
 import kotlin.jvm.JvmName
 
 @JvmName("ListCurves_toCurves")
-fun List<Curves>.toCurves(closed: Boolean = this.last().closed) = Curves(this.flatMap { it.curves }, closed)
+fun List<Curves>.toCurves(closed: Boolean = this.last().closed) = Curves(this.flatMap { it.beziers }, closed)
 @JvmName("ListCurve_toCurves")
-fun List<Curve>.toCurves(closed: Boolean) = Curves(this, closed)
+fun List<Bezier>.toCurves(closed: Boolean) = Curves(this, closed)
 
 fun Curves.toCurves(closed: Boolean) = this
-fun Curve.toCurves(closed: Boolean) = Curves(listOf(this), closed)
+fun Bezier.toCurves(closed: Boolean) = Curves(listOf(this), closed)
 
-data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
-    constructor(vararg curves: Curve, closed: Boolean = false) : this(curves.toList(), closed)
+data class Curves(val beziers: List<Bezier>, val closed: Boolean) : Curve, Extra by Extra.Mixin() {
+    var assumeConvex: Boolean = false
+
+    constructor(vararg curves: Bezier, closed: Boolean = false) : this(curves.toList(), closed)
 
     override val order: Int get() = -1
 
     data class CurveInfo(
         val index: Int,
-        val curve: Curve,
+        val curve: Bezier,
         val startLength: Double,
         val endLength: Double,
         val bounds: Rectangle,
@@ -34,7 +45,7 @@ data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
 
     val infos: List<CurveInfo> by lazy {
         var pos = 0.0
-        curves.mapIndexed { index, curve ->
+        beziers.mapIndexed { index, curve ->
             val start = pos
             pos += curve.length
             CurveInfo(index, curve, start, pos, curve.getBounds())
@@ -136,4 +147,26 @@ data class Curves(val curves: List<Curve>, val closed: Boolean) : Curve {
             }
         }, closed = false)
     }
+}
+
+@KormaExperimental
+fun Curves.toNonCurveSimplePointList(out: PointArrayList = PointArrayList()): IPointArrayList? {
+    val curves = this
+    val beziers = curves.beziers//.flatMap { it.toSimpleList() }.map { it.curve }
+    val epsilon = 0.00001
+    beziers.fastForEach { bezier ->
+        if (bezier.inflections().isNotEmpty()) return null
+        val points = bezier.points
+        points.fastForEach { x, y ->
+            if (out.isEmpty() || (!out.lastX.isAlmostEquals(x, epsilon) || !out.lastY.isAlmostEquals(y, epsilon))) {
+                out.add(x, y)
+            }
+        }
+        //println("bezier=$bezier")
+        //out.add(points, 0, points.size - 1)
+    }
+    if (out.lastX.isAlmostEquals(out.firstX, epsilon) && out.lastX.isAlmostEquals(out.firstX, epsilon)) {
+        out.removeAt(out.size - 1)
+    }
+    return out
 }

@@ -255,7 +255,7 @@ class StrokePointsBuilder(val width: Double, override val mode: StrokePointsMode
 
     fun addAllCurvesPoints(curves: Curves, join: LineJoin = LineJoin.MITER, startCap: LineCap = LineCap.BUTT, endCap: LineCap = LineCap.BUTT, miterLimit: Double = 10.0) {
         val closed = curves.closed
-        val curves = curves.curves
+        val curves = curves.beziers
         for (n in curves.indices) {
             val curr = curves.getCyclic(n + 0)
             val next = curves.getCyclic(n + 1)

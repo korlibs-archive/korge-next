@@ -142,6 +142,10 @@ open class PointArrayList(capacity: Int = 7) : IPointArrayList, Extra by Extra.M
     fun add(p: IPointArrayList, index: Int) {
         add(p.getX(index), p.getY(index))
     }
+    fun add(p: IPointArrayList, index: Int, indexEnd: Int) {
+        // @TODO: Optimize this
+        for (n in index until indexEnd) add(p.getX(n), p.getY(n))
+    }
 
     fun copyFrom(other: IPointArrayList): PointArrayList = this.apply { clear() }.apply { add(other) }
     fun clone(out: PointArrayList = PointArrayList()): PointArrayList = out.clear().add(this)

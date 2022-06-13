@@ -13,7 +13,6 @@ import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.PointArrayList
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.bezier.Bezier
-import com.soywiz.korma.geom.bezier.Curve
 import com.soywiz.korma.geom.bezier.Curves
 import com.soywiz.korma.geom.bezier.toCurves
 import com.soywiz.korma.internal.niceStr
@@ -33,6 +32,7 @@ class VectorPath(
     val data: DoubleArrayList = DoubleArrayList(),
     var winding: Winding = Winding.EVEN_ODD
 ) : IVectorPath {
+    var assumeConvex: Boolean = false
     var version: Int = 0
 
     fun clone(): VectorPath = VectorPath(IntArrayList(commands), DoubleArrayList(data), winding)
@@ -453,8 +453,8 @@ class VectorPath(
     }
 }
 
-fun VectorBuilder.path(path: VectorPath) {
-    write(path)
+fun VectorBuilder.path(path: VectorPath?) {
+    if (path != null) write(path)
 }
 
 fun VectorBuilder.write(path: VectorPath) {
@@ -543,12 +543,12 @@ fun VectorPath.applyTransform(m: Matrix?): VectorPath {
     return this
 }
 
-fun VectorPath.getCurvesLists(): List<Curves> = arrayListOf<Curves>().also { out ->
+fun VectorPath.getCurvesList(): List<Curves> = arrayListOf<Curves>().also { out ->
     var currentClosed = false
-    var current = arrayListOf<Curve>()
+    var current = arrayListOf<Bezier>()
     fun flush() {
         if (current.isEmpty()) return
-        out.add(Curves(current, currentClosed))
+        out.add(Curves(current, currentClosed).also { it.assumeConvex = assumeConvex })
         currentClosed = false
         current = arrayListOf()
     }
@@ -570,6 +570,9 @@ fun VectorPath.getCurvesLists(): List<Curves> = arrayListOf<Curves>().also { out
 }
 
 fun VectorPath.getCurves(): Curves {
-    val curvesList = getCurvesLists()
-    return curvesList.flatMap { it.curves }.toCurves(curvesList.lastOrNull()?.closed ?: false)
+    val curvesList = getCurvesList()
+    return curvesList.flatMap { it.beziers }.toCurves(curvesList.lastOrNull()?.closed ?: false)
 }
+
+fun VectorPath.toCurves(): Curves = getCurves()
+fun VectorPath.toCurvesList(): List<Curves> = getCurvesList()

@@ -40,6 +40,7 @@ import com.soywiz.korma.geom.PointArrayList
 import com.soywiz.korma.geom.PointPool
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.bezier.Bezier
+import com.soywiz.korma.geom.bezier.isConvex
 import com.soywiz.korma.geom.degrees
 import com.soywiz.korma.geom.distanceTo
 import com.soywiz.korma.geom.expand
@@ -173,13 +174,8 @@ open class GpuShapeView(
                 EmptyShape -> false
                 is CompoundShape -> this.components.any { it.requireStencil }
                 is TextShape -> this.primitiveShapes.requireStencil
-                is FillShape -> {
-                    // @TODO: Check if the shape is convex. If it is context we might not need the stencil
-                    true
-                }
-                is PolylineShape -> {
-                    false
-                }
+                is FillShape -> !this.isConvex
+                is PolylineShape -> false
                 else -> true // UNKNOWN
             }
         }
@@ -604,7 +600,9 @@ open class GpuShapeView(
         val pathBoundsNoExpended = BoundsBuilder().also { bb -> pathDataList.fastForEach { bb.add(it.bounds) } }.getBounds()
         val pathBounds = pathBoundsNoExpended.clone().expand(2, 2, 2, 2)
 
-        if (!shape.requireStencil && shape.clip == null) {
+        if (shape.isConvex && shape.clip == null) {
+        //if (false) {
+            //println("convex!")
             pathDataList.fastForEach { pathData ->
                 gpuShapeViewCommands.draw(
                     AG.DrawType.TRIANGLE_FAN,
