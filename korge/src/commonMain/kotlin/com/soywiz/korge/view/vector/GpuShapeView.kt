@@ -126,6 +126,7 @@ open class GpuShapeView(
 
     val shapeWidth: Double get() = shapeBounds.width
     val shapeHeight: Double get() = shapeBounds.height
+    private var lastCommandWasClipped: Boolean = false
 
     override val anchorDispX: Double get() = shapeBounds.width * anchorX
     override val anchorDispY: Double get() = shapeBounds.height * anchorY
@@ -144,6 +145,7 @@ open class GpuShapeView(
         validShape = true
         gpuShapeViewCommands.clear()
         gpuShapeViewCommands.clearStencil()
+        lastCommandWasClipped = true
         renderShape(shape)
         gpuShapeViewCommands.finish()
         cachedScale = globalScale
@@ -600,7 +602,27 @@ open class GpuShapeView(
         val pathBoundsNoExpended = BoundsBuilder().also { bb -> pathDataList.fastForEach { bb.add(it.bounds) } }.getBounds()
         val pathBounds = pathBoundsNoExpended.clone().expand(2, 2, 2, 2)
 
-        if (shape.isConvex && shape.clip == null) {
+        val clipDataStart = gpuShapeViewCommands.verticesStart()
+        val clipData = shape.clip?.let { getPointsForPath(it) }
+        val clipDataEnd = gpuShapeViewCommands.verticesEnd()
+        val clipBounds = clipData?.bounds
+        val shapeIsConvex = shape.isConvex
+        val isSimpleDraw = shapeIsConvex && shape.clip == null
+
+        //println("pathBounds=$pathBounds")
+
+        if (!isSimpleDraw || lastCommandWasClipped) {
+            lastCommandWasClipped = true
+            gpuShapeViewCommands.setScissor(when {
+                isSimpleDraw -> null
+                clipBounds != null -> Rectangle().also { it.setToIntersection(pathBounds, clipBounds) }
+                else -> pathBounds
+            })
+            //gpuShapeViewCommands.clearStencil(0)
+        }
+
+        if (isSimpleDraw) {
+            lastCommandWasClipped = false
         //if (false) {
             //println("convex!")
             pathDataList.fastForEach { pathData ->
@@ -610,24 +632,13 @@ open class GpuShapeView(
                     endIndex = pathData.vertexEnd,
                     paintShader = paintShader,
                     colorMask = AG.ColorMaskState(true),
-                    blendMode = BlendMode.NONE.factors,
+                    //blendMode = BlendMode.NONE.factors,
+                    blendMode = BlendMode.NORMAL.factors,
                 )
             }
             return
         }
 
-        val clipDataStart = gpuShapeViewCommands.verticesStart()
-        val clipData = shape.clip?.let { getPointsForPath(it) }
-        val clipDataEnd = gpuShapeViewCommands.verticesEnd()
-        val clipBounds = clipData?.bounds
-
-        //println("pathBounds=$pathBounds")
-
-        gpuShapeViewCommands.setScissor(when {
-            clipBounds != null -> Rectangle().also { it.setToIntersection(pathBounds, clipBounds) }
-            else -> pathBounds
-        })
-        //gpuShapeViewCommands.clearStencil(0)
 
         var stencilEqualsValue = 0b00000001
         pathDataList.fastForEach { pathData ->
