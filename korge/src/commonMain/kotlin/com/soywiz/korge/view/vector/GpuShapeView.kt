@@ -6,7 +6,6 @@ import com.soywiz.klock.measureTime
 import com.soywiz.klogger.Console
 import com.soywiz.kmem.clamp
 import com.soywiz.korag.AG
-import com.soywiz.korge.annotations.KorgeExperimental
 import com.soywiz.korge.internal.KorgeInternal
 import com.soywiz.korge.render.RenderContext
 import com.soywiz.korge.view.Anchorable
@@ -300,8 +299,8 @@ open class GpuShapeView(
         val p1y = p1.y.toFloat()
         val p2x = p2.x.toFloat()
         val p2y = p2.y.toFloat()
-        gpuShapeViewCommands.addVertex(p1x, p1y, p1x, p1y, -lineWidth)
-        gpuShapeViewCommands.addVertex(p2x, p2y, p2x, p2y, +lineWidth)
+        gpuShapeViewCommands.addVertex(p1x, p1y, len = -lineWidth, maxLen = lineWidth)
+        gpuShapeViewCommands.addVertex(p2x, p2y, len = +lineWidth, maxLen = lineWidth)
     }
 
     private fun pointsAddCubicOrLine(
@@ -372,7 +371,10 @@ open class GpuShapeView(
                 val px = x + dx * len
                 val py = y + dy * len
 
-                gpuShapeViewCommands.addVertex(px, py, px, py, len, maxLen)
+                //println("x=$x, y=$y, len=$len, maxLen=$maxLen")
+
+
+                gpuShapeViewCommands.addVertex(px, py, if (antialiased) len else 0f, if (antialiased) maxLen else 10f)
             }
         }
         val endIndex = gpuShapeViewCommands.verticesEnd()
@@ -384,13 +386,14 @@ open class GpuShapeView(
             lineWidth = lineWidth,
         )
 
-        gpuShapeViewCommands.setScissor(null)
+        //gpuShapeViewCommands.setScissor(null)
         gpuShapeViewCommands.draw(AG.DrawType.TRIANGLE_STRIP, info, stencil = stencil, startIndex = startIndex, endIndex = endIndex)
     }
 
     class PointsResult(val bounds: Rectangle, val vertexCount: Int, val vertexStart: Int, val vertexEnd: Int)
 
-    private fun getPointsForPath(points: PointArrayList): PointsResult {
+    private fun getPointsForPath(points: PointArrayList, type: AG.DrawType): PointsResult? {
+        if (points.size < 3) return null
         val vertexStart = gpuShapeViewCommands.verticesStart()
         val bb = this.bb
         bb.reset()
@@ -398,24 +401,35 @@ open class GpuShapeView(
         val xMid = (bb.xmax + bb.xmin) / 2
         val yMid = (bb.ymax + bb.ymin) / 2
 
-        gpuShapeViewCommands.addVertex(xMid.toFloat(), yMid.toFloat())
+        val isStrip = type == AG.DrawType.TRIANGLE_STRIP
+
+        val antialiased = this.antialiased
+        val isStripAndAntialiased = antialiased && isStrip
+        //val isStripAndAntialiased = isStrip
+
+        if (!isStrip) {
+            gpuShapeViewCommands.addVertex(xMid.toFloat(), yMid.toFloat(), len = 0f, maxLen = 10f)
+        }
         for (n in 0 until points.size + 1) {
             val x = points.getX(n % points.size)
             val y = points.getY(n % points.size)
-            //val dist = Point.distance(x, y, xMid, yMid)
-            val dist = 0.0
-            gpuShapeViewCommands.addVertex(x.toFloat(), y.toFloat(), lw = dist.toFloat())
+            val len = if (isStripAndAntialiased) Point.distance(x, y, xMid, yMid).toFloat() else 0f
+            val maxLen = if (isStripAndAntialiased) len else 10f
+            if (isStrip) {
+                gpuShapeViewCommands.addVertex(xMid.toFloat(), yMid.toFloat(), len = 0f, maxLen = maxLen)
+            }
+            gpuShapeViewCommands.addVertex(x.toFloat(), y.toFloat(), len = len, maxLen = maxLen)
         }
         val vertexEnd = gpuShapeViewCommands.verticesEnd()
         return PointsResult(bb.getBounds(), points.size + 2, vertexStart, vertexEnd)
     }
 
-    private fun getPointsForPath(path: VectorPath): PointsResult {
-        return getPointsForPath(path.getPoints2())
+    private fun getPointsForPath(path: VectorPath, type: AG.DrawType): PointsResult? {
+        return getPointsForPath(path.getPoints2(), type)
     }
 
-    private fun getPointsForPathList(path: VectorPath): List<PointsResult> {
-        return path.getPoints2List().map { getPointsForPath(it) }
+    private fun getPointsForPathList(path: VectorPath, type: AG.DrawType): List<PointsResult> {
+        return path.getPoints2List().mapNotNull { getPointsForPath(it, type) }
     }
 
     var maxRenderCount: Int = 100_000
@@ -448,16 +462,16 @@ open class GpuShapeView(
             lineWidth = 10000000.0,
         ) ?: return
 
-        val pathDataList = getPointsForPathList(shape.path)
+        val shapeIsConvex = shape.isConvex
+        val isSimpleDraw = shapeIsConvex && shape.clip == null
+        val pathDataList = getPointsForPathList(shape.path, if (isSimpleDraw) AG.DrawType.TRIANGLE_STRIP else AG.DrawType.TRIANGLE_FAN)
         val pathBoundsNoExpended = BoundsBuilder().also { bb -> pathDataList.fastForEach { bb.add(it.bounds) } }.getBounds()
         val pathBounds = pathBoundsNoExpended.clone().expand(2, 2, 2, 2)
 
         val clipDataStart = gpuShapeViewCommands.verticesStart()
-        val clipData = shape.clip?.let { getPointsForPath(it) }
+        val clipData = shape.clip?.let { getPointsForPath(it, AG.DrawType.TRIANGLE_FAN) }
         val clipDataEnd = gpuShapeViewCommands.verticesEnd()
         val clipBounds = clipData?.bounds
-        val shapeIsConvex = shape.isConvex
-        val isSimpleDraw = shapeIsConvex && shape.clip == null
 
         //println("pathBounds=$pathBounds")
 
@@ -477,31 +491,13 @@ open class GpuShapeView(
             //println("convex!")
             pathDataList.fastForEach { pathData ->
                 gpuShapeViewCommands.draw(
-                    AG.DrawType.TRIANGLE_FAN,
+                    AG.DrawType.TRIANGLE_STRIP,
                     startIndex = pathData.vertexStart,
                     endIndex = pathData.vertexEnd,
                     paintShader = paintShader,
                     colorMask = AG.ColorMaskState(true),
                     //blendMode = BlendMode.NONE.factors,
                     blendMode = BlendMode.NORMAL.factors,
-                )
-            }
-            if (antialiased) {
-                //if (true) {
-                //if (false) {
-                //println("globalScale=$globalScale")
-                renderStroke(
-                    stateTransform = shape.transform,
-                    strokePath = shape.path,
-                    paint = shape.paint,
-                    globalAlpha = shape.globalAlpha,
-                    lineWidth = (1.6 * globalScale).clamp(1.4, 1.8), // @TODO: Scale lineWidth based on the global scale and device pixel ratio
-                    scaleMode = LineScaleMode.NONE,
-                    startCap = LineCap.BUTT,
-                    endCap = LineCap.BUTT,
-                    join = LineJoin.MITER,
-                    miterLimit = 0.5,
-                    forceClosed = false,
                 )
             }
             return
@@ -588,10 +584,10 @@ open class GpuShapeView(
         val y0 = pathBounds.top.toFloat()
         val x1 = pathBounds.right.toFloat()
         val y1 = pathBounds.bottom.toFloat()
-        gpuShapeViewCommands.addVertex(x0, y0)
-        gpuShapeViewCommands.addVertex(x1, y0)
-        gpuShapeViewCommands.addVertex(x1, y1)
-        gpuShapeViewCommands.addVertex(x0, y1)
+        gpuShapeViewCommands.addVertex(x0, y0, 0f, 10f)
+        gpuShapeViewCommands.addVertex(x1, y0, 0f, 10f)
+        gpuShapeViewCommands.addVertex(x1, y1, 0f, 10f)
+        gpuShapeViewCommands.addVertex(x0, y1, 0f, 10f)
         val vend = gpuShapeViewCommands.verticesEnd()
 
         //println("[($lx0,$ly0)-($lx1,$ly1)]")

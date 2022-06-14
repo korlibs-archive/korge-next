@@ -45,7 +45,7 @@ suspend fun Stage.mainGpuVectorRendering2() {
             this.stroke(mainStrokePaint, lineWidth = lineWidth, lineJoin = LineJoin.MITER, lineCap = LineCap.BUTT) {
             //this.fill(mainStrokePaint) {
                 this.rect(lineWidth / 2, lineWidth / 2, width, height)
-                //this.rect(lineWidth / 2 + 32, lineWidth / 2 + 32, width - 64, height - 64)
+                this.rect(lineWidth / 2 + 32, lineWidth / 2 + 32, width - 64, height - 64)
             }
             //this.fill(secondaryStrokePaint) {
             //    this.rect(600, 50, 300, 200)

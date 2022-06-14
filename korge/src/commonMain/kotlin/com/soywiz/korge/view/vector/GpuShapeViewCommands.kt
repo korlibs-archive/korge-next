@@ -38,18 +38,19 @@ class GpuShapeViewCommands {
         commands.clear()
     }
 
-    fun updateVertex(index: Int, x: Float, y: Float, u: Float = x, v: Float = y, lw: Float = 0f, maxLen: Float = lw) {
-        val p = index * 6
+    fun updateVertex(index: Int, x: Float, y: Float, len: Float = 0f, maxLen: Float = len) {
+        val p = index * 4
         bufferVertexData[p + 0] = x
         bufferVertexData[p + 1] = y
-        bufferVertexData[p + 2] = u
-        bufferVertexData[p + 3] = v
-        bufferVertexData[p + 4] = lw
-        bufferVertexData[p + 5] = maxLen
+        bufferVertexData[p + 2] = len
+        bufferVertexData[p + 3] = maxLen
     }
 
-    fun addVertex(x: Float, y: Float, u: Float = x, v: Float = y, lw: Float = 0f, maxLen: Float = lw): Int {
-        bufferVertexData.add(x, y, u, v, lw, maxLen)
+    fun addVertex(x: Float, y: Float, len: Float = 0f, maxLen: Float = len): Int {
+        if (maxLen <= 0f) {
+            error("Invalid maxLen=$maxLen")
+        }
+        bufferVertexData.add(x, y, len, maxLen)
         return vertexIndex++
     }
 

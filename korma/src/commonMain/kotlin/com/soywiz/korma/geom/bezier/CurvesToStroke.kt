@@ -331,7 +331,7 @@ fun List<Curves>.toStrokePointsList(
         lineDash != null -> this.flatMap { it.toDashes(lineDash.toDoubleArray(), lineDashOffset) }
         else -> this
     }
-    return curvesList.map { curves -> StrokePointsBuilder(width, mode, generateDebug).also {
+    return curvesList.map { curves -> StrokePointsBuilder(width / 2.0, mode, generateDebug).also {
         it.addAllCurvesPoints(curves, join, startCap, endCap, miterLimit, forceClosed)
     } }
 }
