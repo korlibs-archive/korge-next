@@ -1,3 +1,4 @@
+import com.soywiz.kds.doubleArrayListOf
 import com.soywiz.klock.*
 import com.soywiz.klogger.*
 import com.soywiz.korev.*
@@ -15,7 +16,6 @@ import com.soywiz.korim.paint.*
 import com.soywiz.korim.text.*
 import com.soywiz.korim.vector.*
 import com.soywiz.korim.vector.format.*
-import com.soywiz.korim.vector.format.SVG
 import com.soywiz.korio.file.std.*
 import com.soywiz.korma.geom.*
 import com.soywiz.korma.geom.vector.*
@@ -175,6 +175,9 @@ suspend fun Stage.mainGpuVectorRendering() {
                     regularPolygon(6, 30.0, x = 100.0, y = 100.0)
                     //rect(-100, -100, 500, 500)
                     //rectHole(40, 40, 320, 320)
+                }
+                stroke(Colors.GREEN, StrokeInfo(thickness = 5.0, startCap = LineCap.ROUND, endCap = LineCap.ROUND, dash = doubleArrayListOf(15.0, 10.0), dashOffset = 8.0)) {
+                    regularPolygon(6, 30.0, x = 100.0, y = 100.0)
                 }
             }
         }

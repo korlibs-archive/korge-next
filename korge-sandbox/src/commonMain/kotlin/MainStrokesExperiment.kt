@@ -29,6 +29,7 @@ import com.soywiz.korma.geom.PointArrayList
 import com.soywiz.korma.geom.bezier.Bezier
 import com.soywiz.korma.geom.bezier.StrokePointsMode
 import com.soywiz.korma.geom.bezier.toDashes
+import com.soywiz.korma.geom.bezier.toNonCurveSimplePointList
 import com.soywiz.korma.geom.bezier.toStrokePoints
 import com.soywiz.korma.geom.bezier.toStrokePointsList
 import com.soywiz.korma.geom.fastForEach
@@ -36,14 +37,45 @@ import com.soywiz.korma.geom.fastForEachWithIndex
 import com.soywiz.korma.geom.firstPoint
 import com.soywiz.korma.geom.lastPoint
 import com.soywiz.korma.geom.shape.buildVectorPath
+import com.soywiz.korma.geom.shape.toPolygon
 import com.soywiz.korma.geom.vector.circle
 import com.soywiz.korma.geom.vector.getCurves
 import com.soywiz.korma.geom.vector.line
+import com.soywiz.korma.geom.vector.path
 import com.soywiz.korma.geom.vector.quadTo
 import com.soywiz.korma.geom.vector.star
+import com.soywiz.korma.geom.vector.toCurves
 import com.soywiz.korma.interpolation.Easing
 
 suspend fun Stage.mainStrokesExperiment2() {
+    graphics {
+        val path = buildVectorPath { circle(200, 200, 100) }
+        val points = path.toCurves().toNonCurveSimplePointList()
+        val path2 = points?.toPolygon()
+
+        stroke(Colors.BLUE, StrokeInfo(thickness = 3.0)) {
+            path(path)
+        }
+
+        stroke(Colors.RED, StrokeInfo(thickness = 2.0)) {
+            path(path2)
+        }
+
+        fill(Colors.PURPLE) {
+            var n = 0
+            points?.fastForEach { x, y ->
+                circle(x, y, 5.0)
+            }
+        }
+        fill(Colors.WHITE) {
+            var n = 0
+            points?.fastForEach { x, y ->
+                text("${n++}", DefaultTtfFont, x = x + 2.0, y = y - 5.0)
+            }
+        }
+    }
+    return
+
     //graphics {
     //    val curve = BezierCurve(0.0, 0.0, 33.33333333333333, 66.66666666666666, 66.66666666666667, 100.0, 100.0, 100.0)
     //    stroke(Colors.RED, StrokeInfo(thickness = 3.0)) {
