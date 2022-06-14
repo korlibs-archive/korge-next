@@ -36,7 +36,9 @@ object GpuShapeViewPrograms {
     val u_Transform = Uniform("u_Transform", VarType.Mat4)
     val u_Gradientp0 = Uniform("u_Gradientp0", VarType.Float3)
     val u_Gradientp1 = Uniform("u_Gradientp1", VarType.Float3)
+    val a_MaxDist: Attribute = Attribute("a_MaxDist", VarType.Float1, normalized = false, precision = Precision.MEDIUM)
     val a_Dist: Attribute = Attribute("a_Dist", VarType.Float1, normalized = false, precision = Precision.MEDIUM)
+    val v_MaxDist: Varying = Varying("v_MaxDist", VarType.Float1, precision = Precision.MEDIUM)
     val v_Dist: Varying = Varying("v_Dist", VarType.Float1, precision = Precision.MEDIUM)
     val LAYOUT = VertexLayout(DefaultShaders.a_Pos)
     val LAYOUT_TEX = VertexLayout(DefaultShaders.a_Tex)
@@ -44,7 +46,7 @@ object GpuShapeViewPrograms {
     val LAYOUT_FILL = VertexLayout(DefaultShaders.a_Pos, DefaultShaders.a_Tex)
 
     val LAYOUT_POS_DIST = VertexLayout(DefaultShaders.a_Pos, a_Dist)
-    val LAYOUT_POS_TEX_FILL_DIST = VertexLayout(DefaultShaders.a_Pos, DefaultShaders.a_Tex, a_Dist)
+    val LAYOUT_POS_TEX_FILL_DIST = VertexLayout(DefaultShaders.a_Pos, DefaultShaders.a_Tex, a_Dist, a_MaxDist)
 
     val LW = (u_LineWidth)
     val LW1 = Program.ExpressionBuilder { (LW - 1f.lit) }
@@ -63,8 +65,9 @@ object GpuShapeViewPrograms {
         vertex = VertexShaderDefault {
             SET(out, (u_ProjMat * u_ViewMat) * vec4(a_Pos, 0f.lit, 1f.lit))
             //SET(out, vec4(a_Pos, 0f.lit, 1f.lit))
-            SET(v_Tex, DefaultShaders.a_Tex)
+            SET(v_Tex, DefaultShaders.a_Pos)
             SET(v_Dist, a_Dist)
+            SET(v_MaxDist, a_MaxDist)
         },
         fragment = FragmentShaderDefault {
             IF(u_ProgramType eq PROGRAM_TYPE_STENCIL.toFloat().lit) {
@@ -150,7 +153,8 @@ object GpuShapeViewPrograms {
             SET(out, out * u_ColorMul)
             IF(abs(v_Dist) ge LW1) {
                 //run {
-                val aaAlpha = 1f.lit - (abs(v_Dist) - LW1)
+                val aaAlpha = 1f.lit - smoothstep(abs(v_MaxDist) - 1f.lit, abs(v_MaxDist), abs(v_Dist))
+                //val aaAlpha = 1f.lit - (abs(v_Dist) - LW1)
                 SET(out["a"], out["a"] * aaAlpha)
                 //SET(out["a"], out["a"] * clamp(aaAlpha, 0f.lit, 1f.lit))
             }

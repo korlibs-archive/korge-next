@@ -43,6 +43,7 @@ suspend fun main() = Korge(
 ) {
     //mainDpi()
     //mainZIndex()
+    //mainStrokesExperiment3()
     //mainStrokesExperiment2()
     //mainStrokesExperiment()
     //mainCircleColor()
@@ -51,7 +52,8 @@ suspend fun main() = Korge(
     //mainEasing()
     //mainTweenPoint()
     //mainBezier()
-    mainGpuVectorRendering()
+    mainGpuVectorRendering2()
+    //mainGpuVectorRendering()
     //mainClipping()
     //mainTextureIssue()
     //mainTilemapTest()

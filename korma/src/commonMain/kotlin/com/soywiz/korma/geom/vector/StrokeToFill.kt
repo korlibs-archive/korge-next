@@ -21,6 +21,10 @@ import com.soywiz.korma.geom.unaryPlus
 import com.soywiz.korma.math.clamp
 
 // @TODO: Implement LineCap + LineJoin
+// @TODO: Use Curves and reuse code from [CurvesToStrokes]
+/**
+ * @TODO: Use [com.soywiz.korma.geom.bezier.Curves] and reuse code from [toStrokePointLi]
+ */
 @OptIn(KormaExperimental::class)
 class StrokeToFill {
     private var weight: Int = 1
