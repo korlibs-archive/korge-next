@@ -161,10 +161,10 @@ val BaseBmpSlice.bmpBase get() = base
 
 data class BmpCoordsWithInstance<T : ISizeInt>(
     override val base: T,
-    override val tl_x: Float, override val tl_y: Float,
-    override val tr_x: Float, override val tr_y: Float,
-    override val br_x: Float, override val br_y: Float,
-    override val bl_x: Float, override val bl_y: Float,
+    override val tl_x: Float = 0f, override val tl_y: Float = 0f,
+    override val tr_x: Float = 1f, override val tr_y: Float = 0f,
+    override val br_x: Float = 1f, override val br_y: Float = 1f,
+    override val bl_x: Float = 0f, override val bl_y: Float = 1f,
     override val name: String? = null,
     override val virtFrame: RectangleInt? = null
 ) : BmpCoordsWithInstanceBase<T>(base, tl_x, tl_y, tr_x, tr_y, br_x, br_y, bl_x, bl_y, name, virtFrame) {
@@ -181,10 +181,10 @@ data class BmpCoordsWithInstance<T : ISizeInt>(
 
 open class BmpCoordsWithInstanceBase<T : ISizeInt>(
     override val base: T,
-    override val tl_x: Float, override val tl_y: Float,
-    override val tr_x: Float, override val tr_y: Float,
-    override val br_x: Float, override val br_y: Float,
-    override val bl_x: Float, override val bl_y: Float,
+    override val tl_x: Float = 0f, override val tl_y: Float = 0f,
+    override val tr_x: Float = 1f, override val tr_y: Float = 0f,
+    override val br_x: Float = 1f, override val br_y: Float = 1f,
+    override val bl_x: Float = 0f, override val bl_y: Float = 1f,
     override val name: String? = null,
     override val virtFrame: RectangleInt? = null
 ) : BmpCoordsWithT<T> {
@@ -363,7 +363,7 @@ abstract class BmpSlice(
     val bounds: RectangleInt,
     override val name: String? = null,
     final override val virtFrame: RectangleInt? = null,
-    bmpCoords: BmpCoordsWithT<*> = BmpCoordsWithInstance(bmpBase, 0f, 0f, 1f, 0f, 1f, 1f, 0f, 1f),
+    bmpCoords: BmpCoordsWithT<*> = BmpCoordsWithInstance(bmpBase),
 ) : Extra, BitmapCoords {
 
     @Deprecated("rotated is ignored. Use bmpCoords")
@@ -373,7 +373,7 @@ abstract class BmpSlice(
         name: String? = null,
         rotated: Boolean = false,
         virtFrame: RectangleInt? = null,
-        bmpCoords: BmpCoordsWithT<*> = BmpCoordsWithInstance(bmpBase, 0f, 0f, 1f, 0f, 1f, 1f, 0f, 1f),
+        bmpCoords: BmpCoordsWithT<*> = BmpCoordsWithInstance(bmpBase),
     ): this(bmpBase, bounds, name, virtFrame) {
         this.rotated = rotated
     }
@@ -500,8 +500,7 @@ abstract class BmpSlice(
                 bounds.setBoundsTo(0, 0, bmpBase.width, bmpBase.height)
                 virtFrame?.setBoundsTo(0, 0, bmpBase.width, bmpBase.height)
                 bmpCoords = BmpCoordsWithInstanceBase(
-                    SizeInt(bmpBase.width, bmpBase.height),
-                    0f, 0f, 1f, 0f, 1f, 1f, 0f, 1f
+                    SizeInt(bmpBase.width, bmpBase.height)
                 )
                 intArrayOf(0, 0, 1, 0, 1, 0).copyInto(pixelOffsets)
                 bmpBase.setRgba(x, y, value)
@@ -560,7 +559,7 @@ class BitmapSlice<out T : Bitmap>(
     bounds: RectangleInt,
     name: String? = null,
     virtFrame: RectangleInt? = null,
-    bmpCoords: BmpCoordsWithT<*> = BmpCoordsWithInstance(bmp, 0f, 0f, 1f, 0f, 1f, 1f, 0f, 1f),
+    bmpCoords: BmpCoordsWithT<*> = BmpCoordsWithInstance(bmp),
 ) : BmpSlice(bmp, bounds, name, virtFrame, bmpCoords), Extra by Extra.Mixin() {
 
     @Deprecated("Use bmpCoords")
@@ -636,7 +635,7 @@ fun BitmapSliceCompat(
 	name: String = "unknown"
 ) = BitmapSlice(bmp, frame.toInt(), name = name, rotated = rotated)
 
-fun <T : Bitmap> T.slice(bounds: RectangleInt = RectangleInt(0, 0, width, height), name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BitmapSlice<T> = BitmapSlice(this, RectangleInt(0, 0, width, height), name, bmpCoords = BmpCoordsWithInstance(this, 0f, 0f, 1f, 0f, 1f, 1f, 0f, 1f))
+fun <T : Bitmap> T.slice(bounds: RectangleInt = RectangleInt(0, 0, width, height), name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BitmapSlice<T> = BitmapSlice(this, RectangleInt(0, 0, width, height), name, bmpCoords = BmpCoordsWithInstance(this))
     .let {
         if (bounds != it.bounds || imageOrientation != ImageOrientation.ORIGINAL) {
             it.slice(bounds, name, imageOrientation)
