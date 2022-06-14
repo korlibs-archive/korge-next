@@ -33,6 +33,7 @@ object GpuShapeViewPrograms {
     val u_Color = Uniform("u_Color", VarType.Float4)
     val u_ColorMul = Uniform("u_ColorMul", VarType.Float4)
     val u_GlobalAlpha = Uniform("u_GlobalAlpha", VarType.Float1)
+    val u_GlobalPixelScale = Uniform("u_GlobalPixelScale", VarType.Float1)
     val u_Transform = Uniform("u_Transform", VarType.Mat4)
     val u_Gradientp0 = Uniform("u_Gradientp0", VarType.Float3)
     val u_Gradientp1 = Uniform("u_Gradientp1", VarType.Float3)
@@ -149,7 +150,7 @@ object GpuShapeViewPrograms {
             // Update global alpha
             SET(out.a, out.a * u_GlobalAlpha)
             SET(out, out * u_ColorMul)
-            val aaAlpha = 1f.lit - smoothstep(v_MaxDist - 1.5f.lit, v_MaxDist, abs(v_Dist))
+            val aaAlpha = 1f.lit - smoothstep(v_MaxDist * u_GlobalPixelScale - 1.5f.lit, v_MaxDist * u_GlobalPixelScale, abs(v_Dist * u_GlobalPixelScale))
             //val aaAlpha = 1f.lit
             SET(out["a"], out["a"] * aaAlpha)
         },

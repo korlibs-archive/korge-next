@@ -20,6 +20,41 @@ import com.soywiz.korio.file.std.*
 import com.soywiz.korma.geom.*
 import com.soywiz.korma.geom.vector.*
 
+suspend fun Stage.mainGpuVectorRendering3() {
+    gpuShapeView({
+        keep {
+            translate(100, 200)
+            fill(Colors.WHITE) {
+                rect(-10, -10, 120, 120)
+                rectHole(40, 40, 80, 80)
+            }
+        }
+    }) {
+        rotation = 15.degrees
+        //debugDrawOnlyAntialiasedBorder = true
+        keys {
+            down(Key.N0) { antialiased = !antialiased }
+            down(Key.N1) { debugDrawOnlyAntialiasedBorder = !debugDrawOnlyAntialiasedBorder }
+        }
+    }
+
+    gpuShapeView({
+        keep {
+            translate(500, 200)
+            stroke(Colors.RED, lineWidth = 10.0) {
+            //fill(Colors.RED) {
+                rect(-10, -10, 120, 120)
+                //rectHole(40, 40, 80, 80)
+            }
+        }
+    }) {
+        rotation = 15.degrees
+        keys {
+            down(Key.N0) { antialiased = !antialiased }
+        }
+    }
+}
+
 suspend fun Stage.mainGpuVectorRendering2() {
     val mainStrokePaint = LinearGradientPaint(0, 0, 0, 300).addColorStop(0.0, Colors.GREEN).addColorStop(0.5, Colors.RED).addColorStop(1.0, Colors.BLUE)
     val secondaryStrokePaint = Colors.GREEN.withAd(0.5)
