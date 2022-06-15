@@ -26,6 +26,8 @@ import com.soywiz.korim.vector.ShapeBuilder
 import com.soywiz.korio.file.std.*
 import com.soywiz.korio.stream.*
 import com.soywiz.korma.geom.*
+import com.soywiz.korma.geom.bezier.Arc
+import com.soywiz.korma.geom.bezier.Bezier
 import com.soywiz.korma.geom.ds.*
 import com.soywiz.korma.geom.shape.*
 import com.soywiz.korma.geom.vector.*
@@ -41,6 +43,7 @@ suspend fun main() = Korge(
     multithreaded = true,
     //debugAg = true,
 ) {
+    //mainArc()
     //mainDpi()
     //mainZIndex()
     //mainStrokesExperiment3()

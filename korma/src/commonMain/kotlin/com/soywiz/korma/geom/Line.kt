@@ -142,10 +142,10 @@ data class Line(override val a: Point, override val b: Point) : ILine {
     //        (q.y <= max(p.y, r.y)) && (q.y >= min(p.y, r.y)))
 
     companion object {
-        fun fromPointAndDirection(point: Point, direction: Point, scale: Double = 1.0, out: Line = Line()): Line {
+        fun fromPointAndDirection(point: IPoint, direction: IPoint, scale: Double = 1.0, out: Line = Line()): Line {
             return out.setTo(point.x, point.y, point.x + direction.x * scale, point.y + direction.y * scale)
         }
-        fun fromPointAngle(point: Point, angle: Angle, length: Double = 1.0, out: Line = Line()): Line =
+        fun fromPointAngle(point: IPoint, angle: Angle, length: Double = 1.0, out: Line = Line()): Line =
             out.setToPolar(point.x, point.y, angle, length)
 
         fun length(Ax: Double, Ay: Double, Bx: Double, By: Double): Double = kotlin.math.hypot(Bx - Ax, By - Ay)

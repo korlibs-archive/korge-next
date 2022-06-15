@@ -5,6 +5,7 @@ import com.soywiz.korma.geom.shape.buildVectorPath
 import com.soywiz.korma.geom.vector.LineJoin
 import com.soywiz.korma.geom.vector.StrokeInfo
 import com.soywiz.korma.geom.vector.VectorBuilder
+import com.soywiz.korma.geom.vector.arcTo
 import com.soywiz.korma.geom.vector.getCurves
 import com.soywiz.korma.geom.vector.line
 import com.soywiz.korma.geom.vector.lineTo
@@ -57,6 +58,7 @@ class CurvesToStrokeTest {
                 moveTo(0, 0)
                 lineTo(100, 0)
                 lineTo(100, 100)
+                arcTo()
             }.toString()
         )
     }

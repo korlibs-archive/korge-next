@@ -151,24 +151,27 @@ data class Curves(val beziers: List<Bezier>, val closed: Boolean) : Curve, Extra
     }
 }
 
-fun Curves.toVectorPath(out: VectorPath = VectorPath()): VectorPath {
-    var lastX = Double.NaN
-    var lastY = Double.NaN
-    for (bezier in beziers) {
-        val points = bezier.points
-        if (lastX.isNaN() || lastY.isNaN() || points.firstX.isAlmostEquals(lastX) || points.firstY.isAlmostEquals(lastY)) {
-            out.moveTo(points.firstX, points.firstY)
+fun Curves.toVectorPath(out: VectorPath = VectorPath()): VectorPath = listOf(this).toVectorPath(out)
+
+fun List<Curves>.toVectorPath(out: VectorPath = VectorPath()): VectorPath {
+    fastForEach { curves ->
+        var first = true
+        for (bezier in curves.beziers) {
+            val points = bezier.points
+            if (first) {
+                out.moveTo(points.firstX, points.firstY)
+                first = false
+            }
+            when (bezier.order) {
+                1 -> out.lineTo(points.getX(1), points.getY(1))
+                2 -> out.quadTo(points.getX(1), points.getY(1), points.getX(2), points.getY(2))
+                3 -> out.cubicTo(points.getX(1), points.getY(1), points.getX(2), points.getY(2), points.getX(3), points.getY(3))
+                else -> TODO()
+            }
         }
-        when (bezier.order) {
-            1 -> out.lineTo(points.getX(1), points.getY(1))
-            2 -> out.quadTo(points.getX(1), points.getY(1), points.getX(2), points.getY(2))
-            3 -> out.cubicTo(points.getX(1), points.getY(1), points.getX(2), points.getY(2), points.getX(3), points.getY(3))
-            else -> TODO()
-        }
-        lastX = points.lastX
-        lastY = points.lastY
+        if (curves.closed) out.close()
     }
-    if (closed) out.close()
+
     return out
 }
 

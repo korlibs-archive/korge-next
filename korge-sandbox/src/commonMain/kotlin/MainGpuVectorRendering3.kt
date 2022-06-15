@@ -13,12 +13,15 @@ import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.bezier.StrokePointsMode
 import com.soywiz.korma.geom.bezier.toStrokePointsList
+import com.soywiz.korma.geom.degrees
 import com.soywiz.korma.geom.minus
 import com.soywiz.korma.geom.shape.buildVectorPath
 import com.soywiz.korma.geom.shape.getPoints2List
 import com.soywiz.korma.geom.vector.LineJoin
 import com.soywiz.korma.geom.vector.StrokeInfo
 import com.soywiz.korma.geom.vector.VectorPath
+import com.soywiz.korma.geom.vector.arc
+import com.soywiz.korma.geom.vector.circle
 import com.soywiz.korma.geom.vector.lineTo
 import com.soywiz.korma.geom.vector.moveTo
 import com.soywiz.korma.geom.vector.rect
@@ -85,7 +88,7 @@ suspend fun Stage.mainGpuVectorRendering3() {
         val sx = index * 400
 
         fun getPos(x: Int, y: Int): IPoint {
-            return Point(sx + 50 + x * 150, 50 + y * 150)
+            return Point(sx + 50 + x * 150, 50 + y * 130)
         }
 
         text("${strokeInfo.join}", color = Colors.YELLOWGREEN).xy(sx + 50, 10)
@@ -137,6 +140,14 @@ suspend fun Stage.mainGpuVectorRendering3() {
             moveTo(100, 0)
             lineTo(0, 0)
             lineTo(100, 30)
+        })
+
+        debugPath("Circle", getPos(0, 4), strokeInfo, buildVectorPath {
+            circle(50.0, 50.0, 50.0)
+        })
+
+        debugPath("Arc", getPos(1, 4), strokeInfo, buildVectorPath {
+            arc(50.0, 50.0, 50.0, (-64).degrees, (+130).degrees)
         })
     }
 }
