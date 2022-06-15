@@ -5,33 +5,36 @@ package com.soywiz.korma.geom.vector
  */
 enum class LineCap {
     /**
-     * Creates a butt cap, keeping
-     * the size of the path.
+     * A butt cap, conserving the length of the path.
      *
-     *  ┌───────
-     *  │┈┈┈┈┈┈┈
-     *  └───────
+     * ```
+     *   ┌───────
+     *   │┈┈┈┈┈┈┈
+     *   └───────
+     * ```
      */
     BUTT,
 
     /**
-     * Creates a square cap, expanding
-     * the size of the path.
+     * A square cap, expanding the length of the path.
      *
-     *  ┌─────────
-     *  │  ┈┈┈┈┈┈┈
-     *  └─────────
+     * ```
+     * ┌─────────
+     * │  ┈┈┈┈┈┈┈
+     * └─────────
+     * ```
      */
     SQUARE,
     /**
-     * Creates a rounded circular cap,
-     * expanding the size of the path.
+     * A rounded circular cap, expanding the length of the path.
      *
-     *  ╭─────────
-     *  │  ┈┈┈┈┈┈┈
-     *  ╰─────────
+     * ```
+     * ╭─────────
+     * │  ┈┈┈┈┈┈┈
+     * ╰─────────
+     * ```
      *
-     * Note:
+     * *Note:*
      * The roundness of the figure is limited by the characters used.
      */
     ROUND;
