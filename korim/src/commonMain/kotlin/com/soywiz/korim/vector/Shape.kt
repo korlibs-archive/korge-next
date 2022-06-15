@@ -28,6 +28,8 @@ import com.soywiz.korma.geom.bezier.isConvex
 import com.soywiz.korma.geom.contains
 import com.soywiz.korma.geom.vector.LineCap
 import com.soywiz.korma.geom.vector.LineJoin
+import com.soywiz.korma.geom.vector.LineScaleMode
+import com.soywiz.korma.geom.vector.StrokeInfo
 import com.soywiz.korma.geom.vector.VectorPath
 import com.soywiz.korma.geom.vector.add
 import com.soywiz.korma.geom.vector.applyTransform
@@ -336,30 +338,28 @@ data class FillShape(
 	}
 }
 
-data class PolylineShape(
+data class PolylineShape constructor(
     override val path: VectorPath,
     override val clip: VectorPath?,
     override val paint: Paint,
     override val transform: Matrix,
-    val thickness: Double,
-    val pixelHinting: Boolean,
-    val scaleMode: LineScaleMode,
-    val startCaps: LineCap,
-    val endCaps: LineCap,
-    val lineJoin: LineJoin,
-    val miterLimit: Double,
-    val lineDash: IDoubleArrayList?,
-    val lineDashOffset: Double,
+    val strokeInfo: StrokeInfo,
     override val globalAlpha: Double = 1.0,
 ) : StyledShape {
     private val tempBB = BoundsBuilder()
     private val tempRect = Rectangle()
 
+    val thickness by strokeInfo::thickness
+    val scaleMode by strokeInfo::scaleMode
+    val startCaps by strokeInfo::startCap
+    val endCaps by strokeInfo::endCap
+    val lineJoin by strokeInfo::join
+    val miterLimit by strokeInfo::miterLimit
+    val lineDash by strokeInfo::dash
+    val lineDashOffset by strokeInfo::dashOffset
+
     val fillShape: FillShape by lazy {
-        FillShape(
-            path.strokeToFill(thickness, lineJoin, startCaps, endCaps, miterLimit, lineDash, lineDashOffset),
-            clip, paint, transform, globalAlpha
-        )
+        FillShape(path.strokeToFill(strokeInfo), clip, paint, transform, globalAlpha)
     }
 
     override fun addBounds(bb: BoundsBuilder, includeStrokes: Boolean) {
@@ -370,7 +370,7 @@ data class PolylineShape(
         //println("TEMP_RECT: ${tempRect}")
 
         if (includeStrokes) {
-            val halfThickness = max(thickness / 2.0, 0.0)
+            val halfThickness = max(strokeInfo.thickness / 2.0, 0.0)
             tempRect.inflate(halfThickness, halfThickness)
         }
 
@@ -381,10 +381,10 @@ data class PolylineShape(
     }
 
     override fun drawInternal(c: Context2d) {
-		c.lineScaleMode = scaleMode
-		c.lineWidth = thickness
-		c.lineCap = endCaps
-        c.lineJoin = lineJoin
+		c.lineScaleMode = strokeInfo.scaleMode
+		c.lineWidth = strokeInfo.thickness
+		c.lineCap = strokeInfo.endCap
+        c.lineJoin = strokeInfo.join
 		c.stroke(paint)
 	}
 
@@ -397,7 +397,7 @@ data class PolylineShape(
 
 	override fun getSvgXmlAttributes(svg: SvgBuilder) = super.getSvgXmlAttributes(svg) + mapOf(
         "fill" to "none",
-		"stroke-width" to "$thickness",
+		"stroke-width" to "${strokeInfo.thickness}",
 		"stroke" to paint.toSvg(svg)
 	)
 }

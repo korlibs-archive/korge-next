@@ -24,6 +24,7 @@ import com.soywiz.korma.geom.projectedPoint
 import com.soywiz.korma.geom.umod
 import com.soywiz.korma.geom.vector.LineCap
 import com.soywiz.korma.geom.vector.LineJoin
+import com.soywiz.korma.geom.vector.StrokeInfo
 import com.soywiz.korma.interpolation.interpolate
 import com.soywiz.korma.math.clamp
 import kotlin.math.absoluteValue
@@ -300,6 +301,31 @@ class StrokePointsBuilder(val width: Double, override val mode: StrokePointsMode
         }
     }
 }
+
+fun Curves.toStrokePointsList(
+    info: StrokeInfo,
+    mode: StrokePointsMode = StrokePointsMode.NON_SCALABLE_POS,
+    generateDebug: Boolean = false,
+    forceClosed: Boolean? = null,
+): List<StrokePoints> = listOf(this).toStrokePointsList(info, mode, generateDebug, forceClosed)
+
+fun List<Curves>.toStrokePointsList(
+    info: StrokeInfo,
+    mode: StrokePointsMode = StrokePointsMode.NON_SCALABLE_POS,
+    generateDebug: Boolean = false,
+    forceClosed: Boolean? = null,
+): List<StrokePoints> = toStrokePointsList(
+    width = info.thickness,
+    join = info.join,
+    startCap = info.startCap,
+    endCap = info.endCap,
+    miterLimit = info.miterLimit,
+    mode = mode,
+    lineDash = info.dash,
+    lineDashOffset = info.dashOffset,
+    generateDebug = generateDebug,
+    forceClosed = forceClosed
+)
 
 /** Useful for drawing */
 fun Curves.toStrokePointsList(

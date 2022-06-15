@@ -18,37 +18,53 @@ import com.soywiz.korim.vector.*
 import com.soywiz.korim.vector.format.*
 import com.soywiz.korio.file.std.*
 import com.soywiz.korma.geom.*
+import com.soywiz.korma.geom.bezier.StrokePointsMode
+import com.soywiz.korma.geom.bezier.toStrokePointsList
+import com.soywiz.korma.geom.shape.buildVectorPath
 import com.soywiz.korma.geom.vector.*
+import com.soywiz.korma.geom.vector.StrokeInfo
 
 suspend fun Stage.mainGpuVectorRendering3() {
+    /*
     gpuShapeView({
         keep {
-            translate(100, 200)
+            translate(100, 100)
             fill(Colors.WHITE) {
                 rect(-10, -10, 120, 120)
                 rectHole(40, 40, 80, 80)
             }
         }
     }) {
-        rotation = 15.degrees
+        rotation = 5.degrees
         //debugDrawOnlyAntialiasedBorder = true
         keys {
             down(Key.N0) { antialiased = !antialiased }
             down(Key.N1) { debugDrawOnlyAntialiasedBorder = !debugDrawOnlyAntialiasedBorder }
         }
     }
+    */
+
+    val strokeInfo = StrokeInfo(thickness = 10.0, join = LineJoin.MITER)
+    for (points in buildVectorPath { rect(0, 0, 100, 100) }.toCurves().toStrokePointsList(strokeInfo, generateDebug = true, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH)) {
+        val vector = points.vector
+        vector.fastForEachGeneric {
+            println("Vector: " + vector.vectorToString(it))
+        }
+    }
 
     gpuShapeView({
         keep {
-            translate(500, 200)
-            stroke(Colors.RED, lineWidth = 10.0) {
+            translate(100, 100)
+            stroke(Colors.RED, strokeInfo) {
+            //stroke(Colors.RED, lineWidth = 10.0, lineJoin = LineJoin.ROUND) {
+            //stroke(Colors.RED, lineWidth = 10.0) {
             //fill(Colors.RED) {
-                rect(-10, -10, 120, 120)
+                rect(0, 0, 100, 100)
                 //rectHole(40, 40, 80, 80)
             }
         }
     }) {
-        rotation = 15.degrees
+        //rotation = 5.degrees
         keys {
             down(Key.N0) { antialiased = !antialiased }
         }
@@ -306,6 +322,7 @@ suspend fun Stage.mainGpuVectorRendering() {
             keys {
                 down(Key.N0) { antialiased = !antialiased }
                 down(Key.A) { antialiased = !antialiased }
+                down(Key.N9) { debugDrawOnlyAntialiasedBorder = !debugDrawOnlyAntialiasedBorder }
             }
         }
     }) {
