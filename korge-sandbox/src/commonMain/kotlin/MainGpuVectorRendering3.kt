@@ -15,6 +15,7 @@ import com.soywiz.korma.geom.bezier.StrokePointsMode
 import com.soywiz.korma.geom.bezier.toStrokePointsList
 import com.soywiz.korma.geom.minus
 import com.soywiz.korma.geom.shape.buildVectorPath
+import com.soywiz.korma.geom.shape.getPoints2List
 import com.soywiz.korma.geom.vector.LineJoin
 import com.soywiz.korma.geom.vector.StrokeInfo
 import com.soywiz.korma.geom.vector.VectorPath
@@ -59,6 +60,13 @@ suspend fun Stage.mainGpuVectorRendering3() {
 
         //debugVertexView(pointsList.map { it.vector }, type = AG.DrawType.POINTS)
         text(desc, alignment = TextAlignment.BASELINE_LEFT).xy(pos - Point(0, 8))
+
+        debugVertexView(path.getPoints2List(), color = Colors.YELLOWGREEN, type = AG.DrawType.LINE_STRIP).xy(pos).apply {
+            keys {
+                down(Key.N8) { visible = !visible }
+            }
+        }
+
         debugVertexView(pointsList.map { it.vector }, type = AG.DrawType.LINE_STRIP).xy(pos).apply {
             keys {
                 down(Key.N9) { visible = !visible }
