@@ -550,7 +550,7 @@ open class GpuShapeView(
                     join = LineJoin.MITER,
                     miterLimit = 5.0,
                 ),
-                forceClosed = false,
+                forceClosed = true,
                 stencil = if (!drawFill) null else AG.StencilState(
                     enabled = true,
                     compareMode = AG.CompareMode.NOT_EQUAL,
