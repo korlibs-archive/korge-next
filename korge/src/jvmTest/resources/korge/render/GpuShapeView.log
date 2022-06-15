@@ -1877,6 +1877,5 @@ vaoDelete: 1
 disposeTemporalPerFrameStuff()
 flipInternal()
 finish
-Buffer[4].afterSetMem(mem[0])
 Rectangle(x=-950, y=-790, width=820, height=800)
 Rectangle(x=90, y=20, width=410, height=400)
