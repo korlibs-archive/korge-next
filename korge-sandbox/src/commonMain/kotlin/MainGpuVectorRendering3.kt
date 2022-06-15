@@ -8,9 +8,12 @@ import com.soywiz.korge.view.vector.gpuShapeView
 import com.soywiz.korge.view.xy
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.text.TextAlignment
+import com.soywiz.korma.geom.IPoint
+import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.bezier.StrokePointsMode
 import com.soywiz.korma.geom.bezier.toStrokePointsList
+import com.soywiz.korma.geom.minus
 import com.soywiz.korma.geom.shape.buildVectorPath
 import com.soywiz.korma.geom.vector.LineJoin
 import com.soywiz.korma.geom.vector.StrokeInfo
@@ -40,7 +43,7 @@ suspend fun Stage.mainGpuVectorRendering3() {
     }
     */
 
-    fun Stage.debugPath(desc: String, x: Number, y: Number, strokeInfo: StrokeInfo, path: VectorPath) {
+    fun Stage.debugPath(desc: String, pos: IPoint, strokeInfo: StrokeInfo, path: VectorPath) {
         val pointsList = path.toCurves().toStrokePointsList(strokeInfo, generateDebug = true, mode = StrokePointsMode.NON_SCALABLE_POS)
 
         gpuShapeView({
@@ -52,11 +55,11 @@ suspend fun Stage.mainGpuVectorRendering3() {
             keys {
                 down(Key.N0) { antialiased = !antialiased }
             }
-        }.xy(x.toDouble(), y.toDouble())
+        }.xy(pos)
 
         //debugVertexView(pointsList.map { it.vector }, type = AG.DrawType.POINTS)
-        text(desc, alignment = TextAlignment.BASELINE_LEFT).xy(x.toDouble(), y.toDouble() - 5.0)
-        debugVertexView(pointsList.map { it.vector }, type = AG.DrawType.LINE_STRIP).xy(x.toDouble(), y.toDouble()).apply {
+        text(desc, alignment = TextAlignment.BASELINE_LEFT).xy(pos - Point(0, 8))
+        debugVertexView(pointsList.map { it.vector }, type = AG.DrawType.LINE_STRIP).xy(pos).apply {
             keys {
                 down(Key.N9) { visible = !visible }
             }
@@ -72,43 +75,60 @@ suspend fun Stage.mainGpuVectorRendering3() {
         StrokeInfo(thickness = 10.0, join = LineJoin.ROUND),
     ).withIndex()) {
         val sx = index * 400
+
+        fun getPos(x: Int, y: Int): IPoint {
+            return Point(sx + 50 + x * 150, 50 + y * 150)
+        }
+
         text("${strokeInfo.join}", color = Colors.YELLOWGREEN).xy(sx + 50, 10)
-        debugPath("Lines CW", sx + 50, 50, strokeInfo, buildVectorPath {
+        debugPath("Lines CW", getPos(0, 0), strokeInfo, buildVectorPath {
             //rect(10, 10, 100, 100)
-            moveTo(10, 10)
-            lineTo(100, 10)
+            moveTo(0, 0)
+            lineTo(100, 0)
             lineTo(100, 100)
         })
 
-        debugPath("Lines CCW", sx + 50, 250, strokeInfo, buildVectorPath {
+        debugPath("Lines CCW", getPos(1, 0), strokeInfo, buildVectorPath {
             //rect(10, 10, 100, 100)
-            moveTo(10, 10)
-            lineTo(10, 100)
+            moveTo(0, 0)
+            lineTo(0, 100)
             lineTo(100, 100)
         })
 
-        debugPath("Rect closed", sx + 200, 50, strokeInfo, buildVectorPath {
-            rect(Rectangle.fromBounds(10, 10, 100, 100))
+        debugPath("Rect closed", getPos(0, 1), strokeInfo, buildVectorPath {
+            rect(Rectangle.fromBounds(0, 0, 100, 100))
         })
 
-        debugPath("Rect not closed", sx + 200, 250, strokeInfo, buildVectorPath {
-            moveTo(10, 10)
-            lineTo(100, 10)
+        debugPath("Rect not closed", getPos(1, 1), strokeInfo, buildVectorPath {
+            moveTo(0, 0)
+            lineTo(100, 0)
             lineTo(100, 100)
-            lineTo(10, 100)
-            lineTo(10, 10)
+            lineTo(0, 100)
+            lineTo(0, 0)
         })
 
-        debugPath("Pointed CW", sx + 50, 450, strokeInfo, buildVectorPath {
-            moveTo(10, 10)
-            lineTo(100, 10)
-            lineTo(10, 100)
+        debugPath("Pointed CW", getPos(0, 2), strokeInfo, buildVectorPath {
+            moveTo(0, 0)
+            lineTo(100, 0)
+            lineTo(0, 100)
         })
 
-        debugPath("Pointed CW", sx + 250, 450, strokeInfo, buildVectorPath {
-            moveTo(10, 10)
-            lineTo(100, 10)
-            lineTo(10, 30)
+        debugPath("Pointed CW", getPos(1, 2), strokeInfo, buildVectorPath {
+            moveTo(0, 0)
+            lineTo(100, 0)
+            lineTo(0, 30)
+        })
+
+        debugPath("Pointed CCW", getPos(0, 3), strokeInfo, buildVectorPath {
+            moveTo(100, 0)
+            lineTo(0, 0)
+            lineTo(100, 100)
+        })
+
+        debugPath("Pointed CCW", getPos(1, 3), strokeInfo, buildVectorPath {
+            moveTo(100, 0)
+            lineTo(0, 0)
+            lineTo(100, 30)
         })
     }
 }
