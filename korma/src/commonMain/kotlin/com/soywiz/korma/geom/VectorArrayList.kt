@@ -5,6 +5,7 @@ import com.soywiz.kds.Extra
 import com.soywiz.kds.iterators.fastForEach
 import com.soywiz.kds.mapDouble
 import com.soywiz.kds.mapFloat
+import com.soywiz.korma.math.roundDecimalPlaces
 import kotlin.math.sqrt
 
 interface IVectorArrayList : Extra {
@@ -76,8 +77,11 @@ class VectorArrayList(
         val rindex = index * dimensions
         for (n in 0 until dimensions) data[rindex + n] = vector.get(n)
     }
-    fun add(values: DoubleArray, offset: Int = 0) {
-        data.add(values, offset, dimensions)
+    fun add(values: DoubleArrayList, offset: Int = 0, count: Int = 1) {
+        add(values.data, offset, count)
+    }
+    fun add(values: DoubleArray, offset: Int = 0, count: Int = 1) {
+        data.add(values, offset, dimensions * count)
     }
     fun add(v0: Double) = checkDimensions(1).also { data.add(v0) }
     fun add(v0: Double, v1: Double) = checkDimensions(2).also { data.add(v0, v1) }
@@ -115,6 +119,17 @@ class VectorArrayList(
             this@VectorArrayList.vectorToStringBuilder(n, this)
         }
         append("\n)")
+    }
+
+    fun add(other: VectorArrayList, index: Int, count: Int = 1) {
+        add(other.data.data, index * dimensions, count)
+    }
+
+    fun clone(): VectorArrayList = VectorArrayList(dimensions, this.size).also { it.add(this, 0, size) }
+
+    fun roundDecimalPlaces(places: Int): VectorArrayList {
+        for (n in 0 until data.size) data[n] = data[n].roundDecimalPlaces(places)
+        return this
     }
 }
 
