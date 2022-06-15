@@ -29,6 +29,19 @@ fun Bezier.toCurves(closed: Boolean) = Curves(listOf(this), closed)
 data class Curves(val beziers: List<Bezier>, val closed: Boolean) : Curve, Extra by Extra.Mixin() {
     var assumeConvex: Boolean = false
 
+    /**
+     * All [beziers] in this set are contiguous
+     */
+    val contiguous by lazy {
+        for (n in 1 until beziers.size) {
+            val curr = beziers[n - 1]
+            val next = beziers[n]
+            if (!curr.points.lastX.isAlmostEquals(next.points.firstX)) return@lazy false
+            if (!curr.points.lastY.isAlmostEquals(next.points.firstY)) return@lazy false
+        }
+        return@lazy true
+    }
+
     constructor(vararg curves: Bezier, closed: Boolean = false) : this(curves.toList(), closed)
 
     override val order: Int get() = -1
@@ -149,6 +162,8 @@ data class Curves(val beziers: List<Bezier>, val closed: Boolean) : Curve, Extra
             }
         }, closed = false)
     }
+
+    fun roundDecimalPlaces(places: Int): Curves = Curves(beziers.map { it.roundDecimalPlaces(places) }, closed)
 }
 
 fun Curves.toVectorPath(out: VectorPath = VectorPath()): VectorPath = listOf(this).toVectorPath(out)

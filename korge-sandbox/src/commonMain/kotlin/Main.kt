@@ -120,9 +120,9 @@ suspend fun main() = Korge(
     //mainStrokesExperiment2()
     //mainStrokesExperiment()
 
-    mainGpuVectorRendering3()
+    //mainGpuVectorRendering3()
     //mainGpuVectorRendering2()
-    //mainGpuVectorRendering()
+    mainGpuVectorRendering()
 
     //mainDpi()
     //mainZIndex()

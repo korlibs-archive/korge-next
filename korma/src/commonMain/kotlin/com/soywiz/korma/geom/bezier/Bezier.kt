@@ -42,6 +42,7 @@ import com.soywiz.korma.geom.top
 import com.soywiz.korma.interpolation.interpolate
 import com.soywiz.korma.math.convertRange
 import com.soywiz.korma.math.isAlmostEquals
+import com.soywiz.korma.math.isAlmostZero
 import com.soywiz.korma.math.normalizeZero
 import com.soywiz.korma.math.roundDecimalPlaces
 import kotlin.contracts.ExperimentalContracts
@@ -519,6 +520,15 @@ class Bezier(
     /** The derivate vector of the curve at [t] (normalized when [normalize] is set to true) */
     fun derivative(t: Double, normalize: Boolean = false, out: Point = Point()): IPoint {
         compute(t, dpoints[0], out)
+        if ((t == 0.0 || t == 1.0) && out.squaredLength.isAlmostZero()) {
+            for (n in 0 until 10) {
+                val newT = 10.0.pow(-(10 - n))
+                val nt = if (t == 1.0) 1.0 - newT else newT
+                //println("newT=$newT, nt=$nt")
+                compute(nt, dpoints[0], out)
+                if (!out.squaredLength.isAlmostZero()) break
+            }
+        }
         if (normalize) out.normalize()
         return out
     }

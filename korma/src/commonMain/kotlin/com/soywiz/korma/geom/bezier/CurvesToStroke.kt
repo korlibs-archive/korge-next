@@ -29,6 +29,7 @@ import com.soywiz.korma.geom.vector.VectorPath
 import com.soywiz.korma.geom.vector.toCurvesList
 import com.soywiz.korma.interpolation.interpolate
 import com.soywiz.korma.math.clamp
+import com.soywiz.korma.math.isNanOrInfinite
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 
@@ -79,15 +80,23 @@ class StrokePointsBuilder(
 
     override fun toString(): String = "StrokePointsBuilder($width, $vector)"
 
-    fun addPoint(pos: IPoint, normal: IPoint, width: Double, maxWidth: Double = width) = when (mode) {
-        StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH -> vector.add(pos.x, pos.y, normal.x, normal.y, width, maxWidth.absoluteValue)
-        StrokePointsMode.NON_SCALABLE_POS -> vector.add(pos.x + normal.x * width, pos.y + normal.y * width)
+    fun addPoint(pos: IPoint, normal: IPoint, width: Double, maxWidth: Double = width) {
+        if (!pos.x.isFinite() || !normal.x.isFinite()) {
+            TODO("NaN detected pos=$pos, normal=$normal, width=$width, maxWidth=$maxWidth")
+        }
+        when (mode) {
+            StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH -> vector.add(pos.x, pos.y, normal.x, normal.y, width, maxWidth.absoluteValue)
+            StrokePointsMode.NON_SCALABLE_POS -> vector.add(pos.x + normal.x * width, pos.y + normal.y * width)
+        }
     }
 
     fun addPointRelative(center: IPoint, pos: IPoint, sign: Double = 1.0) {
         val dist = pos - center
-        val normal = dist.normalized
-        addPoint(center, if (sign < 0.0) normal.mutable.neg() else normal, dist.length * sign)
+        val normal = if (sign < 0.0) dist.mutable.neg() else dist
+        if (!center.x.isFinite() || !normal.x.isFinite()) {
+            TODO("Non finite value detected detected: center=$center, pos=$pos, sign=$sign, dist=$dist, normal=$normal")
+        }
+        addPoint(center, normal.normalized, dist.length * sign)
     }
 
     fun addTwoPoints(pos: IPoint, normal: IPoint, width: Double) {
@@ -108,9 +117,11 @@ class StrokePointsBuilder(
         val nextLine0 = Line.fromPointAndDirection(commonPoint + nextNormal * width, nextTangent)
         val nextLine1 = Line.fromPointAndDirection(commonPoint + nextNormal * -width, nextTangent)
 
+        //if (!nextLine1.dx.isFinite()) println((next as Bezier).roundDecimalPlaces(2))
+
         val intersection0 = Line.lineIntersectionPoint(currLine0, nextLine0)
         val intersection1 = Line.lineIntersectionPoint(currLine1, nextLine1)
-        if (intersection0 == null || intersection1 == null) {
+        if (intersection0 == null || intersection1 == null) { // || !intersection0.x.isFinite() || !intersection1.x.isFinite()) {
             //println("currTangent=$currTangent, nextTangent=$nextTangent")
             //val signChanged = currTangent.x.sign != nextTangent.x.sign || currTangent.y.sign != nextTangent.y.sign
             //addTwoPoints(commonPoint, currNormal, if (signChanged) width else -width)

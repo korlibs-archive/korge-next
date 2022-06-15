@@ -60,8 +60,6 @@ suspend fun Stage.mainGpuVectorRendering3() {
         }
     }
 
-    class DemoInfo(val index: Int, val name: String, val info: StrokeInfo)
-
     //val strokeInfo = StrokeInfo(thickness = 10.0, join = LineJoin.MITER)
     for ((index, strokeInfo) in listOf(
         StrokeInfo(thickness = 10.0, join = LineJoin.BEVEL),

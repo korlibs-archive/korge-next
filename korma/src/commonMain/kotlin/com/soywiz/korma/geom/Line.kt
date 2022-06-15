@@ -3,6 +3,7 @@ package com.soywiz.korma.geom
 import com.soywiz.korma.annotations.KormaExperimental
 import com.soywiz.korma.math.almostEquals
 import com.soywiz.korma.math.clamp
+import com.soywiz.korma.math.isAlmostZero
 
 interface ILine {
     val a: IPoint
@@ -158,9 +159,10 @@ data class Line(override val a: Point, override val b: Point) : ILine {
             val b2 = Cx - Dx
             val c2 = a2 * (Cx) + b2 * (Cy)
             val determinant = a1 * b2 - a2 * b1
-            if (determinant == 0.0) return false
+            if (determinant.isAlmostZero()) return false
             val x = (b2 * c1 - b1 * c2) / determinant
             val y = (a1 * c2 - a2 * c1) / determinant
+            //if (!x.isFinite() || !y.isFinite()) TODO()
             out(x, y)
             return true
         }
