@@ -19,6 +19,7 @@ import com.soywiz.korma.geom.tangent
 import com.soywiz.korma.geom.times
 import com.soywiz.korma.geom.unit
 import com.soywiz.korma.geom.vector.VectorBuilder
+import com.soywiz.korma.geom.vector.arc
 import com.soywiz.korma.geom.vector.isEmpty
 import com.soywiz.korma.geom.vector.toCurves
 import kotlin.math.PI
@@ -134,6 +135,9 @@ object Arc {
 
     fun createEllipse(x: Double, y: Double, rw: Double, rh: Double): Curves =
         buildVectorPath { ellipsePath(this, x, y, rw, rh) }.toCurves()
+
+    fun createCircle(x: Double, y: Double, radius: Double): Curves =
+        buildVectorPath { arc(x, y, radius, Angle.ZERO, Angle.FULL) }.toCurves()
 
     fun createArc(x: Double, y: Double, r: Double, start: Angle, end: Angle, counterclockwise: Boolean = false): Curves =
         buildVectorPath { arcPath(this, x, y, r, start, end, counterclockwise) }.toCurves()

@@ -8,7 +8,9 @@ import com.soywiz.korge.view.vector.gpuShapeView
 import com.soywiz.korge.view.xy
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.text.TextAlignment
+import com.soywiz.korim.vector.format.pathSvg
 import com.soywiz.korma.geom.IPoint
+import com.soywiz.korma.geom.Matrix
 import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.bezier.StrokePointsMode
@@ -28,25 +30,6 @@ import com.soywiz.korma.geom.vector.rect
 import com.soywiz.korma.geom.vector.toCurves
 
 suspend fun Stage.mainGpuVectorRendering3() {
-    /*
-    gpuShapeView({
-        keep {
-            translate(100, 100)
-            fill(Colors.WHITE) {
-                rect(-10, -10, 120, 120)
-                rectHole(40, 40, 80, 80)
-            }
-        }
-    }) {
-        rotation = 5.degrees
-        //debugDrawOnlyAntialiasedBorder = true
-        keys {
-            down(Key.N0) { antialiased = !antialiased }
-            down(Key.N1) { debugDrawOnlyAntialiasedBorder = !debugDrawOnlyAntialiasedBorder }
-        }
-    }
-    */
-
     fun Stage.debugPath(desc: String, pos: IPoint, strokeInfo: StrokeInfo, path: VectorPath) {
         val pointsList = path.toCurves().toStrokePointsList(strokeInfo, generateDebug = true, mode = StrokePointsMode.NON_SCALABLE_POS)
 
@@ -85,13 +68,13 @@ suspend fun Stage.mainGpuVectorRendering3() {
         StrokeInfo(thickness = 10.0, join = LineJoin.MITER),
         StrokeInfo(thickness = 10.0, join = LineJoin.ROUND),
     ).withIndex()) {
-        val sx = index * 400
+        val sx = index * 430 + 15
 
         fun getPos(x: Int, y: Int): IPoint {
-            return Point(sx + 50 + x * 150, 50 + y * 130)
+            return Point(sx + x * 120, 50 + y * 130)
         }
 
-        text("${strokeInfo.join}", color = Colors.YELLOWGREEN).xy(sx + 50, 10)
+        text("${strokeInfo.join}", color = Colors.YELLOWGREEN).xy(sx, 10)
         debugPath("Lines CW", getPos(0, 0), strokeInfo, buildVectorPath {
             //rect(10, 10, 100, 100)
             moveTo(0, 0)
@@ -104,6 +87,20 @@ suspend fun Stage.mainGpuVectorRendering3() {
             moveTo(0, 0)
             lineTo(0, 100)
             lineTo(100, 100)
+        })
+
+        debugPath("Lines2 CCW", getPos(2, 0), strokeInfo, buildVectorPath {
+            //rect(10, 10, 100, 100)
+            moveTo(0, 0)
+            lineTo(0, 100)
+            lineTo(100, 100)
+            lineTo(100, 0)
+        })
+        debugPath("Lines2 CW", getPos(2, 1), strokeInfo, buildVectorPath {
+            moveTo(0, 0)
+            lineTo(100, 0)
+            lineTo(100, 100)
+            lineTo(0, 100)
         })
 
         debugPath("Rect closed", getPos(0, 1), strokeInfo, buildVectorPath {
@@ -147,7 +144,33 @@ suspend fun Stage.mainGpuVectorRendering3() {
         })
 
         debugPath("Arc", getPos(1, 4), strokeInfo, buildVectorPath {
-            arc(50.0, 50.0, 50.0, (-64).degrees, (+130).degrees)
+            arc(50.0, 50.0, 50.0, (-64).degrees, (+180).degrees)
+        })
+
+        debugPath("Shape", getPos(2, 4), strokeInfo, buildVectorPath {
+            pathSvg(
+                "m262.15-119.2s2.05-8-2.35-3.6c0,0-6.4,5.2-13.2,5.2,0,0-13.2,2-17.2,14,0,0-3.6,24.4,3.6,29.6,0,0,4.4,6.8,10.8,0.8s20.35-33.6,18.35-46z",
+                Matrix().setTransform(x = -200.0, y = 150.0).scale(1.2)
+            )
         })
     }
+
+    /*
+     gpuShapeView({
+         keep {
+             translate(100, 100)
+             fill(Colors.WHITE) {
+                 rect(-10, -10, 120, 120)
+                 rectHole(40, 40, 80, 80)
+             }
+         }
+     }) {
+         rotation = 5.degrees
+         //debugDrawOnlyAntialiasedBorder = true
+         keys {
+             down(Key.N0) { antialiased = !antialiased }
+             down(Key.N1) { debugDrawOnlyAntialiasedBorder = !debugDrawOnlyAntialiasedBorder }
+         }
+     }
+     */
 }

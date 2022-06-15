@@ -15,6 +15,7 @@ import com.soywiz.korim.paint.Paint
 import com.soywiz.korim.text.HorizontalAlign
 import com.soywiz.korim.text.VerticalAlign
 import com.soywiz.korim.vector.format.SVG
+import com.soywiz.korim.vector.format.SvgPath
 import com.soywiz.korio.serialization.xml.Xml
 import com.soywiz.korio.util.niceStr
 import com.soywiz.korio.util.toStringDecimal
@@ -96,21 +97,8 @@ private fun Matrix.toSvg() = this.run {
 	}
 }
 
-fun VectorPath.toSvgPathString(separator: String = " ", decimalPlaces: Int = 1): String {
-	val parts = arrayListOf<String>()
-
-	fun Double.fixX() = this.toStringDecimal(decimalPlaces, skipTrailingZeros = true)
-	fun Double.fixY() = this.toStringDecimal(decimalPlaces, skipTrailingZeros = true)
-
-	this.visitCmds(
-		moveTo = { x, y -> parts += "M${x.fixX()} ${y.fixY()}" },
-		lineTo = { x, y -> parts += "L${x.fixX()} ${y.fixY()}" },
-		quadTo = { x1, y1, x2, y2 -> parts += "Q${x1.fixX()} ${y1.fixY()}, ${x2.fixX()} ${y2.fixY()}" },
-		cubicTo = { x1, y1, x2, y2, x3, y3 -> parts += "C${x1.fixX()} ${y1.fixY()}, ${x2.fixX()} ${y2.fixY()}, ${x3.fixX()} ${y3.fixY()}" },
-		close = { parts += "Z" }
-	)
-	return parts.joinToString("")
-}
+fun VectorPath.toSvgPathString(separator: String = " ", decimalPlaces: Int = 1): String =
+    SvgPath.toSvgPathString(this, separator, decimalPlaces)
 
 //fun VectorPath.toSvgPathString(scale: Double, tx: Double, ty: Double): String {
 //	val parts = arrayListOf<String>()

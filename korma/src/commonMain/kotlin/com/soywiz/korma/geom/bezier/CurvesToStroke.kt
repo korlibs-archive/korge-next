@@ -111,9 +111,10 @@ class StrokePointsBuilder(
         val intersection0 = Line.lineIntersectionPoint(currLine0, nextLine0)
         val intersection1 = Line.lineIntersectionPoint(currLine1, nextLine1)
         if (intersection0 == null || intersection1 == null) {
-            //println("direction=$direction, currTangent=$currTangent, nextTangent=$nextTangent")
-            val signChanged = currTangent.x.sign != nextTangent.x.sign || currTangent.y.sign != nextTangent.y.sign
-            addTwoPoints(commonPoint, currNormal, if (signChanged) -width else width)
+            //println("currTangent=$currTangent, nextTangent=$nextTangent")
+            //val signChanged = currTangent.x.sign != nextTangent.x.sign || currTangent.y.sign != nextTangent.y.sign
+            //addTwoPoints(commonPoint, currNormal, if (signChanged) width else -width)
+            addTwoPoints(commonPoint, currNormal, width)
             return
         }
 
@@ -139,8 +140,8 @@ class StrokePointsBuilder(
         if (kind != LineJoin.MITER || miterLength > miterLimit) {
         //run {
             //val angle = Angle.between(nextTangent * 10.0, currTangent * 10.0)
-            val p1 = if (direction < 0.0) currLine0.projectedPoint(commonPoint) else nextLine1.projectedPoint(commonPoint)
-            val p2 = if (direction < 0.0) nextLine0.projectedPoint(commonPoint) else currLine1.projectedPoint(commonPoint)
+            val p1 = if (direction <= 0.0) currLine0.projectedPoint(commonPoint) else nextLine1.projectedPoint(commonPoint)
+            val p2 = if (direction <= 0.0) nextLine0.projectedPoint(commonPoint) else currLine1.projectedPoint(commonPoint)
             // @TODO: We should try to find the common edge (except when the two lines overlaps), to avoid overlapping in normal curves
 
             //println("direction=$direction")
@@ -158,18 +159,13 @@ class StrokePointsBuilder(
                 p3 = p4
             }
 
-            //val d3 = Point.distance(commonPoint, p3!!)
-            //val d4 = Point.distance(commonPoint, p4)
-
-            //if (p5 != null) {
             val angleB = (angle + 180.degrees).absoluteValue
             val angle2 = (angle umod 180.degrees).absoluteValue
-            val angle3 = if (angle2 > 90.degrees) 180.degrees - angle2 else angle2
+            val angle3 = if (angle2 >= 90.degrees) 180.degrees - angle2 else angle2
             val ratio = (angle3.ratio.absoluteValue * 4).clamp(0.0, 1.0)
             val p5 = ratio.interpolate(p4, p3!!.mutable)
-            //println("angle3=$angle3, angle2=$angle2, ratio=$ratio")
-            //}
-            //p3 = if (Point.distance(p3, p4) < width) p3 else p4
+
+            //val p5 = p3
 
             if (generateDebug) {
                 debugSegments.add(nextLine1.scalePoints(1000.0).clone())
@@ -190,6 +186,7 @@ class StrokePointsBuilder(
             //val p6 = if (angleB < 45.degrees) p5 else p3
             val p6 = p5
             //val p6 = p3
+            //val p6 = p4
 
             if (direction < 0.0) {
                 addPointRelative(commonPoint, p1)

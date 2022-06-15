@@ -58,7 +58,6 @@ class CurvesToStrokeTest {
                 moveTo(0, 0)
                 lineTo(100, 0)
                 lineTo(100, 100)
-                arcTo()
             }.toString()
         )
     }
@@ -81,6 +80,22 @@ class CurvesToStrokeTest {
         assertEquals(Curves(Bezier(100,0, 150,0)), curves.split(0.5, 0.75))
         assertEquals(Curves(Bezier(50,0, 100,0)), curves.split(0.25, 0.5))
         assertEquals(Curves(Bezier(50,0, 100,0), Bezier(100,0, 150,0)), curves.split(0.25, 0.75))
+    }
+
+    @Test
+    fun testCircleJoins() {
+        val curves = Arc.createCircle(0.0, 0.0, 100.0)
+        val builder = StrokePointsBuilder(10.0, mode = StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH)
+        builder.addJoin(curves.beziers[0], curves.beziers[1], LineJoin.MITER, 5.0)
+        assertEquals(
+            """
+                VectorArrayList[2](
+                   [0.0, -100.0, 0.0, -1.0, 10.0, 10.0], 
+                   [0.0, -100.0, 0.0, -1.0, -10.0, 10.0]
+                )
+            """.trimIndent(),
+            builder.vector.roundDecimalPlaces(2).toString()
+        )
     }
 
     fun pathPoints(join: LineJoin, block: VectorBuilder.() -> Unit): VectorArrayList =
