@@ -25,6 +25,8 @@ import com.soywiz.korma.geom.umod
 import com.soywiz.korma.geom.vector.LineCap
 import com.soywiz.korma.geom.vector.LineJoin
 import com.soywiz.korma.geom.vector.StrokeInfo
+import com.soywiz.korma.geom.vector.VectorPath
+import com.soywiz.korma.geom.vector.toCurvesList
 import com.soywiz.korma.interpolation.interpolate
 import com.soywiz.korma.math.clamp
 import kotlin.math.absoluteValue
@@ -60,7 +62,11 @@ interface StrokePoints {
     }
 }
 
-class StrokePointsBuilder(val width: Double, override val mode: StrokePointsMode = StrokePointsMode.NON_SCALABLE_POS, val generateDebug: Boolean = false) : StrokePoints {
+class StrokePointsBuilder(
+    val width: Double,
+    override val mode: StrokePointsMode = StrokePointsMode.NON_SCALABLE_POS,
+    val generateDebug: Boolean = false
+) : StrokePoints {
     val NSTEPS = 20
 
     override val vector: VectorArrayList = VectorArrayList(dimensions = when (mode) {
@@ -71,19 +77,22 @@ class StrokePointsBuilder(val width: Double, override val mode: StrokePointsMode
     override val debugPoints: PointArrayList = PointArrayList()
     override val debugSegments: ArrayList<Line> = arrayListOf()
 
-    fun addPoint(pos: IPoint, normal: IPoint, width: Double, maxWidth: Double) = when (mode) {
-        StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH -> vector.add(pos.x, pos.y, normal.x, normal.y, width, maxWidth)
+    override fun toString(): String = "StrokePointsBuilder($width, $vector)"
+
+    fun addPoint(pos: IPoint, normal: IPoint, width: Double, maxWidth: Double = width) = when (mode) {
+        StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH -> vector.add(pos.x, pos.y, normal.x, normal.y, width, maxWidth.absoluteValue)
         StrokePointsMode.NON_SCALABLE_POS -> vector.add(pos.x + normal.x * width, pos.y + normal.y * width)
     }
 
     fun addPointRelative(center: IPoint, pos: IPoint, sign: Double = 1.0) {
-        val width = (pos - center).length * sign
-        addPoint(center, (pos - center).normalized, width, width)
+        val dist = pos - center
+        val normal = dist.normalized
+        addPoint(center, if (sign < 0.0) normal.mutable.neg() else normal, dist.length * sign)
     }
 
     fun addTwoPoints(pos: IPoint, normal: IPoint, width: Double) {
-        addPoint(pos, normal, width, width)
-        addPoint(pos, normal, -width, width)
+        addPoint(pos, normal, width)
+        addPoint(pos, normal, -width)
     }
 
     fun addJoin(curr: Curve, next: Curve, kind: LineJoin, miterLimitRatio: Double) {
@@ -184,14 +193,14 @@ class StrokePointsBuilder(val width: Double, override val mode: StrokePointsMode
 
             if (direction < 0.0) {
                 addPointRelative(commonPoint, p1)
-                addPointRelative(commonPoint, p6)
+                addPointRelative(commonPoint, p6, -1.0)
                 addPointRelative(commonPoint, p2)
-                addPointRelative(commonPoint, p6)
+                addPointRelative(commonPoint, p6, -1.0)
             } else {
                 addPointRelative(commonPoint, p6)
-                addPointRelative(commonPoint, p2)
+                addPointRelative(commonPoint, p2, -1.0)
                 addPointRelative(commonPoint, p6)
-                addPointRelative(commonPoint, p1)
+                addPointRelative(commonPoint, p1, -1.0)
             }
             //addPoint(p1, Point(0, 0), 0.0)
             //addCurvePointsCap(p2, p1, 0.5)
@@ -301,6 +310,13 @@ class StrokePointsBuilder(val width: Double, override val mode: StrokePointsMode
         }
     }
 }
+
+fun VectorPath.toStrokePointsList(
+    info: StrokeInfo,
+    mode: StrokePointsMode = StrokePointsMode.NON_SCALABLE_POS,
+    generateDebug: Boolean = false,
+    forceClosed: Boolean? = null,
+): List<StrokePoints> = toCurvesList().toStrokePointsList(info, mode, generateDebug, forceClosed)
 
 fun Curves.toStrokePointsList(
     info: StrokeInfo,
