@@ -295,10 +295,6 @@ open class Container : View(true) {
         views.fastForEach { if (it != null) addChild(it) }
     }
 
-    fun addChildren(views: Iterable<View>) {
-        for (view in views) addChild(view)
-    }
-
     /**
      * Alias for [addChild].
      */
@@ -436,7 +432,7 @@ class ContainerCollection internal constructor(val container: Container, childre
 
     override fun addAll(elements: Collection<View>): Boolean {
         if (elements.isEmpty()) return false
-        container.addChildren(elements)
+        for (element in elements) container.addChild(element)
         return true
     }
 
