@@ -3,7 +3,6 @@ package com.soywiz.korge.view
 import com.soywiz.korag.log.LogAG
 import com.soywiz.korge.render.RenderContext
 import com.soywiz.korim.color.Colors
-import com.soywiz.korim.vector.StrokeInfo
 import com.soywiz.korio.async.suspendTest
 import com.soywiz.korio.util.OS
 import com.soywiz.korma.geom.Anchor
@@ -11,6 +10,7 @@ import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.Size
 import com.soywiz.korma.geom.bezier.Bezier
+import com.soywiz.korma.geom.vector.StrokeInfo
 import com.soywiz.korma.geom.vector.circle
 import com.soywiz.korma.geom.vector.cubic
 import com.soywiz.korma.geom.vector.lineTo
@@ -80,11 +80,11 @@ class GraphicsTest {
             g.fill(Colors.RED) { g.rect(0, 0, 100, 100) }
             g.clear()
         }
-        assertEquals(1, g.graphicsPathPool.itemsInPool)
+        assertEquals(1, g.vectorPathPool.itemsInPool)
         for (n in 0 until 10) g.fill(Colors.RED) { g.rect(0, 0, 100, 100) }
         g.clear()
-        assertEquals(10, g.graphicsPathPool.itemsInPool)
-        assertNotSame(g.graphicsPathPool.alloc(), g.graphicsPathPool.alloc())
+        assertEquals(10, g.vectorPathPool.itemsInPool)
+        assertNotSame(g.vectorPathPool.alloc(), g.vectorPathPool.alloc())
     }
 
     @Test
@@ -169,8 +169,9 @@ class GraphicsTest {
                 cubic(p0, p1, p2, p3)
             }
             val ratio = 0.3
-            val cubic2 = Bezier.Cubic().setToSplitFirst(Bezier.Cubic(p0, p1, p2, p3), ratio)
-            val cubic3 = Bezier.Cubic().setToSplitSecond(Bezier.Cubic(p0, p1, p2, p3), ratio)
+
+            val cubic2 = Bezier(p0, p1, p2, p3).split(ratio).leftCurve
+            val cubic3 = Bezier(p0, p1, p2, p3).split(ratio).rightCurve
 
             g.stroke(Colors.PURPLE, info = StrokeInfo(thickness = 4.0)) {
                 cubic(cubic2)

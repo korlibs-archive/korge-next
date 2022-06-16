@@ -38,17 +38,19 @@ class GpuShapeViewCommands {
         commands.clear()
     }
 
-    fun updateVertex(index: Int, x: Float, y: Float, u: Float = x, v: Float = y, lw: Float = 0f) {
-        val p = index * 5
+    fun updateVertex(index: Int, x: Float, y: Float, len: Float = 0f, maxLen: Float = len) {
+        val p = index * 4
         bufferVertexData[p + 0] = x
         bufferVertexData[p + 1] = y
-        bufferVertexData[p + 2] = u
-        bufferVertexData[p + 3] = v
-        bufferVertexData[p + 4] = lw
+        bufferVertexData[p + 2] = len
+        bufferVertexData[p + 3] = maxLen
     }
 
-    fun addVertex(x: Float, y: Float, u: Float = x, v: Float = y, lw: Float = 0f): Int {
-        bufferVertexData.add(x, y, u, v, lw)
+    fun addVertex(x: Float, y: Float, len: Float = 0f, maxLen: Float = len): Int {
+        if (maxLen <= 0f) {
+            error("Invalid maxLen=$maxLen")
+        }
+        bufferVertexData.add(x, y, len, maxLen)
         return vertexIndex++
     }
 
@@ -86,7 +88,7 @@ class GpuShapeViewCommands {
         commands += ClearCommand(i)
     }
 
-    fun setScissor(scissor: Rectangle) {
+    fun setScissor(scissor: Rectangle?) {
         commands += ScissorCommand(scissor)
     }
 
@@ -98,6 +100,7 @@ class GpuShapeViewCommands {
     private val decomposed = Matrix.Transform()
     private val tempColorMul = FloatArray(4)
     private val texturesToDelete = FastArrayList<AG.Texture>()
+    private val tempUniforms = AG.UniformValues()
     fun render(ctx: RenderContext, globalMatrix: Matrix, localMatrix: Matrix, applyScissor: Boolean, colorMul: RGBA) {
         val vertices = this.vertices ?: return
         ctx.agBufferManager.delete(verticesToDelete)
@@ -111,9 +114,6 @@ class GpuShapeViewCommands {
             batcher.setTemporalUniform(GpuShapeViewPrograms.u_ColorMul, tempColorMul) {
                 batcher.setViewMatrixTemp(globalMatrix) {
                     globalMatrix.decompose(decomposed)
-                    // @TODO: Use this scale
-                    decomposed.scaleX
-                    decomposed.scaleY
                     ag.commandsNoWait { list ->
                         // applyScissor is for using the ctx.batch.scissor infrastructure
                         if (!applyScissor) {
@@ -147,12 +147,17 @@ class GpuShapeViewCommands {
                                         when (cmd) {
                                             //is FinishCommand -> list.flush()
                                             is ScissorCommand -> {
-                                                val rect = cmd.scissor.clone()
+                                                val rect = cmd.scissor?.clone()
+                                                //rect.normalize()
                                                 // @TODO: Do scissor intersection
                                                 if (applyScissor) {
                                                 }
-                                                rect.applyTransform(globalMatrix)
-                                                list.setScissorState(ag, AG.Scissor().setTo(rect))
+                                                if (rect != null) {
+                                                    rect.applyTransform(globalMatrix)
+                                                    list.setScissorState(ag, AG.Scissor().setTo(rect))
+                                                } else {
+                                                    list.setScissorState(ag, null)
+                                                }
                                             }
                                             is ClearCommand -> {
                                                 list.clearStencil(cmd.i)
@@ -164,9 +169,14 @@ class GpuShapeViewCommands {
                                                 //println("cmd.vertexCount=${cmd.vertexCount}, cmd.vertexIndex=${cmd.vertexIndex}, paintShader=$paintShader")
                                                 batcher.simulateBatchStats(cmd.vertexCount)
                                                 //println(paintShader.uniforms)
+                                                tempUniforms.clear()
                                                 paintShader?.uniforms?.let { resolve(ctx, it, paintShader.texUniforms) }
+                                                tempUniforms.put(paintShader?.uniforms)
+                                                val pixelScale = decomposed.scaleAvg / ctx.bp.globalToWindowScaleAvg
+                                                //val pixelScale = 1f
+                                                tempUniforms.put(GpuShapeViewPrograms.u_GlobalPixelScale, pixelScale)
 
-                                                paintShader?.uniforms?.let { list.uboSet(ubo, it) }
+                                                list.uboSet(ubo, tempUniforms)
                                                 list.uboUse(ubo)
 
                                                 list.setStencilState(cmd.stencil)
@@ -207,7 +217,7 @@ class GpuShapeViewCommands {
 
     sealed interface ICommand
 
-    data class ScissorCommand(val scissor: Rectangle) : ICommand
+    data class ScissorCommand(val scissor: Rectangle?) : ICommand
 
     data class ClearCommand(val i: Int) : ICommand
 

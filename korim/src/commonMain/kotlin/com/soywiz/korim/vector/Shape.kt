@@ -1,5 +1,6 @@
 package com.soywiz.korim.vector
 
+import com.soywiz.kds.IDoubleArrayList
 import com.soywiz.kds.iterators.fastForEach
 import com.soywiz.korim.bitmap.toUri
 import com.soywiz.korim.color.RGBA
@@ -14,20 +15,28 @@ import com.soywiz.korim.paint.Paint
 import com.soywiz.korim.text.HorizontalAlign
 import com.soywiz.korim.text.VerticalAlign
 import com.soywiz.korim.vector.format.SVG
+import com.soywiz.korim.vector.format.SvgPath
 import com.soywiz.korio.serialization.xml.Xml
 import com.soywiz.korio.util.niceStr
 import com.soywiz.korio.util.toStringDecimal
 import com.soywiz.korma.geom.BoundsBuilder
+import com.soywiz.korma.geom.IPointArrayList
 import com.soywiz.korma.geom.Matrix
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.bezier.Bezier
+import com.soywiz.korma.geom.bezier.Curves
+import com.soywiz.korma.geom.bezier.isConvex
 import com.soywiz.korma.geom.contains
 import com.soywiz.korma.geom.vector.LineCap
 import com.soywiz.korma.geom.vector.LineJoin
+import com.soywiz.korma.geom.vector.LineScaleMode
+import com.soywiz.korma.geom.vector.StrokeInfo
 import com.soywiz.korma.geom.vector.VectorPath
 import com.soywiz.korma.geom.vector.add
 import com.soywiz.korma.geom.vector.applyTransform
 import com.soywiz.korma.geom.vector.strokeToFill
+import com.soywiz.korma.geom.vector.toCurves
+import com.soywiz.korma.geom.vector.toCurvesList
 import kotlin.math.max
 import kotlin.math.round
 
@@ -88,21 +97,8 @@ private fun Matrix.toSvg() = this.run {
 	}
 }
 
-fun VectorPath.toSvgPathString(separator: String = " ", decimalPlaces: Int = 1): String {
-	val parts = arrayListOf<String>()
-
-	fun Double.fixX() = this.toStringDecimal(decimalPlaces, skipTrailingZeros = true)
-	fun Double.fixY() = this.toStringDecimal(decimalPlaces, skipTrailingZeros = true)
-
-	this.visitCmds(
-		moveTo = { x, y -> parts += "M${x.fixX()} ${y.fixY()}" },
-		lineTo = { x, y -> parts += "L${x.fixX()} ${y.fixY()}" },
-		quadTo = { x1, y1, x2, y2 -> parts += "Q${x1.fixX()} ${y1.fixY()}, ${x2.fixX()} ${y2.fixY()}" },
-		cubicTo = { x1, y1, x2, y2, x3, y3 -> parts += "C${x1.fixX()} ${y1.fixY()}, ${x2.fixX()} ${y2.fixY()}, ${x3.fixX()} ${y3.fixY()}" },
-		close = { parts += "Z" }
-	)
-	return parts.joinToString("")
-}
+fun VectorPath.toSvgPathString(separator: String = " ", decimalPlaces: Int = 1): String =
+    SvgPath.toSvgPathString(this, separator, decimalPlaces)
 
 //fun VectorPath.toSvgPathString(scale: Double, tx: Double, ty: Double): String {
 //	val parts = arrayListOf<String>()
@@ -124,16 +120,16 @@ fun VectorPath.toSvgPathString(separator: String = " ", decimalPlaces: Int = 1):
 interface Shape : BoundsDrawable {
 	fun addBounds(bb: BoundsBuilder, includeStrokes: Boolean = false): Unit
 	fun buildSvg(svg: SvgBuilder): Unit = Unit
-    fun getPath(path: GraphicsPath = GraphicsPath()): GraphicsPath = path
+    fun getPath(path: VectorPath = VectorPath()): VectorPath = path
 
     // Unoptimized version
     override val bounds: Rectangle get() = BoundsBuilder().also { addBounds(it) }.getBounds()
 	fun containsPoint(x: Double, y: Double): Boolean = bounds.contains(x, y)
 }
 
-fun Shape.getBounds(out: Rectangle = Rectangle(), bb: BoundsBuilder = BoundsBuilder()): Rectangle {
+fun Shape.getBounds(out: Rectangle = Rectangle(), bb: BoundsBuilder = BoundsBuilder(), includeStrokes: Boolean = false): Rectangle {
 	bb.reset()
-	addBounds(bb)
+	addBounds(bb, includeStrokes)
 	bb.getBounds(out)
     return out
 }
@@ -152,14 +148,14 @@ interface StyledShape : Shape {
      *
      * @TODO: Probably it shouldn't have the transform applied
      */
-	val path: GraphicsPath? get() = null
-	val clip: GraphicsPath?
+	val path: VectorPath? get() = null
+	val clip: VectorPath?
 	val paint: Paint
 	val transform: Matrix
     val globalAlpha: Double
 
-    fun getUntransformedPath(): GraphicsPath? {
-        return path?.clone()?.applyTransform(transform.inverted())?.toGraphicsPath()
+    fun getUntransformedPath(): VectorPath? {
+        return path?.clone()?.applyTransform(transform.inverted())
     }
 
 	override fun addBounds(bb: BoundsBuilder, includeStrokes: Boolean) {
@@ -178,7 +174,7 @@ interface StyledShape : Shape {
 		)
 	}
 
-    override fun getPath(path: GraphicsPath): GraphicsPath = path.also {
+    override fun getPath(path: VectorPath): VectorPath = path.also {
         this.path?.let { path.write(it) }
     }
 
@@ -201,36 +197,6 @@ interface StyledShape : Shape {
 
 	fun drawInternal(c: Context2d) {
 	}
-}
-
-// @TODO: Once KorMA updated remove
-private fun BoundsBuilder.add(x: Double, y: Double, transform: Matrix) = add(transform.transformX(x, y), transform.transformY(x, y))
-private fun BoundsBuilder.add(rect: Rectangle, transform: Matrix) = this.apply {
-    if (rect.isNotEmpty) {
-        add(rect.left, rect.top, transform)
-        add(rect.right, rect.bottom, transform)
-    }
-}
-
-private fun BoundsBuilder.add(path: VectorPath, transform: Matrix) {
-    val bb = this
-    var lx = 0.0
-    var ly = 0.0
-
-    val bezierTemp = Bezier.Temp()
-    path.visitCmds(
-        moveTo = { x, y -> bb.add(x, y, transform).also { lx = x }.also { ly = y } },
-        lineTo = { x, y -> bb.add(x, y, transform).also { lx = x }.also { ly = y } },
-        quadTo = { cx, cy, ax, ay ->
-            bb.add(Bezier.quadBounds(lx, ly, cx, cy, ax, ay, bb.tempRect), transform)
-                .also { lx = ax }.also { ly = ay }
-        },
-        cubicTo = { cx1, cy1, cx2, cy2, ax, ay ->
-            bb.add(Bezier.cubicBounds(lx, ly, cx1, cy1, cx2, cy2, ax, ay, bb.tempRect, bezierTemp), transform)
-                .also { lx = ax }.also { ly = ay }
-        },
-        close = {}
-    )
 }
 
 private fun colorToSvg(color: RGBA): String {
@@ -286,6 +252,7 @@ fun Paint.toSvg(svg: SvgBuilder): String {
                         stops
                     )
                 }
+                else -> Unit
             }
 
 			return "url(#def$id)"
@@ -330,12 +297,19 @@ object EmptyShape : Shape {
 }
 
 data class FillShape(
-    override val path: GraphicsPath,
-    override val clip: GraphicsPath?,
+    override val path: VectorPath,
+    override val clip: VectorPath?,
     override val paint: Paint,
     override val transform: Matrix = Matrix(),
     override val globalAlpha: Double = 1.0,
 ) : StyledShape {
+    val pathCurvesList: List<Curves> by lazy {
+        //println("Computed pathCurves for path=$path")
+        path.toCurvesList()
+    }
+    val clipCurvesList: List<Curves>? by lazy { clip?.toCurvesList() }
+    val isConvex: Boolean get() = pathCurvesList.size == 1 && pathCurvesList.first().isConvex && (clipCurvesList == null)
+
 	override fun drawInternal(c: Context2d) {
 		c.fill(paint)
 	}
@@ -352,28 +326,28 @@ data class FillShape(
 	}
 }
 
-data class PolylineShape(
-    override val path: GraphicsPath,
-    override val clip: GraphicsPath?,
+data class PolylineShape constructor(
+    override val path: VectorPath,
+    override val clip: VectorPath?,
     override val paint: Paint,
     override val transform: Matrix,
-    val thickness: Double,
-    val pixelHinting: Boolean,
-    val scaleMode: LineScaleMode,
-    val startCaps: LineCap,
-    val endCaps: LineCap,
-    val lineJoin: LineJoin,
-    val miterLimit: Double,
+    val strokeInfo: StrokeInfo,
     override val globalAlpha: Double = 1.0,
-    ) : StyledShape {
+) : StyledShape {
     private val tempBB = BoundsBuilder()
     private val tempRect = Rectangle()
 
+    val thickness by strokeInfo::thickness
+    val scaleMode by strokeInfo::scaleMode
+    val startCaps by strokeInfo::startCap
+    val endCaps by strokeInfo::endCap
+    val lineJoin by strokeInfo::join
+    val miterLimit by strokeInfo::miterLimit
+    val lineDash by strokeInfo::dash
+    val lineDashOffset by strokeInfo::dashOffset
+
     val fillShape: FillShape by lazy {
-        FillShape(
-            path.strokeToFill(thickness, lineJoin, startCaps, endCaps, miterLimit).toGraphicsPath(),
-            clip, paint, transform, globalAlpha
-        )
+        FillShape(path.strokeToFill(strokeInfo), clip, paint, transform, globalAlpha)
     }
 
     override fun addBounds(bb: BoundsBuilder, includeStrokes: Boolean) {
@@ -384,7 +358,7 @@ data class PolylineShape(
         //println("TEMP_RECT: ${tempRect}")
 
         if (includeStrokes) {
-            val halfThickness = max(thickness / 2.0, 0.0)
+            val halfThickness = max(strokeInfo.thickness / 2.0, 0.0)
             tempRect.inflate(halfThickness, halfThickness)
         }
 
@@ -395,10 +369,10 @@ data class PolylineShape(
     }
 
     override fun drawInternal(c: Context2d) {
-		c.lineScaleMode = scaleMode
-		c.lineWidth = thickness
-		c.lineCap = endCaps
-        c.lineJoin = lineJoin
+		c.lineScaleMode = strokeInfo.scaleMode
+		c.lineWidth = strokeInfo.thickness
+		c.lineCap = strokeInfo.endCap
+        c.lineJoin = strokeInfo.join
 		c.stroke(paint)
 	}
 
@@ -411,7 +385,7 @@ data class PolylineShape(
 
 	override fun getSvgXmlAttributes(svg: SvgBuilder) = super.getSvgXmlAttributes(svg) + mapOf(
         "fill" to "none",
-		"stroke-width" to "$thickness",
+		"stroke-width" to "${strokeInfo.thickness}",
 		"stroke" to paint.toSvg(svg)
 	)
 }
@@ -422,7 +396,7 @@ class CompoundShape(
 	override fun addBounds(bb: BoundsBuilder, includeStrokes: Boolean) { components.fastForEach { it.addBounds(bb, includeStrokes)}  }
 	override fun draw(c: Context2d) = c.buffering { components.fastForEach { it.draw(c) } }
 	override fun buildSvg(svg: SvgBuilder) { components.fastForEach { it.buildSvg(svg) } }
-    override fun getPath(path: GraphicsPath): GraphicsPath = path.also { components.fastForEach { it.getPath(path) } }
+    override fun getPath(path: VectorPath): VectorPath = path.also { components.fastForEach { it.getPath(path) } }
 	override fun containsPoint(x: Double, y: Double): Boolean {
 		return components.any { it.containsPoint(x, y) }
 	}
@@ -434,7 +408,7 @@ class TextShape(
     val y: Double,
     val font: Font?,
     val fontSize: Double,
-    override val clip: GraphicsPath?,
+    override val clip: VectorPath?,
     val fill: Paint?,
     val stroke: Paint?,
     val halign: HorizontalAlign = HorizontalAlign.LEFT,

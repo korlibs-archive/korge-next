@@ -29,7 +29,7 @@ class SWFShapeExporter(
 	val requestScale: Double = 2.0,
 	val minSide: Int = 16,
 	val maxSide: Int = 512,
-	val path: GraphicsPath = GraphicsPath(),
+	val path: VectorPath = VectorPath(),
     val charId: Int = -1
 ) : ShapeExporter() {
 	//val bounds: Rectangle = dshape.shapeBounds.rect
@@ -82,7 +82,7 @@ class SWFShapeExporter(
 
 	var drawingFill = true
 
-	var apath = GraphicsPath()
+	var apath = VectorPath()
 	override fun beginShape() {
 		//ctx.beginPath()
 	}
@@ -204,7 +204,7 @@ class SWFShapeExporter(
 	private fun __flushFill() {
 		if (apath.isEmpty()) return
         shapes += FillShape(apath, null, fillStyle, Matrix())
-		apath = GraphicsPath()
+		apath = VectorPath()
 	}
 
 	private fun __flushStroke() {
@@ -214,15 +214,19 @@ class SWFShapeExporter(
 			null,
 			strokeStyle,
             Matrix(),
-			lineWidth,
-			true,
-			LineScaleMode.NORMAL,
-			lineCap,
-			lineCap,
-			LineJoin.MITER,
-			miterLimit
+            StrokeInfo(
+                lineWidth,
+                true,
+                LineScaleMode.NORMAL,
+                lineCap,
+                lineCap,
+                LineJoin.MITER,
+                miterLimit,
+                lineDash,
+                lineDashOffset
+            )
 		)
-		apath = GraphicsPath()
+		apath = VectorPath()
 	}
 
 	private fun flush() {
@@ -237,6 +241,8 @@ class SWFShapeExporter(
 	private var lineScaleMode = LineScaleMode.NORMAL
 	private var miterLimit = 1.0
 	private var lineCap: LineCap = LineCap.ROUND
+    private var lineDash: IDoubleArrayList? = null
+    private var lineDashOffset: Double = 0.0
 	private var strokeStyle: Paint = ColorPaint(Colors.BLACK)
 
 	override fun lineStyle(

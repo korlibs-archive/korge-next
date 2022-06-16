@@ -211,11 +211,25 @@ fun IntArray.toIntArrayList() = IntArrayList(*this)
 
 // Double
 
+interface IDoubleArrayList : Collection<Double> {
+    operator fun get(index: Int): Double
+    fun getAt(index: Int): Double
+    fun indexOf(value: Double, start: Int = 0, end: Int = this.size): Int
+    fun lastIndexOf(value: Double, start: Int = 0, end: Int = this.size): Int
+    fun toDoubleArray(): DoubleArray
+    fun indexOf(element: Double): Int = indexOf(element, 0, size)
+    fun lastIndexOf(element: Double): Int = lastIndexOf(element, 0, size)
+    fun listIterator(): ListIterator<Double> = listIterator(0)
+    fun listIterator(index: Int): ListIterator<Double>
+    fun subList(fromIndex: Int, toIndex: Int): List<Double>
+    fun clone(): IDoubleArrayList
+}
+
 /**
  * Double growable ArrayList without boxing.
  */
 @Suppress("UNCHECKED_CAST")
-class DoubleArrayList(capacity: Int = 7) : Collection<Double> {
+class DoubleArrayList(capacity: Int = 7) : IDoubleArrayList {
     companion object
     var data: DoubleArray = DoubleArray(capacity) as DoubleArray; private set
     internal val capacity: Int get() = data.size
@@ -297,10 +311,10 @@ class DoubleArrayList(capacity: Int = 7) : Collection<Double> {
     fun add(values: DoubleArrayList) = add(values.data, 0, values.size)
     fun add(values: Iterable<Double>) { for (v in values) add(v) }
 
-    operator fun get(index: Int): Double = data[index]
+    override operator fun get(index: Int): Double = data[index]
 
     /** Gets an item of the list without boxing */
-    fun getAt(index: Int): Double = data[index]
+    override fun getAt(index: Int): Double = data[index]
 
     fun setAt(index: Int, value: Double): Double = value.also { set(index, value) }
 
@@ -327,28 +341,39 @@ class DoubleArrayList(capacity: Int = 7) : Collection<Double> {
     @Suppress("ReplaceSizeZeroCheckWithIsEmpty")
     override fun isEmpty(): Boolean = this.size == 0
 
-    fun indexOf(value: Double, start: Int = 0, end: Int = this.size): Int {
+    override fun indexOf(value: Double, start: Int, end: Int): Int {
         for (n in start until end) if (data[n] == value) return n
         return -1
     }
 
-    fun lastIndexOf(value: Double, start: Int = 0, end: Int = this.size): Int {
+    override fun lastIndexOf(value: Double, start: Int, end: Int): Int {
         for (n in (end - 1) downTo start) if (data[n] == value) return n
         return -1
     }
 
-    fun insertAt(index: Int, value: Double) = this.apply {
-        ensure(1)
-        if (isNotEmpty()) arraycopy(data, index, data, index + 1, length - index)
-        data[index] = value
-        length++
-    }
-
-    fun insertAt(index: Int, value: DoubleArray, start: Int = 0, end: Int = value.size) = this.apply {
-        val count = end - start
+    private fun createHoleAt(index: Int, count: Int) {
         ensure(count)
         if (isNotEmpty()) arraycopy(data, index, data, index + count, length - index)
-        for (n in 0 until count) data[index + n] = value[start + n]
+    }
+
+    fun insertAt(index: Int, value: Double): DoubleArrayList {
+        createHoleAt(index, 1)
+        data[index] = value
+        length++
+        return this
+    }
+
+    fun insertAt(index: Int, v0: Double, v1: Double) = this.apply {
+        createHoleAt(index, 2)
+        data[index + 0] = v0
+        data[index + 1] = v1
+        length += 2
+    }
+
+    fun insertAt(index: Int, values: DoubleArray, start: Int = 0, end: Int = values.size) = this.apply {
+        val count = end - start
+        createHoleAt(index, count)
+        arraycopy(values, start, data, index, count)
         length += count
     }
 
@@ -371,16 +396,14 @@ class DoubleArrayList(capacity: Int = 7) : Collection<Double> {
         return out
     }
 
-    fun toDoubleArray() = this.data.copyOf(length)
+    override fun toDoubleArray(): DoubleArray = this.data.copyOf(length)
 
     // List interface
 
-    fun indexOf(element: Double): Int = indexOf(element, 0, size)
-    fun lastIndexOf(element: Double): Int = lastIndexOf(element, 0, size)
+    override fun listIterator(index: Int): ListIterator<Double> = data.take(length).listIterator(index)
+    override fun subList(fromIndex: Int, toIndex: Int): List<Double> = data.asList().subList(fromIndex, toIndex)
 
-    fun listIterator(): ListIterator<Double> = listIterator(0)
-    fun listIterator(index: Int): ListIterator<Double> = data.take(length).listIterator(index)
-    fun subList(fromIndex: Int, toIndex: Int): List<Double> = data.asList().subList(fromIndex, toIndex)
+    override fun clone(): DoubleArrayList = DoubleArrayList(this)
 
     // Data
     override fun hashCode(): Int = data.contentHashCode(0, size)

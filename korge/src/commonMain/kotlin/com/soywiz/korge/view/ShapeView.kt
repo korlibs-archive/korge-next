@@ -3,10 +3,9 @@ package com.soywiz.korge.view
 import com.soywiz.korge.view.vector.GpuShapeView
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.paint.Paint
-import com.soywiz.korim.vector.StrokeInfo
+import com.soywiz.korma.geom.vector.StrokeInfo
 import com.soywiz.korma.geom.vector.VectorPath
 import com.soywiz.korma.geom.vector.isNotEmpty
-import com.soywiz.korma.geom.vector.path
 
 inline fun Container.shapeView(
     shape: VectorPath? = null,
@@ -23,8 +22,6 @@ open class ShapeView(
     stroke: Paint = Colors.WHITE,
     strokeThickness: Double = 0.0,
     autoScaling: Boolean = true,
-// @TODO: This should probably use
-//) : Graphics(autoScaling = autoScaling) {
 ) : GpuShapeView(autoScaling = autoScaling) {
     var path: VectorPath? = shape
         set(value) {

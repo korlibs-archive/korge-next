@@ -1,5 +1,6 @@
 package com.soywiz.korge.view
 
+import com.soywiz.kds.IDoubleArrayList
 import com.soywiz.kds.Pool
 import com.soywiz.kds.iterators.fastForEach
 import com.soywiz.kmem.clamp
@@ -11,12 +12,9 @@ import com.soywiz.korim.paint.Paint
 import com.soywiz.korim.vector.CompoundShape
 import com.soywiz.korim.vector.Context2d
 import com.soywiz.korim.vector.FillShape
-import com.soywiz.korim.vector.GraphicsPath
-import com.soywiz.korim.vector.LineScaleMode
 import com.soywiz.korim.vector.PolylineShape
 import com.soywiz.korim.vector.Shape
 import com.soywiz.korim.vector.ShapeBuilder
-import com.soywiz.korim.vector.StrokeInfo
 import com.soywiz.korim.vector.StyledShape
 import com.soywiz.korim.vector.buildShape
 import com.soywiz.korma.geom.BoundsBuilder
@@ -25,8 +23,11 @@ import com.soywiz.korma.geom.shape.Shape2d
 import com.soywiz.korma.geom.shape.toShape2d
 import com.soywiz.korma.geom.vector.LineCap
 import com.soywiz.korma.geom.vector.LineJoin
+import com.soywiz.korma.geom.vector.LineScaleMode
+import com.soywiz.korma.geom.vector.StrokeInfo
 import com.soywiz.korma.geom.vector.VectorBuilder
 import com.soywiz.korma.geom.vector.VectorPath
+import com.soywiz.korma.geom.vector.Winding
 import kotlin.jvm.JvmOverloads
 
 inline fun Container.graphics(autoScaling: Boolean = false, callback: @ViewDslMarker Graphics.() -> Unit = {}): Graphics = Graphics(autoScaling).addTo(this, callback).apply { redrawIfRequired() }
@@ -59,7 +60,7 @@ fun Graphics(
 open class Graphics @JvmOverloads constructor(
     autoScaling: Boolean = false
 ) : BaseGraphics(autoScaling), VectorBuilder {
-    internal val graphicsPathPool = Pool(reset = { it.clear() }) { GraphicsPath() }
+    internal val vectorPathPool = Pool(reset = { it.clear() }) { VectorPath() }
     private var shapeVersion = 0
 	private val shapes = arrayListOf<Shape>()
     val allShapes: List<Shape> get() = shapes
@@ -67,7 +68,7 @@ open class Graphics @JvmOverloads constructor(
 	private var fill: Paint? = null
 	private var stroke: Paint? = null
 	@PublishedApi
-	internal var currentPath = graphicsPathPool.alloc()
+	internal var currentPath = vectorPathPool.alloc()
 
     // @TODO: Not used but to have same API as GpuShapeView
     var antialiased: Boolean = true
@@ -146,7 +147,7 @@ open class Graphics @JvmOverloads constructor(
     }
 
 	fun clear() {
-        shapes.forEach { (it as? StyledShape)?.path?.let { path -> graphicsPathPool.free(path) } }
+        shapes.forEach { (it as? StyledShape)?.path?.let { path -> vectorPathPool.free(path) } }
 		shapes.clear()
         currentPath.clear()
 	}
@@ -158,6 +159,8 @@ open class Graphics @JvmOverloads constructor(
 	private var endCap: LineCap = LineCap.BUTT
 	private var lineJoin: LineJoin = LineJoin.MITER
 	private var miterLimit: Double = 10.0
+    private var lineDash: IDoubleArrayList? = null
+    private var lineDashOffset: Double = 0.0
 
     init {
         hitTestUsingShapes = true
@@ -173,14 +176,14 @@ open class Graphics @JvmOverloads constructor(
 	override fun moveTo(x: Double, y: Double) { currentPath.moveTo(x, y) }
 	override fun quadTo(cx: Double, cy: Double, ax: Double, ay: Double) { currentPath.quadTo(cx, cy, ax, ay) }
 
-    inline fun fill(color: RGBA, alpha: Double = 1.0, callback: @ViewDslMarker VectorBuilder.() -> Unit) = fill(toColorFill(color, alpha), callback)
+    inline fun fill(color: RGBA, alpha: Double = 1.0, winding: Winding = Winding.NON_ZERO, callback: @ViewDslMarker VectorBuilder.() -> Unit) = fill(toColorFill(color, alpha), winding, callback)
 
-	inline fun fill(paint: Paint, callback: @ViewDslMarker VectorBuilder.() -> Unit) {
+	inline fun fill(paint: Paint, winding: Winding = Winding.NON_ZERO, callback: @ViewDslMarker VectorBuilder.() -> Unit) {
 		beginFill(paint)
 		try {
 			callback()
 		} finally {
-			endFill()
+			endFill(winding)
 		}
 	}
 
@@ -232,7 +235,7 @@ open class Graphics @JvmOverloads constructor(
 		this.scaleMode = info.scaleMode
 		this.startCap = info.startCap
 		this.endCap = info.endCap
-		this.lineJoin = info.lineJoin
+		this.lineJoin = info.join
 		this.miterLimit = info.miterLimit
 	}
 
@@ -250,7 +253,7 @@ open class Graphics @JvmOverloads constructor(
 
     fun shape(shape: Shape) {
         shapes += shape
-        currentPath = graphicsPathPool.alloc()
+        currentPath = vectorPathPool.alloc()
         dirtyShape()
     }
 	inline fun shape(shape: VectorPath) = dirty { currentPath.write(shape) }
@@ -261,23 +264,24 @@ open class Graphics @JvmOverloads constructor(
         dirty()
     }
 
-	fun endFill() = dirty {
+	fun endFill(winding: Winding = Winding.NON_ZERO) = dirty {
+        currentPath.winding = winding
 		shapes += FillShape(currentPath, null, fill ?: ColorPaint(Colors.RED), Matrix())
-		currentPath = graphicsPathPool.alloc()
+		currentPath = vectorPathPool.alloc()
         dirtyShape()
 	}
 
 	fun endStroke() = dirty {
-		shapes += PolylineShape(currentPath, null, stroke ?: ColorPaint(Colors.RED), Matrix(), thickness, pixelHinting, scaleMode, startCap, endCap, lineJoin, miterLimit)
+		shapes += PolylineShape(currentPath, null, stroke ?: ColorPaint(Colors.RED), Matrix(), StrokeInfo(thickness, pixelHinting, scaleMode, startCap, endCap, lineJoin, miterLimit, lineDash, lineDashOffset))
 		//shapes += PolylineShape(currentPath, null, fill ?: Context2d.Color(Colors.RED), Matrix(), thickness, pixelHinting, scaleMode, startCap, endCap, joints, miterLimit)
-		currentPath = graphicsPathPool.alloc()
+		currentPath = vectorPathPool.alloc()
         dirtyShape()
 	}
 
 	fun endFillStroke() = dirty {
 		shapes += FillShape(currentPath, null, fill ?: ColorPaint(Colors.RED), Matrix())
-		shapes += PolylineShape(graphicsPathPool.alloc().also { it.write(currentPath) }, null, stroke ?: ColorPaint(Colors.RED), Matrix(), thickness, pixelHinting, scaleMode, startCap, endCap, lineJoin, miterLimit)
-		currentPath = graphicsPathPool.alloc()
+		shapes += PolylineShape(vectorPathPool.alloc().also { it.write(currentPath) }, null, stroke ?: ColorPaint(Colors.RED), Matrix(), StrokeInfo(thickness, pixelHinting, scaleMode, startCap, endCap, lineJoin, miterLimit, lineDash, lineDashOffset))
+		currentPath = vectorPathPool.alloc()
         dirtyShape()
 	}
 

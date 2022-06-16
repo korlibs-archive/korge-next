@@ -49,4 +49,18 @@ class PointArrayListTest {
         list.insertAt(1, PointArrayList(Point(2, -2), Point(4, -4)))
         assertEquals("[(0, -1), (2, -2), (4, -4)]", list.toList().toString())
     }
+
+    @Test
+    fun testCreation() {
+        assertEquals("[(1, 2), (3, 4)]", pointArrayListOf(1, 2, 3, 4).toString())
+        assertEquals("[(1, 2), (3, 4)]", pointArrayListOf(1.0, 2.0, 3.0, 4.0).toString())
+    }
+
+    @Test
+    fun testFlatten() {
+        assertEquals(
+            "[(1, 2), (3, 4), (5, 6), (7, 8), (9, 10)]",
+            listOf(pointArrayListOf(1, 2, 3, 4), pointArrayListOf(5, 6, 7, 8), PointArrayList(9, 10)).flatten().toString()
+        )
+    }
 }

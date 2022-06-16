@@ -282,6 +282,18 @@ abstract class View internal constructor(
         }
         set(v) { setXY(x, v) }
 
+    private var _zIndex: Double = 0.0
+
+    // @TODO: Instead of resort everytime that something changes, let's keep an index in the zIndex collection
+    //@PublishedApi internal var _zIndexIndex: Int = 0
+
+    var zIndex: Double
+        get() = _zIndex
+        set(v) {
+            parent?.updatedChildZIndex(this, _zIndex, v)
+            _zIndex = v
+        }
+
     /*
     var xf: Float get() = x.toFloat() ; set(v) { x = v.toDouble() }
 
@@ -2102,7 +2114,7 @@ fun <T : View> T.alpha(alpha: Double): T {
 fun <T : View> T.alpha(alpha: Float): T = alpha(alpha.toDouble())
 fun <T : View> T.alpha(alpha: Int): T = alpha(alpha.toDouble())
 
-@Target(AnnotationTarget.TYPE, AnnotationTarget.CLASS) annotation class ViewDslMarker
+typealias ViewDslMarker = com.soywiz.korma.annotations.ViewDslMarker
 // @TODO: This causes issues having to put some explicit this@ when it shouldn't be required
 //typealias ViewDslMarker = KorDslMarker
 

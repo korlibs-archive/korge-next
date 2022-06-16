@@ -54,12 +54,9 @@ class RoundRect(
     var ry: Double by uiObservable(ry) { updateGraphics() }
 
     /** The [color] of this [RoundRect]. Alias of [colorMul]. */
-    var color: RGBA
-        get() = colorMul
-        set(value) { colorMul = value }
+    var color: RGBA by ::colorMul
 
     init {
-        this.colorMul = color
         updateGraphics()
     }
 
@@ -67,6 +64,7 @@ class RoundRect(
         updatePath {
             clear()
             roundRect(0.0, 0.0, this@RoundRect.width, this@RoundRect.height, this@RoundRect.rx, this@RoundRect.ry)
+            assumeConvex = true // Optimization to avoid computing convexity
         }
     }
 }

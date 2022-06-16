@@ -36,12 +36,9 @@ open class Circle(
     /** Radius of the circle */
     var radius: Double by uiObservable(radius) { updateGraphics() }
     /** Color of the circle. Internally it uses the [colorMul] property */
-    var color: RGBA
-        get() = colorMul
-        set(value) { colorMul = value }
+    var color: RGBA by ::colorMul
 
     init {
-        this.color = color
         updateGraphics()
     }
 
@@ -53,6 +50,7 @@ open class Circle(
         updatePath {
             clear()
             circle(radius, radius, radius)
+            assumeConvex = true // Optimization to avoid computing convexity
             //circle(radius + halfStroke, radius + halfStroke, radius)
             //println(toSvgString())
         }

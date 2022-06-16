@@ -1,13 +1,19 @@
 package com.soywiz.korge.view
 
 import com.soywiz.kds.iterators.fastForEach
+import com.soywiz.korag.AG
 import com.soywiz.korag.annotation.KoragExperimental
 import com.soywiz.korev.EventDispatcher
 import com.soywiz.korge.debug.findObservableProperties
 import com.soywiz.korge.debug.uiCollapsibleSection
 import com.soywiz.korge.debug.uiEditableValue
+import com.soywiz.korge.input.Input
+import com.soywiz.korge.input.InputKeys
 import com.soywiz.korge.render.RenderContext
+import com.soywiz.korgw.GameWindow
+import com.soywiz.korinject.AsyncInjector
 import com.soywiz.korio.resources.ResourcesContainer
+import com.soywiz.korma.annotations.RootViewDslMarker
 import com.soywiz.korma.geom.Point
 import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.setTo
@@ -17,6 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 /**
  * Singleton root [View] and [Container] that contains a reference to the [Views] singleton and doesn't have any parent.
  */
+@RootViewDslMarker
 class Stage(override val views: Views) : FixedSizeContainer()
     , View.Reference
     , CoroutineScope by views
@@ -29,11 +36,11 @@ class Stage(override val views: Views) : FixedSizeContainer()
     override var width: Double by views::virtualWidthDouble
     override var height: Double by views::virtualHeightDouble
 
-    val keys get() = views.input.keys
-    val input get() = views.input
-    val injector get() = views.injector
-    val ag get() = views.ag
-    val gameWindow get() = views.gameWindow
+    val keys: InputKeys get() = views.input.keys
+    val input: Input get() = views.input
+    val injector: AsyncInjector get() = views.injector
+    val ag: AG get() = views.ag
+    val gameWindow: GameWindow get() = views.gameWindow
     override val stage: Stage = this
     override val resources get() = views.resources
 

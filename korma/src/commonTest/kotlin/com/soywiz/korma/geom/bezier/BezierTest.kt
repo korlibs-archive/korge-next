@@ -5,7 +5,7 @@ import com.soywiz.korma.geom.Rectangle
 import com.soywiz.korma.geom.map
 import com.soywiz.korma.geom.shape.buildVectorPath
 import com.soywiz.korma.geom.vector.getCurves
-import com.soywiz.korma.geom.vector.getCurvesLists
+import com.soywiz.korma.geom.vector.getCurvesList
 import com.soywiz.korma.geom.vector.rect
 import kotlin.math.roundToInt
 import kotlin.test.Test
@@ -14,7 +14,7 @@ import kotlin.test.assertEquals
 class BezierTest {
     @Test
     fun testLength() {
-        assertEquals(100.0, Bezier(Point(0, 0), Point(50, 0), Point(100, 0)).length(steps = 100))
+        assertEquals(100.0, Bezier(Point(0, 0), Point(50, 0), Point(100, 0)).length)
     }
 
     @Test
@@ -60,10 +60,16 @@ class BezierTest {
             rect(0, 0, 100, 100)
             rect(300, 0, 100, 100)
         }
-        val curves = path.getCurvesLists()
+        val curves = path.getCurvesList()
         assertEquals(2, curves.size)
         assertEquals(Rectangle(0, 0, 100, 100), curves[0].getBounds())
         assertEquals(Rectangle(300, 0, 100, 100), curves[1].getBounds())
         assertEquals(Rectangle(0, 0, 400, 100), curves.toCurves().getBounds())
+    }
+
+    @Test
+    fun testTangent() {
+        val bezier = Bezier(Point(74.58, 36.96), Point(74.58, 36.96), Point(77.04, 27.36), Point(71.76, 32.64))
+        assertEquals(Point(0.2482, -0.9687), bezier.tangent(0.0).setToRoundDecimalPlaces(4))
     }
 }

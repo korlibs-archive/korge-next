@@ -120,6 +120,7 @@ abstract class AG(val checked: Boolean = false) : AGFeatures, Extra by Extra.Mix
 
     open val devicePixelRatio: Double = 1.0
     open val pixelsPerLogicalInchRatio: Double = 1.0
+    /** Approximate on iOS */
     open val pixelsPerInch: Double = defaultPixelsPerInch
     // Use this in the debug handler, while allowing people to access raw devicePixelRatio without the noise of window scaling
     // I really dont know if "/" or "*" or right but in my mathematical mind "pixelsPerLogicalInchRatio" must increase and not decrease the scale
@@ -921,6 +922,7 @@ abstract class AG(val checked: Boolean = false) : AGFeatures, Extra by Extra.Mix
                         }
                     }
                 }
+                else -> Unit
             }
         }
         //println("useExternalSampler=$useExternalSampler")
@@ -1574,7 +1576,8 @@ abstract class AG(val checked: Boolean = false) : AGFeatures, Extra by Extra.Mix
             }
         }
 
-        fun put(uniforms: UniformValues): UniformValues {
+        fun put(uniforms: UniformValues?): UniformValues {
+            if (uniforms == null) return this
             for (n in 0 until uniforms.size) {
                 this.put(uniforms._uniforms[n], uniforms._values[n])
             }

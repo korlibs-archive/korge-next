@@ -36,7 +36,6 @@ import com.soywiz.korge.scene.Scene
 import com.soywiz.korge.scene.SceneContainer
 import com.soywiz.korge.stat.Stats
 import com.soywiz.korge.view.Stage
-import com.soywiz.korge.view.ViewDslMarker
 import com.soywiz.korge.view.Views
 import com.soywiz.korgw.CreateDefaultGameWindow
 import com.soywiz.korgw.GameWindow
@@ -167,7 +166,7 @@ object Korge {
         settingsFolder: String? = null,
         batchMaxQuads: Int = BatchBuilder2D.DEFAULT_BATCH_QUADS,
         multithreaded: Boolean? = null,
-        entry: @ViewDslMarker suspend Stage.() -> Unit
+        entry: suspend Stage.() -> Unit
 	) {
         if (!OS.isJsBrowser) {
             configureLoggerFromProperties(localCurrentDirVfs["klogger.properties"])
@@ -571,8 +570,8 @@ object Korge {
         val gameId: String = DEFAULT_GAME_ID,
         val settingsFolder: String? = null,
         val batchMaxQuads: Int = BatchBuilder2D.DEFAULT_BATCH_QUADS,
-        val virtualSize: ISizeInt? = null,
-        val windowSize: ISizeInt? = null,
+        val virtualSize: ISizeInt? = module.size,
+        val windowSize: ISizeInt? = module.windowSize,
         val scaleMode: ScaleMode? = null,
         val scaleAnchor: Anchor? = null,
         val clipBorders: Boolean? = null,
@@ -581,10 +580,13 @@ object Korge {
         val quality: GameWindow.Quality? = null,
         val icon: String? = null,
         val multithreaded: Boolean? = null,
-        val main: (suspend Stage.() -> Unit)? = null,
-        val constructedScene: Scene.(Views) -> Unit = {},
-        val constructedViews: (Views) -> Unit = {}
-	)
+        val main: (suspend Stage.() -> Unit)? = module.main,
+        val constructedScene: Scene.(Views) -> Unit = module.constructedScene,
+        val constructedViews: (Views) -> Unit = module.constructedViews,
+	) {
+        val finalWindowSize: ISizeInt get() = windowSize ?: module.windowSize
+        val finalVirtualSize: ISizeInt get() = virtualSize ?: module.size
+    }
 
 	data class ModuleArgs(val args: Array<String>)
 }

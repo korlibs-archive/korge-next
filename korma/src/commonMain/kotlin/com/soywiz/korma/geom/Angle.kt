@@ -5,9 +5,12 @@ import com.soywiz.korma.internal.niceStr
 import com.soywiz.korma.internal.umod
 import com.soywiz.korma.interpolation.interpolate
 import com.soywiz.korma.math.isAlmostEquals
+import com.soywiz.korma.math.roundDecimalPlaces
 import kotlin.math.PI
 import kotlin.math.absoluteValue
 import kotlin.math.atan2
+import kotlin.math.max
+import kotlin.math.min
 
 @PublishedApi internal const val PI2 = PI * 2.0
 @PublishedApi internal const val DEG2RAD = PI / 180.0
@@ -50,11 +53,13 @@ inline class Angle private constructor(
     /** [0..360] degrees -> [0..PI * 2] radians -> [0..1] ratio */
     val degrees: Double get() = ratioToDegrees(ratio)
 
-    override fun toString(): String = "${degrees.niceStr}.degrees"
+    override fun toString(): String = "${degrees.roundDecimalPlaces(2).niceStr}.degrees"
 
     @Suppress("MemberVisibilityCanBePrivate")
     companion object {
+        inline val EPSILON get() = fromRatio(0.00001)
         inline val ZERO get() = fromRatio(0.0)
+        inline val QUARTER get() = fromRatio(0.25)
         inline val HALF get() = fromRatio(0.5)
         inline val FULL get() = fromRatio(1.0)
 
@@ -76,6 +81,7 @@ inline class Angle private constructor(
         inline fun tan01(ratio: Double) = kotlin.math.tan(PI2 * ratio)
 
         inline fun atan2(x: Double, y: Double): Angle = fromRadians(kotlin.math.atan2(x, y))
+        inline fun atan2(p: IPoint): Angle = atan2(p.x, p.y)
 
         inline fun degreesToRadians(degrees: Double): Double = degrees * DEG2RAD
         inline fun radiansToDegrees(radians: Double): Double = radians * RAD2DEG
@@ -93,6 +99,12 @@ inline class Angle private constructor(
         inline fun between(x0: Int, y0: Int, x1: Int, y1: Int): Angle = between(x0.toDouble(), y0.toDouble(), x1.toDouble(), y1.toDouble())
         inline fun between(x0: Float, y0: Float, x1: Float, y1: Float): Angle = between(x0.toDouble(), y0.toDouble(), x1.toDouble(), y1.toDouble())
         inline fun between(p0: IPoint, p1: IPoint): Angle = between(p0.x, p0.y, p1.x, p1.y)
+
+        inline fun between(ox: Double, oy: Double, x1: Double, y1: Double, x2: Double, y2: Double): Angle =
+            between(x1 - ox, y1 - oy, x2 - ox, y2 - oy)
+
+        inline fun between(o: IPoint, v1: IPoint, v2: IPoint): Angle =
+            between(o.x, o.y, v1.x, v1.y, v2.x, v2.y)
     }
 
     override fun compareTo(other: Angle): Int {
@@ -106,14 +118,16 @@ inline class Angle private constructor(
     }
 }
 
-val Angle.cosine get() = cos(this)
-val Angle.sine get() = sin(this)
-val Angle.tangent get() = tan(this)
+val Angle.cosine: Double get() = cos(this)
+val Angle.sine: Double get() = sin(this)
+val Angle.tangent: Double get() = tan(this)
 
 inline fun cos(angle: Angle): Double = kotlin.math.cos(angle.radians)
 inline fun sin(angle: Angle): Double = kotlin.math.sin(angle.radians)
 inline fun tan(angle: Angle): Double = kotlin.math.tan(angle.radians)
 inline fun abs(angle: Angle): Angle = Angle.fromRatio(angle.ratio.absoluteValue)
+inline fun min(a: Angle, b: Angle): Angle = Angle.fromRatio(min(a.ratio, b.ratio))
+inline fun max(a: Angle, b: Angle): Angle = Angle.fromRatio(max(a.ratio, b.ratio))
 
 val Angle.absoluteValue: Angle get() = Angle.fromRatio(ratio.absoluteValue)
 fun Angle.shortDistanceTo(other: Angle): Angle = Angle.shortDistanceTo(this, other)
@@ -125,6 +139,8 @@ operator fun Angle.times(scale: Float): Angle = this * scale.toDouble()
 operator fun Angle.div(scale: Float): Angle = this / scale.toDouble()
 operator fun Angle.times(scale: Int): Angle = this * scale.toDouble()
 operator fun Angle.div(scale: Int): Angle = this / scale.toDouble()
+operator fun Angle.rem(angle: Angle): Angle = Angle.fromRatio(this.ratio % angle.ratio)
+infix fun Angle.umod(angle: Angle): Angle = Angle.fromRatio(this.ratio umod angle.ratio)
 
 operator fun Angle.div(other: Angle): Double = this.ratio / other.ratio // Ratio
 operator fun Angle.plus(other: Angle): Angle = Angle.fromRatio(this.ratio + other.ratio)

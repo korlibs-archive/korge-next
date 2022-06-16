@@ -3,13 +3,12 @@ package com.soywiz.korge.android
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.RelativeLayout
-import com.soywiz.kgl.KmlGl
-import com.soywiz.kgl.KmlGlAndroid
 import com.soywiz.korag.gl.AGOpengl
 import com.soywiz.korev.InitEvent
 import com.soywiz.korev.RenderEvent
 import com.soywiz.korge.Korge
 import com.soywiz.korge.scene.Module
+import com.soywiz.korgw.AndroidAGOpengl
 import com.soywiz.korgw.AndroidGameWindowNoActivity
 import com.soywiz.korgw.GameWindowCreationConfig
 import com.soywiz.korio.Korio
@@ -34,73 +33,64 @@ open class KorgeAndroidView(
     private val renderEvent = RenderEvent()
     private val initEvent = InitEvent()
 
-    private var moduleLoaded = false
-
-    inner class KorgeViewAGOpenGL : AGOpengl() {
-
-        override val gl: KmlGl = KmlGlAndroid { mGLView?.clientVersion ?: -1 }
-        override val nativeComponent: Any get() = this@KorgeAndroidView
-
-        // @TODO: Cache somehow?
-        override val pixelsPerInch: Double get() = resources.displayMetrics.densityDpi.toDouble()
-
-        override fun repaint() {
-            mGLView?.invalidate()
-        }
-    }
+    var moduleLoaded = false ; private set
 
     fun unloadModule() {
+        if (!moduleLoaded) return
 
-        if (moduleLoaded) {
+        gameWindow?.dispatchDestroyEvent()
+        gameWindow?.coroutineContext = null
+        gameWindow?.close()
+        gameWindow?.exit()
+        mGLView = null
+        gameWindow = null
+        agOpenGl = null
+        cleanUpResourcesVfs()
 
-            gameWindow?.dispatchDestroyEvent()
-            gameWindow?.coroutineContext = null
-            gameWindow?.close()
-            gameWindow?.exit()
-            mGLView = null
-            gameWindow = null
-            agOpenGl = null
-            cleanUpResourcesVfs()
-
-            CoroutineScope(Dispatchers.Main).launch {
-                mGLView?.let { removeView(it) }
-            }
-
-            moduleLoaded = false
+        CoroutineScope(Dispatchers.Main).launch {
+            mGLView?.let { removeView(it) }
         }
+
+        moduleLoaded = false
     }
 
     fun loadModule(module: Module) {
+        loadModule(Korge.Config(module))
+    }
 
-        if (!moduleLoaded) {
+    fun loadModule(config: Korge.Config) {
+        unloadModule() // Unload module if already loaded
 
-            agOpenGl = KorgeViewAGOpenGL()
-            gameWindow = AndroidGameWindowNoActivity(module.windowSize.width, module.windowSize.height, agOpenGl!!, context, config) { mGLView!! }
+        agOpenGl = AndroidAGOpengl(context, agCheck = false) { mGLView }
+        gameWindow = AndroidGameWindowNoActivity(config.windowSize?.width ?: config.finalWindowSize.width,
+            config.finalWindowSize.height, agOpenGl!!, context, this.config) { mGLView!! }
+        mGLView = com.soywiz.korgw.KorgwSurfaceView(this, context, gameWindow!!)
 
-            mGLView = com.soywiz.korgw.KorgwSurfaceView(this, context, gameWindow!!)
+        addView(mGLView)
 
-            addView(mGLView)
-
-            gameWindow?.let { gameWindow ->
-
-                Korio(context) {
-                    try {
-                        withAndroidContext(context) {
-                            withContext(coroutineContext + gameWindow) {
-                                Korge(Korge.Config(module = module))
-                            }
+        gameWindow?.let { gameWindow ->
+            Korio(context) {
+                try {
+                    withAndroidContext(context) {
+                        withContext(coroutineContext + gameWindow) {
+                            Korge(config)
                         }
-                    } finally {
-                        println("${javaClass.name} completed!")
                     }
+                } finally {
+                    println("${javaClass.name} completed!")
                 }
             }
-
-            moduleLoaded = true
         }
+
+        moduleLoaded = true
     }
 
     fun queueEvent(runnable: Runnable) {
         mGLView?.queueEvent(runnable)
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        unloadModule()
     }
 }
