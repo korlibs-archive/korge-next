@@ -81,9 +81,7 @@ class StrokePointsBuilder(
     override fun toString(): String = "StrokePointsBuilder($width, $vector)"
 
     fun addPoint(pos: IPoint, normal: IPoint, width: Double, maxWidth: Double = width) {
-        if (!pos.x.isFinite() || !normal.x.isFinite()) {
-            TODO("NaN detected pos=$pos, normal=$normal, width=$width, maxWidth=$maxWidth")
-        }
+        //if (!pos.x.isFinite() || !normal.x.isFinite()) TODO("NaN detected pos=$pos, normal=$normal, width=$width, maxWidth=$maxWidth")
         when (mode) {
             StrokePointsMode.SCALABLE_POS_NORMAL_WIDTH -> vector.add(pos.x, pos.y, normal.x, normal.y, width, maxWidth.absoluteValue)
             StrokePointsMode.NON_SCALABLE_POS -> vector.add(pos.x + normal.x * width, pos.y + normal.y * width)
@@ -93,9 +91,7 @@ class StrokePointsBuilder(
     fun addPointRelative(center: IPoint, pos: IPoint, sign: Double = 1.0) {
         val dist = pos - center
         val normal = if (sign < 0.0) dist.mutable.neg() else dist
-        if (!center.x.isFinite() || !normal.x.isFinite()) {
-            TODO("Non finite value detected detected: center=$center, pos=$pos, sign=$sign, dist=$dist, normal=$normal")
-        }
+        //if (!center.x.isFinite() || !normal.x.isFinite()) TODO("Non finite value detected detected: center=$center, pos=$pos, sign=$sign, dist=$dist, normal=$normal")
         addPoint(center, normal.normalized, dist.length * sign)
     }
 

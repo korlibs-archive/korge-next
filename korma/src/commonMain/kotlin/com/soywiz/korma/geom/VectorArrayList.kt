@@ -4,7 +4,7 @@ import com.soywiz.kds.DoubleArrayList
 import com.soywiz.kds.Extra
 import com.soywiz.kds.iterators.fastForEach
 import com.soywiz.kds.mapDouble
-import com.soywiz.kds.mapFloat
+import com.soywiz.korma.internal.appendNice
 import com.soywiz.korma.math.roundDecimalPlaces
 import kotlin.math.sqrt
 
@@ -98,12 +98,7 @@ class VectorArrayList(
     }
 
     fun vectorToStringBuilder(index: Int, out: StringBuilder) {
-        out.append("[")
-        for (dim in 0 until dimensions) {
-            if (dim != 0) out.append(", ")
-            out.append(get(index, dim))
-        }
-        out.append("]")
+        out.appendGenericArray(dimensions) { appendNice(this@VectorArrayList.get(index, it)) }
     }
 
     fun vectorToString(index: Int): String = buildString { vectorToStringBuilder(index, this) }
@@ -158,19 +153,22 @@ interface IGenericVector {
 
 val IGenericVector.length: Double get() {
     var ssum = 0.0
-    for (n in 0 until dimensions) ssum += this.get(n)
+    for (n in 0 until dimensions) ssum += this[n]
     return sqrt(ssum)
 }
 
 fun IGenericVector.toStringBuilder(out: StringBuilder) {
-    out.append("[")
-    for (dim in 0 until dimensions) {
-        if (dim != 0) out.append(", ")
-        out.append(get(dim))
-    }
-    out.append("]")
+    out.appendGenericArray(dimensions) { appendNice(this@toStringBuilder[it]) }
 }
 
+@PublishedApi internal fun StringBuilder.appendGenericArray(size: Int, appendElement: StringBuilder.(Int) -> Unit) {
+    append("[")
+    for (n in 0 until size) {
+        if (n != 0) append(", ")
+        appendElement(n)
+    }
+    append("]")
+}
 
 // @TODO: Potential candidate for value class when multiple values are supported
 class GenericVector(override val dimensions: Int, val data: DoubleArray, val offset: Int = 0) : IGenericVector {
