@@ -124,6 +124,8 @@ suspend fun main() = Korge(
     //mainGpuVectorRendering2()
     mainGpuVectorRendering()
 
+    //mainSvgAnimation()
+
     //mainDpi()
     //mainZIndex()
     //mainCircleColor()
@@ -132,7 +134,6 @@ suspend fun main() = Korge(
     //mainEasing()
     //mainTweenPoint()
     //mainBezier()
-    //mainSvgAnimation()
     //mainClipping()
     //mainTextureIssue()
     //mainTilemapTest()

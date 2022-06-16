@@ -178,11 +178,11 @@ open class GpuShapeView(
     private var cachedScale: Double = Double.NaN
 
     override fun renderInternal(ctx: RenderContext) {
-        //globalScale = globalTransform.setMatrix(globalMatrix).setMatrix(globalMatrix).scaleAvg * ctx.bp.globalToWindowScaleAvg
+        globalScale = globalTransform.setMatrix(globalMatrix).setMatrix(globalMatrix).scaleAvg * ctx.bp.globalToWindowScaleAvg
         //globalScale = ctx.bp.globalToWindowScaleAvg
-        //if (cachedScale != globalScale) {
-        //    invalidateShape()
-        //}
+        if (cachedScale != globalScale) {
+            invalidateShape()
+        }
         //invalidateShape()
         ctx.flush()
 
@@ -542,8 +542,7 @@ open class GpuShapeView(
                 paint = shape.paint,
                 globalAlpha = shape.globalAlpha,
                 strokeInfo = StrokeInfo(
-                    thickness = (1.6 * globalScale).clamp(1.4, 2.8), // @TODO: Scale lineWidth based on the global scale and device pixel ratio
-                    //thickness = 10.0, // @TODO: Scale lineWidth based on the global scale and device pixel ratio
+                    thickness = (1.6 / globalScale),
                     scaleMode = LineScaleMode.NONE,
                     startCap = LineCap.BUTT,
                     endCap = LineCap.BUTT,
