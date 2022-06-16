@@ -1,4 +1,4 @@
-package com.soywiz.korge.composable
+package samples
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -6,10 +6,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.milliseconds
 import com.soywiz.klock.seconds
-import com.soywiz.kmem.clamp01
 import com.soywiz.korev.Key
 import com.soywiz.korge.compose.Animatable
 import com.soywiz.korge.compose.Box
@@ -29,28 +27,28 @@ import com.soywiz.korge.compose.fillMaxWidth
 import com.soywiz.korge.compose.padding
 import com.soywiz.korge.compose.setComposeContent
 import com.soywiz.korge.compose.size
-import com.soywiz.korge.view.Stage
+import com.soywiz.korge.scene.Scene
+import com.soywiz.korge.view.Container
 import com.soywiz.korim.bitmap.BmpSlice
 import com.soywiz.korim.color.Colors
-import com.soywiz.korim.color.RGBA
 import com.soywiz.korim.color.interpolate
 import com.soywiz.korim.format.readBitmapSlice
 import com.soywiz.korio.async.delay
 import com.soywiz.korio.file.std.resourcesVfs
 import com.soywiz.korma.geom.Anchor
 import com.soywiz.korma.geom.vector.roundRect
-import com.soywiz.korma.interpolation.Easing
-import com.soywiz.korma.interpolation.interpolate
 import kotlin.coroutines.cancellation.CancellationException
 
-suspend fun Stage.mainComposable() {
-    setComposeContent(this) {
-        MainApp()
+class MainComposable : Scene() {
+    override suspend fun Container.sceneMain() {
+        setComposeContent(this) {
+            MainApp()
+        }
     }
 }
 
 @Composable
-fun MainApp() {
+private fun MainApp() {
     //App()
     var color by remember { mutableStateOf(Colors.RED) }
     //val color2 by remember { Animatable(Colors.RED) }
