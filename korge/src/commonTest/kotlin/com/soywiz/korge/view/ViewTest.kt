@@ -181,15 +181,16 @@ class ViewTest {
         val rect3 = c.solidRect(1, 1).name("c")
         val ctx = TestRenderContext()
         fun render() = c.render(ctx)
-        fun validateIndices() {
-            for (n in 0 until c.numChildren) assertEquals(n, c.children[n].index)
-        }
 
         fun assertEqualsOperation(block: () -> Unit, expected: List<View>) {
             block()
             render()
+            assertEquals(expected, c.children.toList())
             assertEquals(expected, c.__childrenZIndex.toList())
-            validateIndices()
+            for (n in 0 until c.numChildren) {
+                assertEquals(n, c.children[n].index)
+                assertEquals(c, c.children[n].parent)
+            }
         }
 
         assertEqualsOperation({ }, listOf(rect1, rect2, rect3))
