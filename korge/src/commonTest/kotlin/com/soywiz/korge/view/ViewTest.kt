@@ -188,8 +188,8 @@ class ViewTest {
             assertEquals(expected, c.children.toList())
             assertEquals(expected, c.__childrenZIndex.toList())
             for (n in 0 until c.numChildren) {
-                assertEquals(n, c.children[n].index)
-                assertEquals(c, c.children[n].parent)
+                assertEquals(n, c.getChildAt(n).index)
+                assertEquals(c, c.getChildAt(n).parent)
             }
         }
 
@@ -198,5 +198,7 @@ class ViewTest {
         assertEqualsOperation({ c.addChild(rect2) }, listOf(rect1, rect3, rect2))
         assertEqualsOperation({ c.swapChildrenAt(1, 2) }, listOf(rect1, rect2, rect3))
         assertEqualsOperation({ c.removeChildrenIf { _, child -> child == rect1 || child == rect3 } }, listOf(rect2))
+        assertEqualsOperation({ c.addChildAt(rect3, 0) }, listOf(rect3, rect2))
+        assertEqualsOperation({ c.addChildAt(rect1, c.numChildren) }, listOf(rect3, rect2, rect1))
     }
 }

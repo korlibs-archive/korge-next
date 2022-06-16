@@ -147,7 +147,6 @@ open class Container : View(true) {
      *
      * Remarks: if [index] is outside bounds 0..[numChildren], it will be clamped to the nearest valid value.
      */
-    @KorgeUntested
     fun addChildAt(view: View, index: Int) {
         view.parent?.invalidateZIndexChildren()
         view.removeFromParent()
