@@ -67,22 +67,9 @@ interface BmpCoordsWithT<T : ISizeInt> : BmpCoords, Closeable, Resourceable<BmpC
             bounds.height += bounds.y
             bounds.y = 0
         }
-        if (imageOrientation.isRotatedDeg90CwOrCcw) {
-            bounds.width = bounds.width.clamp(0, height - bounds.y)
-            bounds.height = bounds.height.clamp(0, width - bounds.x)
-        } else {
-            bounds.width = bounds.width.clamp(0, width - bounds.x)
-            bounds.height = bounds.height.clamp(0, height - bounds.y)
-        }
-
-        val tlX: Float
-        val tlY: Float
-        val trX: Float
-        val trY: Float
-        val brX: Float
-        val brY: Float
-        val blX: Float
-        val blY: Float
+        val ioRotated = imageOrientation.isRotatedDeg90CwOrCcw
+        bounds.width = if (ioRotated) bounds.width.clamp(0, height - bounds.y) else bounds.width.clamp(0, width - bounds.x)
+        bounds.height = if (ioRotated) bounds.height.clamp(0, width - bounds.x) else bounds.height.clamp(0, height - bounds.y)
 
         // Calculate bmpCoords based on parentCoords
         val dx = br_x - tl_x
@@ -94,31 +81,22 @@ interface BmpCoordsWithT<T : ISizeInt> : BmpCoords, Closeable, Resourceable<BmpC
         val bw = width.toFloat()
         val bh = height.toFloat()
 
-        if (isRotatedInBaseDeg90) {
-            // Base is rotated
-            val xDim = if (imageOrientation.isRotatedDeg90CwOrCcw) w else h
-            val yDim = if (imageOrientation.isRotatedDeg90CwOrCcw) h else w
-            tlX = tl_x + y / bh * dx
-            tlY = tl_y + x / bw * dy
-            brX = tlX + xDim / bh * dx
-            brY = tlY + yDim / bw * dy
-            trX = tlX
-            trY = brY
-            blX = brX
-            blY = tlY
-        } else {
-            // Base is not rotated
-            val xDim = if (imageOrientation.isRotatedDeg90CwOrCcw) h else w
-            val yDim = if (imageOrientation.isRotatedDeg90CwOrCcw) w else h
-            tlX = tl_x + x / bw * dx
-            tlY = tl_y + y / bh * dy
-            brX = tlX + xDim / bw * dx
-            brY = tlY + yDim / bh * dy
-            trX = brX
-            trY = tlY
-            blX = tlX
-            blY = brY
-        }
+        val flipDim = isRotatedInBaseDeg90 xor ioRotated
+        val xDim = if (flipDim) h else w
+        val yDim = if (flipDim) w else h
+        val _bw = if (isRotatedInBaseDeg90) bh else bw
+        val _bh = if (isRotatedInBaseDeg90) bw else bh
+        val _x = if (isRotatedInBaseDeg90) y else x
+        val _y = if (isRotatedInBaseDeg90) x else y
+
+        val tlX = tl_x + _x / _bw * dx
+        val tlY = tl_y + _y / _bh * dy
+        val brX = tlX + xDim / _bw * dx
+        val brY = tlY + yDim / _bh * dy
+        val trX = if (isRotatedInBaseDeg90) tlX else brX
+        val trY = if (isRotatedInBaseDeg90) brY else tlY
+        val blX = if (isRotatedInBaseDeg90) brX else tlX
+        val blY = if (isRotatedInBaseDeg90) tlY else brY
 
         return copy(base, tlX, tlY, trX, trY, brX, brY, blX, blY)
             .withImageOrientation(imageOrientation)
