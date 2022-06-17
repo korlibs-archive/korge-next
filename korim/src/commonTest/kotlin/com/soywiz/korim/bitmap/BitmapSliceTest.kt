@@ -3,6 +3,8 @@ package com.soywiz.korim.bitmap
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.format.ImageOrientation
 import com.soywiz.korio.util.OS
+import com.soywiz.korma.geom.Rectangle
+import com.soywiz.korma.geom.RectangleInt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -82,6 +84,39 @@ class BitmapSliceTest {
             assertEquals(Colors.BLUE, vfSlice.base.getRgba(11, 25))
         }
     }
+
+    @Suppress("DEPRECATION")
+    @Test
+    fun testDeprecatedConstructors() {
+        if (OS.isJvm) {
+            val bmp = Bitmap32(20, 20)
+            bmp.setRgba(1, 1, Colors.RED)
+            bmp.setRgba(18, 8, Colors.GREEN)
+
+            val r1 = RectangleInt(1, 1, 18, 8)
+            val r2 = RectangleInt(1, 1, 8, 18)
+
+            var slice = BitmapSlice(bmp, r1, rotated = false)
+            assertEquals(Colors.RED, slice.getRgba(0, 0))
+            assertEquals(Colors.GREEN, slice.getRgba(17, 7))
+
+            slice = BitmapSlice(bmp, r2, rotated = true)
+            assertEquals(Colors.RED, slice.getRgba(7, 0))
+            assertEquals(Colors.GREEN, slice.getRgba(0, 17))
+
+            val r3 = Rectangle(1, 1, 18, 8)
+            val r4 = Rectangle(1, 1, 8, 18)
+
+            var sliceCompat = BitmapSliceCompat(bmp, r3, r3, r3, false)
+            assertEquals(Colors.RED, sliceCompat.getRgba(0, 0))
+            assertEquals(Colors.GREEN, sliceCompat.getRgba(17, 7))
+
+            sliceCompat = BitmapSliceCompat(bmp, r4, r4, r4, true)
+            assertEquals(Colors.RED, sliceCompat.getRgba(7, 0))
+            assertEquals(Colors.GREEN, sliceCompat.getRgba(0, 17))
+        }
+    }
+
 
     @Test
     fun testReadPixels() {
