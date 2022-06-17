@@ -344,15 +344,15 @@ abstract class BmpSlice(
     bmpCoords: BmpCoordsWithT<*> = BmpCoordsWithInstance(bmpBase),
 ) : Extra, BitmapCoords {
 
-    @Deprecated("rotated is ignored. Use bmpCoords")
+    @Deprecated("Use bmpCoords")
     constructor(
         bmpBase: Bitmap,
         bounds: RectangleInt,
         name: String? = null,
         rotated: Boolean = false,
         virtFrame: RectangleInt? = null,
-        bmpCoords: BmpCoordsWithT<*> = BmpCoordsWithInstance(bmpBase),
-    ): this(bmpBase, bounds, name, virtFrame) {
+        bmpCoords: BmpCoordsWithT<*> = BmpCoordsWithInstance(bmpBase).subCoords(bounds, if (rotated) ImageOrientation.ROTATE_90 else ImageOrientation.ORIGINAL),
+    ): this(bmpBase, bounds, name, virtFrame, bmpCoords) {
         this.rotated = rotated
     }
 
@@ -547,7 +547,7 @@ class BitmapSlice<out T : Bitmap>(
         name: String? = null,
         rotated: Boolean = false,
         virtFrame: RectangleInt? = null,
-    ): this(bmp, bounds, name, virtFrame)
+    ): this(bmp, bounds, name, virtFrame, BmpCoordsWithInstance(bmp).subCoords(bounds, if (rotated) ImageOrientation.ROTATE_90 else ImageOrientation.ORIGINAL))
 
     val premultiplied get() = bmp.premultiplied
 
@@ -611,7 +611,7 @@ fun BitmapSliceCompat(
 	trim: Rectangle,
 	rotated: Boolean,
 	name: String = "unknown"
-) = BitmapSlice(bmp, frame.toInt(), name = name, rotated = rotated)
+) = bmp.sliceWithSize(frame.toInt(), name, if (rotated) ImageOrientation.ROTATE_90 else ImageOrientation.ORIGINAL)
 
 fun <T : Bitmap> T.slice(bounds: RectangleInt = RectangleInt(0, 0, width, height), name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BitmapSlice<T> = BitmapSlice(this, RectangleInt(0, 0, width, height), name, bmpCoords = BmpCoordsWithInstance(this))
     .let {
@@ -623,6 +623,7 @@ fun <T : Bitmap> T.slice(bounds: RectangleInt = RectangleInt(0, 0, width, height
     }
 fun <T : Bitmap> T.sliceWithBounds(left: Int, top: Int, right: Int, bottom: Int, name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BitmapSlice<T> = slice(RectangleInt(left, top, right - left, bottom - top), name, imageOrientation)
 fun <T : Bitmap> T.sliceWithSize(x: Int, y: Int, width: Int, height: Int, name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BitmapSlice<T> = slice(RectangleInt(x, y, width, height), name, imageOrientation)
+fun <T : Bitmap> T.sliceWithSize(rect: RectangleInt, name: String? = null, imageOrientation: ImageOrientation = ImageOrientation.ORIGINAL): BitmapSlice<T> = slice(RectangleInt(rect.x, rect.y, rect.width, rect.height), name, imageOrientation)
 
 private fun createRectangleInt(
     bleft: Int, btop: Int, bright: Int, bbottom: Int,
