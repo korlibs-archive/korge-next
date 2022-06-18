@@ -53,6 +53,22 @@ import com.soywiz.korma.geom.vector.toCurvesList
 import kotlin.math.absoluteValue
 
 //@KorgeExperimental
+inline fun Container.gpuGraphics(
+    build: ShapeBuilder.() -> Unit,
+    antialiased: Boolean = true,
+    callback: @ViewDslMarker GpuGraphics.() -> Unit = {}
+) =
+    GpuGraphics(buildShape { build() }, antialiased).addTo(this, callback)
+
+//@KorgeExperimental
+inline fun Container.gpuGraphics(
+    shape: Shape = EmptyShape,
+    antialiased: Boolean = true,
+    callback: @ViewDslMarker GpuGraphics.() -> Unit = {}
+) =
+    GpuGraphics(shape, antialiased).addTo(this, callback)
+
+//@KorgeExperimental
 inline fun Container.gpuShapeView(
     build: ShapeBuilder.() -> Unit,
     antialiased: Boolean = true,
@@ -68,8 +84,13 @@ inline fun Container.gpuShapeView(
 ) =
     GpuShapeView(shape, antialiased).addTo(this, callback)
 
+@Deprecated("")
+//typealias GpuShapeView = GpuGraphics
+typealias GpuGraphics = GpuShapeView
+
 //@KorgeExperimental
 @OptIn(KorgeInternal::class)
+//open class GpuGraphics(
 open class GpuShapeView(
     shape: Shape = EmptyShape,
     antialiased: Boolean = true,
