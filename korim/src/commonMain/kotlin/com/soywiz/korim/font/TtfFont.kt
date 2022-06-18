@@ -15,6 +15,7 @@ import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
 import com.soywiz.korim.color.RgbaArray
 import com.soywiz.korim.format.PNG
+import com.soywiz.korim.vector.Context2d
 import com.soywiz.korim.vector.FillShape
 import com.soywiz.korim.vector.toSvgPathString
 import com.soywiz.korio.file.VfsFile
@@ -27,9 +28,14 @@ import com.soywiz.korio.lang.invalidOp
 import com.soywiz.korio.stream.AsyncInputOpenable
 import com.soywiz.korio.stream.AsyncStream
 import com.soywiz.korio.stream.FastByteArrayInputStream
+import com.soywiz.korio.stream.SyncStream
 import com.soywiz.korio.stream.openFastStream
 import com.soywiz.korio.stream.openUse
 import com.soywiz.korio.stream.readBytesUpTo
+import com.soywiz.korio.stream.readS32BE
+import com.soywiz.korio.stream.readS32LE
+import com.soywiz.korio.stream.readU16BE
+import com.soywiz.korio.stream.readU8
 import com.soywiz.korio.stream.toSyncStream
 import com.soywiz.korma.geom.Matrix
 import com.soywiz.korma.geom.Rectangle
@@ -287,8 +293,9 @@ class TtfFont(
 		}
 	}
 
-    internal fun FastByteArrayInputStream.readFWord() = FWord(readU16LE())
-    internal fun FastByteArrayInputStream.readFixed() = Fixed(readS16LE(), readS16LE())
+    internal fun FastByteArrayInputStream.readFWord(): FWord = FWord(readU16LE())
+    internal fun FastByteArrayInputStream.readFixed(): Int = Fixed(readS16LE(), readS16LE())
+    internal fun FastByteArrayInputStream.readFixed2(): Fixed = Fixed(Fixed(readS16LE(), readS16LE()))
 	data class HorMetric(val advanceWidth: Int, val lsb: Int)
 
     @PublishedApi
@@ -793,29 +800,260 @@ class TtfFont(
         }
     }
 
+    fun FastByteArrayInputStream.readVarIdxBase(): Int = readS32BE()
+    fun FastByteArrayInputStream.readUFWORD(): Float = readF32BE()
+    fun FastByteArrayInputStream.readFWORD(): Float = readF32BE()
+    fun FastByteArrayInputStream.readOffset24(): Int = readU24BE()
+    fun FastByteArrayInputStream.readOffset32(): Int = readS32BE()
+    fun FastByteArrayInputStream.readAffine2x3(out: Matrix = Matrix()): Matrix {
+        return out.setTo(
+            readFixed2().toDouble(),
+            readFixed2().toDouble(),
+            readFixed2().toDouble(),
+            readFixed2().toDouble(),
+            readFixed2().toDouble(),
+            readFixed2().toDouble(),
+        )
+    }
+    fun FastByteArrayInputStream.readColorStop(out: ColorStop = ColorStop(0.0, 0, 0.0)): ColorStop {
+        out.stopOffset = readF2DOT14().toDouble()
+        out.paletteIndex = readU16BE()
+        out.alpha = readF2DOT14().toDouble()
+        return out
+    }
+    fun FastByteArrayInputStream.readClipBox(doVar: Boolean = false) {
+        val xMin: Float = readFWORD()
+        val yMin: Float = readFWORD()
+        val xMax: Float = readFWORD()
+        val yMax: Float = readFWORD()
+        if (doVar) {
+            val varIndexBase = readVarIdxBase()
+        }
+        TODO()
+    }
+    fun FastByteArrayInputStream.readClip() {
+        val startGlyphID = s.readU16BE()
+        val endGlyphID = s.readU16BE()
+        val clipBox = readClipBox()
+        TODO()
+    }
+    fun FastByteArrayInputStream.readBaseGlyphPaintRecord() {
+        val glyphID = s.readU16BE()
+        val paint = s.readOffset24() // <Paint>
+    }
+    inline fun <reified T> FastByteArrayInputStream.readArrayOf(block: FastByteArrayInputStream.(index: Int) -> T): Array<T> =
+        Array<T>(readU16BE()) { block(it) }
+
+    class ColorStop(var stopOffset: Double, var paletteIndex: Int, var alpha: Double)
+
+    private fun interpretColrv1(s: FastByteArrayInputStream, c: Context2d) {
+        val nodeFormat = s.readU8()
+        when (nodeFormat) {
+            1 -> { // PaintColrLayers
+                val numLayers = s.readU8()
+                val firstLayerIndex = s.readS32BE() // index into COLRv1::layerList
+                TODO()
+            }
+            2, 3 -> { // PaintSolid, PaintVarSolid
+                val paletteIndex = s.readU16BE()
+                val alpha = s.readF2DOT14()
+                if (nodeFormat % 2 == 1) {
+                    val varIndexBase = s.readVarIdxBase()
+                }
+                TODO()
+            }
+            4, 5 -> { // PaintLinearGradient, PaintVarLinearGradient
+                val colorLine = s.readOffset24() // <ColorLine>
+                val x0 = s.readFWORD()
+                val y0 = s.readFWORD()
+                val x1 = s.readFWORD()
+                val y1 = s.readFWORD()
+                val x2 = s.readFWORD() // Normal; Equal to (x1,y1) in simple cases.
+                val y2 = s.readFWORD()
+                if (nodeFormat % 2 == 1) {
+                    val varIndexBase = s.readVarIdxBase()
+                }
+                TODO()
+            }
+            6, 7 -> { // PaintRadialGradient, PaintVarRadialGradient
+                val colorLine = s.readOffset24() // <ColorLine>
+                var x0 = s.readFWORD()
+                var y0 = s.readFWORD()
+                var radius0 = s.readUFWORD()
+                var x1 = s.readFWORD()
+                var y1 = s.readFWORD()
+                var radius1 = s.readUFWORD()
+                if (nodeFormat % 2 == 1) {
+                    val varIndexBase = s.readVarIdxBase()
+                }
+                TODO()
+            }
+            8, 9 -> { // PaintSweepGradient, PaintVarSweepGradient
+                val colorLine = s.readOffset24() // <ColorLine>
+                val centerX = s.readFWORD()
+                val centerY = s.readFWORD()
+                val startAngle = s.readF2DOT14() // 180° in counter-clockwise degrees per 1.0 of value
+                val endAngle = s.readF2DOT14() // 180° in counter-clockwise degrees per 1.0 of value
+                if (nodeFormat % 2 == 1) {
+                    val varIndexBase = s.readVarIdxBase()
+                }
+                TODO()
+            }
+            10 -> { // PaintGlyph
+                val paint = s.readOffset24() // <Paint>
+                val glyphID = s.readU16BE()
+                TODO()
+            }
+            11 -> { // PaintColrGlyph
+                val glyphID = s.readU16BE()
+                TODO()
+            }
+            12, 13 -> { // PaintTransform, PaintVarTransform
+                val paint = s.readOffset24() // <Paint>
+                val transform = s.readOffset24() // <Affine2x3> <VarAffine2x3>
+                TODO()
+            }
+            14, 15 -> { // PaintTranslate, PaintVarTranslate
+                val paint = s.readOffset24() // <Paint>
+                val dx = s.readFWord()
+                val dy = s.readFWord()
+                if (nodeFormat % 2 == 1) {
+                    val varIndexBase = s.readVarIdxBase()
+                }
+                TODO()
+            }
+            16, 17, 18, 19 -> { // PaintScale, PaintVarScale, PaintScaleAroundCenter, PaintVarScaleAroundCenter
+                val paint = s.readOffset24() // <Paint>
+                val scaleX = s.readF2DOT14()
+                val scaleY = s.readF2DOT14()
+                if (nodeFormat >= 18) {
+                    val centerX = s.readFWORD()
+                    val centerY = s.readFWORD()
+                }
+                if (nodeFormat % 2 == 1) {
+                    val varIndexBase = s.readVarIdxBase()
+                }
+                TODO()
+            }
+            20, 21, 22, 23 -> { // PaintScaleUniform, PaintVarScaleUniform, PaintScaleUniformAroundCenter, PaintVarScaleUniformAroundCenter
+                val paint = s.readOffset24() // <Paint>
+                val scale = s.readF2DOT14()
+                if (nodeFormat >= 22) {
+                    val centerX = s.readFWORD()
+                    val centerY = s.readFWORD()
+                }
+                if (nodeFormat % 2 == 1) {
+                    val varIndexBase = s.readVarIdxBase()
+                }
+                TODO()
+            }
+            24, 25, 26, 27 -> { // PaintRotate, PaintVarRotate, PaintRotateAroundCenter, PaintVarRotateAroundCenter
+                val paint = s.readOffset24() // <Paint>
+                val angle = s.readF2DOT14()
+                if (nodeFormat >= 26) {
+                    val centerX = s.readFWORD()
+                    val centerY = s.readFWORD()
+                }
+                if (nodeFormat % 2 == 1) {
+                    val varIndexBase = s.readVarIdxBase()
+                }
+                TODO()
+            }
+            28, 29, 30, 31 -> { // PaintSkew, PaintVarSkew, PaintSkewAroundCenter, PaintVarSkewAroundCenter
+                val paint = s.readOffset24() // <Paint>
+                val xSkewAngle = s.readF2DOT14()
+                val ySkewAngle = s.readF2DOT14()
+                if (nodeFormat >= 30) {
+                    val centerX = s.readFWORD()
+                    val centerY = s.readFWORD()
+                }
+                if (nodeFormat % 2 == 1) {
+                    val varIndexBase = s.readVarIdxBase()
+                }
+                TODO()
+            }
+            32 -> { // Paint Composite
+                val sourcePaint = s.readOffset24() // <Paint>
+                val compositeMode = s.readU8() // CompositeMode
+                val backdropPaint = s.readOffset24() // <Paint>
+                TODO()
+            }
+            else ->
+                TODO()
+        }
+    }
+
+    object CompositeModes {
+        // Porter-Duff modes
+        // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators
+        const val COMPOSITE_CLEAR          = 0  // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators_clear
+        const val COMPOSITE_SRC            = 1  // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators_src
+        const val COMPOSITE_DEST           = 2  // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators_dst
+        const val COMPOSITE_SRC_OVER       = 3  // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators_srcover
+        const val COMPOSITE_DEST_OVER      = 4  // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators_dstover
+        const val COMPOSITE_SRC_IN         = 5  // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators_srcin
+        const val COMPOSITE_DEST_IN        = 6  // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators_dstin
+        const val COMPOSITE_SRC_OUT        = 7  // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators_srcout
+        const val COMPOSITE_DEST_OUT       = 8  // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators_dstout
+        const val COMPOSITE_SRC_ATOP       = 9  // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators_srcatop
+        const val COMPOSITE_DEST_ATOP      = 10  // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators_dstatop
+        const val COMPOSITE_XOR            = 11  // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators_xor
+        const val COMPOSITE_PLUS           = 12  // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators_plus
+
+        // Blend modes
+        // https://www.w3.org/TR/compositing-1/#blending
+        const val COMPOSITE_SCREEN         = 13  // https://www.w3.org/TR/compositing-1/#blendingscreen
+        const val COMPOSITE_OVERLAY        = 14  // https://www.w3.org/TR/compositing-1/#blendingoverlay
+        const val COMPOSITE_DARKEN         = 15  // https://www.w3.org/TR/compositing-1/#blendingdarken
+        const val COMPOSITE_LIGHTEN        = 16  // https://www.w3.org/TR/compositing-1/#blendinglighten
+        const val COMPOSITE_COLOR_DODGE    = 17  // https://www.w3.org/TR/compositing-1/#blendingcolordodge
+        const val COMPOSITE_COLOR_BURN     = 18  // https://www.w3.org/TR/compositing-1/#blendingcolorburn
+        const val COMPOSITE_HARD_LIGHT     = 19  // https://www.w3.org/TR/compositing-1/#blendinghardlight
+        const val COMPOSITE_SOFT_LIGHT     = 20  // https://www.w3.org/TR/compositing-1/#blendingsoftlight
+        const val COMPOSITE_DIFFERENCE     = 21  // https://www.w3.org/TR/compositing-1/#blendingdifference
+        const val COMPOSITE_EXCLUSION      = 22  // https://www.w3.org/TR/compositing-1/#blendingexclusion
+        const val COMPOSITE_MULTIPLY       = 23  // https://www.w3.org/TR/compositing-1/#blendingmultiply
+
+        // Modes that, uniquely, do not operate on components
+        // https://www.w3.org/TR/compositing-1/#blendingnonseparable
+        const val COMPOSITE_HSL_HUE        = 24  // https://www.w3.org/TR/compositing-1/#blendinghue
+        const val COMPOSITE_HSL_SATURATION = 25  // https://www.w3.org/TR/compositing-1/#blendingsaturation
+        const val COMPOSITE_HSL_COLOR      = 26  // https://www.w3.org/TR/compositing-1/#blendingcolor
+        const val COMPOSITE_HSL_LUMINOSITY = 27  // https://www.w3.org/TR/compositing-1/#blendingluminosity
+    }
+
     private fun readColr() = runTableUnit("COLR") {
         val version = readU16BE()
         when (version) {
-            0 -> {
+            0, 1 -> {
                 val numBaseGlyphRecords = readU16BE()
                 val baseGlyphRecordsOffset = readS32BE()
-                val layerRecordsOffset =  readS32BE()
+                val layerRecordsOffset = readS32BE()
                 val numLayerRecords = readU16BE()
                 //println("numBaseGlyphRecords=$numBaseGlyphRecords")
                 //println("baseGlyphRecordsOffset=$baseGlyphRecordsOffset")
                 //println("layerRecordsOffset=$layerRecordsOffset")
                 //println("numLayerRecords=$numLayerRecords")
-                position = layerRecordsOffset
-                colrLayerInfos = Array(numLayerRecords) { ColrLayerInfo(readU16BE(), readU16BE()) }
-                position = baseGlyphRecordsOffset
-                for (n in 0 until numBaseGlyphRecords) {
-                    val info = ColrGlyphInfo(readU16BE(), readU16BE(), readU16BE())
-                    colrGlyphInfos[info.glyphID] = info
-                    //println("- $glyphID = $firstLayerIndex / $numLayers")
+                sliceStart(layerRecordsOffset).apply {
+                    colrLayerInfos = Array(numLayerRecords) { ColrLayerInfo(readU16BE(), readU16BE()) }
+                }
+                sliceStart(baseGlyphRecordsOffset).apply {
+                    for (n in 0 until numBaseGlyphRecords) {
+                        val info = ColrGlyphInfo(readU16BE(), readU16BE(), readU16BE())
+                        colrGlyphInfos[info.glyphID] = info
+                        //println("- $glyphID = $firstLayerIndex / $numLayers")
+                    }
+                }
+                if (version == 1) {
+                    val baseGlyphList = readOffset32() // <BaseGlyphList>
+                    val layerList = readOffset32() // <LayerList>
+                    val clipList = readOffset32() // <ClipList>. May be NULL
+                    val varIdxMap = readOffset32() // <VarIdxMap>. May be NULL
+                    val varStore = readOffset32() // <ItemVariationStore>
                 }
             }
             else -> {
-                println("TTF WARNING CCOL version != 0")
+                println("TTF WARNING CCOL version $version != 0")
             }
         }
     }
@@ -1352,8 +1590,10 @@ internal inline class FWord(val data: Int) {
 internal inline class Fixed(val data: Int) {
     val num: Int get() = data.extract16Signed(0)
     val den: Int get() = data.extract16Signed(16)
+    val value: Double get() = num.toDouble() / den.toDouble()
+    fun toDouble(): Double = value
     companion object {
-        operator fun invoke(num: Int, den: Int) = 0.insert(num, 0, 16).insert(den, 16, 16)
+        operator fun invoke(num: Int, den: Int): Int = 0.insert(num, 0, 16).insert(den, 16, 16)
     }
 }
 
