@@ -189,6 +189,8 @@ open class GpuShapeView(
         val doRequireTexture = shape.requireStencil
         //val doRequireTexture = false
 
+        //println("doRequireTexture=$doRequireTexture")
+
         val time = measureTime {
             if (doRequireTexture) {
                 //val currentRenderBuffer = ctx.ag.currentRenderBufferOrMain
@@ -218,7 +220,7 @@ open class GpuShapeView(
         renderMat.copyFrom(mat)
         renderMat.pretranslate(-anchorDispX, -anchorDispY)
         requireShape()
-        gpuShapeViewCommands.render(ctx, renderMat, localMatrix, applyScissor, renderColorMul)
+        gpuShapeViewCommands.render(ctx, renderMat, localMatrix, applyScissor, renderColorMul, doRequireTexture)
     }
 
     private fun renderShape(shape: Shape) {
