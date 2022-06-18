@@ -4,13 +4,13 @@ import com.soywiz.krypto.internal.arraycopy
 
 class PBKDF2 {
     companion object {
-        fun pbkdf2WithHmacSHA1(password: ByteArray, salt: ByteArray, iterationCount: Int, keySizeInBits: Int) =
+        fun pbkdf2WithHmacSHA1(password: ByteArray, salt: ByteArray, iterationCount: Int, keySizeInBits: Int): Hash =
             pbkdf2(password, salt, iterationCount, keySizeInBits, SHA1())
 
-        fun pbkdf2WithHmacSHA256(password: ByteArray, salt: ByteArray, iterationCount: Int, keySizeInBits: Int) =
+        fun pbkdf2WithHmacSHA256(password: ByteArray, salt: ByteArray, iterationCount: Int, keySizeInBits: Int): Hash =
             pbkdf2(password, salt, iterationCount, keySizeInBits, SHA256())
 
-        fun pbkdf2WithHmacSHA512(password: ByteArray, salt: ByteArray, iterationCount: Int, keySizeInBits: Int) =
+        fun pbkdf2WithHmacSHA512(password: ByteArray, salt: ByteArray, iterationCount: Int, keySizeInBits: Int): Hash =
             pbkdf2(password, salt, iterationCount, keySizeInBits, SHA512())
 
         private fun Int.toByteArray(): ByteArray {
@@ -22,7 +22,7 @@ class PBKDF2 {
             )
         }
 
-        fun pbkdf2(password: ByteArray, salt: ByteArray, iterationCount: Int, keySizeInBits: Int, hasher: Hasher): ByteArray {
+        fun pbkdf2(password: ByteArray, salt: ByteArray, iterationCount: Int, keySizeInBits: Int, hasher: Hasher): Hash {
             val hLen = hasher.digestSize
             val blockSize = keySizeInBits / hLen
             val outSize = keySizeInBits / 8
@@ -49,7 +49,7 @@ class PBKDF2 {
                     }
                 }
             }
-            return result
+            return Hash(result)
         }
     }
 }
