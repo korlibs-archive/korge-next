@@ -2,6 +2,7 @@ package com.soywiz.korim.font
 
 import com.soywiz.kds.DoubleArrayList
 import com.soywiz.kds.IntArrayList
+import com.soywiz.kds.IntIntMap
 import com.soywiz.kds.IntMap
 import com.soywiz.kds.getCyclic
 import com.soywiz.kds.iterators.fastForEach
@@ -29,6 +30,7 @@ import com.soywiz.korim.vector.Drawable
 import com.soywiz.korim.vector.FillShape
 import com.soywiz.korim.vector.Shape
 import com.soywiz.korim.vector.buildShape
+import com.soywiz.korim.vector.toSvg
 import com.soywiz.korim.vector.toSvgPathString
 import com.soywiz.korio.file.VfsFile
 import com.soywiz.korio.file.baseName
@@ -807,8 +809,8 @@ class TtfFont(
     }
 
     fun FastByteArrayInputStream.readVarIdxBase(): Int = readS32BE()
-    fun FastByteArrayInputStream.readUFWORD(): Float = readF32BE()
-    fun FastByteArrayInputStream.readFWORD(): Float = readF32BE()
+    fun FastByteArrayInputStream.readUFWORD(): Int = readU16BE()
+    fun FastByteArrayInputStream.readFWORD(): Int = readS16BE()
     fun FastByteArrayInputStream.readOffset24(): Int = readU24BE()
     fun FastByteArrayInputStream.readOffset32(): Int = readS32BE()
     fun FastByteArrayInputStream.readAffine2x3(isVar: Boolean, out: Matrix = Matrix()): Matrix {
@@ -818,15 +820,17 @@ class TtfFont(
         val yy = readFIXED3()
         val dx = readFIXED3()
         val dy = readFIXED3()
-        println("readAffine2x3: $xx, $yx, $xy, $yy, $dx, $dy")
-        return out.setTo(
+        //println("readAffine2x3: $xx, $yx, $xy, $yy, $dx, $dy")
+        out.setTo(
             xx.toDouble(),
             yx.toDouble(),
             xy.toDouble(),
             yy.toDouble(),
             dx.toDouble(),
-            dy.toDouble(),
+            -dy.toDouble(),
         )
+        //out.scale(1.0, -1.0)
+        return out
     }
     fun FastByteArrayInputStream.readColorStop(out: ColorStop = ColorStop(0.0, 0, 0.0)): ColorStop {
         out.stopOffset = readF2DOT14().toDouble()
@@ -834,21 +838,16 @@ class TtfFont(
         out.alpha = readF2DOT14().toDouble()
         return out
     }
-    fun FastByteArrayInputStream.readClipBox(doVar: Boolean = false) {
-        val xMin: Float = readFWORD()
-        val yMin: Float = readFWORD()
-        val xMax: Float = readFWORD()
-        val yMax: Float = readFWORD()
-        if (doVar) {
+    fun FastByteArrayInputStream.readClipBox(doVar: Boolean = false): Rectangle {
+        val format = readU8()
+        val xMin: Int = readFWORD()
+        val yMin: Int = readFWORD()
+        val xMax: Int = readFWORD()
+        val yMax: Int = readFWORD()
+        if (format == 2) {
             val varIndexBase = readVarIdxBase()
         }
-        TODO()
-    }
-    fun FastByteArrayInputStream.readClip() {
-        val startGlyphID = s.readU16BE()
-        val endGlyphID = s.readU16BE()
-        val clipBox = readClipBox()
-        TODO()
+        return Rectangle.fromBounds(xMin, yMin, xMax, yMax)
     }
     fun FastByteArrayInputStream.readBaseGlyphPaintRecord() {
         val glyphID = s.readU16BE()
@@ -879,10 +878,12 @@ class TtfFont(
 
     class ColorStop(var stopOffset: Double, var paletteIndex: Int, var alpha: Double)
 
+    // https://docs.microsoft.com/en-us/typography/opentype/spec/colr
     private fun interpretColrv1(glyphID: Int, s: FastByteArrayInputStream, c: Context2d, pal: Int, level: Int) {
         val nodeFormat = s.readU8()
         val isVar = nodeFormat % 2 == 1
-        println("${" ".repeat(level)}interpretColrv1[glyphID=$glyphID]: $nodeFormat - ${Colrv1Paint.BY_FORMAT.getOrNull(nodeFormat)}")
+        val indent = "  ".repeat(level)
+        println("${indent}interpretColrv1[glyphID=$glyphID]: $nodeFormat - ${Colrv1Paint.BY_FORMAT.getOrNull(nodeFormat)}")
         when (nodeFormat) {
             1 -> { // PaintColrLayers
                 val numLayers = s.readU8()
@@ -899,8 +900,9 @@ class TtfFont(
                     val varIndexBase = s.readVarIdxBase()
                     TODO()
                 }
-                val color = palettes[pal].colors[paletteIndex]
-                c.fill(color.withAd(color.ad * alpha))
+                val color = palettes[pal].colors[paletteIndex].concatAd(alpha)
+                println("${indent}$color")
+                c.fill(color)
             }
             4, 5 -> { // PaintLinearGradient, PaintVarLinearGradient
                 val colorLineOffset = s.readOffset24() // <ColorLine>
@@ -915,8 +917,9 @@ class TtfFont(
                 if (isVar) {
                     val varIndexBase = s.readVarIdxBase()
                 }
-                val paint = LinearGradientPaint(x0, y0,x1, y1, colorLine.cycle)
+                val paint = LinearGradientPaint(x0, -y0, x1, -y1, colorLine.cycle)
                 colorLine.addToPaint(paint, palettes[pal])
+                println("${indent}$paint")
                 c.fill(paint)
 
             }
@@ -932,8 +935,9 @@ class TtfFont(
                 if (isVar) {
                     val varIndexBase = s.readVarIdxBase()
                 }
-                val paint = RadialGradientPaint(x0, y0, radius0, x1, y1, radius1, colorLine.cycle)
+                val paint = RadialGradientPaint(x0, -y0, radius0, x1, -y1, radius1, colorLine.cycle)
                 colorLine.addToPaint(paint, palettes[pal])
+                println("${indent}$paint")
                 c.fill(paint)
             }
             8, 9 -> { // PaintSweepGradient, PaintVarSweepGradient
@@ -967,22 +971,24 @@ class TtfFont(
                 val paint = s.readOffset24() // <Paint>
                 val transform = s.readOffset24() // <Affine2x3> <VarAffine2x3>
                 val affine = s.sliceStart(transform).readAffine2x3(isVar)
-                println("affine=$affine")
-                c.keepTransform {
+                println("${indent}affine=$affine")
+                c.keep {
                     //c.translate(affine.tx, affine.ty)
-                    //c.transform(affine)
+                    //affine.ty = -affine.ty
+                    c.transform(affine)
                     interpretColrv1(glyphID, s.sliceStart(paint), c, pal, level + 1)
                 }
             }
             14, 15 -> { // PaintTranslate, PaintVarTranslate
                 val paint = s.readOffset24() // <Paint>
-                val dx = s.readFWord()
-                val dy = s.readFWord()
+                val dx = s.readFWord().toDouble()
+                val dy = s.readFWord().toDouble()
                 if (isVar) {
                     val varIndexBase = s.readVarIdxBase()
                 }
                 c.keep {
-                    c.translate(dx.toDouble(), dy.toDouble())
+                    println("translate: $dx, $dy")
+                    c.translate(dx, dy)
                     //println(this.unitsPerEm)
                     interpretColrv1(glyphID, s.sliceStart(paint), c, pal, level + 1)
                 }
@@ -1133,11 +1139,22 @@ class TtfFont(
         const val COMPOSITE_HSL_LUMINOSITY = 27  // https://www.w3.org/TR/compositing-1/#blendingluminosity
     }
 
+    data class Clip(
+        val startGlyphID: Int,
+        val endGlyphID: Int,
+        val clipBoxOffset: Int,
+    )
+
     class COLRv1(
         var layerList: IntArray = intArrayOf(),
+        var s: FastByteArrayInputStream = FastByteArrayInputStream(byteArrayOf()),
         var sBaseOffset: FastByteArrayInputStream = FastByteArrayInputStream(byteArrayOf()),
         var sLayerOffset: FastByteArrayInputStream = FastByteArrayInputStream(byteArrayOf()),
-    )
+        var sClipOffset: FastByteArrayInputStream? = null,
+        //var clipList: List<Clip>? = null,
+    ) {
+        val glyphIDToClipOffset = IntIntMap()
+    }
 
     private fun readColr() = runTableUnit("COLR") {
         val version = readU16BE()
@@ -1168,15 +1185,35 @@ class TtfFont(
                     val varIdxMapOffset = readOffset32() // <VarIdxMap>. May be NULL
                     val varStoreOffset = readOffset32() // <ItemVariationStore>
 
+                    println("clipListOffset=$clipListOffset")
+                    println("varIdxMapOffset=$varIdxMapOffset")
+                    println("varStoreOffset=$varStoreOffset")
+
+                    colrv1.glyphIDToClipOffset.clear()
                     colrv1 = COLRv1(
+                        s = sliceStart(0),
                         layerList = sliceStart(layerListOffset).readArrayOf32 { readOffset32() }.toIntArray(),
                         sBaseOffset = this.sliceStart(baseGlyphListOffset),
                         sLayerOffset = this.sliceStart(layerListOffset),
-                        //val clipList = sliceStart(clipListOffset).readArrayOf32 { readOffset32() }
+                        sClipOffset = clipListOffset.takeIf { it != 0 }?.let { this.sliceStart(it) },
                         //val varIdxMap = sliceStart(varIdxMapOffset).readArrayOf32 { readOffset32() }
                         //val varStore = sliceStart(varStoreOffset).readArrayOf32 { readOffset32() }
                     )
 
+                    clipListOffset.takeIf { it != 0 }?.let {
+                        val s = sliceStart(clipListOffset)
+                        val format = s.readU8()
+                        s.readArrayOf32 {
+                            val startGlyphID = readU16BE() // first gid clip applies to
+                            val endGlyphID = readU16BE() // last gid clip applies to, inclusive
+                            val clipBoxOffset = readOffset24()
+                            for (glyphID in startGlyphID..endGlyphID) {
+                                colrv1.glyphIDToClipOffset[glyphID] = clipBoxOffset
+                            }
+                            Unit
+                            //Clip(startGlyphID, endGlyphID, clipBoxOffset)
+                        }//.toList()
+                    }
 
                     sliceStart(baseGlyphListOffset).readArrayOf32 {
                         val glyphID: Int = readU16BE()
@@ -1291,20 +1328,19 @@ class TtfFont(
 							val endCharCode = readS32BE()
 							val startGlyphId = readS32BE()
 
-							var glyphId = startGlyphId
 							for (c in startCharCode..endCharCode) {
-                                addCharacterMap(c, glyphId)
+                                val m = c - startCharCode
+                                addCharacterMap(c, startGlyphId + m)
                                 //println(" - $c -> $glyphId")
-                                glyphId++
 							}
 						}
 					}
                     13 -> { // Many-to-one range mappings
                         println("UNSUPPORTED CMAP format = $format")
                     }
-                    14 -> {
-                        //println("UNSUPPORTED CMAP format = $format")
-                    }
+                    //14 -> {
+                    //    println("UNSUPPORTED CMAP format = $format")
+                    //}
                     //14 -> { // Unicode Variation Sequences
                     //    val length = readS32BE()
                     //    val numVarSelectorRecords = readS32BE()
@@ -1423,11 +1459,15 @@ class TtfFont(
         override fun getColorPath(pal: Int): Shape {
             return buildShape {
                 val paintS = colrv1.sBaseOffset.sliceStart(paint)
+                println(this.state.transform)
                 try {
                     interpretColrv1(glyphID, paintS, this, pal, 0)
                 } catch (e: Throwable) {
                     e.printStackTrace()
                 }
+            }.also { shape ->
+                //println("ColrGlyphInfoV1.getColorPath($pal): $shape")
+                //println("ColrGlyphInfoV1.getColorPath($pal):\n${shape.toSvg().toOuterXmlIndentedString()}")
             }
         }
         override fun toString(): String = "ColrGlyphInfoV1[$glyphID][$paint]"
@@ -1463,6 +1503,28 @@ class TtfFont(
         val bitmapEntry: BitmapGlyphInfo? get() = bitmapGlyphInfos[index]
 
         val metrics1px = run {
+            var xMin = xMin
+            var yMin = yMin
+            var xMax = xMax
+            var yMax = yMax
+
+            if (xMin == 0 && yMin == 0 && xMax == 0 && yMax == 0) {
+                val sClipOffset = colrv1.sClipOffset
+                val glyphIDToClipOffset = colrv1.glyphIDToClipOffset
+                val bounds = if (sClipOffset != null && glyphIDToClipOffset.contains(index)) {
+                    val clipOffset = glyphIDToClipOffset[index]
+                    sClipOffset.sliceStart(clipOffset).readClipBox()
+                } else {
+                    colorEntry?.getColorPath()?.bounds
+                }
+                if (bounds != null) {
+                    xMin = bounds.left.toInt()
+                    xMax = bounds.right.toInt()
+                    yMin = bounds.top.toInt()
+                    yMax = bounds.bottom.toInt()
+                }
+            }
+
             val size = unitsPerEm.toDouble()
             val scale = getTextScale(size)
             GlyphMetrics(size, true, -1, Rectangle.fromBounds(
