@@ -1,14 +1,73 @@
+
 import com.soywiz.korge.Korge
 import com.soywiz.korge.scene.Scene
 import com.soywiz.korge.scene.sceneContainer
-import com.soywiz.korge.ui.uiComboBox
+import com.soywiz.korge.ui.UIDropdownOption
+import com.soywiz.korge.ui.UIDropdownSettings
+import com.soywiz.korge.ui.uiDropdown
 import com.soywiz.korge.view.Stage
 import com.soywiz.korge.view.xy
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.mix
-import com.soywiz.korio.async.launchImmediately
 import com.soywiz.korio.lang.portableSimpleName
-import samples.*
+import samples.BezierSample
+import samples.Bunnymark
+import samples.MainArc
+import samples.MainBVH
+import samples.MainBezier
+import samples.MainBlur
+import samples.MainCircleColor
+import samples.MainCircles
+import samples.MainClipping
+import samples.MainColorPicker
+import samples.MainColorTransformFilter
+import samples.MainCustomSolidRectShader
+import samples.MainDpi
+import samples.MainDraggable
+import samples.MainDragonbones
+import samples.MainEasing
+import samples.MainEditor
+import samples.MainEmoji
+import samples.MainExifTest
+import samples.MainFilterScale
+import samples.MainFilterSwitch
+import samples.MainFiltersRenderToBitmap
+import samples.MainFiltersSample
+import samples.MainGifAnimation
+import samples.MainGpuVectorRendering
+import samples.MainGpuVectorRendering2
+import samples.MainGpuVectorRendering3
+import samples.MainHaptic
+import samples.MainImageTrace
+import samples.MainKorviSample
+import samples.MainMasks
+import samples.MainMipmaps
+import samples.MainMutableAtlasTest
+import samples.MainRenderText
+import samples.MainRotateCircle
+import samples.MainRotatedAtlas
+import samples.MainRotatedTexture
+import samples.MainSWF
+import samples.MainSkybox
+import samples.MainSpine
+import samples.MainStrokesExperiment
+import samples.MainStrokesExperiment2
+import samples.MainStrokesExperiment3
+import samples.MainSvgAnimation
+import samples.MainTextMetrics
+import samples.MainTextureIssue
+import samples.MainTilemapTest
+import samples.MainTransition
+import samples.MainTrimmedAtlas
+import samples.MainTweenPoint
+import samples.MainUIImageTester
+import samples.MainUITreeView
+import samples.MainVampire
+import samples.MainVectorFill
+import samples.MainVectorRendering
+import samples.MainZIndex
+import samples.ParticlesMain
+import samples.TerminalEmulatorMain
 
 suspend fun main() = Korge(
     bgcolor = Colors.DARKCYAN.mix(Colors.BLACK, 0.8),
@@ -50,7 +109,6 @@ suspend fun main() = Korge(
             Demo(::MainDraggable),
             Demo(::MainGifAnimation),
             Demo(::MainTransition),
-            Demo(::MainTilemapTest),
             Demo(::MainTextureIssue),
             Demo(::MainClipping),
             Demo(::MainTweenPoint),
@@ -99,11 +157,19 @@ suspend fun Stage.demoSelector(default: Demo, all: List<Demo>) {
         }
     }
 
-    uiComboBox(width = 300.0, items = listOf(default) + all) {
-        this.onSelectionUpdate.add {
-            println(it)
-            launchImmediately { setDemo(it.selectedItem!!) }
+    val toDropdownOptions = (listOf(default) + all).sortedBy { it.name }.map {
+        UIDropdownOption.AnyOption(it.name, it)
+    }
+
+    val dropdown = uiDropdown(toDropdownOptions, UIDropdownSettings(
+        dropdownWidth = 200.0,
+        numEntriesVisible = 15
+    )).apply {
+        onDropdownChange {
+            val op = it.newOption as UIDropdownOption.AnyOption
+            setDemo(op.data as Demo)
         }
     }
-    setDemo(default)
+
+    dropdown.setEntry(default.name)
 }

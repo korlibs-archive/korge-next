@@ -645,3 +645,15 @@ var View.cursor: GameWindow.ICursor? by extraProperty { null }
 //var View.cursor: GameWindow.ICursor?
 //    get() = mouse.cursor
 //    set(value) { mouse.cursor = value }
+
+fun MouseEvents.isScrollDown(): Boolean {
+    val event = this.lastEvent
+    return event.type == MouseEvent.Type.SCROLL && event.button == MouseButton.BUTTON_WHEEL &&
+        event.scrollDeltaYLines > 0
+}
+
+fun MouseEvents.isScrollUp(): Boolean {
+    val event = this.lastEvent
+    return event.type == MouseEvent.Type.SCROLL && event.button == MouseButton.BUTTON_WHEEL &&
+        event.scrollDeltaYLines < 0
+}
