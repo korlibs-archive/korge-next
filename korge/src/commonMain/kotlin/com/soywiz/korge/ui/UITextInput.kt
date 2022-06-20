@@ -1,6 +1,7 @@
 package com.soywiz.korge.ui
 
 import com.soywiz.klock.seconds
+import com.soywiz.kmem.Platform
 import com.soywiz.kmem.clamp
 import com.soywiz.korev.Key
 import com.soywiz.korge.annotations.KorgeExperimental
@@ -338,8 +339,20 @@ class UITextInput(initialText: String = "", width: Double = 128.0, height: Doubl
                             }
                         }
                     }
-                    Key.LEFT -> moveToIndex(it.shift, leftIndex(selectionStart, it.ctrl))
-                    Key.RIGHT -> moveToIndex(it.shift, rightIndex(selectionStart, it.ctrl))
+                    Key.LEFT -> {
+                        if (it.meta && Platform.os.isApple) {
+                            moveToIndex(it.shift, 0)
+                        } else {
+                            moveToIndex(it.shift, leftIndex(selectionStart, it.ctrl))
+                        }
+                    }
+                    Key.RIGHT -> {
+                        if (it.meta && Platform.os.isApple) {
+                            moveToIndex(it.shift, text.length)
+                        } else {
+                            moveToIndex(it.shift, rightIndex(selectionStart, it.ctrl))
+                        }
+                    }
                     Key.HOME -> moveToIndex(it.shift, 0)
                     Key.END -> moveToIndex(it.shift, text.length)
                     else -> Unit
