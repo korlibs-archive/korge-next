@@ -106,7 +106,12 @@ class UITextInput(initialText: String = "", width: Double = 128.0, height: Doubl
             textView.font = value
         }
 
-    var textSize: Double by textView::textSize
+    var textSize: Double
+        get() = textView.textSize
+        set(value) {
+            textView.textSize = value
+            caret.height = value
+        }
     var textColor: RGBA by textView::color
 
     private var _selectionStart: Int = initialText.length
